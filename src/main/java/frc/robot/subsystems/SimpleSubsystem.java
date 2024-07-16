@@ -14,6 +14,7 @@ import lombok.Setter;
 public class SimpleSubsystem extends SubsystemBase {
 
   @RequiredArgsConstructor
+  @Getter
   public enum State {
     ON(() -> 1.0),
     OFF(() -> 0.0);
@@ -24,7 +25,9 @@ public class SimpleSubsystem extends SubsystemBase {
       return outputSupplier.getAsDouble();
     }
   }
-  @Getter @Setter
+
+  @Getter
+  @Setter
   private State state = State.OFF;
 
   /** Creates a new SimpleSubsystem. */
