@@ -54,6 +54,6 @@ Photonvision
 
 [Pathplanner](https://pathplanner.dev/pathplanner-gui.html) - Autonomous (docs)
 
-    [Build an Auto](https://pathplanner.dev/pplib-build-an-auto.html#create-a-sendablechooser-with-all-autos-in-project) (tutorial)
+[Build an Auto](https://pathplanner.dev/pplib-build-an-auto.html#create-a-sendablechooser-with-all-autos-in-project) (tutorial)
     
-    [Named Commands](https://pathplanner.dev/pplib-named-commands.html) (tutorial)
+[Named Commands](https://pathplanner.dev/pplib-named-commands.html) (tutorial)
