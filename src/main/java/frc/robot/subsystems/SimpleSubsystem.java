@@ -38,5 +38,7 @@ public class SimpleSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    
+    //motor.setControl(state.getStateOutput());
   }
 }
