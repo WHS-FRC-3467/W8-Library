@@ -5,6 +5,8 @@
 package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
+
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -52,7 +54,8 @@ public class ComplexSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    goalAngle = state.getStateOutput();
+    goalAngle = MathUtil.clamp(state.getStateOutput(), lowerLimitDegrees, upperLimitDegrees);
+    
     if (state == State.HOME && pidController.atGoal()) {
       // motor.setControl(Neutral)
     } else {
