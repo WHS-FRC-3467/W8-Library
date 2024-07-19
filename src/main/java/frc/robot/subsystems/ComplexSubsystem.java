@@ -10,7 +10,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class ComplexSubsystem extends SubsystemBase {
     private final DoubleSupplier outputSupplier;
 
     private double getStateOutput() {
-      return Units.radiansToDegrees(outputSupplier.getAsDouble());
+      return outputSupplier.getAsDouble();
     }
   }
 
@@ -44,7 +44,7 @@ public class ComplexSubsystem extends SubsystemBase {
   private double goalAngle;
   private double currentAngle;
   private SimpleMotorFeedforward ff = new SimpleMotorFeedforward(0, 0);
-  private double voltageOutput = 0;
+  private double output = 0;
 
   /** Creates a new ComplexSubsystem. */
   public ComplexSubsystem() {
@@ -55,13 +55,17 @@ public class ComplexSubsystem extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
     goalAngle = MathUtil.clamp(state.getStateOutput(), lowerLimitDegrees, upperLimitDegrees);
-    
+
     if (state == State.HOME && pidController.atGoal()) {
       // motor.setControl(Neutral)
     } else {
-      voltageOutput = pidController.calculate(currentAngle, goalAngle) + ff.calculate(0, 0);
-      // motor.setControl(voltageOutput);
+      output = pidController.calculate(currentAngle, goalAngle) + ff.calculate(0, 0);
+      // motor.setControl(output);
     }
 
+  }
+
+  public Command setStateCommand(State state) {
+    return runOnce(() -> this.state = state);
   }
 }

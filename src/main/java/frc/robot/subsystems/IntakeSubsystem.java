@@ -14,6 +14,8 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -58,15 +60,25 @@ public class IntakeSubsystem extends SubsystemBase {
   public void periodic() {
     // This method will be called once per scheduler run
     displayInfo(true);
-    m_intakeMotor.setControl(m_percent.withOutput(state.getStateOutput()));
+    if (state == State.OFF) {
+      m_intakeMotor.setControl(m_brake);
+    } else {
+      m_intakeMotor.setControl(m_percent.withOutput(state.getStateOutput()));
+    }
+    
   }
 
   private void displayInfo(boolean debug) {
     if (debug) {
+      SmartDashboard.putString("Intake State ", state.toString());
       SmartDashboard.putNumber("Intake Setpoint ", state.getStateOutput());
       SmartDashboard.putNumber("Intake Output ", m_intakeMotor.getMotorVoltage().getValueAsDouble());
       SmartDashboard.putNumber("Intake Current Draw", m_intakeMotor.getSupplyCurrent().getValueAsDouble());
     }
     
+  }
+
+  public Command setStateCommand(State state) {
+    return runOnce(() -> this.state = state);
   }
 }

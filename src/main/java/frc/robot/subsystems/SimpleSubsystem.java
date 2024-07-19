@@ -6,6 +6,7 @@ package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,15 @@ public class SimpleSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    
-    //motor.setControl(state.getStateOutput());
+
+    if (state == State.OFF) {
+      // m_intakeMotor.setControl(m_brake);
+    } else {
+      // m_intakeMotor.setControl(m_percent.withOutput(state.getStateOutput()));
+    }
+  }
+
+  public Command setStateCommand(State state) {
+    return runOnce(() -> this.state = state);
   }
 }
