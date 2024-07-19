@@ -10,6 +10,8 @@ Below is a list of documentation and libraries that are useful from year to year
         
 [Playing music on Talon FX](https://v6.docs.ctr-electronics.com/en/stable/docs/api-reference/api-usage/orchestra.html) (docs)
         
+[Phoenix 6 Examples](https://github.com/CrossTheRoadElec/Phoenix6-Examples/tree/main) (repo)
+
 [Phoenix 5](https://api.ctr-electronics.com/phoenix/release/java/)
     
 [CAN Talon (SRX) tutorial](https://binnur.gitbooks.io/spartronics-developers-handbook/content/actuators/talon/programming.html) (example)
