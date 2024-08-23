@@ -6,12 +6,19 @@ package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.NeutralOut;
+import com.ctre.phoenix6.hardware.TalonFX;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -46,6 +53,10 @@ public class ComplexSubsystem extends SubsystemBase {
   private SimpleMotorFeedforward ff = new SimpleMotorFeedforward(0, 0);
   private double output = 0;
 
+  //TalonFX m_motor = new TalonFX(Constants.ExampleSubsystemConstants.ID_Motor);
+  private final DutyCycleOut m_voltage = new DutyCycleOut(0);
+  private final NeutralOut m_brake = new NeutralOut();
+
   /** Creates a new ComplexSubsystem. */
   public ComplexSubsystem() {
 
@@ -65,7 +76,23 @@ public class ComplexSubsystem extends SubsystemBase {
 
   }
 
+  public boolean atGoal() {
+    return pidController.atGoal();
+  }
+
   public Command setStateCommand(State state) {
-    return runOnce(() -> this.state = state);
+    return startEnd(() -> this.state = state, () -> this.state = State.HOME);
+  }
+
+    private void displayInfo(boolean debug) {
+    if (debug) {
+      SmartDashboard.putString("ComplexSubsystem State ", state.toString());
+      SmartDashboard.putNumber("ComplexSubsystem Setpoint ", Units.radiansToDegrees(goalAngle));
+      //SmartDashboard.putNumber("ComplexSubsystem Angle ", Units.radiansToDegrees(m_encoder.getDistance()));
+      SmartDashboard.putBoolean("ComplexSubsystem at Goal?", atGoal());
+      //SmartDashboard.putNumber("ComplexSubsystem Current Draw", m_armMotor.getSupplyCurrent().getValueAsDouble());
+      SmartDashboard.putData("ComplexSubsystem PID",pidController);
+    }
+
   }
 }
