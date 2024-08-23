@@ -32,8 +32,8 @@ public class Arm extends SubsystemBase {
   @Getter
   public enum State { //0 angle is straight horizontal, -20 is on the hardstops
     STOW(() -> 0.0),
-    SCORE(() -> 90.0);
-    //LOOKUP(() -> RobotState.getInstance().getShotAngle());
+    SCORE(() -> 90.0),
+    DYNAMIC(() -> RobotState.getInstance().getShotAngle());
 
     private final DoubleSupplier outputSupplier;
 
