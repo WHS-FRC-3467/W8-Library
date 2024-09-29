@@ -63,8 +63,7 @@ public class Intake extends SubsystemBase {
   }
 
   public boolean atGoal() {
-    return (m_intakeMotor.getDutyCycle().getValueAsDouble() == state.getOutputSupplier())
-        && (m_intakeFollowerMotor.getDutyCycle().getValueAsDouble() == state.getOutputSupplier());
+    return (m_intakeMotor.getDutyCycle().getValueAsDouble() == state.getOutputSupplier());
   }
 
   private void displayInfo(boolean debug) {

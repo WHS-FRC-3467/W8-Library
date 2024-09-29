@@ -76,13 +76,17 @@ public class Constants {
             m_configuration.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
             m_configuration.Feedback.SensorToMechanismRatio = 1;
 
-            m_configuration.Slot0.kG = 0; // output to overcome gravity (output)
-            m_configuration.Slot0.kS = 0; // output to overcome static friction (output)
-            m_configuration.Slot0.kV = 0; // output per unit of requested velocity (output/rps)
-            m_configuration.Slot0.kA = 0; // unused, as there is no target acceleration
             m_configuration.Slot0.kP = 1; // output per unit of error in position (output/rotation)
             m_configuration.Slot0.kI = 0; // output per unit of integrated error in position (output/(rotation*s))
             m_configuration.Slot0.kD = 0; // output per unit of error derivative in position (output/rps)
+
+            m_configuration.Slot1.kG = 0; // output to overcome gravity (output)
+            m_configuration.Slot1.kS = 0; // output to overcome static friction (output)
+            m_configuration.Slot1.kV = 0; // output per unit of requested velocity (output/rps)
+            m_configuration.Slot1.kA = 0; // unused, as there is no target acceleration
+            m_configuration.Slot1.kP = 1; // output per unit of error in position (output/rotation)
+            m_configuration.Slot1.kI = 0; // output per unit of integrated error in position (output/(rotation*s))
+            m_configuration.Slot1.kD = 0; // output per unit of error derivative in position (output/rps)
 
             m_configuration.MotionMagic.MotionMagicCruiseVelocity = 10;
             m_configuration.MotionMagic.MotionMagicAcceleration = 10;
