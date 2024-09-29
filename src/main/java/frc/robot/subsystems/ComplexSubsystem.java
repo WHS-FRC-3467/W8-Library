@@ -69,7 +69,7 @@ public class ComplexSubsystem extends SubsystemBase {
   }
 
   public Command setStateCommand(State state) {
-    return runOnce(() -> this.state = state);
+    return startEnd(() -> this.state = state, () -> this.state = State.HOME);
   }
 
   private void displayInfo(boolean debug) {

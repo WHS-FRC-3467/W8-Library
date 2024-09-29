@@ -60,7 +60,7 @@ public class Constants {
     }
 
     public static final class ExampleComplexSubsystemConstants {
-        public static final int ID_Motor = 0;
+        public static final int ID_Motor = 1;
         public static final double upperLimit = Units.degreesToRadians(180);
         public static final double lowerLimit = Units.degreesToRadians(0);
         public static final double tolerance = Units.degreesToRadians(1);
