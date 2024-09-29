@@ -6,12 +6,20 @@ package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.NeutralOut;
+import com.ctre.phoenix6.hardware.TalonFX;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.ExampleComplexSubsystemConstants;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -22,12 +30,12 @@ public class ComplexSubsystem extends SubsystemBase {
   @Getter
   public enum State {
     HOME(() -> 0.0),
-    OUT(() -> 90.0);
+    SCORE(() -> 90.0);
 
     private final DoubleSupplier outputSupplier;
 
     private double getStateOutput() {
-      return outputSupplier.getAsDouble();
+      return Units.degreesToRadians(outputSupplier.getAsDouble());
     }
   }
 
@@ -35,37 +43,47 @@ public class ComplexSubsystem extends SubsystemBase {
   @Setter
   private State state = State.HOME;
 
-  private final double upperLimitDegrees = 180;
-  private final double lowerLimitDegrees = 0;
-  private final double maxVelocity = 1;
-  private final double maxAcceleration = 1;
-  private ProfiledPIDController pidController = new ProfiledPIDController(0, 0, 0,
-      new TrapezoidProfile.Constraints(maxVelocity, maxAcceleration));
+  TalonFX m_motor = new TalonFX(ExampleComplexSubsystemConstants.ID_Motor);
+  private final MotionMagicVoltage m_magic = new MotionMagicVoltage(state.getStateOutput());
+  private final NeutralOut m_neutral = new NeutralOut();
+
   private double goalAngle;
-  private double currentAngle;
-  private SimpleMotorFeedforward ff = new SimpleMotorFeedforward(0, 0);
-  private double output = 0;
+
 
   /** Creates a new ComplexSubsystem. */
   public ComplexSubsystem() {
-
+    m_motor.getConfigurator().apply(ExampleComplexSubsystemConstants.motorConfig());
   }
 
   @Override
   public void periodic() {
-    // This method will be called once per scheduler run
-    goalAngle = MathUtil.clamp(state.getStateOutput(), lowerLimitDegrees, upperLimitDegrees);
+    goalAngle = MathUtil.clamp(state.getStateOutput(), ExampleComplexSubsystemConstants.lowerLimit, ExampleComplexSubsystemConstants.upperLimit);
 
-    if (state == State.HOME && pidController.atGoal()) {
-      // motor.setControl(Neutral)
+    if (state == State.HOME && atGoal()) {
+      m_motor.setControl(m_neutral);
     } else {
-      output = pidController.calculate(currentAngle, goalAngle) + ff.calculate(0, 0);
-      // motor.setControl(output);
+      m_motor.setControl(m_magic.withPosition(goalAngle));
     }
 
+    displayInfo(true);
+  }
+
+  public boolean atGoal() {
+    return Math.abs(state.getStateOutput() - m_motor.getPosition().getValueAsDouble()) < ExampleComplexSubsystemConstants.tolerance;
   }
 
   public Command setStateCommand(State state) {
     return runOnce(() -> this.state = state);
+  }
+
+  private void displayInfo(boolean debug) {
+    if (debug) {
+      SmartDashboard.putString(this.getClass().getSimpleName() + " State ", state.toString());
+      SmartDashboard.putNumber(this.getClass().getSimpleName() + " Setpoint ", state.getStateOutput());
+      SmartDashboard.putNumber(this.getClass().getSimpleName() + " Output ", m_motor.getMotorVoltage().getValueAsDouble());
+      SmartDashboard.putNumber(this.getClass().getSimpleName() + " Current Draw", m_motor.getSupplyCurrent().getValueAsDouble());
+      SmartDashboard.putBoolean(this.getClass().getSimpleName() + " atGoal", atGoal());
+    }
+
   }
 }
