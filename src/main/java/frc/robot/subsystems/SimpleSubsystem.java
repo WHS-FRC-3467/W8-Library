@@ -20,8 +20,8 @@ public class SimpleSubsystem extends SubsystemBase {
   @RequiredArgsConstructor
   @Getter
   public enum State {
-    ON(1.0),
-    OFF(0.0);
+    OFF(0.0),
+    ON(1.0);
 
     private final double output;
   }

@@ -62,9 +62,9 @@ public class DynamicSubsystem extends SubsystemBase {
     if (state == State.HOME && atGoal()) {
       m_motor.setControl(m_neutral);
     } else if (state == State.AIM) {
-      m_motor.setControl(m_position.withPosition(goalAngle));
+      m_motor.setControl(m_position.withPosition(goalAngle).withSlot(0));
     } else {
-      m_motor.setControl(m_magic.withPosition(goalAngle));
+      m_motor.setControl(m_magic.withPosition(goalAngle).withSlot(1));
     }
 
     displayInfo(true);
@@ -82,7 +82,7 @@ public class DynamicSubsystem extends SubsystemBase {
     if (debug) {
       SmartDashboard.putString(this.getClass().getSimpleName() + " State ", state.toString());
       SmartDashboard.putNumber(this.getClass().getSimpleName() + " Setpoint ", state.getStateOutput());
-      SmartDashboard.putNumber(this.getClass().getSimpleName() + " Output ", m_motor.getMotorVoltage().getValueAsDouble());
+      SmartDashboard.putNumber(this.getClass().getSimpleName() + " Output ", m_motor.getPosition().getValueAsDouble());
       SmartDashboard.putNumber(this.getClass().getSimpleName() + " Current Draw", m_motor.getSupplyCurrent().getValueAsDouble());
       SmartDashboard.putBoolean(this.getClass().getSimpleName() + " atGoal", atGoal());
     }
