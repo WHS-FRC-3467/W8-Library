@@ -4,18 +4,17 @@
 
 package frc.robot;
 
-import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
-
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.ComplexSubsystem;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.SimpleSubsystem;
+import frc.robot.subsystems.SampleRollers.SampleRollers;
+import frc.robot.subsystems.SampleRollers.SampleRollersIO;
+import frc.robot.subsystems.SampleRollers.SampleRollersIOSim;
+import frc.robot.subsystems.SampleRollers.SampleRollersIOTalonFX;
 
 public class RobotContainer {
 
@@ -23,10 +22,10 @@ public class RobotContainer {
   private final CommandXboxController joystick = new CommandXboxController(0); // My joystick
   public final Drivetrain drivetrain = TunerConstants.DriveTrain; // My drivetrain
 
+  // Subsystems
   public final SimpleSubsystem simpleSubsystem = new SimpleSubsystem();
   public final ComplexSubsystem complexSubsystem = new ComplexSubsystem();
-
-
+  public final SampleRollers sampleRollersSubsystem;
 
   /* Path follower */
   private Command runAuto = drivetrain.getAutoPath("Tests");
@@ -44,10 +43,34 @@ public class RobotContainer {
     joystick.a().whileTrue(complexSubsystem.setStateCommand(ComplexSubsystem.State.SCORE));
     joystick.b().whileTrue(simpleSubsystem.setStateCommand(SimpleSubsystem.State.ON));
 
+    joystick.x().whileTrue(sampleRollersSubsystem.setStateCommand(SampleRollers.State.EJECT));
+
   }
 
   public RobotContainer() {
+
+    switch (Constants.currentMode) {
+      case REAL:
+        // Real robot, instantiate hardware IO implementations
+        sampleRollersSubsystem = new SampleRollers(new SampleRollersIOTalonFX());
+        break;
+
+      case SIM:
+        // Sim robot, instantiate physics sim IO implementations
+        sampleRollersSubsystem = new SampleRollers(new SampleRollersIOSim());
+        break;
+
+      default:
+        // Replayed robot, disable IO implementations
+        sampleRollersSubsystem = new SampleRollers(new SampleRollersIO() {});
+        break;
+    }
+
     configureBindings();
+
+    // Detect if controllers are missing / Stop multiple warnings
+    DriverStation.silenceJoystickConnectionWarning(true);
+
   }
 
   public Command getAutonomousCommand() {

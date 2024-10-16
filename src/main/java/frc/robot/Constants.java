@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -15,20 +14,12 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.generated.TunerConstants;
 
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
-
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
-import frc.robot.generated.TunerConstants;
-//Test
-
 /** Add your docs here. */
 public class Constants {
 
-        public static final Mode currentMode = Mode.REAL;
+    public static double loopPeriodSecs = 0.02;
+
+    public static final Mode currentMode = Mode.SIM;
 
     public static enum Mode {
         REAL,
@@ -38,7 +29,7 @@ public class Constants {
 
 
     public static final class ExampleSimpleSubsystemConstants {
-        public static final int ID_Motor = 0;
+        public static final int ID_Motor = 10;
 
         public static TalonFXConfiguration motorConfig() {
             TalonFXConfiguration m_configuration = new TalonFXConfiguration();
@@ -60,7 +51,7 @@ public class Constants {
     }
 
     public static final class ExampleComplexSubsystemConstants {
-        public static final int ID_Motor = 1;
+        public static final int ID_Motor = 11;
         public static final double upperLimit = Units.degreesToRadians(180);
         public static final double lowerLimit = Units.degreesToRadians(0);
         public static final double tolerance = Units.degreesToRadians(1);
@@ -103,37 +94,6 @@ public class Constants {
         }
     }
 
-    public static final class ArmConstants { 
-        public static final int ID_ArmLeader = 25;
-        public static final int ID_ArmFollower = 26;  
-        public static final int ID_ArmAbsEncoder = 0;
-
-        public static final double upperLimit = Units.degreesToRadians(130);
-        public static final double lowerLimit = Units.degreesToRadians(-20);
-        public static final double tolerance = Units.degreesToRadians(.5);
-        public static final double maxVelocity = Math.PI;
-        public static final double maxAcceleration = Math.PI / 2;
-
-        public static TalonFXConfiguration motorConfig() {
-            TalonFXConfiguration m_configuration = new TalonFXConfiguration();
-
-            m_configuration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-            m_configuration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-            m_configuration.MotorOutput.DutyCycleNeutralDeadband = .005;
-            m_configuration.Voltage.PeakForwardVoltage = 12.0;
-            m_configuration.Voltage.PeakReverseVoltage = -12.0; 
-
-            m_configuration.CurrentLimits.SupplyCurrentLimit = 30; 
-            m_configuration.CurrentLimits.SupplyCurrentThreshold = 50;
-            m_configuration.CurrentLimits.SupplyTimeThreshold = 0.1; 
-            m_configuration.CurrentLimits.SupplyCurrentLimitEnable = true; 
-            m_configuration.CurrentLimits.StatorCurrentLimit = 60;
-            m_configuration.CurrentLimits.StatorCurrentLimitEnable = true; 
-
-            return m_configuration;
-        }
-    }
-
     public static final class DriveConstants {
         public static final double headingAngleTolerance = 2.0;
         public static final double MaxSpeed = TunerConstants.kSpeedAt12VoltsMps; // kSpeedAt12VoltsMps desired top speed
@@ -151,57 +111,6 @@ public class Constants {
 
             return m_configuration;
         }
-    }
-
-    public static final class IntakeConstants { 
-        public static final int ID_IntakeMotor = 19;
-        public static final int ID_IntakeFollower = 21;
-
-        public static TalonFXConfiguration motorConfig() {
-            TalonFXConfiguration m_configuration = new TalonFXConfiguration();
-
-            m_configuration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-            m_configuration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-            m_configuration.Voltage.PeakForwardVoltage = 12.0;
-            m_configuration.Voltage.PeakReverseVoltage = -12.0; 
-
-            m_configuration.CurrentLimits.SupplyCurrentLimit = 20; 
-            m_configuration.CurrentLimits.SupplyCurrentThreshold = 40;
-            m_configuration.CurrentLimits.SupplyTimeThreshold = 0.1; 
-            m_configuration.CurrentLimits.SupplyCurrentLimitEnable = true; 
-            m_configuration.CurrentLimits.StatorCurrentLimit = 70;
-            m_configuration.CurrentLimits.StatorCurrentLimitEnable = true; 
-
-            return m_configuration;
-        }
-    }
-
-    public static final class ShooterConstants { 
-        public static final int ID_ShooterLeft = 15;
-        public static final int ID_ShooterRight = 17;
-
-        public static TalonFXConfiguration motorConfig() {
-            TalonFXConfiguration m_configuration = new TalonFXConfiguration();
-
-            m_configuration.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-            m_configuration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-            m_configuration.Voltage.PeakForwardVoltage = 12.0;
-            m_configuration.Voltage.PeakReverseVoltage = -12.0; 
-
-            m_configuration.CurrentLimits.SupplyCurrentLimit = 60; 
-            m_configuration.CurrentLimits.SupplyCurrentThreshold = 80;
-            m_configuration.CurrentLimits.SupplyTimeThreshold = 0.1; 
-            m_configuration.CurrentLimits.SupplyCurrentLimitEnable = true; 
-            m_configuration.CurrentLimits.StatorCurrentLimit = 70;
-            m_configuration.CurrentLimits.StatorCurrentLimitEnable = true; 
-
-            m_configuration.Slot0.kP = .03;
-            m_configuration.Slot0.kI = 0;
-            m_configuration.Slot0.kD = 0;
-            m_configuration.Slot0.kV = .125;
-
-            return m_configuration;
-        }
 
         public static TalonFXConfiguration motor2Config() {
             TalonFXConfiguration m_configuration = motorConfig();
@@ -210,36 +119,6 @@ public class Constants {
         }
     }
 
-    public static final class StageConstants { 
-        // Stage CAN IDs
-        public static final int ID_StageMotor = 23;
-        public static final int ID_StageBeamBreak = 1;
-
-/*         public static TalonFXConfiguration StageConfig() {
-            TalonFXConfiguration m_configuration = new TalonFXConfiguration();
-
-            m_configuration.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-            m_configuration.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-            m_configuration.Voltage.PeakForwardVoltage = 12.0;
-            m_configuration.Voltage.PeakReverseVoltage = -12.0; 
-
-            m_configuration.CurrentLimits.SupplyCurrentLimit = 20; 
-            m_configuration.CurrentLimits.SupplyCurrentThreshold = 40;
-            m_configuration.CurrentLimits.SupplyTimeThreshold = 0.1; 
-            m_configuration.CurrentLimits.SupplyCurrentLimitEnable = true; 
-            m_configuration.CurrentLimits.StatorCurrentLimit = 70;
-            m_configuration.CurrentLimits.StatorCurrentLimitEnable = true; 
-
-            return m_configuration;
-        } */
-    }
-
-    public static final class ControllerConstants {
-
-        public static final double leftTriggerMin = 0.3;
-        public static final double leftTriggerMid = 0.6;
-
-    }
 
     public static class FieldConstants {
 
