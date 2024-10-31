@@ -6,10 +6,46 @@
       "/SmartDashboard/Module 0": "Mechanism2d",
       "/SmartDashboard/Module 1": "Mechanism2d",
       "/SmartDashboard/Module 2": "Mechanism2d",
-      "/SmartDashboard/Module 3": "Mechanism2d"
+      "/SmartDashboard/Module 3": "Mechanism2d",
+      "/SmartDashboard/Rollers": "Mechanism2d",
+      "/SmartDashboard/SampleRollers": "Mechanism2d"
+    },
+    "windows": {
+      "/SmartDashboard/SampleRollers": {
+        "window": {
+          "visible": true
+        }
+      }
+    }
+  },
+  "NetworkTables": {
+    "transitory": {
+      "AdvantageKit": {
+        "SampleRollers": {
+          "boolean[]##v_/AdvantageKit/SampleRollers/Connected": {
+            "open": true
+          },
+          "double[]##v_/AdvantageKit/SampleRollers/AppliedVoltage": {
+            "open": true
+          },
+          "double[]##v_/AdvantageKit/SampleRollers/SupplyCurrentAmps": {
+            "open": true
+          },
+          "double[]##v_/AdvantageKit/SampleRollers/TempCelsius": {
+            "open": true
+          },
+          "double[]##v_/AdvantageKit/SampleRollers/TorqueCurrentAmps": {
+            "open": true
+          },
+          "open": true
+        },
+        "open": true
+      }
     }
   },
   "NetworkTables Info": {
-    "visible": true
+    "Clients": {
+      "open": true
+    }
   }
 }

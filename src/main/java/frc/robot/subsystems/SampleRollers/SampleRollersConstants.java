@@ -1,5 +1,7 @@
 package frc.robot.subsystems.SampleRollers;
 
+import java.util.List;
+
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
@@ -15,7 +17,8 @@ public final class SampleRollersConstants {
 
         kIntakeConstants.kName = "SampleRollers";
 
-        kIntakeConstants.kMainMotorID = Ports.SAMPLE_ROLLER;
+//        kIntakeConstants.kMotorIDs = List.of(Ports.SAMPLE_ROLLER);
+        kIntakeConstants.kMotorIDs = List.of(Ports.TWO_ROLLER_1, Ports.TWO_ROLLER_2);
 
         kIntakeConstants.kMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         kIntakeConstants.kMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;

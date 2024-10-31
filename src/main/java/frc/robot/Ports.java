@@ -15,6 +15,10 @@ public class Ports {
 	/* SUBSYSTEM CAN DEVICE IDS */
 	public static final CanDeviceId SAMPLE_ROLLER = new CanDeviceId(15, "rio");
 
+	public static final CanDeviceId TWO_ROLLER_1 = new CanDeviceId(16, "rio");
+	public static final CanDeviceId TWO_ROLLER_2 = new CanDeviceId(15, "rio");
+
+
 /*
 	public static final CanDeviceId INTAKE_PIVOT = new CanDeviceId(8, "canivore1");
 	public static final CanDeviceId INTAKE_ROLLER = new CanDeviceId(15, "rio");

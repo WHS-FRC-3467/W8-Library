@@ -1,42 +1,55 @@
 package frc.robot.subsystems.GenericRollerSubsystem;
 
-import lombok.RequiredArgsConstructor;
 import frc.robot.util.Alert;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-@RequiredArgsConstructor
 public abstract class GenericRollerSubsystem<G extends GenericRollerSubsystem.VoltageState> extends SubsystemBase {
 
   public interface VoltageState {
-    double getOutput();
+
+    public double getOutput(int index);
   }
 
   public abstract G getState();
 
   private final String name;
+  private final int numRollers;
   private final GenericRollerSubsystemIO io;
   protected final GenericRollerIOInputsAutoLogged inputs = new GenericRollerIOInputsAutoLogged();
-  private final Alert disconnected;
+  private final List<Alert> disconnected = new ArrayList<Alert> ();
 
   private final boolean debug = true;
   
-  public GenericRollerSubsystem(String name, GenericRollerSubsystemIO io) {
+  public GenericRollerSubsystem(String name, int numRollers, GenericRollerSubsystemIO io) {
     this.name = name;
+    this.numRollers = numRollers;
     this.io = io;
 
-    disconnected = new Alert(name + " motor disconnected!", Alert.AlertType.WARNING);
+    // Set up a disconnection Alert for each roller motor
+    for (int i = 0; i < numRollers; i++) {
+      this.disconnected.add(new Alert(name + " motor " + i + " disconnected!", Alert.AlertType.WARNING));
+    }
   }
 
   public void periodic() {
 
     io.updateInputs(inputs);
     Logger.processInputs(name, inputs);
-    disconnected.set(!inputs.connected);
 
-    io.runVolts(getState().getOutput());
+    // Check and run each roller motor
+    for (int i = 0; i < numRollers; i++) {
+      // Check for motor disconnection
+      disconnected.get(i).set(!inputs.connected[i]);
+      // Run motor by voltage
+      io.runVolts(i, getState().getOutput(i));
+    }
 
     Logger.recordOutput("Rollers/" + name + "Goal", getState().toString());
 
@@ -45,10 +58,13 @@ public abstract class GenericRollerSubsystem<G extends GenericRollerSubsystem.Vo
   
   private void displayInfo(boolean debug) {
     if (debug) {
-        SmartDashboard.putString(this.getClass().getSimpleName() + " State ", getState().toString());
-        SmartDashboard.putNumber(this.getClass().getSimpleName() + " Setpoint ", getState().getOutput());
-        SmartDashboard.putNumber(this.getClass().getSimpleName() + " Output ", inputs.appliedVoltage);
-        SmartDashboard.putNumber(this.getClass().getSimpleName() + " Current Draw", inputs.supplyCurrentAmps);
+      SmartDashboard.putString(this.name + " State ", getState().toString());
+        
+      for (int i = 0; i < 0; i++) {
+        SmartDashboard.putNumber(this.name + " Setpoint " + i, getState().getOutput(i));
+        SmartDashboard.putNumber(this.name + " Output " + i, inputs.appliedVoltage[i]);
+        SmartDashboard.putNumber(this.name + " Current Draw" + i, inputs.supplyCurrentAmps[i]);
+      }
     }
   }
 
