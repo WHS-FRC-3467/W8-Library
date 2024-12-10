@@ -3,30 +3,31 @@ package frc.robot.subsystems.GenericRollerSubsystem;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+
+import frc.robot.util.drivers.Phoenix6Util;
 import frc.robot.util.drivers.TalonUtil;
 import frc.robot.util.sim.PhysicsSim;
+import frc.robot.util.sim.mechanisms.GenericRollerSimMechanism;
 
 /**
  * Generic roller IO implementation for a roller or
  * series of rollers using a Kraken.
  */
-public abstract class GenericRollerSubsystemIOSim implements GenericRollerSubsystemIO {
+public abstract class GenericRollerSubsystemIOImpl implements GenericRollerSubsystemIO {
 
   private boolean mInitialized = false;
+  private boolean mIsSim = false;
 
-  private final PhysicsSim mSim;
-  private final GenericRollerSimMechanisms mMechanisms;
-
-  // List of commanded voltages (Sim needs to hold this)
-  private List<Double> mAppVoltage = new ArrayList<Double>();
+  private PhysicsSim mSim = null;
+  private GenericRollerSimMechanism mMechanism = null;
 
   // Local motor object(s)
   private List<TalonFX> mMotors = new ArrayList<TalonFX>();
@@ -49,16 +50,20 @@ public abstract class GenericRollerSubsystemIOSim implements GenericRollerSubsys
   /*
    * Constructor
    */
-  public GenericRollerSubsystemIOSim(GenericRollerSubsystemConstants constants) {
+  public GenericRollerSubsystemIOImpl(GenericRollerSubsystemConstants constants, boolean isSim) {
 
     GenericRollerSubsystemConstants mConst = constants;
+    this.mIsSim = isSim;
+
     // Number of motors is based on how many IDs are specified in the provided
     // Constants
     mNumMotors = mConst.kMotorIDs.size();
 
-    // Create the Physics Sim and the Mechanism display
-    mSim = PhysicsSim.getInstance();
-    mMechanisms = new GenericRollerSimMechanisms(mConst.kName, mNumMotors);
+    if (mIsSim) {
+      // Create the Physics Sim and the Mechanism display
+      mSim = PhysicsSim.getInstance();
+      mMechanism = new GenericRollerSimMechanism(mConst.kName, mNumMotors);
+    }
 
     // Instantiate each roller
     for (int i = 0; i < mNumMotors; i++) {
@@ -66,7 +71,6 @@ public abstract class GenericRollerSubsystemIOSim implements GenericRollerSubsys
       // Instantiate the TalonFX object for this roller
       TalonFX mMotor = new TalonFX(mConst.kMotorIDs.get(i).getDeviceNumber(), mConst.kMotorIDs.get(i).getBus());
       mMotors.add(mMotor);
-      mAppVoltage.add(0.0);
 
       // Get the motor configuration group and configure the motor
       mConfig = mConst.kMotorConfig;
@@ -80,9 +84,28 @@ public abstract class GenericRollerSubsystemIOSim implements GenericRollerSubsys
       mTorqueCurrent.add(mMotor.getTorqueCurrent());
       mTempCelsius.add(mMotor.getDeviceTemp());
 
-      // Add the motor object to the Physics Sim
-      mSim.addTalonFX(mMotor, new DCMotorSim(constants.simMotorModelSupplier.get(),
-          constants.simReduction, constants.simMOI));
+      // Set update frequencies for some basic output signals
+      Phoenix6Util.checkErrorAndRetry(() -> mMotor.getBridgeOutput().setUpdateFrequency(200, 0.05));
+      Phoenix6Util.checkErrorAndRetry(() -> mMotor.getFault_Hardware().setUpdateFrequency(4, 0.05));
+
+      // Set update frequencies for the StatusSignals of interest
+      final int index = i;
+      Phoenix6Util.checkErrorAndRetry(() -> BaseStatusSignal.setUpdateFrequencyForAll(
+          100,
+          mPositionRot.get(index),
+          mVelocityRps.get(index),
+          mAppliedVoltage.get(index),
+          mSupplyCurrent.get(index),
+          mTorqueCurrent.get(index),
+          mTempCelsius.get(index)));
+
+      mMotor.optimizeBusUtilization(0, 1.0);
+
+      if (mIsSim) {
+        // Add the motor object to the Physics Sim
+        mSim.addTalonFX(mMotor, new DCMotorSim(constants.simMotorModelSupplier.get(),
+            constants.simReduction, constants.simMOI));
+      }
     }
 
     // Send a neutral command to halt all motors.
@@ -93,6 +116,10 @@ public abstract class GenericRollerSubsystemIOSim implements GenericRollerSubsys
   @Override
   public void updateInputs(GenericRollerIOInputs inputs) {
 
+    /*
+     * Because this code supports a configurable number of motors, we must wait
+     * until the first time this method is called to instantiate arrays of the proper size
+     */
     if (!mInitialized) {
       inputs.connected = new boolean[mNumMotors];
       inputs.positionRot = new double[mNumMotors];
@@ -105,8 +132,10 @@ public abstract class GenericRollerSubsystemIOSim implements GenericRollerSubsys
       mInitialized = true;
     }
 
-    // Run the Sim
-    mSim.run();
+    if (mIsSim) {
+      // Run the Sim
+      mSim.run();
+    }
 
     for (int i = 0; i < mNumMotors; i++) {
 
@@ -114,28 +143,39 @@ public abstract class GenericRollerSubsystemIOSim implements GenericRollerSubsys
         runVolts(i, 0.0);
       }
 
-      TalonFX mFX = mMotors.get(i);
-      inputs.connected[i] = true;
+      // Check & Refresh all signals of interest
+      inputs.connected[i] = BaseStatusSignal.refreshAll(
+          mPositionRot.get(i),
+          mVelocityRps.get(i),
+          mAppliedVoltage.get(i),
+          mSupplyCurrent.get(i),
+          mTorqueCurrent.get(i),
+          mTempCelsius.get(i))
+          .isOK();
 
- 	  // Get velocity, voltage, currents, and temperature for the motor
-      inputs.positionRot[i] = mFX.getPosition().getValue();
-      inputs.velocityRps[i] = mFX.getVelocity().getValue();
-      inputs.appliedVoltage[i] = mAppVoltage.get(i);
-      inputs.supplyCurrentAmps[i] = mFX.getSimState().getSupplyCurrent();
-      inputs.torqueCurrentAmps[i] = mFX.getSimState().getTorqueCurrent();
-      inputs.tempCelsius[i] = mFX.getDeviceTemp().getValue();
+      // Get velocity, voltage, currents, and temperature for the motor
+      inputs.positionRot[i] = mPositionRot.get(i).getValueAsDouble();
+      inputs.velocityRps[i] = mVelocityRps.get(i).getValueAsDouble();
+      inputs.appliedVoltage[i] = mAppliedVoltage.get(i).getValueAsDouble();
+      inputs.supplyCurrentAmps[i] = mSupplyCurrent.get(i).getValueAsDouble();
+      inputs.torqueCurrentAmps[i] = mTorqueCurrent.get(i).getValueAsDouble();
+      inputs.tempCelsius[i] = mTempCelsius.get(i).getValueAsDouble();
 
-      mMechanisms.update(i, inputs.positionRot[i]);
+      if (mIsSim) {
+        // Update the sim mechanism
+        mMechanism.update(i, inputs.positionRot[i]);
+      }
     }
 
   }
 
+  /** Run roller at specified voltage */
   @Override
   public void runVolts(int index, double volts) {
-    mAppVoltage.set(index, MathUtil.clamp(volts, -12.0, 12.0));
-    mMotors.get(index).setControl(mVoltageOut.withOutput(mAppVoltage.get(index)));
+    mMotors.get(index).setControl(mVoltageOut.withOutput(volts));
   }
 
+  /** Stop in Open Loop */
   @Override
   public void stop() {
     for (int i = 0; i < mNumMotors; i++) {

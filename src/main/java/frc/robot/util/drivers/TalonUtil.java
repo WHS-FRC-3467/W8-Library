@@ -23,7 +23,8 @@ public class TalonUtil {
                         + "] (attempt " + (i + 1) + " of " + numTries + ")", false);
             }
         }
-        DriverStation.reportError("Failed to apply config for talon after " + numTries + " attempts", false);
+    //    DriverStation.reportError("Failed to apply config for talon after " + numTries + " attempts", false);
+        DriverStation.reportWarning("Failed to apply config for talon after " + numTries + " attempts", false);
         return false;
     }
 

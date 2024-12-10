@@ -1,0 +1,5 @@
+package frc.robot.subsystems.SampleProfiledElevator;
+
+import frc.robot.subsystems.GenericMotionProfiledSubsystem.GenericMotionProfiledSubsystemIO;
+
+public interface SampleProfiledElevatorIO extends GenericMotionProfiledSubsystemIO {}

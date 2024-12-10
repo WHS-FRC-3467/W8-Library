@@ -20,8 +20,9 @@ public class GenericRollerSubsystemConstants {
 
 	public TalonFXConfiguration kMotorConfig = new TalonFXConfiguration();
 
+    // Motor simulation
 	public Supplier<DCMotor> simMotorModelSupplier = ()-> DCMotor.getKrakenX60Foc(1);
- 	public final double simReduction = (18.0 / 12.0);
-  	public final double simMOI = 0.001;
+ 	public double simReduction = 1;
+  	public double simMOI = 0.001;
 
 }

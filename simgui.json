@@ -8,9 +8,21 @@
       "/SmartDashboard/Module 2": "Mechanism2d",
       "/SmartDashboard/Module 3": "Mechanism2d",
       "/SmartDashboard/Rollers": "Mechanism2d",
+      "/SmartDashboard/SampleProfiledArm": "Mechanism2d",
+      "/SmartDashboard/SampleProfiledElevator": "Mechanism2d",
       "/SmartDashboard/SampleRollers": "Mechanism2d"
     },
     "windows": {
+      "/SmartDashboard/SampleProfiledArm": {
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/SampleProfiledElevator": {
+        "window": {
+          "visible": true
+        }
+      },
       "/SmartDashboard/SampleRollers": {
         "window": {
           "visible": true
@@ -19,6 +31,9 @@
     }
   },
   "NetworkTables": {
+    "Transitory Values": {
+      "open": false
+    },
     "transitory": {
       "AdvantageKit": {
         "SampleRollers": {
@@ -38,14 +53,23 @@
             "open": true
           },
           "open": true
-        },
-        "open": true
+        }
       }
     }
   },
   "NetworkTables Info": {
+    "AdvantageScope@1": {
+      "open": true
+    },
     "Clients": {
       "open": true
-    }
+    },
+    "shuffleboard@2": {
+      "Publishers": {
+        "open": true
+      },
+      "open": true
+    },
+    "visible": true
   }
 }

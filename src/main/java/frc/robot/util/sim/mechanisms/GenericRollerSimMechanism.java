@@ -1,8 +1,9 @@
-package frc.robot.subsystems.GenericRollerSubsystem;
+package frc.robot.util.sim.mechanisms;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -12,16 +13,16 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 /**
  * Class to keep all the mechanism-specific objects together and out of the main example
  */
-public class GenericRollerSimMechanisms {
+public class GenericRollerSimMechanism {
     
     String mSimName;
     Mechanism2d mMech;
     private List<MechanismLigament2d> mRollers = new ArrayList<MechanismLigament2d>();
 
-    public GenericRollerSimMechanisms(String simName, int numRollers) {
+    public GenericRollerSimMechanism(String simName, int numRollers) {
 
         double HEIGHT = .50; // Controls the height of the mech2d SmartDashboard
-        double WIDTH = .50; // Controls the offset of the first root in the mech2d SmartDashboard
+        double WIDTH = .50; // Controls width of the mech2d SmartDashboard
 
         mSimName = simName;
         mMech = new Mechanism2d(WIDTH * numRollers, HEIGHT);
@@ -51,7 +52,7 @@ public class GenericRollerSimMechanisms {
      */
     public void update(int index, double position) {
         
-        mRollers.get(index).setAngle(position * 360);
+        mRollers.get(index).setAngle(Units.rotationsToDegrees(position));
         SmartDashboard.putData(mSimName, mMech); // Creates mech2d in SmartDashboard
     }
 }

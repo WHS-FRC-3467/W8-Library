@@ -3,6 +3,7 @@ package frc.robot.util.sim;
 import java.util.ArrayList;
 
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -21,23 +22,6 @@ public class PhysicsSim {
     }
 
     /**
-     * Adds a TalonFX controller to the simulator.
-     * 
-     * @param talon
-     *        The TalonFX device
-     * @param reduction
-     *      The gearing of the DC motor (numbers greater than 1 represent reductions).
-     * @param rotorInertia
-     *        Rotational Inertia of the mechanism at the rotor
-     */
-    public void addTalonFX(TalonFX talon, final double reduction, final double rotorInertia) {
-        if (talon != null) {
-            TalonFXSimProfile simFalcon = new TalonFXSimProfile(talon, reduction, rotorInertia);
-            _simProfiles.add(simFalcon);
-        }
-    }
-
-    /**
      * Adds a TalonFX controller to the simulator
      *  using provided TalonFX object and DCMotorSim
      * 
@@ -50,6 +34,44 @@ public class PhysicsSim {
         if (talon != null) {
             TalonFXSimProfile simFalcon = new TalonFXSimProfile(talon, motorModel);
             _simProfiles.add(simFalcon);
+        }
+    }
+
+    /**
+     * Adds an Arm sim controller to the simulator
+     */
+    public void addArmSim(final String simName,
+                            final TalonFX talon,
+                            final CANcoder cancoder,
+                            final MotorSimConfiguration motorConst,
+                            final ArmSimConfiguration armConst) {
+        if (talon != null) {
+            ArmSimProfile simArm =
+                new ArmSimProfile(simName,
+                                talon,
+                                cancoder,
+                                motorConst,
+                                armConst);
+            _simProfiles.add(simArm);
+        }
+    }
+
+    /**
+     * Adds an Elevator sim controller to the simulator
+     */
+    public void addElevatorSim(final String simName,
+                            final TalonFX talon,
+                            final CANcoder cancoder,
+                            final MotorSimConfiguration motorConst,
+                            final ElevatorSimConfiguration elevConst) {
+        if (talon != null) {
+            ElevatorSimProfile simElevator =
+                new ElevatorSimProfile(simName,
+                                    talon,
+                                    cancoder,
+                                    motorConst,
+                                    elevConst);
+            _simProfiles.add(simElevator);
         }
     }
 

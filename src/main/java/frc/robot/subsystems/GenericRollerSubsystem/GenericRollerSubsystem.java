@@ -60,7 +60,7 @@ public abstract class GenericRollerSubsystem<G extends GenericRollerSubsystem.Vo
     if (debug) {
       SmartDashboard.putString(this.name + " State ", getState().toString());
         
-      for (int i = 0; i < 0; i++) {
+      for (int i = 0; i < numRollers; i++) {
         SmartDashboard.putNumber(this.name + " Setpoint " + i, getState().getOutput(i));
         SmartDashboard.putNumber(this.name + " Output " + i, inputs.appliedVoltage[i]);
         SmartDashboard.putNumber(this.name + " Current Draw" + i, inputs.supplyCurrentAmps[i]);
