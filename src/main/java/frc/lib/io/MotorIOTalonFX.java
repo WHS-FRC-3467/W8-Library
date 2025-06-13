@@ -8,9 +8,9 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 /** Add your docs here. */
-public class MotorIOTalonFX extends MotorIO{
+public class MotorIOTalonFX extends MotorIO {
     // protected final TalonFX main;
-	// protected final TalonFX[] followers;
-	// protected TalonFXConfiguration config;
-	// protected TalonFXConfiguration followerConfig;
+    // protected final TalonFX[] followers;
+    // protected TalonFXConfiguration config;
+    // protected TalonFXConfiguration followerConfig;
 }

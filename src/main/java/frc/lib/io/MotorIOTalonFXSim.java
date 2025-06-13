@@ -5,4 +5,5 @@
 package frc.lib.io;
 
 /** Add your docs here. */
-public class MotorIOTalonFXSim extends MotorIOTalonFX{}
+public class MotorIOTalonFXSim extends MotorIOTalonFX {
+}

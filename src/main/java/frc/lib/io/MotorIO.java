@@ -7,18 +7,19 @@ package frc.lib.io;
 /** Add your docs here. */
 public abstract class MotorIO {
 
-    public class Inputs {}
+    public class Inputs {
+    }
 
     public enum Mode {
         IDLE,
-		VOLTAGE,
+        VOLTAGE,
         DUTY_CYCLE,
         POSITION,
         VELOCITY,
-		PROFILE;
+        PROFILE;
     }
 
-    public static class Setpoint {}
+    public static class Setpoint {
+    }
 
 }
-
