@@ -11,7 +11,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-package frc.lib.io;
+package frc.lib.io.vision;
 
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
