@@ -4,22 +4,40 @@
 
 package frc.lib.io.motor;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+
 /** Add your docs here. */
 public abstract class MotorIO {
 
     public class Inputs {
     }
 
-    public enum Mode {
-        IDLE,
-        VOLTAGE,
-        DUTY_CYCLE,
-        POSITION,
-        VELOCITY,
-        PROFILE;
-    }
+    public sealed interface Setpoint {
+        public record Idle() implements Setpoint {
+        }
 
-    public static class Setpoint {
+        public record Voltage(edu.wpi.first.units.measure.Voltage volts) implements Setpoint {
+        }
+
+        public record DutyCycle(double dutyCycle) implements Setpoint {
+            public DutyCycle {
+                dutyCycle = MathUtil.clamp(dutyCycle, 0, 1);
+            }
+        }
+
+        public record Position(Angle position) implements Setpoint {
+        }
+
+        public record Velocity(AngularVelocity velocity) implements Setpoint {
+        }
+
+        public record MotionProfiledPosition(Angle position) implements Setpoint {
+        }
+
+        public record MotionProfiledVelocity(AngularVelocity velocity) implements Setpoint {
+        }
     }
 
 }
