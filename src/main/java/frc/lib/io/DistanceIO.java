@@ -4,42 +4,38 @@
 
 package frc.lib.io;
 
-import static edu.wpi.first.units.Units.Millimeters;
+import static edu.wpi.first.units.Units.Volts;
 
-import org.littletonrobotics.junction.AutoLog;
-
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
+import org.littletonrobotics.junction.AutoLog;
 
 /** Add your docs here. */
-public abstract class DistanceIO {
-    private final String name;
-
-    public DistanceIO(String name) {
-        this.name = name;
-    }
+public interface DistanceIO {
 
     @AutoLog
-    abstract class DistanceSensorIOInputs {
+    abstract class DistanceIOInputs {
         /** Whether the DistanceSensor is connected. */
         public boolean connected = false;
         /** Whether an object is within a specified range. */
         public boolean isDetected = false;
         /** Distance from the Distance sensor to the nearest object */
         public Distance distance = null;
-        /** Standard deviation of the distance sensor measurement*/
+        /** Standard deviation of the distance sensor measurement */
         public Distance distanceStdDev = null;
         /** The amount of ambient infrared light detected by the DistanceSensor. */
         public double ambientSignal = 0.0;
-
+        /** The supply voltage of the DistanceSensor. */
+        public Voltage supplyVoltage = Volts.of(0.0);
+        /** The signal strength of the DistanceSensor */
+        public double signalStrength = 0.0;
     }
+
+    public void updateInputs(DistanceIOInputs inputs);
+
+    public abstract boolean getBeamBreak();
 
     public abstract Distance getDistance();
 
-    public boolean isNearDistance(Distance expected, Distance tolerDistance) {
-        return MathUtil.isNear(expected.in(Millimeters),getDistance().in(Millimeters),tolerDistance.in(Millimeters));
-    }
-
+    public boolean isNearDistance(Distance expected, Distance tolerDistance);
 }
