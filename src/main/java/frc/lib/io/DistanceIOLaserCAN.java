@@ -29,7 +29,6 @@ public class DistanceIOLaserCAN implements DistanceIO {
     private Distance currentDistance;
     private double tries = 0;
     private boolean hasConfiged = false;
-    private Distance beamBreakDistanceThreshold;
 
     private final Alert failedConfig = new Alert("Failed to configure LaserCAN!", AlertType.kError);
     private final Alert sensorAlert =
@@ -40,13 +39,12 @@ public class DistanceIOLaserCAN implements DistanceIO {
         String name,
         RangingMode rangingMode,
         RegionOfInterest regionOfInterest,
-        TimingBudget timingBudget, double beamBreakDistanceThreshold) {
+        TimingBudget timingBudget) {
         this.name = name;
         this.laserCan =
             (Constants.currentMode == Constants.simMode)
                 ? new LaserCANSim(name)
                 : new LaserCan(id.getDeviceNumber());
-        this.beamBreakDistanceThreshold = Inches.of(beamBreakDistanceThreshold);
         while (tries < 5) {
             try {
                 this.laserCan.setRangingMode(rangingMode);
@@ -65,7 +63,7 @@ public class DistanceIOLaserCAN implements DistanceIO {
     }
 
     /**
-     * Updates the DistanceIO inputs for tracking position, velocity, and other control parameters.
+     * Updates the DistanceIO inputs
      *
      * @param inputs The DistanceIOInputs object where the updated values will be stored.
      */
@@ -147,16 +145,6 @@ public class DistanceIOLaserCAN implements DistanceIO {
                 tries++;
             }
         }
-    }
-
-    /**
-     * Use this method only if the LaserCAN is used like a simple beambreak sensor.
-     *
-     * @return whether the beam is broken based on the measured distance being less than the threshold distance.
-     */
-    @Override
-    public boolean getBeamBreak() {
-        return currentDistance.in(Millimeters) < beamBreakDistanceThreshold.in(Millimeters);
     }
 
     /**

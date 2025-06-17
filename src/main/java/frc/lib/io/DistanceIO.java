@@ -17,8 +17,6 @@ public interface DistanceIO {
     abstract class DistanceIOInputs {
         /** Whether the DistanceSensor is connected. */
         public boolean connected = false;
-        /** Whether an object is within a specified range. */
-        public boolean isDetected = false;
         /** Distance from the Distance sensor to the nearest object */
         public Distance distance = null;
         /** Standard deviation of the distance sensor measurement */
@@ -32,8 +30,6 @@ public interface DistanceIO {
     }
 
     public void updateInputs(DistanceIOInputs inputs);
-
-    public abstract boolean getBeamBreak();
 
     public abstract Distance getDistance();
 

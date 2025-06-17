@@ -38,9 +38,7 @@ public class DistanceIOCANrange implements DistanceIO{
     private final StatusSignal<Angle> fovRangeX;
     private final StatusSignal<Angle> fovRangeY;
     private final StatusSignal<Boolean> isDetected;
-    private double lastSignalStrength;
     private final StatusSignal<Double> signalStrength;
-	private final double signalStrengthThreshold;
 
     // Executor for retrying config operations asynchronously
     private BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
@@ -63,12 +61,11 @@ public class DistanceIOCANrange implements DistanceIO{
         });
     }
 
-    public DistanceIOCANrange(CanDeviceId id, String name, CANrangeConfiguration config, Time debounce, double signalStrengthThreshold) {
+    public DistanceIOCANrange(CanDeviceId id, String name, CANrangeConfiguration config, Time debounce) {
         
         // Instantiate the CANrange sensor
         this.name = name;
         this.CanRange = new CANrange(id.getDeviceNumber());
-        this.signalStrengthThreshold = signalStrengthThreshold;
         // Apply the configuration
         checkErrorAndRetry(() -> CanRange.getConfigurator().apply(config));
 
@@ -82,7 +79,6 @@ public class DistanceIOCANrange implements DistanceIO{
         fovRangeY = CanRange.getRealFOVRangeY();
         isDetected = CanRange.getIsDetected();
         signalStrength = CanRange.getSignalStrength();
-        lastSignalStrength = signalStrength.getValue();
 
         // Set update frequencies for the StatusSignals of interest
         checkErrorAndRetry(
@@ -106,20 +102,18 @@ public class DistanceIOCANrange implements DistanceIO{
     }
 
     /**
-     * Updates the DistanceSensor inputs for tracking position, velocity, and other control parameters.
+     * Updates the DistanceSensor inputs
      *
      * @param inputs The DistanceSensorIOInputs object where the updated values will be stored.
      */
     @Override
     public void updateInputs(DistanceIOInputs inputs)
     {
-        lastSignalStrength = signalStrength.getValue();
         // Refreshes the signals for position, velocity, and other values
         inputs.connected = BaseStatusSignal.refreshAll(
             distance,
             distanceStdDev,
             supplyVoltage,
-            isDetected,
             fovCenterX,
             fovCenterY,
             fovRangeX,
@@ -132,7 +126,6 @@ public class DistanceIOCANrange implements DistanceIO{
         inputs.distance = distance.getValue();
         inputs.distanceStdDev = distanceStdDev.getValue();
         inputs.supplyVoltage = supplyVoltage.getValue();
-        inputs.isDetected = isDetected.getValue();
         inputs.ambientSignal = ambientSignal.getValue();
         inputs.signalStrength = signalStrength.getValue();
 
@@ -150,17 +143,6 @@ public class DistanceIOCANrange implements DistanceIO{
             fovRangeX.getValue(),
             fovRangeY.getValue()
         );
-    }
-
-    /**
-     * Use this method only if the CANrange is used like a simple beambreak sensor.
-     * The beam is considered broken if the last signal strength exceeds the threshold.
-     *
-     * @return whether the beam is broken based on the last signal strength measurement.
-     */
-    @Override
-    public boolean getBeamBreak() {
-        return isDetected.getValue() && lastSignalStrength > signalStrengthThreshold;
     }
 
     /**
