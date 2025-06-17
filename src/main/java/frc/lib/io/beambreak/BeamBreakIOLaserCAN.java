@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.lib.io;
+package frc.lib.io.beambreak;
 
 import static edu.wpi.first.units.Units.*;
 
@@ -14,37 +14,39 @@ import au.grapplerobotics.interfaces.LaserCanInterface.RangingMode;
 import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
 import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import frc.lib.io.LaserCANSim;
 import frc.lib.util.CanDeviceId;
 import frc.robot.Constants;
 import org.littletonrobotics.junction.Logger;
 
 /** Add your docs here. */
-public class DistanceIOLaserCAN implements DistanceIO {
+public class BeamBreakIOLaserCAN implements BeamBreakIO {
     private final LaserCanInterface laserCan;
     private final String name;
     private Distance currentDistance;
     private double tries = 0;
     private boolean hasConfiged = false;
+    private Distance beamBreakDistanceThreshold;
 
     private final Alert failedConfig = new Alert("Failed to configure LaserCAN!", AlertType.kError);
     private final Alert sensorAlert =
         new Alert("Failed to get LaserCAN measurement", Alert.AlertType.kWarning);
 
-    public DistanceIOLaserCAN(
+    public BeamBreakIOLaserCAN(
         CanDeviceId id,
         String name,
         RangingMode rangingMode,
         RegionOfInterest regionOfInterest,
-        TimingBudget timingBudget) {
+        TimingBudget timingBudget, double beamBreakDistanceThreshold) {
         this.name = name;
         this.laserCan =
             (Constants.currentMode == Constants.simMode)
                 ? new LaserCANSim(name)
                 : new LaserCan(id.getDeviceNumber());
+        this.beamBreakDistanceThreshold = Inches.of(beamBreakDistanceThreshold);
         while (tries < 5) {
             try {
                 this.laserCan.setRangingMode(rangingMode);
@@ -63,12 +65,12 @@ public class DistanceIOLaserCAN implements DistanceIO {
     }
 
     /**
-     * Updates the DistanceIO inputs
+     * Updates the BeamBreakIO inputs
      *
-     * @param inputs The DistanceIOInputs object where the updated values will be stored.
+     * @param inputs The BeamBreakIOInputs object where the updated values will be stored.
      */
     @Override
-    public void updateInputs(DistanceIOInputs inputs) {
+    public void updateInputs(BeamBreakIOInputs inputs) {
         Measurement measurement = laserCan.getMeasurement();
         if (measurement != null) {
             if (measurement.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {
@@ -87,7 +89,6 @@ public class DistanceIOLaserCAN implements DistanceIO {
             currentDistance = Millimeters.of(Double.POSITIVE_INFINITY);
         }
         Logger.recordOutput("LaserCANSensors/LaserCAN" + name, currentDistance.in(Inches));
-        inputs.distance = currentDistance;
     }
 
     /**
@@ -99,12 +100,12 @@ public class DistanceIOLaserCAN implements DistanceIO {
      *     Mode is used to detect targets at 1.3m and lower. Although shorter than the Long ranging
      *     mode, this mode is less susceptible to ambient light.
      * @throws ConfigurationFailedException
-    */
+     */
     private void setRangingMode(RangingMode mode) {
         tries = 0;
         while (tries < 5) {
             try {
-                laserCan.setRangingMode(mode);
+            laserCan.setRangingMode(mode);
                 hasConfiged = true;
             } catch (ConfigurationFailedException e) {
                 System.out.println("Configuration failed for " + name + "! " + e);
@@ -119,9 +120,8 @@ public class DistanceIOLaserCAN implements DistanceIO {
      * Updates the current settings that determine whether the center and extent of the CANrange's
      * view Call this method to achieve the desired performance.
      *
-     * @see parameters in the ROI configs: newROICenterX: Specifies the target center of the Field of View in the X direction,
-     *     between +/- 11.8
-     * 
+     * @see parameters in the ROI configs: newROICenterX: Specifies the target center of the Field of
+     *     View in the X direction, between +/- 11.8
      * @see newROICenterY: Specifies the target center of the Field of View in the Y direction,
      *     between +/- 11.8
      * @see newROIRangeX: Specifies the target range of the Field of View in the X direction. The
@@ -148,26 +148,13 @@ public class DistanceIOLaserCAN implements DistanceIO {
     }
 
     /**
-     * Returns the current distance measured by the Distance sensor in meters
+     * Here, the LaserCAN is used like a simple beambreak sensor.
      *
-     * @return The current distance as a Distance object.
+     * @return whether the beam is broken based on the measured distance being less than the threshold distance.
      */
     @Override
-    public Distance getDistance() {
-        return currentDistance;
+    public boolean get() {
+        return currentDistance.in(Millimeters) < beamBreakDistanceThreshold.in(Millimeters);
     }
 
-    /**
-     * Checks if the measured distance is within a specified tolerance of an expected distance.
-     *
-     * @param expected The expected distance to compare against.
-     * @param tolerDistance The tolerance distance within which the measurement is considered "near".
-     * @return true if the measured distance is within the tolerance of the expected distance, false
-     *     otherwise.
-     */
-    @Override
-    public boolean isNearDistance(Distance expected, Distance tolerDistance) {
-        return MathUtil.isNear(
-            expected.in(Millimeters), getDistance().in(Millimeters), tolerDistance.in(Millimeters));
-    }
 }
