@@ -6,8 +6,8 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.lib.util.LoggedTunableBoolean;
 import frc.robot.Robot;
+import frc.robot.util.LoggedTunableBoolean;
 
 public class BeamBreakIOSim implements BeamBreakIO {
 
@@ -39,27 +39,33 @@ public class BeamBreakIOSim implements BeamBreakIO {
     return button.getAsBoolean();
   }
 
+  @Override
   public boolean getDebounced() {
     return debouncer.calculate(get());
   }
 
+  @Override
   public boolean getDebouncedIfReal() {
     return Robot.isReal() && getDebounced();
   }
 
+  @Override
   public Command stateWait(boolean state) {
     return Commands.waitUntil(() -> get() == state);
   }
 
+  @Override
   public Command stateWaitWithDebounce(boolean state) {
     return Commands.waitUntil(() -> getDebounced() == state);
   }
 
+  @Override
   public Command stateWaitIfReal(boolean state, double waitSecondsSim) {
     return Commands.either(
         stateWait(state), Commands.waitSeconds(waitSecondsSim), () -> Robot.isReal());
   }
 
+  @Override
   public Command stateWaitWithDebounceIfReal(boolean state, double waitSecondsSim) {
     return Commands.either(
         stateWaitWithDebounce(state), Commands.waitSeconds(waitSecondsSim), () -> Robot.isReal());

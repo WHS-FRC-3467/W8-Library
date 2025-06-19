@@ -1,4 +1,4 @@
-package frc.lib.util;
+package frc.robot.util;
 
 // Code inspired by FRC 6328
 // http://github.com/Mechanical-Advantage

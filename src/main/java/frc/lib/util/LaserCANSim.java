@@ -1,4 +1,4 @@
-package frc.lib.io;
+package frc.lib.util;
 
 import au.grapplerobotics.ConfigurationFailedException;
 import au.grapplerobotics.interfaces.LaserCanInterface;

@@ -22,8 +22,8 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.lib.io.LaserCANSim;
 import frc.lib.util.CanDeviceId;
+import frc.lib.util.LaserCANSim;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import org.littletonrobotics.junction.Logger;
@@ -168,27 +168,33 @@ public class BeamBreakIOLaserCAN implements BeamBreakIO {
     return currentDistance.in(Millimeters) < beamBreakDistanceThreshold.in(Millimeters);
   }
 
+  @Override
   public boolean getDebounced() {
     return debouncer.calculate(get());
   }
 
+  @Override
   public boolean getDebouncedIfReal() {
     return Robot.isReal() && getDebounced();
   }
 
+  @Override
   public Command stateWait(boolean state) {
     return Commands.waitUntil(() -> get() == state);
   }
 
+  @Override
   public Command stateWaitWithDebounce(boolean state) {
     return Commands.waitUntil(() -> getDebounced() == state);
   }
 
+  @Override
   public Command stateWaitIfReal(boolean state, double waitSecondsSim) {
     return Commands.either(
         stateWait(state), Commands.waitSeconds(waitSecondsSim), () -> Robot.isReal());
   }
 
+  @Override
   public Command stateWaitWithDebounceIfReal(boolean state, double waitSecondsSim) {
     return Commands.either(
         stateWaitWithDebounce(state), Commands.waitSeconds(waitSecondsSim), () -> Robot.isReal());
