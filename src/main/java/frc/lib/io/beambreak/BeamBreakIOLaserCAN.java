@@ -13,148 +13,184 @@ import au.grapplerobotics.interfaces.LaserCanInterface.Measurement;
 import au.grapplerobotics.interfaces.LaserCanInterface.RangingMode;
 import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
 import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
-
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.lib.io.LaserCANSim;
 import frc.lib.util.CanDeviceId;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import org.littletonrobotics.junction.Logger;
 
 /** Add your docs here. */
 public class BeamBreakIOLaserCAN implements BeamBreakIO {
-    private final LaserCanInterface laserCan;
-    private final String name;
-    private Distance currentDistance;
-    private double tries = 0;
-    private boolean hasConfiged = false;
-    private Distance beamBreakDistanceThreshold;
+  private final LaserCanInterface laserCan;
+  private final String name;
+  private Distance currentDistance;
+  private double tries = 0;
+  private boolean hasConfiged = false;
+  private Distance beamBreakDistanceThreshold;
+  private final Debouncer debouncer;
 
-    private final Alert failedConfig = new Alert("Failed to configure LaserCAN!", AlertType.kError);
-    private final Alert sensorAlert =
-        new Alert("Failed to get LaserCAN measurement", Alert.AlertType.kWarning);
+  private final Alert failedConfig = new Alert("Failed to configure LaserCAN!", AlertType.kError);
+  private final Alert sensorAlert =
+      new Alert("Failed to get LaserCAN measurement", Alert.AlertType.kWarning);
 
-    public BeamBreakIOLaserCAN(
-        CanDeviceId id,
-        String name,
-        RangingMode rangingMode,
-        RegionOfInterest regionOfInterest,
-        TimingBudget timingBudget, double beamBreakDistanceThreshold) {
-        this.name = name;
-        this.laserCan =
-            (Constants.currentMode == Constants.simMode)
-                ? new LaserCANSim(name)
-                : new LaserCan(id.getDeviceNumber());
-        this.beamBreakDistanceThreshold = Inches.of(beamBreakDistanceThreshold);
-        while (tries < 5) {
-            try {
-                this.laserCan.setRangingMode(rangingMode);
-                this.laserCan.setRegionOfInterest(regionOfInterest);
-                this.laserCan.setTimingBudget(timingBudget);
-                failedConfig.set(false);
-                System.out.println("Succesfully configured " + name);
-                hasConfiged = true;
-            } catch (ConfigurationFailedException e) {
-                System.out.println("Configuration failed for " + name + "! " + e);
-                failedConfig.setText("Failed to configure " + name + "!");
-                failedConfig.set(true);
-                tries++;
-            }
-        }
+  public BeamBreakIOLaserCAN(
+      CanDeviceId id,
+      String name,
+      RangingMode rangingMode,
+      RegionOfInterest regionOfInterest,
+      TimingBudget timingBudget,
+      double beamBreakDistanceThreshold,
+      Time debounce) {
+    this.name = name;
+    this.laserCan =
+        (Constants.currentMode == Constants.simMode)
+            ? new LaserCANSim(name)
+            : new LaserCan(id.getDeviceNumber());
+    this.beamBreakDistanceThreshold = Inches.of(beamBreakDistanceThreshold);
+    while (tries < 5) {
+      try {
+        this.laserCan.setRangingMode(rangingMode);
+        this.laserCan.setRegionOfInterest(regionOfInterest);
+        this.laserCan.setTimingBudget(timingBudget);
+        failedConfig.set(false);
+        System.out.println("Succesfully configured " + name);
+        hasConfiged = true;
+      } catch (ConfigurationFailedException e) {
+        System.out.println("Configuration failed for " + name + "! " + e);
+        failedConfig.setText("Failed to configure " + name + "!");
+        failedConfig.set(true);
+        tries++;
+      }
     }
+    this.debouncer = new Debouncer(debounce.in(Units.Seconds), DebounceType.kBoth);
+  }
 
-    /**
-     * Updates the BeamBreakIO inputs
-     *
-     * @param inputs The BeamBreakIOInputs object where the updated values will be stored.
-     */
-    @Override
-    public void updateInputs(BeamBreakIOInputs inputs) {
-        Measurement measurement = laserCan.getMeasurement();
-        if (measurement != null) {
-            if (measurement.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {
-                sensorAlert.set(false);
-                currentDistance = Millimeters.of(measurement.distance_mm);
-                inputs.ambientSignal = (double) measurement.ambient;
-            } else {
-                sensorAlert.setText("Failed to get LaserCAN ID: " + name + ", no valid measurement");
-                sensorAlert.set(true);
-                currentDistance = Millimeters.of(Double.POSITIVE_INFINITY);
-                inputs.connected = false;
-            }
-        } else {
-            sensorAlert.setText("Failed to get LaserCAN ID: " + name + ", measurement null");
-            sensorAlert.set(true);
-            currentDistance = Millimeters.of(Double.POSITIVE_INFINITY);
-        }
-        Logger.recordOutput("LaserCANSensors/LaserCAN" + name, currentDistance.in(Inches));
+  /**
+   * Updates the BeamBreakIO inputs
+   *
+   * @param inputs The BeamBreakIOInputs object where the updated values will be stored.
+   */
+  @Override
+  public void updateInputs(BeamBreakIOInputs inputs) {
+    Measurement measurement = laserCan.getMeasurement();
+    if (measurement != null) {
+      if (measurement.status == LaserCan.LASERCAN_STATUS_VALID_MEASUREMENT) {
+        sensorAlert.set(false);
+        currentDistance = Millimeters.of(measurement.distance_mm);
+        inputs.ambientSignal = (double) measurement.ambient;
+      } else {
+        sensorAlert.setText("Failed to get LaserCAN ID: " + name + ", no valid measurement");
+        sensorAlert.set(true);
+        currentDistance = Millimeters.of(Double.POSITIVE_INFINITY);
+        inputs.connected = false;
+      }
+    } else {
+      sensorAlert.setText("Failed to get LaserCAN ID: " + name + ", measurement null");
+      sensorAlert.set(true);
+      currentDistance = Millimeters.of(Double.POSITIVE_INFINITY);
     }
+    Logger.recordOutput("LaserCANSensors/LaserCAN" + name, currentDistance.in(Inches));
+  }
 
-    /**
-     * Updates the current settings that determine whether the CANrange 'detects' an object. Call this
-     * method to achieve the desired performance.
-     *
-     * @param mode The LONG Ranging Mode can be used to identify targets at longer distances than the
-     *     short ranging mode (up to 4m), but is more susceptible to ambient light. The SHORT Ranging
-     *     Mode is used to detect targets at 1.3m and lower. Although shorter than the Long ranging
-     *     mode, this mode is less susceptible to ambient light.
-     * @throws ConfigurationFailedException
-     */
-    private void setRangingMode(RangingMode mode) {
-        tries = 0;
-        while (tries < 5) {
-            try {
-            laserCan.setRangingMode(mode);
-                hasConfiged = true;
-            } catch (ConfigurationFailedException e) {
-                System.out.println("Configuration failed for " + name + "! " + e);
-                failedConfig.setText("Failed to configure " + name + " new ranging mode!");
-                failedConfig.set(true);
-                tries++;
-            }
-        }
+  /**
+   * Updates the current settings that determine whether the CANrange 'detects' an object. Call this
+   * method to achieve the desired performance.
+   *
+   * @param mode The LONG Ranging Mode can be used to identify targets at longer distances than the
+   *     short ranging mode (up to 4m), but is more susceptible to ambient light. The SHORT Ranging
+   *     Mode is used to detect targets at 1.3m and lower. Although shorter than the Long ranging
+   *     mode, this mode is less susceptible to ambient light.
+   * @throws ConfigurationFailedException
+   */
+  private void setRangingMode(RangingMode mode) {
+    tries = 0;
+    while (tries < 5) {
+      try {
+        laserCan.setRangingMode(mode);
+        hasConfiged = true;
+      } catch (ConfigurationFailedException e) {
+        System.out.println("Configuration failed for " + name + "! " + e);
+        failedConfig.setText("Failed to configure " + name + " new ranging mode!");
+        failedConfig.set(true);
+        tries++;
+      }
     }
+  }
 
-    /**
-     * Updates the current settings that determine whether the center and extent of the CANrange's
-     * view Call this method to achieve the desired performance.
-     *
-     * @see parameters in the ROI configs: newROICenterX: Specifies the target center of the Field of
-     *     View in the X direction, between +/- 11.8
-     * @see newROICenterY: Specifies the target center of the Field of View in the Y direction,
-     *     between +/- 11.8
-     * @see newROIRangeX: Specifies the target range of the Field of View in the X direction. The
-     *     magnitude of this is capped to abs(27 - 2*FOVCenterY).
-     * @see newROIRangeY: Specifies the target range of the Field of View in the Y direction. The
-     *     magnitude of this is capped to abs(27 - 2*FOVCenterY).
-     * @param roiConfig The Region of Interest configuration to set, including the center and range in
-     * @throws ConfigurationFailedException
-     */
-    private void setROIParams(RegionOfInterest roiConfig) {
-        hasConfiged = false;
-        tries = 0;
-        while (!hasConfiged && tries < 5) {
-            try {
-                laserCan.setRegionOfInterest(roiConfig);
-                hasConfiged = true;
-            } catch (ConfigurationFailedException e) {
-                System.out.println("Configuration failed for " + name + "! " + e);
-                failedConfig.setText("Failed to configure " + name + " new ROI params!");
-                failedConfig.set(true);
-                tries++;
-            }
-        }
+  /**
+   * Updates the current settings that determine whether the center and extent of the CANrange's
+   * view Call this method to achieve the desired performance.
+   *
+   * @see parameters in the ROI configs: newROICenterX: Specifies the target center of the Field of
+   *     View in the X direction, between +/- 11.8
+   * @see newROICenterY: Specifies the target center of the Field of View in the Y direction,
+   *     between +/- 11.8
+   * @see newROIRangeX: Specifies the target range of the Field of View in the X direction. The
+   *     magnitude of this is capped to abs(27 - 2*FOVCenterY).
+   * @see newROIRangeY: Specifies the target range of the Field of View in the Y direction. The
+   *     magnitude of this is capped to abs(27 - 2*FOVCenterY).
+   * @param roiConfig The Region of Interest configuration to set, including the center and range in
+   * @throws ConfigurationFailedException
+   */
+  private void setROIParams(RegionOfInterest roiConfig) {
+    hasConfiged = false;
+    tries = 0;
+    while (!hasConfiged && tries < 5) {
+      try {
+        laserCan.setRegionOfInterest(roiConfig);
+        hasConfiged = true;
+      } catch (ConfigurationFailedException e) {
+        System.out.println("Configuration failed for " + name + "! " + e);
+        failedConfig.setText("Failed to configure " + name + " new ROI params!");
+        failedConfig.set(true);
+        tries++;
+      }
     }
+  }
 
-    /**
-     * Here, the LaserCAN is used like a simple beambreak sensor.
-     *
-     * @return whether the beam is broken based on the measured distance being less than the threshold distance.
-     */
-    @Override
-    public boolean get() {
-        return currentDistance.in(Millimeters) < beamBreakDistanceThreshold.in(Millimeters);
-    }
+  /**
+   * Here, the LaserCAN is used like a simple beambreak sensor.
+   *
+   * @return whether the beam is broken based on the measured distance being less than the threshold
+   *     distance.
+   */
+  @Override
+  public boolean get() {
+    return currentDistance.in(Millimeters) < beamBreakDistanceThreshold.in(Millimeters);
+  }
 
+  public boolean getDebounced() {
+    return debouncer.calculate(get());
+  }
+
+  public boolean getDebouncedIfReal() {
+    return Robot.isReal() && getDebounced();
+  }
+
+  public Command stateWait(boolean state) {
+    return Commands.waitUntil(() -> get() == state);
+  }
+
+  public Command stateWaitWithDebounce(boolean state) {
+    return Commands.waitUntil(() -> getDebounced() == state);
+  }
+
+  public Command stateWaitIfReal(boolean state, double waitSecondsSim) {
+    return Commands.either(
+        stateWait(state), Commands.waitSeconds(waitSecondsSim), () -> Robot.isReal());
+  }
+
+  public Command stateWaitWithDebounceIfReal(boolean state, double waitSecondsSim) {
+    return Commands.either(
+        stateWaitWithDebounce(state), Commands.waitSeconds(waitSecondsSim), () -> Robot.isReal());
+  }
 }
