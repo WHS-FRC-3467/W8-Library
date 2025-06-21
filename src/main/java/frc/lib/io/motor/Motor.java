@@ -20,7 +20,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import frc.lib.util.CANDevice;
+import frc.lib.util.Device;
 
 /**
  * Standardized interface for motor controllers used in FRC. Supports multiple control modes,
@@ -65,7 +65,7 @@ public interface Motor {
      *
      * @return The CANDevice representing this motor's ID and bus name.
      */
-    public CANDevice getID();
+    public Device.CAN getID();
 
     /**
      * Updates the provided {@link MotorInputs} instance with the latest sensor readings. If the

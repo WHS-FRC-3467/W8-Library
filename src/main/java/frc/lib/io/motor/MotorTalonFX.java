@@ -18,7 +18,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import frc.lib.util.CANDevice;
+import frc.lib.util.Device;
 import frc.lib.util.CANUpdateThread;
 
 /**
@@ -26,7 +26,7 @@ import frc.lib.util.CANUpdateThread;
  * control modes, telemetry polling, and error handling.
  */
 public class MotorTalonFX implements Motor {
-    private final CANDevice id;
+    private final Device.CAN id;
     private final TalonFX motor;
 
     // Cached signals for performance and easier access
@@ -60,7 +60,7 @@ public class MotorTalonFX implements Motor {
      * @param id CAN bus ID and bus name.
      * @param config Configuration to apply to the motor.
      */
-    public MotorTalonFX(CANDevice id, TalonFXConfiguration config)
+    public MotorTalonFX(Device.CAN id, TalonFXConfiguration config)
     {
         this.id = id;
         motor = new TalonFX(id.id(), id.bus());
@@ -196,7 +196,7 @@ public class MotorTalonFX implements Motor {
      * @return The CANDevice representing this motor's ID and bus name.
      */
     @Override
-    public CANDevice getID()
+    public Device.CAN getID()
     {
         return id;
     }
