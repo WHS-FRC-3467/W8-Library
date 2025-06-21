@@ -5,7 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANrangeConfiguration;
 import com.ctre.phoenix6.hardware.CANrange;
 import edu.wpi.first.units.measure.Distance;
-import frc.lib.util.CANDevice;
+import frc.lib.util.Device;
 import frc.lib.util.CANUpdateThread;
 import lombok.Getter;
 
@@ -16,7 +16,7 @@ public class DistanceSensorCANRange implements DistanceSensor {
     @Getter
     private final String name;
     @Getter
-    private final CANDevice id;
+    private final Device.CAN id;
     private final CANrange CANRange;
 
     private final CANUpdateThread updateThread = new CANUpdateThread();
@@ -32,7 +32,7 @@ public class DistanceSensorCANRange implements DistanceSensor {
      * @param name A human-readable name for this sensor instance.
      * @param config The CANrangeConfiguration to apply to the sensor upon initialization.
      */
-    public DistanceSensorCANRange(CANDevice id, String name, CANrangeConfiguration config)
+    public DistanceSensorCANRange(Device.CAN id, String name, CANrangeConfiguration config)
     {
         this.name = name;
         this.id = id;

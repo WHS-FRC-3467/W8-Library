@@ -1,6 +1,6 @@
 package frc.lib.io.distancesensor;
 
-import frc.lib.util.CANDevice;
+import frc.lib.util.Device;
 
 /** A default implementation with placeholder methods to allow for log replay */
 public class DistanceSensorReplay implements DistanceSensor {
@@ -12,9 +12,9 @@ public class DistanceSensorReplay implements DistanceSensor {
     }
 
     @Override
-    public CANDevice getId()
+    public Device.CAN getId()
     {
-        return new CANDevice("", 0);
+        return new Device.CAN(0, "");
     }
 
     @Override

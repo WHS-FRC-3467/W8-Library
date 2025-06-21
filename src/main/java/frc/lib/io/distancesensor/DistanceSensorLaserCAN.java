@@ -8,7 +8,7 @@ import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
 import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-import frc.lib.util.CANDevice;
+import frc.lib.util.Device;
 import frc.lib.util.CANUpdateThread;
 import frc.lib.util.HandlableLaserCAN;
 import lombok.Getter;
@@ -18,7 +18,7 @@ import lombok.Getter;
  */
 public class DistanceSensorLaserCAN implements DistanceSensor {
     @Getter
-    private final CANDevice id;
+    private final Device.CAN id;
     @Getter
     private final String name;
     private final HandlableLaserCAN laserCAN;
@@ -37,7 +37,7 @@ public class DistanceSensorLaserCAN implements DistanceSensor {
      * @param regionOfInterest The region of interest setting for the sensor.
      * @param timingBudget The timing budget setting that controls measurement speed/accuracy.
      */
-    public DistanceSensorLaserCAN(CANDevice id, String name, RangingMode rangingMode,
+    public DistanceSensorLaserCAN(Device.CAN id, String name, RangingMode rangingMode,
         RegionOfInterest regionOfInterest, TimingBudget timingBudget)
     {
         this.id = id;
