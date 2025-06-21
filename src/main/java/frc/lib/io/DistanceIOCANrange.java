@@ -19,11 +19,10 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Voltage;
+import frc.lib.util.CANDevice;
 
-import frc.lib.util.CanDeviceId;
+public class DistanceIOCANrange implements DistanceIO {
 
-public class DistanceIOCANrange implements DistanceIO{
-    
     private final String name;
 
     private final CANrange CanRange;
@@ -43,14 +42,15 @@ public class DistanceIOCANrange implements DistanceIO{
     // Executor for retrying config operations asynchronously
     private BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, 5,
-            java.util.concurrent.TimeUnit.MILLISECONDS, queue);
+        java.util.concurrent.TimeUnit.MILLISECONDS, queue);
 
     /**
      * Attempts a config action up to 5 times until it succeeds.
      *
      * @param action The status-returning operation to retry.
      */
-    public void checkErrorAndRetry(Supplier<StatusCode> action) {
+    public void checkErrorAndRetry(Supplier<StatusCode> action)
+    {
         threadPoolExecutor.submit(() -> {
             for (int i = 0; i < 5; i++) {
                 StatusCode result = action.get();
@@ -61,11 +61,13 @@ public class DistanceIOCANrange implements DistanceIO{
         });
     }
 
-    public DistanceIOCANrange(CanDeviceId id, String name, CANrangeConfiguration config, Time debounce) {
-        
+    public DistanceIOCANrange(CANDevice id, String name, CANrangeConfiguration config,
+        Time debounce)
+    {
+
         // Instantiate the CANrange sensor
         this.name = name;
-        this.CanRange = new CANrange(id.getDeviceNumber());
+        this.CanRange = new CANrange(id.id());
         // Apply the configuration
         checkErrorAndRetry(() -> CanRange.getConfigurator().apply(config));
 
@@ -136,13 +138,13 @@ public class DistanceIOCANrange implements DistanceIO{
      * 
      * @return the Field of View (FOV) configs as a list of Angle objects
      */
-    public List<Angle> getFovConfig() {
+    public List<Angle> getFovConfig()
+    {
         return List.of(
             fovCenterX.getValue(),
             fovCenterY.getValue(),
             fovRangeX.getValue(),
-            fovRangeY.getValue()
-        );
+            fovRangeY.getValue());
     }
 
     /**
@@ -160,22 +162,24 @@ public class DistanceIOCANrange implements DistanceIO{
      * Checks if the measured distance is within a specified tolerance of an expected distance.
      *
      * @param expected The expected distance to compare against.
-     * @param tolerDistance The tolerance distance within which the measurement is considered "near".
+     * @param tolerDistance The tolerance distance within which the measurement is considered
+     *        "near".
      * @return true if the measured distance is within the tolerance of the expected distance, false
-     *     otherwise.
+     *         otherwise.
      */
     @Override
-    public boolean isNearDistance(Distance expected, Distance tolerDistance) {
+    public boolean isNearDistance(Distance expected, Distance tolerDistance)
+    {
         return MathUtil.isNear(
             expected.in(Millimeters), getDistance().in(Millimeters), tolerDistance.in(Millimeters));
     }
 
     /**
-     * Updates the current settings that determine whether the CANrange 'detects' an object.
-     * Call this method to achieve the desired performance.
+     * Updates the current settings that determine whether the CANrange 'detects' an object. Call
+     * this method to achieve the desired performance.
      *
-     * @param proximityParamsConfigs The proximity parameters to set, including
-     * ProximityThreshold, ProximityHysteresis, and MinSignalStrengthForValidMeasurement.
+     * @param proximityParamsConfigs The proximity parameters to set, including ProximityThreshold,
+     *        ProximityHysteresis, and MinSignalStrengthForValidMeasurement.
      */
     private void setProximityParams(ProximityParamsConfigs proximityParamsConfigs)
     {
@@ -184,10 +188,11 @@ public class DistanceIOCANrange implements DistanceIO{
     }
 
     /**
-     * Updates the current settings that determine whether the center and extent of the CANrange's view
-     * Call this method to achieve the desired performance.
+     * Updates the current settings that determine whether the center and extent of the CANrange's
+     * view Call this method to achieve the desired performance.
      *
-     * @param fovParamsConfigs The FOV parameters to set, including centerX, centerY, rangeX, and rangeY.
+     * @param fovParamsConfigs The FOV parameters to set, including centerX, centerY, rangeX, and
+     *        rangeY.
      */
     private void setFOVParams(FovParamsConfigs fovParamsConfigs)
     {
