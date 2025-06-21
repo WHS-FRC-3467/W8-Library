@@ -5,6 +5,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
 import com.ctre.phoenix6.StatusCode;
+import frc.lib.util.HandlableLaserCAN.ConfigurationStatus;
 
 public class CANUpdateThread {
     // Executor for retrying config operations asynchronously
@@ -23,6 +24,18 @@ public class CANUpdateThread {
             for (int i = 0; i < 5; i++) {
                 StatusCode result = action.get();
                 if (result.isOK()) {
+                    break;
+                }
+            }
+        });
+    }
+
+    public void LaserCANCheckErrorAndRetry(Supplier<ConfigurationStatus> action)
+    {
+        threadPoolExecutor.submit(() -> {
+            for (int i = 0; i < 5; i++) {
+                ConfigurationStatus result = action.get();
+                if (result == ConfigurationStatus.SUCCESS) {
                     break;
                 }
             }
