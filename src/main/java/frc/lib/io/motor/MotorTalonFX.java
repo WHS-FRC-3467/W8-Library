@@ -19,7 +19,7 @@ import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import frc.lib.util.CANDevice;
-import frc.lib.util.CTREUpdateThread;
+import frc.lib.util.CANUpdateThread;
 
 /**
  * Abstraction for a CTRE TalonFX motor implementing the {@link Motor} interface. Wraps motor setup,
@@ -52,7 +52,7 @@ public class MotorTalonFX implements Motor {
             0);
     private final VelocityTorqueCurrentFOC velocityControl = new VelocityTorqueCurrentFOC(0);
 
-    private final CTREUpdateThread updateThread = new CTREUpdateThread();
+    private final CANUpdateThread updateThread = new CANUpdateThread();
 
     /**
      * Constructs and initializes a TalonFX motor.
@@ -65,7 +65,7 @@ public class MotorTalonFX implements Motor {
         this.id = id;
         motor = new TalonFX(id.id(), id.bus());
 
-        updateThread.checkErrorAndRetry(() -> motor.getConfigurator().apply(config));
+        updateThread.CTRECheckErrorAndRetry(() -> motor.getConfigurator().apply(config));
 
         position = motor.getPosition();
         velocity = motor.getVelocity();
@@ -77,7 +77,7 @@ public class MotorTalonFX implements Motor {
         closedLoopReference = motor.getClosedLoopReference();
         closedLoopReferenceSlope = motor.getClosedLoopReferenceSlope();
 
-        updateThread.checkErrorAndRetry(() -> BaseStatusSignal.setUpdateFrequencyForAll(
+        updateThread.CTRECheckErrorAndRetry(() -> BaseStatusSignal.setUpdateFrequencyForAll(
             100,
             position,
             velocity,
@@ -86,7 +86,7 @@ public class MotorTalonFX implements Motor {
             torqueCurrent,
             temperature));
 
-        updateThread.checkErrorAndRetry(() -> BaseStatusSignal.setUpdateFrequencyForAll(
+        updateThread.CTRECheckErrorAndRetry(() -> BaseStatusSignal.setUpdateFrequencyForAll(
             200,
             closedLoopError,
             closedLoopReference,
