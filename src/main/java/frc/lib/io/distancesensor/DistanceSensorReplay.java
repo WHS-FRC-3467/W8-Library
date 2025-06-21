@@ -14,7 +14,7 @@ public class DistanceSensorReplay implements DistanceSensor {
     @Override
     public CANDevice getId()
     {
-        return new CANDevice();
+        return new CANDevice(0, "");
     }
 
     @Override
