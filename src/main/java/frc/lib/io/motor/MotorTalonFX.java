@@ -3,13 +3,7 @@ package frc.lib.io.motor;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.function.Supplier;
-
 import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
@@ -25,11 +19,11 @@ import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import frc.lib.util.CANDevice;
+import frc.lib.util.CTREUpdateThread;
 
 /**
- * Abstraction for a CTRE TalonFX motor implementing the {@link Motor}
- * interface.
- * Wraps motor setup, control modes, telemetry polling, and error handling.
+ * Abstraction for a CTRE TalonFX motor implementing the {@link Motor} interface. Wraps motor setup,
+ * control modes, telemetry polling, and error handling.
  */
 public class MotorTalonFX implements Motor {
     private final CANDevice id;
@@ -53,42 +47,25 @@ public class MotorTalonFX implements Motor {
     private final VoltageOut voltageControl = new VoltageOut(0).withEnableFOC(true);
     private final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0);
     private final DutyCycleOut dutyCycleControl = new DutyCycleOut(0).withEnableFOC(true);
-    private final DynamicMotionMagicTorqueCurrentFOC positionControl = new DynamicMotionMagicTorqueCurrentFOC(0, 0, 0,
+    private final DynamicMotionMagicTorqueCurrentFOC positionControl =
+        new DynamicMotionMagicTorqueCurrentFOC(0, 0, 0,
             0);
     private final VelocityTorqueCurrentFOC velocityControl = new VelocityTorqueCurrentFOC(0);
 
-    // Executor for retrying config operations asynchronously
-    private BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
-    private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, 5,
-            java.util.concurrent.TimeUnit.MILLISECONDS, queue);
-
-    /**
-     * Attempts a config action up to 5 times until it succeeds.
-     *
-     * @param action The status-returning operation to retry.
-     */
-    public void checkErrorAndRetry(Supplier<StatusCode> action) {
-        threadPoolExecutor.submit(() -> {
-            for (int i = 0; i < 5; i++) {
-                StatusCode result = action.get();
-                if (result.isOK()) {
-                    break;
-                }
-            }
-        });
-    }
+    private final CTREUpdateThread updateThread = new CTREUpdateThread();
 
     /**
      * Constructs and initializes a TalonFX motor.
      *
-     * @param id     CAN bus ID and bus name.
+     * @param id CAN bus ID and bus name.
      * @param config Configuration to apply to the motor.
      */
-    public MotorTalonFX(CANDevice id, TalonFXConfiguration config) {
+    public MotorTalonFX(CANDevice id, TalonFXConfiguration config)
+    {
         this.id = id;
         motor = new TalonFX(id.id(), id.bus());
 
-        checkErrorAndRetry(() -> motor.getConfigurator().apply(config));
+        updateThread.checkErrorAndRetry(() -> motor.getConfigurator().apply(config));
 
         position = motor.getPosition();
         velocity = motor.getVelocity();
@@ -100,20 +77,20 @@ public class MotorTalonFX implements Motor {
         closedLoopReference = motor.getClosedLoopReference();
         closedLoopReferenceSlope = motor.getClosedLoopReferenceSlope();
 
-        checkErrorAndRetry(() -> BaseStatusSignal.setUpdateFrequencyForAll(
-                100,
-                position,
-                velocity,
-                supplyCurrent,
-                supplyCurrent,
-                torqueCurrent,
-                temperature));
+        updateThread.checkErrorAndRetry(() -> BaseStatusSignal.setUpdateFrequencyForAll(
+            100,
+            position,
+            velocity,
+            supplyCurrent,
+            supplyCurrent,
+            torqueCurrent,
+            temperature));
 
-        checkErrorAndRetry(() -> BaseStatusSignal.setUpdateFrequencyForAll(
-                200,
-                closedLoopError,
-                closedLoopReference,
-                closedLoopReferenceSlope));
+        updateThread.checkErrorAndRetry(() -> BaseStatusSignal.setUpdateFrequencyForAll(
+            200,
+            closedLoopError,
+            closedLoopReference,
+            closedLoopReferenceSlope));
 
         motor.optimizeBusUtilization(0, 1.0);
     }
@@ -123,12 +100,13 @@ public class MotorTalonFX implements Motor {
      *
      * @return True if the motor is using a position control mode.
      */
-    private boolean isRunningPositionControl() {
+    private boolean isRunningPositionControl()
+    {
         var control = motor.getAppliedControl();
         return (control instanceof PositionTorqueCurrentFOC)
-                || (control instanceof PositionVoltage)
-                || (control instanceof MotionMagicTorqueCurrentFOC)
-                || (control instanceof MotionMagicVoltage);
+            || (control instanceof PositionVoltage)
+            || (control instanceof MotionMagicTorqueCurrentFOC)
+            || (control instanceof MotionMagicVoltage);
     }
 
     /**
@@ -136,12 +114,13 @@ public class MotorTalonFX implements Motor {
      *
      * @return True if the motor is using a velocity control mode.
      */
-    private boolean isRunningVelocityControl() {
+    private boolean isRunningVelocityControl()
+    {
         var control = motor.getAppliedControl();
         return (control instanceof VelocityTorqueCurrentFOC)
-                || (control instanceof VelocityVoltage)
-                || (control instanceof MotionMagicVelocityTorqueCurrentFOC)
-                || (control instanceof MotionMagicVelocityVoltage);
+            || (control instanceof VelocityVoltage)
+            || (control instanceof MotionMagicVelocityTorqueCurrentFOC)
+            || (control instanceof MotionMagicVelocityVoltage);
     }
 
     /**
@@ -149,12 +128,13 @@ public class MotorTalonFX implements Motor {
      *
      * @return True if the motor is using a Motion Magic mode.
      */
-    private boolean isRunningMotionMagic() {
+    private boolean isRunningMotionMagic()
+    {
         var control = motor.getAppliedControl();
         return (control instanceof MotionMagicTorqueCurrentFOC)
-                || (control instanceof MotionMagicVelocityTorqueCurrentFOC)
-                || (control instanceof MotionMagicVoltage)
-                || (control instanceof MotionMagicVelocityVoltage);
+            || (control instanceof MotionMagicVelocityTorqueCurrentFOC)
+            || (control instanceof MotionMagicVoltage)
+            || (control instanceof MotionMagicVelocityVoltage);
     }
 
     /**
@@ -163,18 +143,19 @@ public class MotorTalonFX implements Motor {
      * @param inputs Motor input structure to populate.
      */
     @Override
-    public void updateInputs(MotorInputs inputs) {
+    public void updateInputs(MotorInputs inputs)
+    {
         inputs.connected = BaseStatusSignal.refreshAll(
-                position,
-                velocity,
-                supplyVoltage,
-                supplyCurrent,
-                torqueCurrent,
-                temperature,
-                closedLoopError,
-                closedLoopReference,
-                closedLoopReferenceSlope)
-                .isOK();
+            position,
+            velocity,
+            supplyVoltage,
+            supplyCurrent,
+            torqueCurrent,
+            temperature,
+            closedLoopError,
+            closedLoopReference,
+            closedLoopReferenceSlope)
+            .isOK();
 
         inputs.position = position.getValue();
         inputs.velocity = velocity.getValue();
@@ -188,12 +169,12 @@ public class MotorTalonFX implements Motor {
         var closedLoopTargetValue = closedLoopReference.getValue();
 
         inputs.positionError = isRunningPositionControl()
-                ? Rotations.of(closedLoopErrorValue)
-                : null;
+            ? Rotations.of(closedLoopErrorValue)
+            : null;
 
         inputs.activeTrajectoryPosition = isRunningPositionControl() && isRunningMotionMagic()
-                ? Rotations.of(closedLoopTargetValue)
-                : null;
+            ? Rotations.of(closedLoopTargetValue)
+            : null;
 
         if (isRunningVelocityControl()) {
             inputs.velocityError = RotationsPerSecond.of(closedLoopErrorValue);
@@ -201,7 +182,7 @@ public class MotorTalonFX implements Motor {
         } else if (isRunningPositionControl() && isRunningMotionMagic()) {
             var targetVelocity = closedLoopReferenceSlope.getValue();
             inputs.velocityError = RotationsPerSecond.of(
-                    targetVelocity - inputs.velocity.in(RotationsPerSecond));
+                targetVelocity - inputs.velocity.in(RotationsPerSecond));
             inputs.activeTrajectoryVelocity = RotationsPerSecond.of(targetVelocity);
         } else {
             inputs.velocityError = null;
@@ -215,7 +196,8 @@ public class MotorTalonFX implements Motor {
      * @return The CANDevice representing this motor's ID and bus name.
      */
     @Override
-    public CANDevice getID() {
+    public CANDevice getID()
+    {
         return id;
     }
 
@@ -223,7 +205,8 @@ public class MotorTalonFX implements Motor {
      * Sets the motor to coast mode.
      */
     @Override
-    public void runCoast() {
+    public void runCoast()
+    {
         motor.setControl(coastControl);
     }
 
@@ -231,7 +214,8 @@ public class MotorTalonFX implements Motor {
      * Sets the motor to brake mode.
      */
     @Override
-    public void runBrake() {
+    public void runBrake()
+    {
         motor.setControl(brakeControl);
     }
 
@@ -239,11 +223,13 @@ public class MotorTalonFX implements Motor {
      * Follows the specified motor using CAN follower mode.
      *
      * @param followMotor The motor to follow.
-     * @param oppose      Whether or not to oppose the main motor.
+     * @param oppose Whether or not to oppose the main motor.
      */
     @Override
-    public void follow(Motor followMotor, boolean oppose) {
-        motor.setControl(followControl.withMasterID(followMotor.getID().id()).withOpposeMasterDirection(oppose));
+    public void follow(Motor followMotor, boolean oppose)
+    {
+        motor.setControl(
+            followControl.withMasterID(followMotor.getID().id()).withOpposeMasterDirection(oppose));
     }
 
     /**
@@ -252,7 +238,8 @@ public class MotorTalonFX implements Motor {
      * @param voltage Desired voltage output.
      */
     @Override
-    public void runVoltage(Voltage voltage) {
+    public void runVoltage(Voltage voltage)
+    {
         motor.setControl(voltageControl.withOutput(voltage));
     }
 
@@ -262,7 +249,8 @@ public class MotorTalonFX implements Motor {
      * @param current Desired torque-producing current.
      */
     @Override
-    public void runCurrent(Current current) {
+    public void runCurrent(Current current)
+    {
         motor.setControl(currentControl.withOutput(current));
     }
 
@@ -272,7 +260,8 @@ public class MotorTalonFX implements Motor {
      * @param dutyCycle Fractional output between 0 and 1.
      */
     @Override
-    public void runDutyCycle(double dutyCycle) {
+    public void runDutyCycle(double dutyCycle)
+    {
         double dutyCyclePercent = MathUtil.clamp(dutyCycle, 0.0, 1.0);
         motor.setControl(dutyCycleControl.withOutput(dutyCyclePercent));
     }
@@ -280,29 +269,34 @@ public class MotorTalonFX implements Motor {
     /**
      * Runs the motor to a specific position.
      *
-     * @param position       Target position.
+     * @param position Target position.
      * @param cruiseVelocity Cruise velocity.
-     * @param acceleration   Max acceleration.
-     * @param maxJerk        Max jerk (rate of acceleration).
-     * @param slot           PID slot index.
+     * @param acceleration Max acceleration.
+     * @param maxJerk Max jerk (rate of acceleration).
+     * @param slot PID slot index.
      */
     @Override
-    public void runPosition(Angle position, AngularVelocity cruiseVelocity, AngularAcceleration acceleration,
-            Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot) {
+    public void runPosition(Angle position, AngularVelocity cruiseVelocity,
+        AngularAcceleration acceleration,
+        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
+    {
         motor.setControl(positionControl.withPosition(position).withVelocity(cruiseVelocity)
-                .withAcceleration(acceleration).withJerk(maxJerk).withSlot(slot.ordinal()));
+            .withAcceleration(acceleration).withJerk(maxJerk).withSlot(slot.ordinal()));
     }
 
     /**
      * Runs the motor at a target velocity.
      *
-     * @param velocity     Desired velocity.
+     * @param velocity Desired velocity.
      * @param acceleration Max acceleration.
-     * @param slot         PID slot index.
+     * @param slot PID slot index.
      */
     @Override
-    public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot) {
+    public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
+        PIDSlot slot)
+    {
         motor.setControl(
-                velocityControl.withVelocity(velocity).withAcceleration(acceleration).withSlot(slot.ordinal()));
+            velocityControl.withVelocity(velocity).withAcceleration(acceleration)
+                .withSlot(slot.ordinal()));
     }
 }
