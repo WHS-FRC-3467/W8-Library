@@ -23,9 +23,8 @@ import edu.wpi.first.units.measure.Voltage;
 import frc.lib.util.CANDevice;
 
 /**
- * Standardized interface for motor controllers used in FRC.
- * Supports multiple control modes, telemetry reporting, and follower
- * configuration.
+ * Standardized interface for motor controllers used in FRC. Supports multiple control modes,
+ * telemetry reporting, and follower configuration.
  */
 public interface Motor {
 
@@ -69,9 +68,10 @@ public interface Motor {
     public CANDevice getID();
 
     /**
-     * Updates the passed-in MotorInputs structure with the latest sensor readings.
+     * Updates the provided {@link MotorInputs} instance with the latest sensor readings. If the
+     * sensor is not connected, it populates the fields with default values.
      *
-     * @param inputs Motor input structure to populate.
+     * @param inputs The structure to populate with updated sensor values.
      */
     public void updateInputs(MotorInputs inputs);
 
@@ -89,7 +89,7 @@ public interface Motor {
      * Follows the specified motor using CAN follower mode.
      *
      * @param followMotor The motor to follow.
-     * @param oppose      Whether or not to oppose the main motor.
+     * @param oppose Whether or not to oppose the main motor.
      */
     public void follow(Motor motor, boolean oppose);
 
@@ -117,21 +117,23 @@ public interface Motor {
     /**
      * Runs the motor to a specific position.
      *
-     * @param position       Target position.
+     * @param position Target position.
      * @param cruiseVelocity Cruise velocity.
-     * @param acceleration   Max acceleration.
-     * @param maxJerk        Max jerk (rate of acceleration).
-     * @param slot           PID slot index.
+     * @param acceleration Max acceleration.
+     * @param maxJerk Max jerk (rate of acceleration).
+     * @param slot PID slot index.
      */
-    public void runPosition(Angle position, AngularVelocity cruiseVelocity, AngularAcceleration acceleration,
-            Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot);
+    public void runPosition(Angle position, AngularVelocity cruiseVelocity,
+        AngularAcceleration acceleration,
+        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot);
 
     /**
      * Runs the motor at a target velocity.
      *
-     * @param velocity     Desired velocity.
+     * @param velocity Desired velocity.
      * @param acceleration Max acceleration.
-     * @param slot         PID slot index.
+     * @param slot PID slot index.
      */
-    public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot);
+    public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
+        PIDSlot slot);
 }
