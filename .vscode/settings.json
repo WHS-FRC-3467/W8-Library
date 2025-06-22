@@ -26,11 +26,8 @@
         "DYLD_LIBRARY_PATH": "${workspaceFolder}/build/jni/release"
       }
     },
-    null
   ],
   "java.test.defaultConfig": "WPIlibUnitTests",
-  "spotlessGradle.format.enable": true,
-  "spotlessGradle.diagnostics.enable": false,
   "java.import.gradle.annotationProcessing.enabled": false,
   "java.completion.favoriteStaticMembers": [
     "org.junit.Assert.*",
@@ -61,12 +58,5 @@
     "edu.wpi.first.math.proto.*",
     "edu.wpi.first.math.**.proto.*",
     "edu.wpi.first.math.**.struct.*"
-  ],
-  "editor.defaultFormatter": "richardwillis.vscode-spotless-gradle",
-  "[json]": {
-    "editor.defaultFormatter": "richardwillis.vscode-spotless-gradle"
-  },
-  "[java]": {
-    "editor.defaultFormatter": "richardwillis.vscode-spotless-gradle"
-  }
+  ]
 }
