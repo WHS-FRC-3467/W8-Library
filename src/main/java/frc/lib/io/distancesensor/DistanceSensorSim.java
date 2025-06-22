@@ -16,7 +16,7 @@
 package frc.lib.io.distancesensor;
 
 import static edu.wpi.first.units.Units.Meters;
-import frc.robot.util.LoggedTunableNumber;
+import frc.lib.util.LoggedTunableNumber;
 import lombok.Getter;
 
 /**
