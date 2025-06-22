@@ -25,7 +25,10 @@ public interface DistanceSensor {
      * 
      * @return The name of the sensor
      */
-    public String getName();
+    public default String getName()
+    {
+        return "";
+    }
 
     /**
      * Updates the provided {@link DistanceSensorInputs} instance with the latest sensor readings.
@@ -33,5 +36,6 @@ public interface DistanceSensor {
      *
      * @param inputs The structure to populate with updated sensor values.
      */
-    public void updateInputs(DistanceSensorInputs inputs);
+    public default void updateInputs(DistanceSensorInputs inputs)
+    {}
 }
