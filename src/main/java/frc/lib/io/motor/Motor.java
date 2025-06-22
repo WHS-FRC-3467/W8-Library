@@ -65,7 +65,10 @@ public interface Motor {
      *
      * @return The CANDevice representing this motor's ID and bus name.
      */
-    public Device.CAN getID();
+    public default Device.CAN getID()
+    {
+        return new Device.CAN(0, "");
+    }
 
     /**
      * Updates the provided {@link MotorInputs} instance with the latest sensor readings. If the
@@ -73,17 +76,20 @@ public interface Motor {
      *
      * @param inputs The structure to populate with updated sensor values.
      */
-    public void updateInputs(MotorInputs inputs);
+    public default void updateInputs(MotorInputs inputs)
+    {}
 
     /**
      * Sets the motor to coast mode.
      */
-    public void runCoast();
+    public default void runCoast()
+    {}
 
     /**
      * Sets the motor to brake mode.
      */
-    public void runBrake();
+    public default void runBrake()
+    {}
 
     /**
      * Follows the specified motor using CAN follower mode.
@@ -91,28 +97,32 @@ public interface Motor {
      * @param followMotor The motor to follow.
      * @param oppose Whether or not to oppose the main motor.
      */
-    public void follow(Motor motor, boolean oppose);
+    public default void follow(Motor motor, boolean oppose)
+    {}
 
     /**
      * Runs the motor using direct voltage control.
      *
      * @param voltage Desired voltage output.
      */
-    public void runVoltage(Voltage voltage);
+    public default void runVoltage(Voltage voltage)
+    {}
 
     /**
      * Runs the motor with a specified current output.
      *
      * @param current Desired torque-producing current.
      */
-    public void runCurrent(Current current);
+    public default void runCurrent(Current current)
+    {}
 
     /**
      * Runs the motor using duty cycle (percentage of available voltage).
      *
      * @param dutyCycle Fractional output between 0 and 1.
      */
-    public void runDutyCycle(double dutyCycle);
+    public default void runDutyCycle(double dutyCycle)
+    {}
 
     /**
      * Runs the motor to a specific position.
@@ -123,9 +133,10 @@ public interface Motor {
      * @param maxJerk Max jerk (rate of acceleration).
      * @param slot PID slot index.
      */
-    public void runPosition(Angle position, AngularVelocity cruiseVelocity,
+    public default void runPosition(Angle position, AngularVelocity cruiseVelocity,
         AngularAcceleration acceleration,
-        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot);
+        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
+    {}
 
     /**
      * Runs the motor at a target velocity.
@@ -134,6 +145,7 @@ public interface Motor {
      * @param acceleration Max acceleration.
      * @param slot PID slot index.
      */
-    public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
-        PIDSlot slot);
+    public default void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
+        PIDSlot slot)
+    {}
 }
