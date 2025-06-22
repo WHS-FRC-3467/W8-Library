@@ -31,14 +31,17 @@ public interface BeamBreak {
      * 
      * @return The name of the sensor
      */
-    public String getName();
+    public default String getName()
+    {
+        return "";
+    }
 
     /**
-     * Updates the provided {@link BeamBreakInputs} instance with the latest
-     * sensor readings.
-     * If the sensor is not connected, it populates the fields with default values.
+     * Updates the provided {@link BeamBreakInputs} instance with the latest sensor readings. If the
+     * sensor is not connected, it populates the fields with default values.
      *
      * @param inputs The structure to populate with updated sensor values.
      */
-    public void updateInputs(BeamBreakInputs inputs);
+    public default void updateInputs(BeamBreakInputs inputs)
+    {}
 }
