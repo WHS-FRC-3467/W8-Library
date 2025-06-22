@@ -15,8 +15,6 @@ import lombok.Getter;
 public class DistanceSensorCANRange implements DistanceSensor {
     @Getter
     private final String name;
-    @Getter
-    private final Device.CAN id;
     private final CANrange CANRange;
 
     private final CANUpdateThread updateThread = new CANUpdateThread();
@@ -35,7 +33,6 @@ public class DistanceSensorCANRange implements DistanceSensor {
     public DistanceSensorCANRange(Device.CAN id, String name, CANrangeConfiguration config)
     {
         this.name = name;
-        this.id = id;
 
         CANRange = new CANrange(id.id(), id.bus());
 

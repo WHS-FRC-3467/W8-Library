@@ -18,8 +18,6 @@ import lombok.Getter;
  */
 public class DistanceSensorLaserCAN implements DistanceSensor {
     @Getter
-    private final Device.CAN id;
-    @Getter
     private final String name;
     private final HandlableLaserCAN laserCAN;
 
@@ -40,7 +38,6 @@ public class DistanceSensorLaserCAN implements DistanceSensor {
     public DistanceSensorLaserCAN(Device.CAN id, String name, RangingMode rangingMode,
         RegionOfInterest regionOfInterest, TimingBudget timingBudget)
     {
-        this.id = id;
         this.name = name;
 
         laserCANOnWrongBusAlert =

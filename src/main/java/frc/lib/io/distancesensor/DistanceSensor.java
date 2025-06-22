@@ -5,7 +5,6 @@
 package frc.lib.io.distancesensor;
 
 import edu.wpi.first.units.measure.Distance;
-import frc.lib.util.Device;
 import org.littletonrobotics.junction.AutoLog;
 
 /** Standardized interface for distance sensors used in FRC. */
@@ -27,13 +26,6 @@ public interface DistanceSensor {
      * @return The name of the sensor
      */
     public String getName();
-
-    /**
-     * Getter for the CAN Device
-     * 
-     * @return the CAN Device
-     */
-    public Device.CAN getId();
 
     /**
      * Updates the provided {@link DistanceSensorInputs} instance with the latest sensor readings.
