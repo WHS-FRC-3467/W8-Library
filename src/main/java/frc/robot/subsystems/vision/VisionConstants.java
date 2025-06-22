@@ -1,15 +1,17 @@
-// Copyright 2021-2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
+/*
+ * Copyright (C) 2025 Windham Windup
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
+ */
 
 package frc.robot.subsystems.vision;
 
@@ -20,7 +22,8 @@ import edu.wpi.first.math.geometry.Transform3d;
 
 public class VisionConstants {
     // AprilTag layout
-    public static AprilTagFieldLayout aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+    public static AprilTagFieldLayout aprilTagLayout =
+        AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
     // Camera names, must match names configured on coprocessor
     public static String camera0Name = "camera_0";
@@ -28,8 +31,10 @@ public class VisionConstants {
 
     // Robot to camera transforms
     // (Not used by Limelight, configure in web UI instead)
-    public static Transform3d robotToCamera0 = new Transform3d(0.2, 0.0, 0.2, new Rotation3d(0.0, -0.4, 0.0));
-    public static Transform3d robotToCamera1 = new Transform3d(-0.2, 0.0, 0.2, new Rotation3d(0.0, -0.4, Math.PI));
+    public static Transform3d robotToCamera0 =
+        new Transform3d(0.2, 0.0, 0.2, new Rotation3d(0.0, -0.4, 0.0));
+    public static Transform3d robotToCamera1 =
+        new Transform3d(-0.2, 0.0, 0.2, new Rotation3d(0.0, -0.4, Math.PI));
 
     // Basic filtering thresholds
     public static double maxAmbiguity = 0.3;
@@ -49,5 +54,6 @@ public class VisionConstants {
 
     // Multipliers to apply for MegaTag 2 observations
     public static double linearStdDevMegatag2Factor = 0.5; // More stable than full 3D solve
-    public static double angularStdDevMegatag2Factor = Double.POSITIVE_INFINITY; // No rotation data available
+    public static double angularStdDevMegatag2Factor = Double.POSITIVE_INFINITY; // No rotation data
+                                                                                 // available
 }

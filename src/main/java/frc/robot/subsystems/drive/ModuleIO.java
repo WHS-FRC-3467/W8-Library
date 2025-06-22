@@ -1,15 +1,17 @@
-// Copyright 2021-2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
+/*
+ * Copyright (C) 2025 Windham Windup
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
+ */
 
 package frc.robot.subsystems.drive;
 
@@ -39,22 +41,22 @@ public interface ModuleIO {
     }
 
     /** Updates the set of loggable inputs. */
-    public default void updateInputs(ModuleIOInputs inputs) {
-    }
+    public default void updateInputs(ModuleIOInputs inputs)
+    {}
 
     /** Run the drive motor at the specified open loop value. */
-    public default void setDriveOpenLoop(double output) {
-    }
+    public default void setDriveOpenLoop(double output)
+    {}
 
     /** Run the turn motor at the specified open loop value. */
-    public default void setTurnOpenLoop(double output) {
-    }
+    public default void setTurnOpenLoop(double output)
+    {}
 
     /** Run the drive motor at the specified velocity. */
-    public default void setDriveVelocity(double velocityRadPerSec) {
-    }
+    public default void setDriveVelocity(double velocityRadPerSec)
+    {}
 
     /** Run the turn motor to the specified rotation. */
-    public default void setTurnPosition(Rotation2d rotation) {
-    }
+    public default void setTurnPosition(Rotation2d rotation)
+    {}
 }

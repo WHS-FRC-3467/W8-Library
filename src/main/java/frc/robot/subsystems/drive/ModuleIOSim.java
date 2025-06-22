@@ -1,15 +1,17 @@
-// Copyright 2021-2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
+/*
+ * Copyright (C) 2025 Windham Windup
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
+ */
 
 package frc.robot.subsystems.drive;
 
@@ -26,8 +28,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 /**
- * Physics sim implementation of module IO. The sim models are configured using
- * a set of module
+ * Physics sim implementation of module IO. The sim models are configured using a set of module
  * constants from Phoenix. Simulation is always based on voltage control.
  */
 public class ModuleIOSim implements ModuleIO {
@@ -36,7 +37,8 @@ public class ModuleIOSim implements ModuleIO {
     private static final double DRIVE_KP = 0.05;
     private static final double DRIVE_KD = 0.0;
     private static final double DRIVE_KS = 0.0;
-    private static final double DRIVE_KV_ROT = 0.91035; // Same units as TunerConstants: (volt * secs) / rotation
+    private static final double DRIVE_KV_ROT = 0.91035; // Same units as TunerConstants: (volt *
+                                                        // secs) / rotation
     private static final double DRIVE_KV = 1.0 / Units.rotationsToRadians(1.0 / DRIVE_KV_ROT);
     private static final double TURN_KP = 8.0;
     private static final double TURN_KD = 0.0;
@@ -55,26 +57,29 @@ public class ModuleIOSim implements ModuleIO {
     private double turnAppliedVolts = 0.0;
 
     public ModuleIOSim(
-            SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
+        SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants)
+    {
         // Create drive and turn sim models
         driveSim = new DCMotorSim(
-                LinearSystemId.createDCMotorSystem(
-                        DRIVE_GEARBOX, constants.DriveInertia, constants.DriveMotorGearRatio),
-                DRIVE_GEARBOX);
+            LinearSystemId.createDCMotorSystem(
+                DRIVE_GEARBOX, constants.DriveInertia, constants.DriveMotorGearRatio),
+            DRIVE_GEARBOX);
         turnSim = new DCMotorSim(
-                LinearSystemId.createDCMotorSystem(
-                        TURN_GEARBOX, constants.SteerInertia, constants.SteerMotorGearRatio),
-                TURN_GEARBOX);
+            LinearSystemId.createDCMotorSystem(
+                TURN_GEARBOX, constants.SteerInertia, constants.SteerMotorGearRatio),
+            TURN_GEARBOX);
 
         // Enable wrapping for turn PID
         turnController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     @Override
-    public void updateInputs(ModuleIOInputs inputs) {
+    public void updateInputs(ModuleIOInputs inputs)
+    {
         // Run closed-loop control
         if (driveClosedLoop) {
-            driveAppliedVolts = driveFFVolts + driveController.calculate(driveSim.getAngularVelocityRadPerSec());
+            driveAppliedVolts =
+                driveFFVolts + driveController.calculate(driveSim.getAngularVelocityRadPerSec());
         } else {
             driveController.reset();
         }
@@ -108,32 +113,36 @@ public class ModuleIOSim implements ModuleIO {
 
         // Update odometry inputs (50Hz because high-frequency odometry in sim doesn't
         // matter)
-        inputs.odometryTimestamps = new double[] { Timer.getFPGATimestamp() };
-        inputs.odometryDrivePositionsRad = new double[] { inputs.drivePositionRad };
-        inputs.odometryTurnPositions = new Rotation2d[] { inputs.turnPosition };
+        inputs.odometryTimestamps = new double[] {Timer.getFPGATimestamp()};
+        inputs.odometryDrivePositionsRad = new double[] {inputs.drivePositionRad};
+        inputs.odometryTurnPositions = new Rotation2d[] {inputs.turnPosition};
     }
 
     @Override
-    public void setDriveOpenLoop(double output) {
+    public void setDriveOpenLoop(double output)
+    {
         driveClosedLoop = false;
         driveAppliedVolts = output;
     }
 
     @Override
-    public void setTurnOpenLoop(double output) {
+    public void setTurnOpenLoop(double output)
+    {
         turnClosedLoop = false;
         turnAppliedVolts = output;
     }
 
     @Override
-    public void setDriveVelocity(double velocityRadPerSec) {
+    public void setDriveVelocity(double velocityRadPerSec)
+    {
         driveClosedLoop = true;
         driveFFVolts = DRIVE_KS * Math.signum(velocityRadPerSec) + DRIVE_KV * velocityRadPerSec;
         driveController.setSetpoint(velocityRadPerSec);
     }
 
     @Override
-    public void setTurnPosition(Rotation2d rotation) {
+    public void setTurnPosition(Rotation2d rotation)
+    {
         turnClosedLoop = true;
         turnController.setSetpoint(rotation.getRadians());
     }

@@ -1,15 +1,17 @@
-// Copyright 2021-2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
+/*
+ * Copyright (C) 2025 Windham Windup
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
+ */
 
 package frc.robot.subsystems.drive;
 
@@ -28,50 +30,52 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.DoubleSupplier;
 
 /**
- * Provides an interface for asynchronously reading high-frequency measurements
- * to a set of queues.
+ * Provides an interface for asynchronously reading high-frequency measurements to a set of queues.
  *
  * <p>
- * This version is intended for Phoenix 6 devices on both the RIO and CANivore
- * buses. When using
- * a CANivore, the thread uses the "waitForAll" blocking method to enable more
- * consistent sampling.
- * This also allows Phoenix Pro users to benefit from lower latency between
- * devices using CANivore
+ * This version is intended for Phoenix 6 devices on both the RIO and CANivore buses. When using a
+ * CANivore, the thread uses the "waitForAll" blocking method to enable more consistent sampling.
+ * This also allows Phoenix Pro users to benefit from lower latency between devices using CANivore
  * time synchronization.
  */
 public class PhoenixOdometryThread extends Thread {
-    private final Lock signalsLock = new ReentrantLock(); // Prevents conflicts when registering signals
+    private final Lock signalsLock = new ReentrantLock(); // Prevents conflicts when registering
+                                                          // signals
     private BaseStatusSignal[] phoenixSignals = new BaseStatusSignal[0];
     private final List<DoubleSupplier> genericSignals = new ArrayList<>();
     private final List<Queue<Double>> phoenixQueues = new ArrayList<>();
     private final List<Queue<Double>> genericQueues = new ArrayList<>();
     private final List<Queue<Double>> timestampQueues = new ArrayList<>();
 
-    private static boolean isCANFD = new CANBus(DriveConstants.DrivetrainConstants.CANBusName).isNetworkFD();
+    private static boolean isCANFD =
+        new CANBus(DriveConstants.DrivetrainConstants.CANBusName).isNetworkFD();
     private static PhoenixOdometryThread instance = null;
 
-    public static PhoenixOdometryThread getInstance() {
+    public static PhoenixOdometryThread getInstance()
+    {
         if (instance == null) {
             instance = new PhoenixOdometryThread();
         }
         return instance;
     }
 
-    private PhoenixOdometryThread() {
+    private PhoenixOdometryThread()
+    {
         setName("PhoenixOdometryThread");
         setDaemon(true);
     }
 
     @Override
-    public void start() {
+    public void start()
+    {
         if (timestampQueues.size() > 0) {
             super.start();
         }
     }
 
     /** Registers a Phoenix signal to be read from the thread. */
-    public Queue<Double> registerSignal(StatusSignal<Angle> signal) {
+    public Queue<Double> registerSignal(StatusSignal<Angle> signal)
+    {
         Queue<Double> queue = new ArrayBlockingQueue<>(20);
         signalsLock.lock();
         Drive.odometryLock.lock();
@@ -89,7 +93,8 @@ public class PhoenixOdometryThread extends Thread {
     }
 
     /** Registers a generic signal to be read from the thread. */
-    public Queue<Double> registerSignal(DoubleSupplier signal) {
+    public Queue<Double> registerSignal(DoubleSupplier signal)
+    {
         Queue<Double> queue = new ArrayBlockingQueue<>(20);
         signalsLock.lock();
         Drive.odometryLock.lock();
@@ -104,7 +109,8 @@ public class PhoenixOdometryThread extends Thread {
     }
 
     /** Returns a new queue that returns timestamp values for each sample. */
-    public Queue<Double> makeTimestampQueue() {
+    public Queue<Double> makeTimestampQueue()
+    {
         Queue<Double> queue = new ArrayBlockingQueue<>(20);
         Drive.odometryLock.lock();
         try {
@@ -116,7 +122,8 @@ public class PhoenixOdometryThread extends Thread {
     }
 
     @Override
-    public void run() {
+    public void run()
+    {
         while (true) {
             // Wait for updates from all signals
             signalsLock.lock();
