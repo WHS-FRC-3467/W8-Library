@@ -1,11 +1,21 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
+/*
+ * Copyright (C) 2025 Windham Windup
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
+ */
 
 package frc.lib.io.distancesensor;
 
 import edu.wpi.first.units.measure.Distance;
-import frc.lib.util.Device;
 import org.littletonrobotics.junction.AutoLog;
 
 /** Standardized interface for distance sensors used in FRC. */
@@ -26,14 +36,10 @@ public interface DistanceSensor {
      * 
      * @return The name of the sensor
      */
-    public String getName();
-
-    /**
-     * Getter for the CAN Device
-     * 
-     * @return the CAN Device
-     */
-    public Device.CAN getId();
+    public default String getName()
+    {
+        return "";
+    }
 
     /**
      * Updates the provided {@link DistanceSensorInputs} instance with the latest sensor readings.
@@ -41,5 +47,6 @@ public interface DistanceSensor {
      *
      * @param inputs The structure to populate with updated sensor values.
      */
-    public void updateInputs(DistanceSensorInputs inputs);
+    public default void updateInputs(DistanceSensorInputs inputs)
+    {}
 }

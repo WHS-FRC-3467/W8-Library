@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2025 Windham Windup
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
+ */
+
 package frc.lib.io.distancesensor;
 
 import static edu.wpi.first.units.Units.Millimeters;
@@ -17,8 +32,6 @@ import lombok.Getter;
  * A distance sensor implementation that uses a LaserCAN
  */
 public class DistanceSensorLaserCAN implements DistanceSensor {
-    @Getter
-    private final Device.CAN id;
     @Getter
     private final String name;
     private final HandlableLaserCAN laserCAN;
@@ -40,7 +53,6 @@ public class DistanceSensorLaserCAN implements DistanceSensor {
     public DistanceSensorLaserCAN(Device.CAN id, String name, RangingMode rangingMode,
         RegionOfInterest regionOfInterest, TimingBudget timingBudget)
     {
-        this.id = id;
         this.name = name;
 
         laserCANOnWrongBusAlert =
