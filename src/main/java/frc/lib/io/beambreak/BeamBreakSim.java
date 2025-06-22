@@ -15,7 +15,7 @@
 
 package frc.lib.io.beambreak;
 
-import frc.robot.util.LoggedTunableBoolean;
+import frc.lib.util.LoggedTunableBoolean;
 import lombok.Getter;
 
 /** A simulated implementation that uses a togglable button on the dashboard */
