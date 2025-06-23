@@ -9,30 +9,34 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.io.distancesensor.DistanceSensorIO;
-import frc.lib.io.distancesensor.DistanceSensorInputsAutoLogged;
+import frc.lib.subsystems.DistanceSensor;
 import lombok.NonNull;
 
 /** Add your docs here. */
 public class LaserCAN1 extends SubsystemBase { // Don't extend if contained in superstructure
-    private final DistanceSensorIO distanceSensor;
-    private final DistanceSensorInputsAutoLogged inputs = new DistanceSensorInputsAutoLogged();
+    private final DistanceSensor distanceSensor;
 
     public final Trigger inside =
         new Trigger(() -> betweenDistance(Millimeters.of(5), Millimeters.of(10)));
 
     public LaserCAN1(DistanceSensorIO io)
     {
-        distanceSensor = io;
+        distanceSensor = new DistanceSensor(io);
     }
 
     @Override
     public void periodic()
     {
-        distanceSensor.updateInputs(inputs);
+        distanceSensor.periodic();
     }
 
     private boolean betweenDistance(@NonNull Distance min, @NonNull Distance max)
     {
-        return inputs.distance.gt(min) && inputs.distance.lt(max);
+        if (distanceSensor.getDistance().isEmpty()) {
+            return false;
+        }
+
+        Distance distance = distanceSensor.getDistance().get();
+        return distance.gt(min) && distance.lt(max);
     }
 }

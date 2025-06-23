@@ -16,7 +16,6 @@
 package frc.lib.io.distancesensor;
 
 import edu.wpi.first.units.measure.Distance;
-import static edu.wpi.first.units.Units.Meters;
 import org.littletonrobotics.junction.AutoLog;
 
 /** Standardized interface for distance sensors used in FRC. */
@@ -27,7 +26,7 @@ public interface DistanceSensorIO {
         /** Whether the sensor is connected. */
         public boolean connected = false;
         /** Distance from the sensor to the nearest object */
-        public Distance distance = Meters.of(0.0);
+        public Distance distance = null;
         /** The amount of ambient infrared light detected by the sensor. */
         public double ambientSignal = 0.0;
     }
