@@ -4,21 +4,35 @@
 
 package frc.robot.subsystems.lasercan1;
 
+import static edu.wpi.first.units.Units.Millimeters;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import frc.lib.subsystems.DistanceSensorSubsystem;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.lib.io.distancesensor.DistanceSensor;
+import frc.lib.io.distancesensor.DistanceSensorInputsAutoLogged;
+import lombok.NonNull;
 
 /** Add your docs here. */
-public class LaserCAN1 extends DistanceSensorSubsystem {
+public class LaserCAN1 extends SubsystemBase { // Don't extend if contained in superstructure
+    private final DistanceSensor distanceSensor;
+    private final DistanceSensorInputsAutoLogged inputs = new DistanceSensorInputsAutoLogged();
 
-    public LaserCAN1()
+    public final Trigger inside =
+        new Trigger(() -> betweenDistance(Millimeters.of(5), Millimeters.of(10)));
+
+    public LaserCAN1(DistanceSensor io)
     {
-        super(LaserCAN1Constants.NAME, LaserCAN1Constants.getDistanceSensorIO());
+        distanceSensor = io;
     }
 
-    public Command waitUntilBetweenDistance(Distance min, Distance max)
+    @Override
+    public void periodic()
     {
-        return Commands.waitUntil(() -> (getDistance().gt(min) && getDistance().lt(max)));
+        distanceSensor.updateInputs(inputs);
+    }
+
+    private boolean betweenDistance(@NonNull Distance min, @NonNull Distance max)
+    {
+        return inputs.distance.gt(min) && inputs.distance.lt(max);
     }
 }
