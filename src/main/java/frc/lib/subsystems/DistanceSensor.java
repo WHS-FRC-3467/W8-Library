@@ -21,31 +21,55 @@ import edu.wpi.first.units.measure.Distance;
 import frc.lib.io.distancesensor.DistanceSensorIO;
 import frc.lib.io.distancesensor.DistanceSensorInputsAutoLogged;
 
+/**
+ * Class for simplified DistanceSensorIO implementation
+ */
 public class DistanceSensor {
     private final DistanceSensorIO io;
     private final DistanceSensorInputsAutoLogged inputs = new DistanceSensorInputsAutoLogged();
 
+    /**
+     * Constructs a Distance Sensor.
+     *
+     * @param io the IO to interact with.
+     */
     public DistanceSensor(DistanceSensorIO io)
     {
         this.io = io;
     }
 
+    /** Call this method periodically */
     public void periodic()
     {
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
     }
 
+    /**
+     * Whether the sensor is connected.
+     * 
+     * @return Whether the sensor is connected
+     */
     public boolean isConnected()
     {
         return inputs.connected;
     }
 
+    /**
+     * Getter for the distance read by the sensor
+     * 
+     * @return The distance read by the sensor
+     */
     public Optional<Distance> getDistance()
     {
         return Optional.ofNullable(inputs.distance);
     }
 
+    /**
+     * Getter for the ambient light read by the sensor
+     * 
+     * @return The ambient light read by the sensor
+     */
     public double getAmbientSignal()
     {
         return inputs.ambientSignal;
