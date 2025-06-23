@@ -9,13 +9,16 @@ import com.ctre.phoenix6.controls.EmptyAnimation;
 import com.ctre.phoenix6.controls.FireAnimation;
 import com.ctre.phoenix6.controls.RainbowAnimation;
 import com.ctre.phoenix6.controls.SingleFadeAnimation;
+import com.ctre.phoenix6.controls.StrobeAnimation;
 import com.ctre.phoenix6.signals.AnimationDirectionValue;
 import com.ctre.phoenix6.signals.Enable5VRailValue;
 import com.ctre.phoenix6.signals.LossOfSignalBehaviorValue;
+import com.ctre.phoenix6.signals.RGBWColor;
 import com.ctre.phoenix6.signals.StatusLedWhenActiveValue;
 import com.ctre.phoenix6.signals.StripTypeValue;
 import com.ctre.phoenix6.signals.VBatOutputModeValue;
 
+import edu.wpi.first.wpilibj.util.Color;
 import frc.lib.io.LightsIO;
 import frc.lib.io.LightsIOCandle;
 import frc.lib.io.LightsIOCandle.LightsIOCandleConfiguration;
@@ -96,8 +99,9 @@ public class LEDsConstants {
     public static final ControlRequest[] autoAnimation = { candleAuto, frontAuto };
 
     // Flashing
-    public static final ControlRequest candleFlash = new SingleFadeAnimation(candleLEDs.startIndex, candleLEDs.endIndex)
+    public static final ControlRequest candleFlash = new StrobeAnimation(candleLEDs.startIndex, candleLEDs.endIndex)
             .withSlot(candleLEDs.animationSlot)
-            .withFrameRate(10);
+            .withFrameRate(10)
+            .withColor(new RGBWColor(Color.kRed));
 
 }
