@@ -4,7 +4,6 @@
 
 package frc.robot.subsystems.LEDs;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.io.LightsIO;
 import frc.lib.subsystems.LightsSubsystem;
@@ -13,7 +12,6 @@ public class LEDs extends LightsSubsystem<LightsIO> {
 
     public LEDs() {
         super("LEDs", LEDsConstants.getLightsIO());
-        SmartDashboard.putData("Auto LED Command", autoLED());
     }
 
     @Override

@@ -11,7 +11,6 @@ public class LightsIOSim extends LightsIO {
 
     public LightsIOSim() {
         super();
-        System.out.println("INIT FOR SIM LEDS");
 
     }
 

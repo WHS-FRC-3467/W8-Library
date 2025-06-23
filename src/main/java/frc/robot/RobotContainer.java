@@ -74,7 +74,6 @@ public class RobotContainer {
                 break;
 
             case SIM:
-                System.out.println("SIM");
                 // Sim robot, instantiate physics sim IO implementations
                 drive = new Drive(
                         new GyroIO() {
