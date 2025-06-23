@@ -1,30 +1,14 @@
 package frc.lib.io;
 
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.wpilibj.util.Color;
-
-import java.util.ArrayList;
+import com.ctre.phoenix6.controls.ControlRequest;
 
 public abstract class LightsIO {
-  private LEDSegment[] segments;
 
-  public LightsIO(LEDSegment[] segments) {
-    this.segments = segments;
-  }
-
-      class LEDSegment {
-
-        int startIndex;
-        int segmentSize;
-        int animationSlot;
-
-        public LEDSegment(int startIndex, int segmentSize, int animationSlot)
-        {
-            this.startIndex = startIndex;
-            this.segmentSize = segmentSize;
-            this.animationSlot = animationSlot;
-        }
-    }
-
+    /**
+     * Passes ControlRequest to IO layer
+     *
+     * @param request {@link ControlRequest}
+     */
+    public abstract void setAnimation(ControlRequest request);
 
 }
