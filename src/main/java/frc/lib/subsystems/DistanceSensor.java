@@ -15,7 +15,6 @@
 
 package frc.lib.subsystems;
 
-import static edu.wpi.first.units.Units.Meters;
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.units.measure.Distance;
@@ -34,9 +33,7 @@ public class DistanceSensor {
     public void periodic()
     {
         io.updateInputs(inputs);
-
-        Logger.recordOutput("DistanceSensors/" + io.getName(),
-            getDistance().orElse(Meters.of(0.0))); // Example functionality. TODO: To be removed.
+        Logger.processInputs(io.getName(), inputs);
     }
 
     public boolean isConnected()

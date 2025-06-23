@@ -11,7 +11,6 @@ import frc.lib.io.distancesensor.DistanceSensorIO;
 import frc.lib.io.distancesensor.DistanceSensorIOLaserCAN;
 import frc.lib.io.distancesensor.DistanceSensorIOSim;
 import frc.robot.Ports;
-import frc.robot.Robot;
 
 /** Add your docs here. */
 public class LaserCAN1Constants {
@@ -21,13 +20,19 @@ public class LaserCAN1Constants {
     private final static RegionOfInterest ROI = new RegionOfInterest(8, 8, 4, 4);
     private final static TimingBudget TIMING_BUDGET = TimingBudget.TIMING_BUDGET_20MS;
 
-    public static DistanceSensorIO getDistanceSensorIO()
+    public static DistanceSensorIOLaserCAN getReal()
     {
-        if (Robot.isReal()) {
-            return new DistanceSensorIOLaserCAN(Ports.laserCAN1, NAME, RANGING_MODE, ROI,
-                TIMING_BUDGET);
-        } else {
-            return new DistanceSensorIOSim(NAME);
-        }
+        return new DistanceSensorIOLaserCAN(Ports.laserCAN1, NAME, RANGING_MODE, ROI,
+            TIMING_BUDGET);
+    }
+
+    public static DistanceSensorIOSim getSim()
+    {
+        return new DistanceSensorIOSim(NAME);
+    }
+
+    public static DistanceSensorIO getReplay()
+    {
+        return new DistanceSensorIO() {};
     }
 }
