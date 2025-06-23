@@ -23,10 +23,8 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.lib.io.distancesensor.DistanceSensor;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.commands.DriveCommands;
-import frc.robot.subsystems.distancesensor.DistanceSensorConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.GyroIO;
@@ -34,6 +32,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.lasercan1.LaserCAN1;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -48,7 +47,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
     // Subsystems
     private final Drive drive;
-    private final DistanceSensor lc1 = DistanceSensorConstants.getDistanceSensor();
+    private final LaserCAN1 lc1 = new LaserCAN1();
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
