@@ -21,10 +21,11 @@ public class LaserCAN1Constants {
     private final static RegionOfInterest ROI = new RegionOfInterest(8, 8, 4, 4);
     private final static TimingBudget TIMING_BUDGET = TimingBudget.TIMING_BUDGET_20MS;
 
-    public static DistanceSensor getDistanceSensorIO() {
+    public static DistanceSensor getDistanceSensorIO()
+    {
         if (Robot.isReal()) {
             return new DistanceSensorLaserCAN(Ports.laserCAN1, NAME, RANGING_MODE, ROI,
-                    TIMING_BUDGET);
+                TIMING_BUDGET);
         } else {
             return new DistanceSensorSim(NAME);
         }

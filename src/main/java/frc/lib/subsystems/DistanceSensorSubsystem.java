@@ -18,21 +18,24 @@ public class DistanceSensorSubsystem extends SubsystemBase {
     protected final DistanceSensorInputsAutoLogged inputs = new DistanceSensorInputsAutoLogged();
     protected final String name;
 
-    public DistanceSensorSubsystem(String name, DistanceSensor sensor) {
+    public DistanceSensorSubsystem(String name, DistanceSensor sensor)
+    {
         super(name);
         this.sensor = sensor;
         this.name = name;
     }
 
     @Override
-    public void periodic() {
+    public void periodic()
+    {
         sensor.updateInputs(inputs);
         Logger.processInputs(name, inputs);
         SmartDashboard.putBoolean(name + " Connected?", inputs.connected);
         SmartDashboard.putNumber(name + " Distance (m): ", inputs.distance.in(Meters));
     }
 
-    public Distance getDistance() {
+    public Distance getDistance()
+    {
         return inputs.distance;
     }
 

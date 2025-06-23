@@ -12,11 +12,13 @@ import frc.lib.subsystems.DistanceSensorSubsystem;
 /** Add your docs here. */
 public class LaserCAN1 extends DistanceSensorSubsystem {
 
-    public LaserCAN1() {
+    public LaserCAN1()
+    {
         super(LaserCAN1Constants.NAME, LaserCAN1Constants.getDistanceSensorIO());
     }
 
-    public Command waitUntilBetweenDistance(Distance min, Distance max) {
+    public Command waitUntilBetweenDistance(Distance min, Distance max)
+    {
         return Commands.waitUntil(() -> (getDistance().gt(min) && getDistance().lt(max)));
     }
 }

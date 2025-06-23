@@ -29,19 +29,20 @@ public class DistanceSensorSim implements DistanceSensor {
     private final LoggedTunableNumber distance;
 
     /**
-     * Constructs a new {@link DistanceSensorSim} with specified parameters and
-     * configuration.
+     * Constructs a new {@link DistanceSensorSim} with specified parameters and configuration.
      *
      * @param name A human-readable name for the sensor instance.
      */
-    public DistanceSensorSim(String name) {
+    public DistanceSensorSim(String name)
+    {
         this.name = name;
 
         distance = new LoggedTunableNumber(name + "Meters: ", 0.0);
     }
 
     @Override
-    public void updateInputs(DistanceSensorInputs inputs) {
+    public void updateInputs(DistanceSensorInputs inputs)
+    {
         inputs.ambientSignal = 0.0;
         inputs.connected = true;
         inputs.distance = Meters.of(distance.get());
