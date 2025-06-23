@@ -16,17 +16,17 @@ import frc.robot.Robot;
 /** Add your docs here. */
 public class LaserCAN1Constants {
 
-    public final static String name = "LaserCAN #1";
-    private final static RangingMode rangingMode = RangingMode.SHORT;
-    private final static RegionOfInterest roi = new RegionOfInterest(8, 8, 4, 4);
-    private final static TimingBudget timingBudget = TimingBudget.TIMING_BUDGET_20MS;
+    public final static String NAME = "LaserCAN #1";
+    private final static RangingMode RANGING_MODE = RangingMode.SHORT;
+    private final static RegionOfInterest ROI = new RegionOfInterest(8, 8, 4, 4);
+    private final static TimingBudget TIMING_BUDGET = TimingBudget.TIMING_BUDGET_20MS;
 
     public static DistanceSensor getDistanceSensorIO() {
         if (Robot.isReal()) {
-            return new DistanceSensorLaserCAN(Ports.laserCAN1, name, rangingMode, roi,
-                    timingBudget);
+            return new DistanceSensorLaserCAN(Ports.laserCAN1, NAME, RANGING_MODE, ROI,
+                    TIMING_BUDGET);
         } else {
-            return new DistanceSensorSim(name);
+            return new DistanceSensorSim(NAME);
         }
     }
 }
