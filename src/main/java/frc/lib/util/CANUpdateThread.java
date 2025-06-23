@@ -20,21 +20,20 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
 import com.ctre.phoenix6.StatusCode;
-import frc.lib.util.HandlableLaserCAN.ConfigurationStatus;
+import frc.lib.util.LaserCANConfigurator.ConfigurationStatus;
 
 public class CANUpdateThread {
     // Executor for retrying config operations asynchronously
     private BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, 5,
-        java.util.concurrent.TimeUnit.MILLISECONDS, queue);
+            java.util.concurrent.TimeUnit.MILLISECONDS, queue);
 
     /**
      * Attempts a CTRE action up to 5 times until it succeeds.
      *
      * @param action The status-returning operation to retry.
      */
-    public void CTRECheckErrorAndRetry(Supplier<StatusCode> action)
-    {
+    public void CTRECheckErrorAndRetry(Supplier<StatusCode> action) {
         threadPoolExecutor.submit(() -> {
             for (int i = 0; i < 5; i++) {
                 StatusCode result = action.get();
@@ -45,8 +44,7 @@ public class CANUpdateThread {
         });
     }
 
-    public void LaserCANCheckErrorAndRetry(Supplier<ConfigurationStatus> action)
-    {
+    public void LaserCANCheckErrorAndRetry(Supplier<ConfigurationStatus> action) {
         threadPoolExecutor.submit(() -> {
             for (int i = 0; i < 5; i++) {
                 ConfigurationStatus result = action.get();
