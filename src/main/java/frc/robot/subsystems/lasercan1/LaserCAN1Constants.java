@@ -7,9 +7,9 @@ package frc.robot.subsystems.lasercan1;
 import au.grapplerobotics.interfaces.LaserCanInterface.RangingMode;
 import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
 import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
-import frc.lib.io.distancesensor.DistanceSensor;
-import frc.lib.io.distancesensor.DistanceSensorLaserCAN;
-import frc.lib.io.distancesensor.DistanceSensorSim;
+import frc.lib.io.distancesensor.DistanceSensorIO;
+import frc.lib.io.distancesensor.DistanceSensorIOLaserCAN;
+import frc.lib.io.distancesensor.DistanceSensorIOSim;
 import frc.robot.Ports;
 import frc.robot.Robot;
 
@@ -21,13 +21,13 @@ public class LaserCAN1Constants {
     private final static RegionOfInterest ROI = new RegionOfInterest(8, 8, 4, 4);
     private final static TimingBudget TIMING_BUDGET = TimingBudget.TIMING_BUDGET_20MS;
 
-    public static DistanceSensor getDistanceSensorIO()
+    public static DistanceSensorIO getDistanceSensorIO()
     {
         if (Robot.isReal()) {
-            return new DistanceSensorLaserCAN(Ports.laserCAN1, NAME, RANGING_MODE, ROI,
+            return new DistanceSensorIOLaserCAN(Ports.laserCAN1, NAME, RANGING_MODE, ROI,
                 TIMING_BUDGET);
         } else {
-            return new DistanceSensorSim(NAME);
+            return new DistanceSensorIOSim(NAME);
         }
     }
 }

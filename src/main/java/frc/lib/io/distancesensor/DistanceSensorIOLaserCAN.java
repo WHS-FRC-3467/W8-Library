@@ -31,7 +31,7 @@ import lombok.Getter;
 /**
  * A distance sensor implementation that uses a LaserCAN
  */
-public class DistanceSensorLaserCAN implements DistanceSensor {
+public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
     @Getter
     private final String name;
     private final LaserCANConfigurator laserCAN;
@@ -42,22 +42,22 @@ public class DistanceSensorLaserCAN implements DistanceSensor {
     private final Alert disconnectedAlert;
 
     /**
-     * Constructs a new {@link DistanceSensorLaserCAN} with specified parameters and
+     * Constructs a new {@link DistanceSensorIOLaserCAN} with specified parameters and
      * configuration.
      *
-     * @param id               The CAN device ID and bus to which the sensor is
-     *                         connected.
-     * @param name             A human-readable name for the sensor instance.
-     * @param rangingMode      The ranging mode to configure on the sensor.
+     * @param id The CAN device ID and bus to which the sensor is connected.
+     * @param name A human-readable name for the sensor instance.
+     * @param rangingMode The ranging mode to configure on the sensor.
      * @param regionOfInterest The region of interest setting for the sensor.
-     * @param timingBudget     The timing budget setting that controls measurement
-     *                         speed/accuracy.
+     * @param timingBudget The timing budget setting that controls measurement speed/accuracy.
      */
-    public DistanceSensorLaserCAN(Device.CAN id, String name, RangingMode rangingMode,
-            RegionOfInterest regionOfInterest, TimingBudget timingBudget) {
+    public DistanceSensorIOLaserCAN(Device.CAN id, String name, RangingMode rangingMode,
+        RegionOfInterest regionOfInterest, TimingBudget timingBudget)
+    {
         this.name = name;
 
-        laserCANOnWrongBusAlert = new Alert("LaserCAN " + name + " must be wired to the RIO's CAN bus",
+        laserCANOnWrongBusAlert =
+            new Alert("LaserCAN " + name + " must be wired to the RIO's CAN bus",
                 AlertType.kError);
         disconnectedAlert = new Alert("LaserCAN " + name + " is not connected", AlertType.kError);
 
@@ -69,12 +69,13 @@ public class DistanceSensorLaserCAN implements DistanceSensor {
 
         updateThread.LaserCANCheckErrorAndRetry(() -> laserCAN.setRangingMode(rangingMode));
         updateThread
-                .LaserCANCheckErrorAndRetry(() -> laserCAN.setRegionOfInterest(regionOfInterest));
+            .LaserCANCheckErrorAndRetry(() -> laserCAN.setRegionOfInterest(regionOfInterest));
         updateThread.LaserCANCheckErrorAndRetry(() -> laserCAN.setTimingBudget(timingBudget));
     }
 
     @Override
-    public void updateInputs(DistanceSensorInputs inputs) {
+    public void updateInputs(DistanceSensorInputs inputs)
+    {
         Measurement measure = laserCAN.getMeasurement();
 
         if (measure == null) {

@@ -22,18 +22,18 @@ import lombok.Getter;
 /**
  * A simulated distance sensor implementation
  */
-public class DistanceSensorSim implements DistanceSensor {
+public class DistanceSensorIOSim implements DistanceSensorIO {
     @Getter
     private final String name;
 
     private final LoggedTunableNumber distance;
 
     /**
-     * Constructs a new {@link DistanceSensorSim} with specified parameters and configuration.
+     * Constructs a new {@link DistanceSensorIOSim} with specified parameters and configuration.
      *
      * @param name A human-readable name for the sensor instance.
      */
-    public DistanceSensorSim(String name)
+    public DistanceSensorIOSim(String name)
     {
         this.name = name;
 
