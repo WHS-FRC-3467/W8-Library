@@ -34,14 +34,17 @@ import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import frc.lib.util.Device;
+import lombok.Getter;
 import frc.lib.util.CANUpdateThread;
 
 /**
- * Abstraction for a CTRE TalonFX motor implementing the {@link Motor} interface. Wraps motor setup,
- * control modes, telemetry polling, and error handling.
+ * Abstraction for a CTRE TalonFX motor implementing the {@link MotorIO} interface. Wraps motor
+ * setup, control modes, telemetry polling, and error handling.
  */
-public class MotorTalonFX implements Motor {
+public class MotorIOTalonFX implements MotorIO {
+    @Getter
     private final Device.CAN id;
+    @Getter
     private final TalonFX motor;
 
     // Cached signals for performance and easier access
@@ -75,7 +78,7 @@ public class MotorTalonFX implements Motor {
      * @param id CAN bus ID and bus name.
      * @param config Configuration to apply to the motor.
      */
-    public MotorTalonFX(Device.CAN id, TalonFXConfiguration config)
+    public MotorIOTalonFX(Device.CAN id, TalonFXConfiguration config)
     {
         this.id = id;
         motor = new TalonFX(id.id(), id.bus());
@@ -206,17 +209,6 @@ public class MotorTalonFX implements Motor {
     }
 
     /**
-     * Returns the motor's CAN device ID.
-     *
-     * @return The CANDevice representing this motor's ID and bus name.
-     */
-    @Override
-    public Device.CAN getID()
-    {
-        return id;
-    }
-
-    /**
      * Sets the motor to coast mode.
      */
     @Override
@@ -241,10 +233,10 @@ public class MotorTalonFX implements Motor {
      * @param oppose Whether or not to oppose the main motor.
      */
     @Override
-    public void follow(Motor followMotor, boolean oppose)
+    public void follow(MotorIO followMotor, boolean oppose)
     {
         motor.setControl(
-            followControl.withMasterID(followMotor.getID().id()).withOpposeMasterDirection(oppose));
+            followControl.withMasterID(followMotor.getId().id()).withOpposeMasterDirection(oppose));
     }
 
     /**

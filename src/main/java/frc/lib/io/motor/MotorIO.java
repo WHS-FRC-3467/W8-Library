@@ -37,7 +37,7 @@ import frc.lib.util.Device;
  * Standardized interface for motor controllers used in FRC. Supports multiple control modes,
  * telemetry reporting, and follower configuration.
  */
-public interface Motor {
+public interface MotorIO {
 
     public enum PIDSlot {
         SLOT_1,
@@ -76,9 +76,19 @@ public interface Motor {
      *
      * @return The CANDevice representing this motor's ID and bus name.
      */
-    public default Device.CAN getID()
+    public default Device.CAN getId()
     {
         return new Device.CAN(0, "");
+    }
+
+    /**
+     * Getter for the name of the motor
+     * 
+     * @return The name of the motor
+     */
+    public default String getName()
+    {
+        return "";
     }
 
     /**
@@ -108,7 +118,7 @@ public interface Motor {
      * @param followMotor The motor to follow.
      * @param oppose Whether or not to oppose the main motor.
      */
-    public default void follow(Motor motor, boolean oppose)
+    public default void follow(MotorIO motor, boolean oppose)
     {}
 
     /**
