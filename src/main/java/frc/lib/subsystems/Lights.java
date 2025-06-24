@@ -4,18 +4,15 @@
 
 package frc.lib.subsystems;
 
-import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.controls.ControlRequest;
 
 import frc.lib.io.lights.LightsIO;
-import frc.lib.io.lights.LightsInputsAutoLogged;
 
 /**
  * Class for simplified Lights implementation
  */
 public class Lights {
     private final LightsIO io;
-    private final LightsInputsAutoLogged inputs = new LightsInputsAutoLogged();
 
     /**
      * Constructs Lights.
@@ -25,13 +22,6 @@ public class Lights {
     public Lights(LightsIO io)
     {
         this.io = io;
-    }
-
-    /** Call this method periodically */
-    public void periodic()
-    {
-        io.updateInputs(inputs);
-        Logger.processInputs(io.getName(), inputs);
     }
 
     /**

@@ -17,12 +17,6 @@ public class LEDs extends SubsystemBase {
         lights = new Lights(io);
     }
 
-    @Override
-    public void periodic()
-    {
-        lights.periodic();
-    }
-
     public Command runDisabledAnimation()
     {
         return this.startEnd(

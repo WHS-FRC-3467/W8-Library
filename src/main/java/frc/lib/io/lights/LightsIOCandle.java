@@ -25,13 +25,6 @@ public class LightsIOCandle implements LightsIO {
     }
 
     @Override
-    public void updateInputs(LightsInputs inputs)
-    {
-        inputs.connected = candle.isConnected();
-        inputs.request = candle.getAppliedControl();
-    }
-
-    @Override
     public void setAnimation(ControlRequest request)
     {
         candle.setControl(request);
