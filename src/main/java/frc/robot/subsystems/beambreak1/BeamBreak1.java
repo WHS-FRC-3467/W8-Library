@@ -13,12 +13,29 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.util;
+package frc.robot.subsystems.beambreak1;
 
-public sealed interface Device {
-    record CAN(int id, String bus) implements Device {
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.lib.io.beambreak.BeamBreakIO;
+import frc.lib.subsystems.BeamBreak;
+
+public class BeamBreak1 extends SubsystemBase {
+
+    private final BeamBreak beamBreak;
+
+    public final Trigger broken;
+
+    public BeamBreak1(BeamBreakIO io)
+    {
+        beamBreak = new BeamBreak(io);
+
+        broken = new Trigger(beamBreak::isBroken);
     }
 
-    public record DIO(int id) implements Device {
+    @Override
+    public void periodic()
+    {
+        beamBreak.periodic();
     }
 }

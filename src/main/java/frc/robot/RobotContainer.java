@@ -25,6 +25,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.commands.DriveCommands;
+import frc.robot.subsystems.beambreak1.BeamBreak1;
+import frc.robot.subsystems.beambreak1.BeamBreak1Constants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.GyroIO;
@@ -49,6 +51,7 @@ public class RobotContainer {
     private final Drive drive;
     private final LEDs leds;
     private final LaserCAN1 laserCAN1;
+    private final BeamBreak1 beamBreak1;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -73,6 +76,8 @@ public class RobotContainer {
 
                 leds = new LEDs(LEDsConstants.getLightsIOReal());
                 laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal());
+                beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
+
                 break;
 
             case SIM:
@@ -86,6 +91,9 @@ public class RobotContainer {
 
                 leds = new LEDs(LEDsConstants.getLightsIOSim());
                 laserCAN1 = new LaserCAN1(LaserCAN1Constants.getSim());
+                beamBreak1 = new BeamBreak1(
+                    BeamBreak1Constants.getSim());
+
                 break;
 
             default:
@@ -99,6 +107,8 @@ public class RobotContainer {
 
                 leds = new LEDs(LEDsConstants.getLightsIOReplay());
                 laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReplay());
+                beamBreak1 = new BeamBreak1(
+                    BeamBreak1Constants.getReplay());
 
                 break;
         }

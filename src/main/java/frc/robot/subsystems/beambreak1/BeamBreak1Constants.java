@@ -13,12 +13,29 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.util;
+package frc.robot.subsystems.beambreak1;
 
-public sealed interface Device {
-    record CAN(int id, String bus) implements Device {
+import frc.lib.io.beambreak.BeamBreakIO;
+import frc.lib.io.beambreak.BeamBreakIODIO;
+import frc.lib.io.beambreak.BeamBreakIOSim;
+import frc.robot.Ports;
+
+public class BeamBreak1Constants {
+
+    public final static String NAME = "Beam Break #1";
+
+    public static BeamBreakIODIO getReal()
+    {
+        return new BeamBreakIODIO(Ports.diobeambreak, NAME);
     }
 
-    public record DIO(int id) implements Device {
+    public static BeamBreakIOSim getSim()
+    {
+        return new BeamBreakIOSim(NAME);
+    }
+
+    public static BeamBreakIO getReplay()
+    {
+        return new BeamBreakIO() {};
     }
 }
