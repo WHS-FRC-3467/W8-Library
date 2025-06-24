@@ -17,6 +17,7 @@ package frc.lib.io.lights;
 
 import com.ctre.phoenix6.controls.ControlRequest;
 
+/** Standardized interface for lights used in FRC. */
 public interface LightsIO {
 
     /**
