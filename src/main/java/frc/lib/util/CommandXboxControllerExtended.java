@@ -11,7 +11,8 @@ public class CommandXboxControllerExtended extends CommandXboxController {
     private GenericHID hid;
     private double deadband = 0.0;
 
-    public CommandXboxControllerExtended(int port) {
+    public CommandXboxControllerExtended(int port)
+    {
         super(port);
         hid = this.getHID();
     }
@@ -22,7 +23,8 @@ public class CommandXboxControllerExtended extends CommandXboxController {
      * @param deadband The percent deadband to apply
      * @return this
      */
-    public CommandXboxControllerExtended withDeadband(double deadband) {
+    public CommandXboxControllerExtended withDeadband(double deadband)
+    {
         this.deadband = deadband;
         return this;
     }
@@ -30,31 +32,37 @@ public class CommandXboxControllerExtended extends CommandXboxController {
     /**
      * Rumble controller until command ends
      * 
-     * @param side      Which motor to rumble
+     * @param side Which motor to rumble
      * @param intensity Percentage for rumble intensity
      * @return Command to rumble the controller
      */
-    public Command rumble(RumbleType side, double intensity) {
-        return Commands.startEnd(() -> hid.setRumble(side, intensity), () -> hid.setRumble(side, 0.0));
+    public Command rumble(RumbleType side, double intensity)
+    {
+        return Commands.startEnd(() -> hid.setRumble(side, intensity),
+            () -> hid.setRumble(side, 0.0));
     }
 
     @Override
-    public double getLeftX() {
+    public double getLeftX()
+    {
         return MathUtil.applyDeadband(super.getLeftX(), deadband);
     }
 
     @Override
-    public double getLeftY() {
+    public double getLeftY()
+    {
         return MathUtil.applyDeadband(super.getLeftY(), deadband);
     }
 
     @Override
-    public double getRightX() {
+    public double getRightX()
+    {
         return MathUtil.applyDeadband(super.getRightX(), deadband);
     }
 
     @Override
-    public double getRightY() {
+    public double getRightY()
+    {
         return MathUtil.applyDeadband(super.getRightY(), deadband);
     }
 }
