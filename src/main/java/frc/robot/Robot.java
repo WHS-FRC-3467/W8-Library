@@ -1,17 +1,16 @@
-/* Copyright (C) 2025 Windham Windup
+/*
+ * Copyright (C) 2025 Windham Windup
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
  */
 
 package frc.robot;
@@ -19,9 +18,12 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
+
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.drive.DriveConstants;
+
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -30,19 +32,17 @@ import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 /**
- * The VM is configured to automatically run this class, and to call the
- * functions corresponding to
- * each mode, as described in the TimedRobot documentation. If you change the
- * name of this class or
- * the package after creating this project, you must also update the
- * build.gradle file in the
+ * The VM is configured to automatically run this class, and to call the functions corresponding to
+ * each mode, as described in the TimedRobot documentation. If you change the name of this class or
+ * the package after creating this project, you must also update the build.gradle file in the
  * project.
  */
 public class Robot extends LoggedRobot {
     private Command autonomousCommand;
     private RobotContainer robotContainer;
 
-    public Robot() {
+    public Robot()
+    {
         // Record metadata
         Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
         Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
@@ -79,7 +79,8 @@ public class Robot extends LoggedRobot {
                 setUseTiming(false); // Run as fast as possible
                 String logPath = LogFileUtil.findReplayLog();
                 Logger.setReplaySource(new WPILOGReader(logPath));
-                Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+                Logger
+                    .addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
                 break;
         }
 
@@ -88,27 +89,30 @@ public class Robot extends LoggedRobot {
 
         // Check for valid swerve config
         var modules = new SwerveModuleConstants[] {
-                TunerConstants.FrontLeft,
-                TunerConstants.FrontRight,
-                TunerConstants.BackLeft,
-                TunerConstants.BackRight
+                DriveConstants.FrontLeft,
+                DriveConstants.FrontRight,
+                DriveConstants.BackLeft,
+                DriveConstants.BackRight
         };
         for (var constants : modules) {
             if (constants.DriveMotorType != DriveMotorArrangement.TalonFX_Integrated
-                    || constants.SteerMotorType != SteerMotorArrangement.TalonFX_Integrated) {
+                || constants.SteerMotorType != SteerMotorArrangement.TalonFX_Integrated) {
                 throw new RuntimeException(
-                        "You are using an unsupported swerve configuration, which this template does not support without manual customization. The 2025 release of Phoenix supports some swerve configurations which were not available during 2025 beta testing, preventing any development and support from the AdvantageKit developers.");
+                    "You are using an unsupported swerve configuration, which this template does not support without manual customization. The 2025 release of Phoenix supports some swerve configurations which were not available during 2025 beta testing, preventing any development and support from the AdvantageKit developers.");
             }
         }
 
         // Instantiate our RobotContainer. This will perform all our button bindings,
         // and put our autonomous chooser on the dashboard.
         robotContainer = new RobotContainer();
+
+        DriverStation.silenceJoystickConnectionWarning(!Robot.isReal());
     }
 
     /** This function is called periodically during all modes. */
     @Override
-    public void robotPeriodic() {
+    public void robotPeriodic()
+    {
         // Optionally switch the thread to high priority to improve loop
         // timing (see the template project documentation for details)
         // Threads.setCurrentThreadPriority(true, 99);
@@ -126,20 +130,20 @@ public class Robot extends LoggedRobot {
 
     /** This function is called once when the robot is disabled. */
     @Override
-    public void disabledInit() {
-    }
+    public void disabledInit()
+    {}
 
     /** This function is called periodically when disabled. */
     @Override
-    public void disabledPeriodic() {
-    }
+    public void disabledPeriodic()
+    {}
 
     /**
-     * This autonomous runs the autonomous command selected by your
-     * {@link RobotContainer} class.
+     * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
      */
     @Override
-    public void autonomousInit() {
+    public void autonomousInit()
+    {
         autonomousCommand = robotContainer.getAutonomousCommand();
 
         // schedule the autonomous command (example)
@@ -150,12 +154,13 @@ public class Robot extends LoggedRobot {
 
     /** This function is called periodically during autonomous. */
     @Override
-    public void autonomousPeriodic() {
-    }
+    public void autonomousPeriodic()
+    {}
 
     /** This function is called once when teleop is enabled. */
     @Override
-    public void teleopInit() {
+    public void teleopInit()
+    {
         // This makes sure that the autonomous stops running when
         // teleop starts running. If you want the autonomous to
         // continue until interrupted by another command, remove
@@ -167,28 +172,29 @@ public class Robot extends LoggedRobot {
 
     /** This function is called periodically during operator control. */
     @Override
-    public void teleopPeriodic() {
-    }
+    public void teleopPeriodic()
+    {}
 
     /** This function is called once when test mode is enabled. */
     @Override
-    public void testInit() {
+    public void testInit()
+    {
         // Cancels all running commands at the start of test mode.
         CommandScheduler.getInstance().cancelAll();
     }
 
     /** This function is called periodically during test mode. */
     @Override
-    public void testPeriodic() {
-    }
+    public void testPeriodic()
+    {}
 
     /** This function is called once when the robot is first started up. */
     @Override
-    public void simulationInit() {
-    }
+    public void simulationInit()
+    {}
 
     /** This function is called periodically whilst in simulation. */
     @Override
-    public void simulationPeriodic() {
-    }
+    public void simulationPeriodic()
+    {}
 }

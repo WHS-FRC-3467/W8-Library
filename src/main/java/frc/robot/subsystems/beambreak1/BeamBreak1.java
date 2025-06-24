@@ -13,19 +13,29 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.util;
+package frc.robot.subsystems.beambreak1;
 
-import com.ctre.phoenix6.StatusCode;
-import java.util.function.Supplier;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.lib.io.beambreak.BeamBreakIO;
+import frc.lib.subsystems.BeamBreak;
 
-public class PhoenixUtil {
-    /** Attempts to run the command until no error is produced. */
-    public static void tryUntilOk(int maxAttempts, Supplier<StatusCode> command)
+public class BeamBreak1 extends SubsystemBase {
+
+    private final BeamBreak beamBreak;
+
+    public final Trigger broken;
+
+    public BeamBreak1(BeamBreakIO io)
     {
-        for (int i = 0; i < maxAttempts; i++) {
-            var error = command.get();
-            if (error.isOK())
-                break;
-        }
+        beamBreak = new BeamBreak(io);
+
+        broken = new Trigger(beamBreak::isBroken);
+    }
+
+    @Override
+    public void periodic()
+    {
+        beamBreak.periodic();
     }
 }

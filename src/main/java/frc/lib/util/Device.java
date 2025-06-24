@@ -13,19 +13,12 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.util;
+package frc.lib.util;
 
-import com.ctre.phoenix6.StatusCode;
-import java.util.function.Supplier;
+public sealed interface Device {
+    record CAN(int id, String bus) implements Device {
+    }
 
-public class PhoenixUtil {
-    /** Attempts to run the command until no error is produced. */
-    public static void tryUntilOk(int maxAttempts, Supplier<StatusCode> command)
-    {
-        for (int i = 0; i < maxAttempts; i++) {
-            var error = command.get();
-            if (error.isOK())
-                break;
-        }
+    public record DIO(int id) implements Device {
     }
 }

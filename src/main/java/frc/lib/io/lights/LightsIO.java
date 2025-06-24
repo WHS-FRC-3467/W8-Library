@@ -13,19 +13,28 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.util;
+package frc.lib.io.lights;
 
-import com.ctre.phoenix6.StatusCode;
-import java.util.function.Supplier;
+import com.ctre.phoenix6.controls.ControlRequest;
 
-public class PhoenixUtil {
-    /** Attempts to run the command until no error is produced. */
-    public static void tryUntilOk(int maxAttempts, Supplier<StatusCode> command)
+/** Standardized interface for lights used in FRC. */
+public interface LightsIO {
+
+    /**
+     * Getter for the name of the lights
+     * 
+     * @return The name of the lights
+     */
+    public default String getName()
     {
-        for (int i = 0; i < maxAttempts; i++) {
-            var error = command.get();
-            if (error.isOK())
-                break;
-        }
+        return "";
     }
+
+    /**
+     * Passes ControlRequest to IO layer
+     *
+     * @param request {@link ControlRequest}
+     */
+    public default void setAnimation(ControlRequest request)
+    {}
 }

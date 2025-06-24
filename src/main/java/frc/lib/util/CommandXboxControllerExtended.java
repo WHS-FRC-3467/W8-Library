@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2025 Windham Windup
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
+ */
+
 package frc.lib.util;
 
 import edu.wpi.first.math.MathUtil;
@@ -11,7 +26,8 @@ public class CommandXboxControllerExtended extends CommandXboxController {
     private GenericHID hid;
     private double deadband = 0.0;
 
-    public CommandXboxControllerExtended(int port) {
+    public CommandXboxControllerExtended(int port)
+    {
         super(port);
         hid = this.getHID();
     }
@@ -22,7 +38,8 @@ public class CommandXboxControllerExtended extends CommandXboxController {
      * @param deadband The percent deadband to apply
      * @return this
      */
-    public CommandXboxControllerExtended withDeadband(double deadband) {
+    public CommandXboxControllerExtended withDeadband(double deadband)
+    {
         this.deadband = deadband;
         return this;
     }
@@ -30,31 +47,37 @@ public class CommandXboxControllerExtended extends CommandXboxController {
     /**
      * Rumble controller until command ends
      * 
-     * @param side      Which motor to rumble
+     * @param side Which motor to rumble
      * @param intensity Percentage for rumble intensity
      * @return Command to rumble the controller
      */
-    public Command rumble(RumbleType side, double intensity) {
-        return Commands.startEnd(() -> hid.setRumble(side, intensity), () -> hid.setRumble(side, 0.0));
+    public Command rumble(RumbleType side, double intensity)
+    {
+        return Commands.startEnd(() -> hid.setRumble(side, intensity),
+            () -> hid.setRumble(side, 0.0));
     }
 
     @Override
-    public double getLeftX() {
+    public double getLeftX()
+    {
         return MathUtil.applyDeadband(super.getLeftX(), deadband);
     }
 
     @Override
-    public double getLeftY() {
+    public double getLeftY()
+    {
         return MathUtil.applyDeadband(super.getLeftY(), deadband);
     }
 
     @Override
-    public double getRightX() {
+    public double getRightX()
+    {
         return MathUtil.applyDeadband(super.getRightX(), deadband);
     }
 
     @Override
-    public double getRightY() {
+    public double getRightY()
+    {
         return MathUtil.applyDeadband(super.getRightY(), deadband);
     }
 }

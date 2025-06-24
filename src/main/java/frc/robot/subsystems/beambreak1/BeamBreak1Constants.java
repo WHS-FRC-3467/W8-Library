@@ -13,19 +13,29 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.util;
+package frc.robot.subsystems.beambreak1;
 
-import com.ctre.phoenix6.StatusCode;
-import java.util.function.Supplier;
+import frc.lib.io.beambreak.BeamBreakIO;
+import frc.lib.io.beambreak.BeamBreakIODIO;
+import frc.lib.io.beambreak.BeamBreakIOSim;
+import frc.robot.Ports;
 
-public class PhoenixUtil {
-    /** Attempts to run the command until no error is produced. */
-    public static void tryUntilOk(int maxAttempts, Supplier<StatusCode> command)
+public class BeamBreak1Constants {
+
+    public final static String NAME = "Beam Break #1";
+
+    public static BeamBreakIODIO getReal()
     {
-        for (int i = 0; i < maxAttempts; i++) {
-            var error = command.get();
-            if (error.isOK())
-                break;
-        }
+        return new BeamBreakIODIO(Ports.diobeambreak, NAME);
+    }
+
+    public static BeamBreakIOSim getSim()
+    {
+        return new BeamBreakIOSim(NAME);
+    }
+
+    public static BeamBreakIO getReplay()
+    {
+        return new BeamBreakIO() {};
     }
 }
