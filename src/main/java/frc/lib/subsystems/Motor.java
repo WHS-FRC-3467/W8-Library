@@ -68,17 +68,6 @@ public class Motor {
     }
 
     /**
-     * Follows the specified motor using CAN follower mode.
-     *
-     * @param followMotor The motor to follow.
-     * @param oppose Whether or not to oppose the main motor.
-     */
-    public void follow(MotorIO motor, boolean oppose)
-    {
-        io.follow(motor, oppose);
-    }
-
-    /**
      * Runs the motor using direct voltage control.
      *
      * @param voltage Desired voltage output.

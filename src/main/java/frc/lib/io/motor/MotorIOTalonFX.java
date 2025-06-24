@@ -33,6 +33,8 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.lib.util.Device;
 import lombok.Getter;
 import frc.lib.util.CANUpdateThread;
@@ -43,9 +45,10 @@ import frc.lib.util.CANUpdateThread;
  */
 public class MotorIOTalonFX implements MotorIO {
     @Getter
-    private final Device.CAN id;
-    @Getter
+    private final String name;
+
     private final TalonFX motor;
+    private final TalonFX[] followers;
 
     // Cached signals for performance and easier access
     private final StatusSignal<Angle> position;
@@ -61,7 +64,6 @@ public class MotorIOTalonFX implements MotorIO {
     // Preconfigured control objects reused for efficiency
     private final CoastOut coastControl = new CoastOut();
     private final StaticBrake brakeControl = new StaticBrake();
-    private final Follower followControl = new Follower(0, false);
     private final VoltageOut voltageControl = new VoltageOut(0).withEnableFOC(true);
     private final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0);
     private final DutyCycleOut dutyCycleControl = new DutyCycleOut(0).withEnableFOC(true);
@@ -72,18 +74,42 @@ public class MotorIOTalonFX implements MotorIO {
 
     private final CANUpdateThread updateThread = new CANUpdateThread();
 
+    private final Alert[] followerOnWrongBusAlert;
+
     /**
      * Constructs and initializes a TalonFX motor.
      *
-     * @param id CAN bus ID and bus name.
-     * @param config Configuration to apply to the motor.
+     * @param name The name of the motor(s)
+     * @param config Configuration to apply to the motor(s)
+     * @param main CAN ID of the main motor
+     * @param followers
      */
-    public MotorIOTalonFX(Device.CAN id, TalonFXConfiguration config)
+    public MotorIOTalonFX(String name, TalonFXConfiguration config, Device.CAN main,
+        Device.CAN... followers)
     {
-        this.id = id;
-        motor = new TalonFX(id.id(), id.bus());
+        this.name = name;
 
+        motor = new TalonFX(main.id(), main.bus());
         updateThread.CTRECheckErrorAndRetry(() -> motor.getConfigurator().apply(config));
+
+        followerOnWrongBusAlert = new Alert[followers.length];
+        this.followers = new TalonFX[followers.length];
+        for (int i = 0; i < followers.length; i++) {
+            Device.CAN id = followers[i];
+
+            if (id.bus() != main.bus()) {
+                followerOnWrongBusAlert[i] =
+                    new Alert(name + " follower " + i + " is on a different CAN bus than main!",
+                        AlertType.kError);
+                followerOnWrongBusAlert[i].set(true);
+            }
+
+            this.followers[i] = new TalonFX(id.id(), id.bus());
+        }
+
+        for (TalonFX follower : this.followers) {
+            updateThread.CTRECheckErrorAndRetry(() -> follower.getConfigurator().apply(config));
+        }
 
         position = motor.getPosition();
         velocity = motor.getVelocity();
@@ -224,19 +250,6 @@ public class MotorIOTalonFX implements MotorIO {
     public void runBrake()
     {
         motor.setControl(brakeControl);
-    }
-
-    /**
-     * Follows the specified motor using CAN follower mode.
-     *
-     * @param followMotor The motor to follow.
-     * @param oppose Whether or not to oppose the main motor.
-     */
-    @Override
-    public void follow(MotorIO followMotor, boolean oppose)
-    {
-        motor.setControl(
-            followControl.withMasterID(followMotor.getId().id()).withOpposeMasterDirection(oppose));
     }
 
     /**

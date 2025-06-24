@@ -31,11 +31,10 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import frc.lib.util.Device;
 
 /**
- * Standardized interface for motor controllers used in FRC. Supports multiple control modes,
- * telemetry reporting, and follower configuration.
+ * Standardized interface for motor controllers used in FRC. Supports multiple control modes and
+ * telemetry reporting.
  */
 public interface MotorIO {
 
@@ -72,16 +71,6 @@ public interface MotorIO {
     }
 
     /**
-     * Returns the motor's CAN device ID.
-     *
-     * @return The CANDevice representing this motor's ID and bus name.
-     */
-    public default Device.CAN getId()
-    {
-        return new Device.CAN(0, "");
-    }
-
-    /**
      * Getter for the name of the motor
      * 
      * @return The name of the motor
@@ -110,15 +99,6 @@ public interface MotorIO {
      * Sets the motor to brake mode.
      */
     public default void runBrake()
-    {}
-
-    /**
-     * Follows the specified motor using CAN follower mode.
-     *
-     * @param followMotor The motor to follow.
-     * @param oppose Whether or not to oppose the main motor.
-     */
-    public default void follow(MotorIO motor, boolean oppose)
     {}
 
     /**
