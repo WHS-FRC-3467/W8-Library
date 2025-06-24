@@ -25,13 +25,15 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.commands.DriveCommands;
-import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.leds.LEDs;
+import frc.robot.subsystems.leds.LEDsConstants;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -43,6 +45,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
     // Subsystems
     private final Drive drive;
+    private final LEDs leds;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -60,20 +63,24 @@ public class RobotContainer {
                 // Real robot, instantiate hardware IO implementations
                 drive = new Drive(
                     new GyroIOPigeon2(),
-                    new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                    new ModuleIOTalonFX(TunerConstants.FrontRight),
-                    new ModuleIOTalonFX(TunerConstants.BackLeft),
-                    new ModuleIOTalonFX(TunerConstants.BackRight));
+                    new ModuleIOTalonFX(DriveConstants.FrontLeft),
+                    new ModuleIOTalonFX(DriveConstants.FrontRight),
+                    new ModuleIOTalonFX(DriveConstants.BackLeft),
+                    new ModuleIOTalonFX(DriveConstants.BackRight));
+
+                leds = new LEDs(LEDsConstants.getLightsIOReal());
                 break;
 
             case SIM:
                 // Sim robot, instantiate physics sim IO implementations
                 drive = new Drive(
                     new GyroIO() {},
-                    new ModuleIOSim(TunerConstants.FrontLeft),
-                    new ModuleIOSim(TunerConstants.FrontRight),
-                    new ModuleIOSim(TunerConstants.BackLeft),
-                    new ModuleIOSim(TunerConstants.BackRight));
+                    new ModuleIOSim(DriveConstants.FrontLeft),
+                    new ModuleIOSim(DriveConstants.FrontRight),
+                    new ModuleIOSim(DriveConstants.BackLeft),
+                    new ModuleIOSim(DriveConstants.BackRight));
+
+                leds = new LEDs(LEDsConstants.getLightsIOSim());
                 break;
 
             default:
@@ -84,6 +91,8 @@ public class RobotContainer {
                     new ModuleIO() {},
                     new ModuleIO() {},
                     new ModuleIO() {});
+
+                leds = new LEDs(LEDsConstants.getLightsIOReplay());
                 break;
         }
 
