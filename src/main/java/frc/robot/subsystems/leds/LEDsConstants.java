@@ -32,6 +32,7 @@ import com.ctre.phoenix6.signals.StripTypeValue;
 import com.ctre.phoenix6.signals.VBatOutputModeValue;
 
 import edu.wpi.first.wpilibj.util.Color;
+import frc.lib.io.lights.LightsIO;
 import frc.lib.io.lights.LightsIOCandle;
 import frc.lib.io.lights.LightsIOSim;
 import frc.robot.Ports;
@@ -60,6 +61,11 @@ public class LEDsConstants {
     public static final LightsIOSim getLightsIOSim()
     {
         return new LightsIOSim(NAME);
+    }
+
+    public static final LightsIO getLightsIOReplay()
+    {
+        return new LightsIO() {};
     }
 
     public record LEDSegment(int startIndex, int endIndex, int animationSlot) {
