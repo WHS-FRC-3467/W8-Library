@@ -1,17 +1,16 @@
-/* Copyright (C) 2025 Windham Windup
+/*
+ * Copyright (C) 2025 Windham Windup
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
  */
 
 package frc.robot.subsystems.vision;
@@ -35,11 +34,12 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     /**
      * Creates a new VisionIOPhotonVisionSim.
      *
-     * @param name         The name of the camera.
+     * @param name The name of the camera.
      * @param poseSupplier Supplier for the robot pose to use in simulation.
      */
     public VisionIOPhotonVisionSim(
-            String name, Transform3d robotToCamera, Supplier<Pose2d> poseSupplier) {
+        String name, Transform3d robotToCamera, Supplier<Pose2d> poseSupplier)
+    {
         super(name, robotToCamera);
         this.poseSupplier = poseSupplier;
 
@@ -56,7 +56,8 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     }
 
     @Override
-    public void updateInputs(VisionIOInputs inputs) {
+    public void updateInputs(VisionIOInputs inputs)
+    {
         visionSim.update(poseSupplier.get());
         super.updateInputs(inputs);
     }
