@@ -9,10 +9,6 @@ public class Ports {
      */
 
     public static final Device.CAN laserCAN1 = new CAN(0, "rio");
-    // public static final CanDeviceId ELEVATOR_MAIN = new CanDeviceId(22, "rio");
-    // // Top Kraken
-    // public static final CanDeviceId ELEVATOR_FOLLOWER = new CanDeviceId(23,
-    // "rio"); // Bottom
-    // Kraken
+    public static final Device.CAN lights = new CAN(1, "rio");
 
 }
