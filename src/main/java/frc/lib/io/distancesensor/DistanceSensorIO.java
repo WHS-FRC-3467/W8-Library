@@ -19,7 +19,7 @@ import edu.wpi.first.units.measure.Distance;
 import org.littletonrobotics.junction.AutoLog;
 
 /** Standardized interface for distance sensors used in FRC. */
-public interface DistanceSensor {
+public interface DistanceSensorIO {
 
     @AutoLog
     abstract class DistanceSensorInputs {

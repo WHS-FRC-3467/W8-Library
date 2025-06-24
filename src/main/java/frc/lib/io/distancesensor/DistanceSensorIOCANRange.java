@@ -27,7 +27,7 @@ import lombok.Getter;
 /**
  * A distance sensor implementation that uses a CANRange
  */
-public class DistanceSensorCANRange implements DistanceSensor {
+public class DistanceSensorIOCANRange implements DistanceSensorIO {
     @Getter
     private final String name;
     private final CANrange CANRange;
@@ -38,14 +38,14 @@ public class DistanceSensorCANRange implements DistanceSensor {
     private final StatusSignal<Double> ambientSignal;
 
     /**
-     * Constructs a {@link DistanceSensorCANRange} object with the specified CAN ID, name, and
+     * Constructs a {@link DistanceSensorIOCANRange} object with the specified CAN ID, name, and
      * configuration.
      *
      * @param id The CANDevice identifying the bus and device ID for this sensor.
      * @param name A human-readable name for this sensor instance.
      * @param config The CANrangeConfiguration to apply to the sensor upon initialization.
      */
-    public DistanceSensorCANRange(Device.CAN id, String name, CANrangeConfiguration config)
+    public DistanceSensorIOCANRange(Device.CAN id, String name, CANrangeConfiguration config)
     {
         this.name = name;
 

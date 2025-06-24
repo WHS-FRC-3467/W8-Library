@@ -20,7 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
 import com.ctre.phoenix6.StatusCode;
-import frc.lib.util.HandlableLaserCAN.ConfigurationStatus;
+import frc.lib.util.LaserCANConfigurator.ConfigurationStatus;
 
 public class CANUpdateThread {
     // Executor for retrying config operations asynchronously

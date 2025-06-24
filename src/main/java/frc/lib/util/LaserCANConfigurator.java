@@ -22,7 +22,7 @@ import au.grapplerobotics.interfaces.LaserCanInterface.RangingMode;
 import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
 import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
 
-public class HandlableLaserCAN implements AutoCloseable {
+public class LaserCANConfigurator implements AutoCloseable {
     public enum ConfigurationStatus {
         SUCCESS,
         FAILURE;
@@ -30,7 +30,7 @@ public class HandlableLaserCAN implements AutoCloseable {
 
     private final LaserCan laserCAN;
 
-    public HandlableLaserCAN(int can_id)
+    public LaserCANConfigurator(int can_id)
     {
         laserCAN = new LaserCan(can_id);
     }

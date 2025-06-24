@@ -32,6 +32,8 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.lasercan1.LaserCAN1;
+import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -43,6 +45,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
     // Subsystems
     private final Drive drive;
+    private final LaserCAN1 laserCAN1;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -64,6 +67,8 @@ public class RobotContainer {
                     new ModuleIOTalonFX(DriveConstants.FrontRight),
                     new ModuleIOTalonFX(DriveConstants.BackLeft),
                     new ModuleIOTalonFX(DriveConstants.BackRight));
+
+                laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal());
                 break;
 
             case SIM:
@@ -74,6 +79,8 @@ public class RobotContainer {
                     new ModuleIOSim(DriveConstants.FrontRight),
                     new ModuleIOSim(DriveConstants.BackLeft),
                     new ModuleIOSim(DriveConstants.BackRight));
+
+                laserCAN1 = new LaserCAN1(LaserCAN1Constants.getSim());
                 break;
 
             default:
@@ -84,6 +91,8 @@ public class RobotContainer {
                     new ModuleIO() {},
                     new ModuleIO() {},
                     new ModuleIO() {});
+
+                laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReplay());
                 break;
         }
 

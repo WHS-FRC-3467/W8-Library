@@ -25,16 +25,16 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.lib.util.Device;
 import frc.lib.util.CANUpdateThread;
-import frc.lib.util.HandlableLaserCAN;
+import frc.lib.util.LaserCANConfigurator;
 import lombok.Getter;
 
 /**
  * A distance sensor implementation that uses a LaserCAN
  */
-public class DistanceSensorLaserCAN implements DistanceSensor {
+public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
     @Getter
     private final String name;
-    private final HandlableLaserCAN laserCAN;
+    private final LaserCANConfigurator laserCAN;
 
     private final CANUpdateThread updateThread = new CANUpdateThread();
 
@@ -42,7 +42,8 @@ public class DistanceSensorLaserCAN implements DistanceSensor {
     private final Alert disconnectedAlert;
 
     /**
-     * Constructs a new {@link DistanceSensorLaserCAN} with specified parameters and configuration.
+     * Constructs a new {@link DistanceSensorIOLaserCAN} with specified parameters and
+     * configuration.
      *
      * @param id The CAN device ID and bus to which the sensor is connected.
      * @param name A human-readable name for the sensor instance.
@@ -50,20 +51,21 @@ public class DistanceSensorLaserCAN implements DistanceSensor {
      * @param regionOfInterest The region of interest setting for the sensor.
      * @param timingBudget The timing budget setting that controls measurement speed/accuracy.
      */
-    public DistanceSensorLaserCAN(Device.CAN id, String name, RangingMode rangingMode,
+    public DistanceSensorIOLaserCAN(Device.CAN id, String name, RangingMode rangingMode,
         RegionOfInterest regionOfInterest, TimingBudget timingBudget)
     {
         this.name = name;
 
         laserCANOnWrongBusAlert =
-            new Alert("LaserCAN " + name + " must be wired to the RIO's CAN bus", AlertType.kError);
+            new Alert("LaserCAN " + name + " must be wired to the RIO's CAN bus",
+                AlertType.kError);
         disconnectedAlert = new Alert("LaserCAN " + name + " is not connected", AlertType.kError);
 
         if (id.bus() != "rio") {
             laserCANOnWrongBusAlert.set(true);
         }
 
-        laserCAN = new HandlableLaserCAN(id.id());
+        laserCAN = new LaserCANConfigurator(id.id());
 
         updateThread.LaserCANCheckErrorAndRetry(() -> laserCAN.setRangingMode(rangingMode));
         updateThread
