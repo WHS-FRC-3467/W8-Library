@@ -59,28 +59,16 @@ import org.littletonrobotics.junction.Logger;
 public class Drive extends SubsystemBase {
     // TunerConstants doesn't include these constants, so they are declared locally
     static final double ODOMETRY_FREQUENCY =
-<<<<<<< HEAD
-        new CANBus(TunerConstants.DrivetrainConstants.CANBusName).isNetworkFD()
-=======
         new CANBus(DriveConstants.DrivetrainConstants.CANBusName).isNetworkFD()
->>>>>>> origin/motor-io
             ? 250.0
             : 100.0;
     public static final double DRIVE_BASE_RADIUS = Math.max(
         Math.max(
-<<<<<<< HEAD
-            Math.hypot(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
-            Math.hypot(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY)),
-        Math.max(
-            Math.hypot(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
-            Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)));
-=======
             Math.hypot(DriveConstants.FrontLeft.LocationX, DriveConstants.FrontLeft.LocationY),
             Math.hypot(DriveConstants.FrontRight.LocationX, DriveConstants.FrontRight.LocationY)),
         Math.max(
             Math.hypot(DriveConstants.BackLeft.LocationX, DriveConstants.BackLeft.LocationY),
             Math.hypot(DriveConstants.BackRight.LocationX, DriveConstants.BackRight.LocationY)));
->>>>>>> origin/motor-io
 
     // PathPlanner config constants
     private static final double ROBOT_MASS_KG = 74.088;
@@ -90,21 +78,12 @@ public class Drive extends SubsystemBase {
         ROBOT_MASS_KG,
         ROBOT_MOI,
         new ModuleConfig(
-<<<<<<< HEAD
-            TunerConstants.FrontLeft.WheelRadius,
-            TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
-            WHEEL_COF,
-            DCMotor.getKrakenX60Foc(1)
-                .withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio),
-            TunerConstants.FrontLeft.SlipCurrent,
-=======
             DriveConstants.FrontLeft.WheelRadius,
             DriveConstants.kSpeedAt12Volts.in(MetersPerSecond),
             WHEEL_COF,
             DCMotor.getKrakenX60Foc(1)
                 .withReduction(DriveConstants.FrontLeft.DriveMotorGearRatio),
             DriveConstants.FrontLeft.SlipCurrent,
->>>>>>> origin/motor-io
             1),
         getModuleTranslations());
 
@@ -396,11 +375,7 @@ public class Drive extends SubsystemBase {
     /** Returns the maximum linear speed in meters per sec. */
     public double getMaxLinearSpeedMetersPerSec()
     {
-<<<<<<< HEAD
-        return TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-=======
         return DriveConstants.kSpeedAt12Volts.in(MetersPerSecond);
->>>>>>> origin/motor-io
     }
 
     /** Returns the maximum angular speed in radians per sec. */
@@ -413,16 +388,6 @@ public class Drive extends SubsystemBase {
     public static Translation2d[] getModuleTranslations()
     {
         return new Translation2d[] {
-<<<<<<< HEAD
-                new Translation2d(TunerConstants.FrontLeft.LocationX,
-                    TunerConstants.FrontLeft.LocationY),
-                new Translation2d(TunerConstants.FrontRight.LocationX,
-                    TunerConstants.FrontRight.LocationY),
-                new Translation2d(TunerConstants.BackLeft.LocationX,
-                    TunerConstants.BackLeft.LocationY),
-                new Translation2d(TunerConstants.BackRight.LocationX,
-                    TunerConstants.BackRight.LocationY)
-=======
                 new Translation2d(DriveConstants.FrontLeft.LocationX,
                     DriveConstants.FrontLeft.LocationY),
                 new Translation2d(DriveConstants.FrontRight.LocationX,
@@ -431,7 +396,6 @@ public class Drive extends SubsystemBase {
                     DriveConstants.BackLeft.LocationY),
                 new Translation2d(DriveConstants.BackRight.LocationX,
                     DriveConstants.BackRight.LocationY)
->>>>>>> origin/motor-io
         };
     }
 }

@@ -48,11 +48,7 @@ public class PhoenixOdometryThread extends Thread {
     private final List<Queue<Double>> timestampQueues = new ArrayList<>();
 
     private static boolean isCANFD =
-<<<<<<< HEAD
-        new CANBus(TunerConstants.DrivetrainConstants.CANBusName).isNetworkFD();
-=======
         new CANBus(DriveConstants.DrivetrainConstants.CANBusName).isNetworkFD();
->>>>>>> origin/motor-io
     private static PhoenixOdometryThread instance = null;
 
     public static PhoenixOdometryThread getInstance()

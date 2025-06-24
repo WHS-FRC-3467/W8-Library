@@ -7,9 +7,8 @@ package frc.lib.subsystems;
 import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.controls.ControlRequest;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.lights.LightsIO;
+import frc.lib.io.lights.LightsInputsAutoLogged;
 
 /**
  * Class for simplified Lights implementation
