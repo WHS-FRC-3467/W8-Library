@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.subsystems.vision;
+package frc.lib.io.vision;
 
 import static frc.robot.subsystems.vision.VisionConstants.aprilTagLayout;
 

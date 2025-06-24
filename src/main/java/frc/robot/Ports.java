@@ -1,19 +1,14 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
-/** Add your docs here. */
-public enum Ports {
+import frc.lib.util.Device;
+import frc.lib.util.Device.CAN;
 
-    CANDLE(30, "rio"); // Placeholders
+public class Ports {
+    /*
+     * LIST OF CHANNEL AND CAN IDS
+     */
 
-    public final int id;
-    public final String bus;
+    public static final Device.CAN laserCAN1 = new CAN(0, "rio");
+    public static final Device.CAN lights = new CAN(1, "rio");
 
-    private Ports(int id, String bus) {
-        this.id = id;
-        this.bus = bus;
-    }
 }

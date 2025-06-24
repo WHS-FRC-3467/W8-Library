@@ -42,7 +42,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
-import frc.robot.generated.TunerConstants;
+
 import java.util.Queue;
 
 /**
@@ -100,10 +100,17 @@ public class ModuleIOTalonFX implements ModuleIO {
     {
         this.constants = constants;
         driveTalon =
+<<<<<<< HEAD
             new TalonFX(constants.DriveMotorId, TunerConstants.DrivetrainConstants.CANBusName);
         turnTalon =
             new TalonFX(constants.SteerMotorId, TunerConstants.DrivetrainConstants.CANBusName);
         cancoder = new CANcoder(constants.EncoderId, TunerConstants.DrivetrainConstants.CANBusName);
+=======
+            new TalonFX(constants.DriveMotorId, DriveConstants.DrivetrainConstants.CANBusName);
+        turnTalon =
+            new TalonFX(constants.SteerMotorId, DriveConstants.DrivetrainConstants.CANBusName);
+        cancoder = new CANcoder(constants.EncoderId, DriveConstants.DrivetrainConstants.CANBusName);
+>>>>>>> origin/motor-io
 
         // Configure drive motor
         var driveConfig = constants.DriveMotorInitialConfigs;
