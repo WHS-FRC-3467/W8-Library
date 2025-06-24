@@ -18,7 +18,7 @@ package frc.lib.io.beambreak;
 import org.littletonrobotics.junction.AutoLog;
 
 /** Standardized interface for beam breaks used in FRC. */
-public interface BeamBreak {
+public interface BeamBreakIO {
 
     @AutoLog
     abstract class BeamBreakInputs {

@@ -20,7 +20,7 @@ import frc.lib.util.Device;
 import lombok.Getter;
 
 /** A beam break implementation that uses any DIO input */
-public class BeamBreakDIO implements BeamBreak {
+public class BeamBreakIODIO implements BeamBreakIO {
 
     @Getter
     private final String name;
@@ -28,12 +28,12 @@ public class BeamBreakDIO implements BeamBreak {
     private final DigitalInput dio;
 
     /**
-     * Constructs a {@link BeamBreakDIO} object with the specified DIO ID
+     * Constructs a {@link BeamBreakIODIO} object with the specified DIO ID
      *
      * @param id The CANDevice identifying the bus and device ID for this sensor.
      * @param name A human readable name for this sensor
      */
-    public BeamBreakDIO(Device.DIO id, String name)
+    public BeamBreakIODIO(Device.DIO id, String name)
     {
         this.name = name;
 

@@ -19,7 +19,7 @@ import frc.lib.util.LoggedTunableBoolean;
 import lombok.Getter;
 
 /** A simulated implementation that uses a togglable button on the dashboard */
-public class BeamBreakSim implements BeamBreak {
+public class BeamBreakIOSim implements BeamBreakIO {
 
     @Getter
     private final String name;
@@ -27,11 +27,11 @@ public class BeamBreakSim implements BeamBreak {
     private final LoggedTunableBoolean button;
 
     /**
-     * Constructs a {@link BeamBreakSim} object with the specified DIO ID
+     * Constructs a {@link BeamBreakIOSim} object with the specified DIO ID
      *
      * @param name A human readable name for this sensor
      */
-    public BeamBreakSim(String name)
+    public BeamBreakIOSim(String name)
     {
         this.name = name;
 
