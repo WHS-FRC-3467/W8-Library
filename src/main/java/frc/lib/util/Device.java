@@ -13,9 +13,12 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.util;
+ package frc.lib.util;
 
-public sealed interface Device {
-    record CAN(int id, String bus) implements Device {
-    }
-}
+ public sealed interface Device {
+     record CAN(int id, String bus) implements Device {
+     }
+ 
+     public record DIO(int id) implements Device {
+     }
+ }
