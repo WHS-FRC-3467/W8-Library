@@ -29,6 +29,18 @@ public class BeamBreak1Constants {
         return new BeamBreakIODIO(Ports.diobeambreak, NAME);
     }
 
+    // private final static RangingMode RANGING_MODE = RangingMode.SHORT;
+    // private final static RegionOfInterest ROI = new RegionOfInterest(8, 8, 4, 4);
+    // private final static TimingBudget TIMING_BUDGET = TimingBudget.TIMING_BUDGET_20MS;
+
+
+    // public static BeamBreakIOLaserCAN getReal()
+    // {
+    // return new BeamBreakIOLaserCAN(Ports.laserCAN1, NAME, Millimeters.of(100), RANGING_MODE,
+    // ROI, TIMING_BUDGET);
+
+    // }
+
     public static BeamBreakIOSim getSim()
     {
         return new BeamBreakIOSim(NAME);
