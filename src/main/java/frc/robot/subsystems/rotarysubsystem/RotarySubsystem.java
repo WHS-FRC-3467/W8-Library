@@ -34,7 +34,7 @@ public class RotarySubsystem extends SubsystemBase {
 
     public RotarySubsystem(MotorIO motorIO)
     {
-        motor = new Motor(motorIO);
+        motor = new Motor(motorIO); // Delcares instance of motor being used
 
     }
 
