@@ -8,8 +8,8 @@ import static edu.wpi.first.units.Units.Millimeters;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.lib.devices.DistanceSensor;
 import frc.lib.io.distancesensor.DistanceSensorIO;
-import frc.lib.subsystems.DistanceSensor;
 import lombok.NonNull;
 
 /** Add your docs here. */

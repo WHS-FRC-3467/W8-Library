@@ -49,32 +49,32 @@ public class MotorIOTalonFX implements MotorIO {
     }
 
     @Getter
-    private final String name;
+    protected final String name;
 
-    private final TalonFX motor;
-    private final TalonFX[] followers;
+    protected final TalonFX motor;
+    protected final TalonFX[] followers;
 
     // Cached signals for performance and easier access
-    private final StatusSignal<Angle> position;
-    private final StatusSignal<AngularVelocity> velocity;
-    private final StatusSignal<Voltage> supplyVoltage;
-    private final StatusSignal<Current> supplyCurrent;
-    private final StatusSignal<Current> torqueCurrent;
-    private final StatusSignal<Temperature> temperature;
-    private final StatusSignal<Double> closedLoopError;
-    private final StatusSignal<Double> closedLoopReference;
-    private final StatusSignal<Double> closedLoopReferenceSlope;
+    protected final StatusSignal<Angle> position;
+    protected final StatusSignal<AngularVelocity> velocity;
+    protected final StatusSignal<Voltage> supplyVoltage;
+    protected final StatusSignal<Current> supplyCurrent;
+    protected final StatusSignal<Current> torqueCurrent;
+    protected final StatusSignal<Temperature> temperature;
+    protected final StatusSignal<Double> closedLoopError;
+    protected final StatusSignal<Double> closedLoopReference;
+    protected final StatusSignal<Double> closedLoopReferenceSlope;
 
     // Preconfigured control objects reused for efficiency
-    private final CoastOut coastControl = new CoastOut();
-    private final StaticBrake brakeControl = new StaticBrake();
-    private final VoltageOut voltageControl = new VoltageOut(0).withEnableFOC(true);
-    private final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0);
-    private final DutyCycleOut dutyCycleControl = new DutyCycleOut(0).withEnableFOC(true);
-    private final DynamicMotionMagicTorqueCurrentFOC positionControl =
+    protected final CoastOut coastControl = new CoastOut();
+    protected final StaticBrake brakeControl = new StaticBrake();
+    protected final VoltageOut voltageControl = new VoltageOut(0).withEnableFOC(true);
+    protected final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0);
+    protected final DutyCycleOut dutyCycleControl = new DutyCycleOut(0).withEnableFOC(true);
+    protected final DynamicMotionMagicTorqueCurrentFOC positionControl =
         new DynamicMotionMagicTorqueCurrentFOC(0, 0, 0,
             0);
-    private final VelocityTorqueCurrentFOC velocityControl = new VelocityTorqueCurrentFOC(0);
+    protected final VelocityTorqueCurrentFOC velocityControl = new VelocityTorqueCurrentFOC(0);
 
     private final CANUpdateThread updateThread = new CANUpdateThread();
 
@@ -150,7 +150,7 @@ public class MotorIOTalonFX implements MotorIO {
      *
      * @return True if the motor is using a position control mode.
      */
-    private boolean isRunningPositionControl()
+    protected boolean isRunningPositionControl()
     {
         var control = motor.getAppliedControl();
         return (control instanceof PositionTorqueCurrentFOC)
@@ -164,7 +164,7 @@ public class MotorIOTalonFX implements MotorIO {
      *
      * @return True if the motor is using a velocity control mode.
      */
-    private boolean isRunningVelocityControl()
+    protected boolean isRunningVelocityControl()
     {
         var control = motor.getAppliedControl();
         return (control instanceof VelocityTorqueCurrentFOC)
@@ -178,7 +178,7 @@ public class MotorIOTalonFX implements MotorIO {
      *
      * @return True if the motor is using a Motion Magic mode.
      */
-    private boolean isRunningMotionMagic()
+    protected boolean isRunningMotionMagic()
     {
         var control = motor.getAppliedControl();
         return (control instanceof MotionMagicTorqueCurrentFOC)
@@ -215,21 +215,26 @@ public class MotorIOTalonFX implements MotorIO {
         inputs.temperature = temperature.getValue();
 
         // Interpret control-loop status signals conditionally based on current mode
-        var closedLoopErrorValue = closedLoopError.getValue();
-        var closedLoopTargetValue = closedLoopReference.getValue();
+        Double closedLoopErrorValue = closedLoopError.getValue();
+        Double closedLoopTargetValue = closedLoopReference.getValue();
 
-        inputs.positionError = isRunningPositionControl()
+        boolean isRunningPositionControl = isRunningPositionControl();
+        boolean isRunningMotionMagic = isRunningMotionMagic();
+        boolean isRunningVelocityControl = isRunningVelocityControl();
+
+        inputs.positionError = isRunningPositionControl
             ? Rotations.of(closedLoopErrorValue)
             : null;
 
-        inputs.activeTrajectoryPosition = isRunningPositionControl() && isRunningMotionMagic()
-            ? Rotations.of(closedLoopTargetValue)
-            : null;
+        inputs.activeTrajectoryPosition =
+            isRunningPositionControl && isRunningMotionMagic
+                ? Rotations.of(closedLoopTargetValue)
+                : null;
 
-        if (isRunningVelocityControl()) {
+        if (isRunningVelocityControl) {
             inputs.velocityError = RotationsPerSecond.of(closedLoopErrorValue);
             inputs.activeTrajectoryVelocity = RotationsPerSecond.of(closedLoopTargetValue);
-        } else if (isRunningPositionControl() && isRunningMotionMagic()) {
+        } else if (isRunningPositionControl && isRunningMotionMagic) {
             var targetVelocity = closedLoopReferenceSlope.getValue();
             inputs.velocityError = RotationsPerSecond.of(
                 targetVelocity - inputs.velocity.in(RotationsPerSecond));

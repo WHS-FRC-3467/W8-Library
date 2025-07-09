@@ -13,29 +13,16 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.subsystems.beambreak1;
+package frc.lib.mechanisms;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.lib.devices.BeamBreak;
-import frc.lib.io.beambreak.BeamBreakIO;
+import frc.lib.io.motor.MotorIOSim;
 
-public class BeamBreak1 extends SubsystemBase {
+public abstract class MechanismSim extends Mechanism {
+    protected final MotorIOSim io;
 
-    private final BeamBreak beamBreak;
-
-    public final Trigger broken;
-
-    public BeamBreak1(BeamBreakIO io)
+    public MechanismSim(MotorIOSim io)
     {
-        beamBreak = new BeamBreak(io);
-
-        broken = new Trigger(beamBreak::isBroken);
-    }
-
-    @Override
-    public void periodic()
-    {
-        beamBreak.periodic();
+        super(io);
+        this.io = io;
     }
 }

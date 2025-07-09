@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.subsystems;
+package frc.lib.mechanisms;
 
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.units.AngularAccelerationUnit;
@@ -27,19 +27,16 @@ import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
-/**
- * Class for simplified MotorIO implementation
- */
-public class Motor {
-    private final MotorIO io;
-    private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
+public abstract class Mechanism {
+    protected final MotorIO io;
+    protected final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
 
     /**
-     * Constructs a Motor.
+     * Constructs a mechanism.
      *
      * @param io the IO to interact with.
      */
-    public Motor(MotorIO io)
+    public Mechanism(MotorIO io)
     {
         this.io = io;
     }
@@ -52,7 +49,7 @@ public class Motor {
     }
 
     /**
-     * Sets the motor to coast mode.
+     * Sets the mechanism to coast mode.
      */
     public void runCoast()
     {
@@ -60,7 +57,7 @@ public class Motor {
     }
 
     /**
-     * Sets the motor to brake mode.
+     * Sets the mechanism to brake mode.
      */
     public void runBrake()
     {
@@ -68,7 +65,7 @@ public class Motor {
     }
 
     /**
-     * Runs the motor using direct voltage control.
+     * Runs the mechanism using direct voltage control.
      *
      * @param voltage Desired voltage output.
      */
@@ -78,7 +75,7 @@ public class Motor {
     }
 
     /**
-     * Runs the motor with a specified current output.
+     * Runs the mechanism with a specified current output.
      *
      * @param current Desired torque-producing current.
      */
@@ -88,7 +85,7 @@ public class Motor {
     }
 
     /**
-     * Runs the motor using duty cycle (percentage of available voltage).
+     * Runs the mechanism using duty cycle (percentage of available voltage).
      *
      * @param dutyCycle Fractional output between 0 and 1.
      */
@@ -98,7 +95,7 @@ public class Motor {
     }
 
     /**
-     * Runs the motor to a specific position.
+     * Runs the mechanism to a specific position.
      *
      * @param position Target position.
      * @param cruiseVelocity Cruise velocity.
@@ -114,7 +111,7 @@ public class Motor {
     }
 
     /**
-     * Runs the motor at a target velocity.
+     * Runs the mechanism at a target velocity.
      *
      * @param velocity Desired velocity.
      * @param acceleration Max acceleration.

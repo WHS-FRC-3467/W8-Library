@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.subsystems;
+package frc.lib.devices;
 
 import org.littletonrobotics.junction.Logger;
 import frc.lib.io.beambreak.BeamBreakIO;
