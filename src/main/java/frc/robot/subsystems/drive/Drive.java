@@ -59,7 +59,7 @@ import org.littletonrobotics.junction.Logger;
 public class Drive extends SubsystemBase {
     // TunerConstants doesn't include these constants, so they are declared locally
     static final double ODOMETRY_FREQUENCY =
-        new CANBus(DriveConstants.DrivetrainConstants.CANBusName).isNetworkFD()
+        new CANBus(DriveConstants.drivetrainConstants.CANBusName).isNetworkFD()
             ? 250.0
             : 100.0;
     public static final double DRIVE_BASE_RADIUS = Math.max(
@@ -163,6 +163,7 @@ public class Drive extends SubsystemBase {
     }
 
     @Override
+    @SuppressWarnings("LockNotBeforeTry")
     public void periodic()
     {
         odometryLock.lock(); // Prevents odometry updates while reading data

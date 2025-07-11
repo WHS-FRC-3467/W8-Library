@@ -52,39 +52,35 @@ public class Robot extends LoggedRobot {
         Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
         Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
         switch (BuildConstants.DIRTY) {
-            case 0:
-                Logger.recordMetadata("GitDirty", "All changes committed");
-                break;
-            case 1:
-                Logger.recordMetadata("GitDirty", "Uncomitted changes");
-                break;
-            default:
-                Logger.recordMetadata("GitDirty", "Unknown");
-                break;
+            case 0 -> Logger.recordMetadata("GitDirty", "All changes committed");
+            case 1 -> Logger.recordMetadata("GitDirty", "Uncomitted changes");
+            default -> Logger.recordMetadata("GitDirty", "Unknown");
         }
 
         // Set up data receivers & replay source
         switch (Constants.currentMode) {
-            case REAL:
+            case REAL -> {
                 // Running on a real robot, log to a USB stick ("/U/logs")
                 Logger.addDataReceiver(new WPILOGWriter());
                 Logger.addDataReceiver(new NT4Publisher());
                 LoggedPowerDistribution.getInstance(Ports.pdh.id(), ModuleType.kRev);
-                break;
+            }
 
-            case SIM:
+            case SIM -> {
                 // Running a physics simulator, log to NT
                 Logger.addDataReceiver(new NT4Publisher());
-                break;
+            }
 
-            case REPLAY:
+            case REPLAY -> {
                 // Replaying a log, set up replay source
                 setUseTiming(false); // Run as fast as possible
                 String logPath = LogFileUtil.findReplayLog();
-                Logger.setReplaySource(new WPILOGReader(logPath));
                 Logger
-                    .addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
-                break;
+                    .setReplaySource(new WPILOGReader(logPath));
+                Logger
+                    .addDataReceiver(
+                        new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+            }
         }
 
         // Start AdvantageKit logger
