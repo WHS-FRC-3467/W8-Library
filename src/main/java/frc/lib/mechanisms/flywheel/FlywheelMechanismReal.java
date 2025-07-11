@@ -15,11 +15,11 @@
 
 package frc.lib.mechanisms.flywheel;
 
+import frc.lib.annotations.NoSubtypeAllowed;
 import frc.lib.io.motor.MotorIO;
-import frc.lib.mechanisms.Mechanism;
 
-public abstract class FlywheelMechanism<T extends MotorIO> extends Mechanism<T> {
-    public FlywheelMechanism(T io)
+public class FlywheelMechanismReal extends FlywheelMechanism<MotorIO> {
+    public FlywheelMechanismReal(@NoSubtypeAllowed MotorIO io)
     {
         super(io);
     }
