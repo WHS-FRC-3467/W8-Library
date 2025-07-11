@@ -22,23 +22,23 @@ import org.littletonrobotics.junction.AutoLog;
  */
 public interface detectionMLIO {
 
-    /* Abstract class effectively behaving as a private structure for data encapsulation. */
+    /* Abstract class effectively behaving as a visible structure for data encapsulation. */
     @AutoLog
     abstract class detectionMLIOInputs {
         /** Whether the camera is connected. */
         public boolean connected = false;
-        /** Pitch of detected object. */
-        public double pitch = -1000.0;
-        /** Yaw of detected object. */
-        public double yaw = -1000.0;
-        /** Skew of detected object. */
-        public double skew = -1000.0;
         /** ID of detected object. */
         public int objID = -1000;
         /** Confidence of detected object. */
         public float objConf = -1000.0f;
         /** Circumscribed area of detected object. */
         public double objArea = -1000.0;
+        /** Pitch of detected object. */
+        public double pitch = -1000.0;
+        /** Yaw of detected object. */
+        public double yaw = -1000.0;
+        /** Skew of detected object. */
+        public double skew = -1000.0;
     }
 
     /*
