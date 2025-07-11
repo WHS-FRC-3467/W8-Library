@@ -31,6 +31,8 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
  * Standardized interface for motor controllers used in FRC. Supports multiple control modes and
@@ -38,10 +40,14 @@ import edu.wpi.first.units.measure.Voltage;
  */
 public interface MotorIO {
 
+    @Getter
+    @AllArgsConstructor
     public enum PIDSlot {
-        SLOT_1,
-        SLOT_2,
-        SLOT_3;
+        SLOT_1(0),
+        SLOT_2(1),
+        SLOT_3(2);
+
+        public final int num;
     }
 
     @AutoLog

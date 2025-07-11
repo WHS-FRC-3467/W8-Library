@@ -15,6 +15,7 @@
 
 package frc.robot.subsystems.leds;
 
+import java.util.List;
 import com.ctre.phoenix6.configs.CANdleConfiguration;
 import com.ctre.phoenix6.configs.CANdleFeaturesConfigs;
 import com.ctre.phoenix6.configs.LEDConfigs;
@@ -78,7 +79,7 @@ public class LEDsConstants {
 
     public static final ControlRequest frontOff = new EmptyAnimation(FRONT_STRIP.animationSlot);;
 
-    public static final ControlRequest[] offAnimation = {candleOff, frontOff};
+    public static final List<ControlRequest> offAnimation = List.of(candleOff, frontOff);
 
     // Disabled
     public static final ControlRequest candleDisabled =
@@ -95,7 +96,8 @@ public class LEDsConstants {
             .withBrightness(0.7)
             .withDirection(AnimationDirectionValue.Forward);
 
-    public static final ControlRequest[] disabledAnimation = {candleDisabled, frontDisabled};
+    public static final List<ControlRequest> disabledAnimation =
+        List.of(candleDisabled, frontDisabled);
 
     // Auto
     public static final ControlRequest candleAuto =
@@ -116,7 +118,7 @@ public class LEDsConstants {
             .withCooling(0.1)
             .withSparking(1.0);
 
-    public static final ControlRequest[] autoAnimation = {candleAuto, frontAuto};
+    public static final List<ControlRequest> autoAnimation = List.of(candleAuto, frontAuto);
 
     // Flashing
     public static final ControlRequest candleFlash =

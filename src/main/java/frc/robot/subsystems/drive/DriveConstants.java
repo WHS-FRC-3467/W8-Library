@@ -104,7 +104,7 @@ public class DriveConstants {
     private static final Voltage kSteerFrictionVoltage = Volts.of(0.2);
     private static final Voltage kDriveFrictionVoltage = Volts.of(0.2);
 
-    public static final SwerveDrivetrainConstants DrivetrainConstants =
+    public static final SwerveDrivetrainConstants drivetrainConstants =
         new SwerveDrivetrainConstants()
             .withCANBusName(kCANBus.getName())
             .withPigeon2Id(kPigeonId)

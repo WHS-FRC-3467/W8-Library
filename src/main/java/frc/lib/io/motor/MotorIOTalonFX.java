@@ -86,7 +86,7 @@ public class MotorIOTalonFX implements MotorIO {
      * @param name The name of the motor(s)
      * @param config Configuration to apply to the motor(s)
      * @param main CAN ID of the main motor
-     * @param followerData
+     * @param followerData Configuration data for the follower(s)
      */
     public MotorIOTalonFX(String name, TalonFXConfiguration config, Device.CAN main,
         TalonFXFollower... followerData)
@@ -103,7 +103,7 @@ public class MotorIOTalonFX implements MotorIO {
         for (int i = 0; i < followerData.length; i++) {
             Device.CAN id = followerData[i].id();
 
-            if (id.bus() != main.bus()) {
+            if (!id.bus().equals(main.bus())) {
                 followerOnWrongBusAlert[i] =
                     new Alert(name + " follower " + i + " is on a different CAN bus than main!",
                         AlertType.kError);
@@ -312,7 +312,7 @@ public class MotorIOTalonFX implements MotorIO {
         Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
     {
         motor.setControl(positionControl.withPosition(position).withVelocity(cruiseVelocity)
-            .withAcceleration(acceleration).withJerk(maxJerk).withSlot(slot.ordinal()));
+            .withAcceleration(acceleration).withJerk(maxJerk).withSlot(slot.getNum()));
     }
 
     /**
@@ -328,6 +328,6 @@ public class MotorIOTalonFX implements MotorIO {
     {
         motor.setControl(
             velocityControl.withVelocity(velocity).withAcceleration(acceleration)
-                .withSlot(slot.ordinal()));
+                .withSlot(slot.getNum()));
     }
 }

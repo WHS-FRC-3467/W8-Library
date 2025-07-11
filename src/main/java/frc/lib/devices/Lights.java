@@ -15,6 +15,7 @@
 
 package frc.lib.devices;
 
+import java.util.List;
 import com.ctre.phoenix6.controls.ControlRequest;
 
 import frc.lib.io.lights.LightsIO;
@@ -48,9 +49,9 @@ public class Lights {
     /**
      * Passes ControlRequests to IO layer
      *
-     * @param request {@link ControlRequest}
+     * @param requests {@link ControlRequest}
      */
-    public void setAnimations(ControlRequest[] requests)
+    public void setAnimations(List<ControlRequest> requests)
     {
         for (ControlRequest request : requests) {
             io.setAnimation(request);

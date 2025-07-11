@@ -61,7 +61,7 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
                 AlertType.kError);
         disconnectedAlert = new Alert("LaserCAN " + name + " is not connected", AlertType.kError);
 
-        if (id.bus() != "rio") {
+        if (!id.bus().equals("rio")) {
             laserCANOnWrongBusAlert.set(true);
         }
 
