@@ -8,8 +8,8 @@ repositories {
 }
 
 dependencies {
-    errorprone("com.google.errorprone:error_prone_core:2.24.1")   // for the compiler plugin
-    compileOnly("com.google.errorprone:error_prone_core:2.24.1") // for your checker code to compile
+    errorprone("com.google.errorprone:error_prone_core:2.24.1")
+    compileOnly("com.google.errorprone:error_prone_core:2.24.1")
     compileOnly("com.google.auto.service:auto-service-annotations:1.0.1")
     annotationProcessor("com.google.auto.service:auto-service:1.0.1")
 }

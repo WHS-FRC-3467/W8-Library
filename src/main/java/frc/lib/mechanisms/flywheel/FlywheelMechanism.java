@@ -15,12 +15,7 @@
 
 package frc.lib.mechanisms.flywheel;
 
-import frc.lib.io.motor.MotorIO;
 import frc.lib.mechanisms.Mechanism;
 
-public abstract class FlywheelMechanism<T extends MotorIO> extends Mechanism<T> {
-    public FlywheelMechanism(T io)
-    {
-        super(io);
-    }
+public interface FlywheelMechanism extends Mechanism {
 }

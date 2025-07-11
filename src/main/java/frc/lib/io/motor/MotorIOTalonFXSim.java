@@ -44,7 +44,7 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
      * @param followerData Configuration data for the follower(s)
      */
     public MotorIOTalonFXSim(String name, TalonFXConfiguration config, CAN main,
-        TalonFXFollower[] followerData)
+        TalonFXFollower... followerData)
     {
         super(name, config, main, followerData);
 
