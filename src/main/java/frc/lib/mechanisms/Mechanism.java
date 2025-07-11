@@ -27,8 +27,8 @@ import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
-public abstract class Mechanism {
-    protected final MotorIO io;
+public abstract class Mechanism<T extends MotorIO> {
+    protected final T io;
     protected final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
 
     /**
@@ -36,7 +36,7 @@ public abstract class Mechanism {
      *
      * @param io the IO to interact with.
      */
-    public Mechanism(MotorIO io)
+    public Mechanism(T io)
     {
         this.io = io;
     }

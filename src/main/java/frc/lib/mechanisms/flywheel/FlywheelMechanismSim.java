@@ -27,9 +27,8 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import frc.lib.io.motor.MotorIOSim;
-import frc.lib.mechanisms.MechanismSim;
 
-public class FlywheelMechanismSim extends MechanismSim {
+public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
     private final FlywheelSim sim;
 
     private Time lastTime;

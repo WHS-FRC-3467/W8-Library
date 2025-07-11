@@ -36,12 +36,12 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
     private TalonFXSimState simState;
 
     /**
-     * Constructs and initializes a TalonFX motor.
+     * Constructs and initializes a TalonFX motor simulation.
      *
      * @param name The name of the motor(s)
      * @param config Configuration to apply to the motor(s)
      * @param main CAN ID of the main motor
-     * @param followerData
+     * @param followerData Configuration data for the follower(s)
      */
     public MotorIOTalonFXSim(String name, TalonFXConfiguration config, CAN main,
         TalonFXFollower[] followerData)

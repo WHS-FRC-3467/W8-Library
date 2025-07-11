@@ -18,8 +18,8 @@ package frc.lib.mechanisms.flywheel;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.mechanisms.Mechanism;
 
-public class FlywheelMechanism extends Mechanism {
-    public FlywheelMechanism(MotorIO io)
+public class FlywheelMechanism<T extends MotorIO> extends Mechanism<T> {
+    public FlywheelMechanism(T io)
     {
         super(io);
     }
