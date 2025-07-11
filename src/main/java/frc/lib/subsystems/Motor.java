@@ -52,6 +52,16 @@ public class Motor {
     }
 
     /**
+     * Gets the last read position of the main motor.
+     *
+     * @return Position of mechanism.
+     */
+    public Angle getPosition()
+    {
+        return inputs.position;
+    }
+
+    /**
      * Sets the motor to coast mode.
      */
     public void runCoast()
