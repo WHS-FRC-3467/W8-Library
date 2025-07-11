@@ -48,7 +48,7 @@ public class PhoenixOdometryThread extends Thread {
     private final List<Queue<Double>> timestampQueues = new ArrayList<>();
 
     private static boolean isCANFD =
-        new CANBus(DriveConstants.DrivetrainConstants.CANBusName).isNetworkFD();
+        new CANBus(DriveConstants.drivetrainConstants.CANBusName).isNetworkFD();
     private static PhoenixOdometryThread instance = null;
 
     public static PhoenixOdometryThread getInstance()
@@ -66,7 +66,7 @@ public class PhoenixOdometryThread extends Thread {
     }
 
     @Override
-    public void start()
+    public synchronized void start()
     {
         if (timestampQueues.size() > 0) {
             super.start();
@@ -122,6 +122,7 @@ public class PhoenixOdometryThread extends Thread {
     }
 
     @Override
+    @SuppressWarnings("CatchAndPrintStackTrace")
     public void run()
     {
         while (true) {
