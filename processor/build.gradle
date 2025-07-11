@@ -1,0 +1,39 @@
+plugins {
+    id "java-library"
+    id "net.ltgt.errorprone" version "4.3.0"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    errorprone("com.google.errorprone:error_prone_core:2.24.1")   // for the compiler plugin
+    compileOnly("com.google.errorprone:error_prone_core:2.24.1") // for your checker code to compile
+    compileOnly("com.google.auto.service:auto-service-annotations:1.0.1")
+    annotationProcessor("com.google.auto.service:auto-service:1.0.1")
+}
+
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone {
+        disableAllChecks = true
+    }
+    options.compilerArgs.addAll([
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
+    ])
+}
+
+task printSourceRoots {
+    doLast {
+        sourceSets.main.allSource.srcDirs.each { srcDir ->
+            println "Main source root: $srcDir"
+        }
+    }
+}
