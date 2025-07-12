@@ -20,14 +20,17 @@ import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.OnTheFlyPathCommand;
 import frc.robot.subsystems.beambreak1.BeamBreak1;
 import frc.robot.subsystems.beambreak1.BeamBreak1Constants;
 import frc.robot.subsystems.drive.Drive;
@@ -148,9 +151,9 @@ public class RobotContainer {
 
         // Example Pathfinding/Path generation Commands
         SmartDashboard.putData("Example Pathfind to Pose", DriveCommands.pathFindToPose(() -> drive.getPose(),
-            new Pose2d(3, 3, Rotation2d.kZero), constraints, 0.0, 0.02));
-        SmartDashboard.putData("Example On The Fly Path", DriveCommands.onTheFlyPath(() -> drive.getPose(), null,
-            new Pose2d(6, 6, Rotation2d.k180deg), constraints, 0.0, false, false, 0.02));
+            new Pose2d(3, 7, Rotation2d.kZero), constraints, 0.0, 0.02));
+        SmartDashboard.putData("Example On The Fly Path", new OnTheFlyPathCommand(drive, () -> drive.getPose(), null,
+            new Pose2d(6, 6, Rotation2d.k180deg), constraints, 0.0, false, 0.02));
         /* 
         List<Pose2d> waypointPoses = new ArrayList<>();
         waypointPoses.add(new Pose2d(1, 1, Rotation2d.kCCW_90deg));
