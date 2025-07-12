@@ -31,18 +31,17 @@ import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import frc.lib.io.motor.MotorIO.PIDSlot;
-import frc.lib.mechanisms.flywheel.FlywheelMechanismSim.PhysicsError.Cause;
+import frc.lib.mechanisms.flywheel.FlywheelMechanismSim.PhysicsException.Cause;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
 public class FlywheelMechanismSim implements FlywheelMechanism {
-    public static class PhysicsError extends Exception {
+    public static class PhysicsException extends Exception {
         @Getter
         @AllArgsConstructor
         public enum Cause {
@@ -51,7 +50,7 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
             public final String message;
         }
 
-        public PhysicsError(Cause cause)
+        public PhysicsException(Cause cause)
         {
             super(cause.getMessage());
         }
@@ -64,10 +63,10 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
     private Time lastTime = Seconds.zero();
 
     public FlywheelMechanismSim(MotorIOSim io, DCMotor characteristics,
-        MomentOfInertia momentOfInertia) throws PhysicsError
+        MomentOfInertia momentOfInertia) throws PhysicsException
     {
         if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
-            throw new PhysicsError(Cause.LTE_ZERO);
+            throw new PhysicsException(Cause.LTE_ZERO);
 
         this.io = io;
         sim = new FlywheelSim(LinearSystemId.createFlywheelSystem(characteristics,

@@ -13,7 +13,7 @@ import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.flywheel.FlywheelMechanism;
 import frc.lib.mechanisms.flywheel.FlywheelMechanismReal;
 import frc.lib.mechanisms.flywheel.FlywheelMechanismSim;
-import frc.lib.mechanisms.flywheel.FlywheelMechanismSim.PhysicsError;
+import frc.lib.mechanisms.flywheel.FlywheelMechanismSim.PhysicsException;
 import frc.robot.Ports;
 
 /** Add your docs here. */
@@ -35,7 +35,7 @@ public class FlywheelConstants {
         try {
             return new FlywheelMechanismSim(new MotorIOTalonFXSim(NAME, CONFIG, Ports.flywheel),
                 CHARACTERISTICS, MOI);
-        } catch (PhysicsError e) {
+        } catch (PhysicsException e) {
             throw new IllegalStateException(e);
         }
     }
