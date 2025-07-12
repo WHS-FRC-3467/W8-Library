@@ -13,6 +13,7 @@ import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.flywheel.FlywheelMechanism;
 import frc.lib.mechanisms.flywheel.FlywheelMechanismReal;
 import frc.lib.mechanisms.flywheel.FlywheelMechanismSim;
+import frc.lib.mechanisms.flywheel.FlywheelMechanismSim.PhysicsError;
 import frc.robot.Ports;
 
 /** Add your docs here. */
@@ -22,7 +23,7 @@ public class FlywheelConstants {
     public static final TalonFXConfiguration CONFIG = new TalonFXConfiguration();
 
     public static final DCMotor CHARACTERISTICS = DCMotor.getKrakenX60(1);
-    public static final MomentOfInertia MOI = KilogramSquareMeters.of(0);
+    public static final MomentOfInertia MOI = KilogramSquareMeters.of(1);
 
     public static FlywheelMechanismReal getReal()
     {
@@ -31,8 +32,12 @@ public class FlywheelConstants {
 
     public static FlywheelMechanismSim getSim()
     {
-        return new FlywheelMechanismSim(new MotorIOTalonFXSim(NAME, CONFIG, Ports.flywheel),
-            CHARACTERISTICS, MOI);
+        try {
+            return new FlywheelMechanismSim(new MotorIOTalonFXSim(NAME, CONFIG, Ports.flywheel),
+                CHARACTERISTICS, MOI);
+        } catch (PhysicsError e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     public static FlywheelMechanism getReplay()

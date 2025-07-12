@@ -31,22 +31,44 @@ import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import frc.lib.io.motor.MotorIO.PIDSlot;
+import frc.lib.mechanisms.flywheel.FlywheelMechanismSim.PhysicsError.Cause;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
 public class FlywheelMechanismSim implements FlywheelMechanism {
+    public static class PhysicsError extends Exception {
+        @Getter
+        @AllArgsConstructor
+        public enum Cause {
+            LTE_ZERO("Cannot be less than or equal to zero");
+
+            public final String message;
+        }
+
+        public PhysicsError(Cause cause)
+        {
+            super(cause.getMessage());
+        }
+    }
+
     private final MotorIOSim io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
     private final FlywheelSim sim;
 
-    private Time lastTime;
+    private Time lastTime = Seconds.zero();
 
     public FlywheelMechanismSim(MotorIOSim io, DCMotor characteristics,
-        MomentOfInertia momentOfInertia)
+        MomentOfInertia momentOfInertia) throws PhysicsError
     {
+        if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
+            throw new PhysicsError(Cause.LTE_ZERO);
+
         this.io = io;
         sim = new FlywheelSim(LinearSystemId.createFlywheelSystem(characteristics,
             momentOfInertia.in(KilogramSquareMeters),
