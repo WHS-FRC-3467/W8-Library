@@ -35,7 +35,7 @@ import lombok.Getter;
 import lombok.Setter;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -175,8 +175,8 @@ public class DriveCommands {
      */
     public static Command feedforwardCharacterization(Drive drive)
     {
-        List<Double> velocitySamples = new LinkedList<>();
-        List<Double> voltageSamples = new LinkedList<>();
+        List<Double> velocitySamples = new ArrayList<>();
+        List<Double> voltageSamples = new ArrayList<>();
         Timer timer = new Timer();
 
         return Commands.sequence(

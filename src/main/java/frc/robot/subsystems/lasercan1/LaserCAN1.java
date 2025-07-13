@@ -30,7 +30,7 @@ public class LaserCAN1 extends SubsystemBase { // Don't extend if contained in s
         distanceSensor.periodic();
     }
 
-    private boolean betweenDistance(@NonNull Distance min, @NonNull Distance max)
+    private boolean betweenDistance(Distance min, Distance max)
     {
         if (distanceSensor.getDistance().isEmpty()) {
             return false;
