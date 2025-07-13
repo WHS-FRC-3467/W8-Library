@@ -15,7 +15,10 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.path.PathConstraints;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.subsystems.drive.DriveConstants;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
@@ -38,4 +41,8 @@ public final class Constants {
         /** Replaying from a log file. */
         REPLAY
     }
+
+    // Instantiate the constraints to use while pathfinding
+    // TODO: Tune the maxAcceleration, maxAngularVelocityRadPerSec, and maxAngularAccelerationRacPerSecSq constraints for pathfinding
+    public static final PathConstraints ON_THE_FLY_PATH_CONSTRAINTS = new PathConstraints(DriveConstants.kSpeedAt12Volts.magnitude(), 4.0, Units.degreesToRadians(540), Units.degreesToRadians(720));
 }

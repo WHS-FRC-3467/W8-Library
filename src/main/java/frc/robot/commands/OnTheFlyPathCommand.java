@@ -16,19 +16,20 @@
 
 package frc.robot.commands;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.IdealStartingState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.Waypoint;
+
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
 
 public class OnTheFlyPathCommand extends Command {
@@ -56,8 +57,8 @@ public class OnTheFlyPathCommand extends Command {
      * @param tolerance The allowed tolerance, in meters, of the robot's position from the target pose.
      * Saves the path and command for retrieval to be executed by the CommandScheduler in Robot.java
      */
-    public OnTheFlyPathCommand(Drive drive, Supplier<Pose2d> currentPose, List<Pose2d> waypointPoses,
-    Pose2d targetPose, PathConstraints constraints, double goalEndVelocity, boolean shouldMirrorPath, double tolerance) {
+    public OnTheFlyPathCommand(Drive drive, Supplier<Pose2d> currentPose, List<Pose2d> waypointPoses, Pose2d targetPose, 
+        PathConstraints constraints, double goalEndVelocity, boolean shouldMirrorPath, double tolerance) {
         addRequirements(drive);
         this.currentPose = currentPose;
         this.waypointPoses = waypointPoses;
@@ -70,13 +71,30 @@ public class OnTheFlyPathCommand extends Command {
 
     @Override
     public void initialize() {
-        List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(
-            currentPose.get(), targetPose); // Start Pose and End pose (need to include a second pose or else the code will crash)
-        if (waypointPoses != null) {
-            waypoints.remove(waypoints.size()-1); // If additional waypoints are provided remove the target pose before adding it back in
-            waypoints.addAll(PathPlannerPath.waypointsFromPoses(waypointPoses));
-            waypointPoses.add(targetPose); // Add the target/last pose to the end of the waypoint pose list
+        if (shouldMirrorPath) {
+            double FIELD_WIDTH = Units.inchesToMeters(317); // Should be in a FieldConstants.java file
+            if (waypointPoses != null) {
+                for (int i = 0; i < waypointPoses.size(); i++) {
+                    waypointPoses.set(i, new Pose2d(waypointPoses.get(i).getX(), FIELD_WIDTH - waypointPoses.get(i).getY(), 
+                        waypointPoses.get(i).getRotation()));
+                }
+            }
+            targetPose = new Pose2d(targetPose.getX(), FIELD_WIDTH - targetPose.getY(), targetPose.getRotation());
+        }
 
+        List<Waypoint> waypoints = new ArrayList<>();
+        if (waypointPoses == null) {
+            waypoints = PathPlannerPath.waypointsFromPoses(
+                currentPose.get(), targetPose);
+        } else {
+            // Construct a single list with all the poses because waypointsFromPoses() does not accept poses AND a list of poses
+            List<Pose2d> completePoseList = new ArrayList<>();
+            completePoseList.add(currentPose.get());
+            completePoseList.addAll(waypointPoses);
+            completePoseList.add(targetPose);
+            
+            waypoints = PathPlannerPath.waypointsFromPoses(
+                completePoseList);
         }
 
         PathConstraints pathConstraints = null;
@@ -94,11 +112,11 @@ public class OnTheFlyPathCommand extends Command {
             new GoalEndState(goalEndVelocity, targetPose.getRotation()) // Goal end state. You can set a holonomic rotation here.
         );
         
-        // Prevent the path from being flipped if the coordinates are already correct
-        path.preventFlipping = DriverStation.getAlliance().get() == Alliance.Blue;
-        path = shouldMirrorPath ? path.mirrorPath() : path;
+        // Prevent the path from being flipped - if the robot is switching alliances, then input the correct end pose
+        path.preventFlipping = true;
+        // path = shouldMirrorPath ? path.mirrorPath() : path;
         // Start the pathfinding path tracker
-        DriveCommands.setOnTheFlyPath((DriverStation.getAlliance().get() == Alliance.Blue) ? path : path.flipPath());   
+        DriveCommands.setOnTheFlyPath(path);   
         command = AutoBuilder.followPath(path);
         command.initialize();
     }

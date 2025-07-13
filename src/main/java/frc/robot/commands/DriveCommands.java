@@ -33,7 +33,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
 import lombok.Getter;
 import lombok.Setter;
-import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
@@ -41,11 +40,8 @@ import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.path.GoalEndState;
-import com.pathplanner.lib.path.IdealStartingState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.path.Waypoint;
 
 public class DriveCommands {
     private static final double DEADBAND = 0.1;

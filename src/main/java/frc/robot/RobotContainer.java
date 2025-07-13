@@ -16,14 +16,10 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -44,6 +40,7 @@ import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
+import java.util.ArrayList;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -64,9 +61,6 @@ public class RobotContainer {
 
     // Dashboard inputs
     private final LoggedDashboardChooser<Command> autoChooser;
-
-    // Constraints to be used when pathfinding
-    PathConstraints constraints;
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -145,23 +139,19 @@ public class RobotContainer {
         // Configure the button bindings
         configureButtonBindings();
 
-        // Instantiate the constraints to use while pathfinding
-        // TODO: Tune the maxAcceleration, maxAngularVelocityRadPerSec, and maxAngularAccelerationRacPerSecSq constraints for pathfinding
-        constraints = new PathConstraints(DriveConstants.kSpeedAt12Volts.magnitude(), 4.0, Units.degreesToRadians(540), Units.degreesToRadians(720));
-
         // Example Pathfinding/Path generation Commands
         SmartDashboard.putData("Example Pathfind to Pose", DriveCommands.pathFindToPose(() -> drive.getPose(),
-            new Pose2d(3, 7, Rotation2d.kZero), constraints, 0.0, 0.02));
+            new Pose2d(3, 7, Rotation2d.kZero), Constants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, 0.02));
         SmartDashboard.putData("Example On The Fly Path", new OnTheFlyPathCommand(drive, () -> drive.getPose(), null,
-            new Pose2d(6, 6, Rotation2d.k180deg), constraints, 0.0, false, 0.02));
-        /* 
-        List<Pose2d> waypointPoses = new ArrayList<>();
+            new Pose2d(6, 6, Rotation2d.k180deg), Constants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, true, 0.02));
+        
+        ArrayList<Pose2d> waypointPoses = new ArrayList<>();
         waypointPoses.add(new Pose2d(1, 1, Rotation2d.kCCW_90deg));
         waypointPoses.add(new Pose2d(2, 5, Rotation2d.kCW_90deg));
         waypointPoses.add(new Pose2d(5, 2, Rotation2d.k180deg));
-        SmartDashboard.putData("Example Waypoints On The Fly Path", DriveCommands.onTheFlyPath(() -> drive.getPose(), waypointPoses,
-            new Pose2d(6, 6, Rotation2d.k180deg), constraints, 0.0, false, false, 0.02));
-        */
+        SmartDashboard.putData("Example Waypoints On The Fly Path", new OnTheFlyPathCommand(drive, () -> drive.getPose(), waypointPoses,
+            new Pose2d(6, 6, Rotation2d.k180deg), Constants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, false, 0.02));
+        
     }
 
     /**
@@ -205,7 +195,7 @@ public class RobotContainer {
 
         // Go to a specific Pose when the Y button is pressed - can replace example pose with an offset from a FieldConstants pose
         controller.y().onTrue(
-            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(3, 3, Rotation2d.kZero), constraints, 0.0, 0.02)
+            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(3, 3, Rotation2d.kZero), Constants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, 0.02)
         );
     }
 
