@@ -18,34 +18,78 @@ package frc.lib.io.servo;
 
 import static edu.wpi.first.units.Units.Degrees;
 import edu.wpi.first.math.MathUtil;
-import frc.lib.util.LoggedTunableNumber;
+import edu.wpi.first.units.measure.Angle;
 import lombok.Getter;
 
 public class ServoIOSim implements ServoIO {
     
     @Getter
     private final String name;
-    private final double lowerLimitDegrees;
-    private final double upperLimitDegrees;
+    private final Angle minAngle;
+    private final Angle maxAngle;
 
-    private final LoggedTunableNumber targetPositionDegrees;
+    @Getter
+    private Angle goalPosition = Degrees.of(0.0);
 
     /**
      * Constructs a {@link ServoIOSim} object with the specified name and limits.
      *
      * @param name A human-readable name for this servo instance
-     * @param lowerLimitDegrees The lower limit of the servo in degrees.
-     * @param upperLimitDegrees The upper limit of the servo in degrees.
+     * @param minAngle The lower limit of the servo in degrees.
+     * @param maxAngle The upper limit of the servo in degrees.
      */
-    public ServoIOSim(String name, double lowerLimitDegrees, double upperLimitDegrees) {
+    public ServoIOSim(String name, Angle minAngle, Angle maxAngle) {
         this.name = name;
-        this.targetPositionDegrees = new LoggedTunableNumber(name, 0);
-        this.lowerLimitDegrees = lowerLimitDegrees;
-        this.upperLimitDegrees = upperLimitDegrees;
+        this.minAngle = minAngle;
+        this.maxAngle = maxAngle;
     }
 
     @Override
     public void updateInputs(ServoInputs inputs) {
-        inputs.position = Degrees.of(MathUtil.clamp(targetPositionDegrees.getAsDouble(), lowerLimitDegrees, upperLimitDegrees));
+        inputs.position = getGoalPosition();
+    }
+
+    /** The range of the servo, in degrees */
+    public double getServoAngleRange() {
+        return maxAngle.minus(minAngle).in(Degrees);
+    }
+
+    /**
+     * Set the servo position.
+     *
+     * @param value Position from 0.0 to 1.0, corresponding to the range of full left to full right.
+     */
+    @Override
+    public void setScaledPosition(double value) {
+        goalPosition = Degrees.of(MathUtil.clamp(value, 0.0, 1.0)*getServoAngleRange() + minAngle.in(Degrees));
+    }
+
+    /**
+     * Set the servo angle.
+     *
+     * <p>Servo angles that are out of the supported range of the servo simply "saturate" in that
+     * direction In other words, if the servo has a range of (X degrees to Y degrees) than angles of
+     * less than X result in an angle of X being set and angles of more than Y degrees result in an
+     * angle of Y being set.
+     *
+     * @param degrees The angle in degrees to set the servo.
+     */
+    public void setAngle(double degrees) {
+        goalPosition = Degrees.of(MathUtil.clamp(degrees, minAngle.in(Degrees), maxAngle.in(Degrees)));
+    }
+
+    /**
+     * Set the servo angle.
+     *
+     * <p>Servo angles that are out of the supported range of the servo simply "saturate" in that
+     * direction In other words, if the servo has a range of (X degrees to Y degrees) than angles of
+     * less than X result in an angle of X being set and angles of more than Y degrees result in an
+     * angle of Y being set.
+     *
+     * @param angle The Angle set the servo.
+     */
+    @Override
+    public void setAngle(Angle angle) {
+        goalPosition = angle;
     }
 }

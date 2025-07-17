@@ -20,7 +20,9 @@ import static edu.wpi.first.units.Units.Degrees;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Servo;
+import frc.lib.util.Device;
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * ServoIOPWM is an abstraction for WPILib's Servo class with Pulse Width Modulation signal control (PWM) and implements the ServoIO interface.
@@ -32,11 +34,18 @@ public class ServoIOPWM implements ServoIO {
     private final String name;
     private final Servo servo;
 
-    public ServoIOPWM(String name, int channel) {
-        this.name = name;
-        servo = new Servo(channel);
+    @Getter
+    @Setter
+    private Angle minAngle;
+    @Getter
+    @Setter
+    private Angle maxAngle;
 
-        servo.getSpeed();
+    public ServoIOPWM(Device.PWM id, String name, Angle minAngle, Angle maxAngle) {
+        this.name = name;
+        servo = new Servo(id.id());
+        this.minAngle = minAngle;
+        this.maxAngle = maxAngle;
     }
 
     @Override
@@ -44,21 +53,49 @@ public class ServoIOPWM implements ServoIO {
         inputs.position = Degrees.of(servo.getAngle());
     }
 
-    /** 
-     * Set the servo position by specifying the angle, in degrees from 0 to 180. 
-     * This method will work for servos with the same range as the Hitec HS-322HD servo . 
-     * Any values passed to this method outside the specified range will be coerced to the boundary.
-     */
-    @Override
-    public void runPosition(Angle position) {
-        servo.setAngle(position.in(Degrees));
+    /** The range of the servo, in degrees */
+    public double getServoAngleRange() {
+        return maxAngle.minus(minAngle).in(Degrees);
     }
 
+    /**
+     * Set the servo position.
+     *
+     * @param value Position from 0.0 to 1.0, corresponding to the range of full left to full right.
+     */
     @Override
-    public void runPosition(double value) {
+    public void setScaledPosition(double value) {
         servo.set(MathUtil.clamp(value, 0.0, 1.0));
     }
 
+    /**
+     * Set the servo angle.
+     *
+     * <p>Servo angles that are out of the supported range of the servo simply "saturate" in that
+     * direction In other words, if the servo has a range of (X degrees to Y degrees) than angles of
+     * less than X result in an angle of X being set and angles of more than Y degrees result in an
+     * angle of Y being set.
+     *
+     * @param degrees The angle in degrees to set the servo.
+     */
+    public void setAngle(double degrees) {
+        servo.set((MathUtil.clamp(degrees, minAngle.in(Degrees), maxAngle.in(Degrees)) - minAngle.in(Degrees)) / getServoAngleRange());
+    }
+
+    /**
+     * Set the servo angle.
+     *
+     * <p>Servo angles that are out of the supported range of the servo simply "saturate" in that
+     * direction In other words, if the servo has a range of (X degrees to Y degrees) than angles of
+     * less than X result in an angle of X being set and angles of more than Y degrees result in an
+     * angle of Y being set.
+     *
+     * @param angle The Angle set the servo.
+     */
+    public void setAngle(Angle angle) {
+        setAngle(angle.in(Degrees));
+    }
+    
     /**
      * Disables the PWM output until told to run to a position again.
      */

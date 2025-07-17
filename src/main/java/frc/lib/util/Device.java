@@ -21,4 +21,7 @@ public sealed interface Device {
 
     public record DIO(int id) implements Device {
     }
+
+    public record PWM(int id) implements Device {
+    }
 }

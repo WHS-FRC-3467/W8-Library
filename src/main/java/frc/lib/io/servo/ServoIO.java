@@ -52,15 +52,20 @@ public interface ServoIO {
      * 0.0 corresponds to one extreme of the servo and 1.0 corresponds to the other.
      * @param value
      */
-    public default void runPosition(double value) {}
+    public default void setScaledPosition(double value) {}
 
     /**
      * Runs the servo to position using an {@link Angle} value.
      * The value should not exceed the lower and upper limits of the servo.
      * @param position
      */
-    public default void runPosition(Angle position) {}
+    public default void setAngle(Angle position) {}
 
     /** Runs the servo at neutral mode. */
     public default void stop() {}
+
+    public default double getServoAngleRange() 
+    {
+        return 0.0;
+    }
 }
