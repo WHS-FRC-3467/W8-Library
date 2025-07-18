@@ -22,7 +22,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Servo;
 import frc.lib.util.Device;
 import lombok.Getter;
-import lombok.Setter;
 
 /**
  * ServoIOPWM is an abstraction for WPILib's Servo class with Pulse Width Modulation signal control (PWM) and implements the ServoIO interface.
@@ -34,11 +33,7 @@ public class ServoIOPWM implements ServoIO {
     private final String name;
     private final Servo servo;
 
-    @Getter
-    @Setter
     private Angle minAngle;
-    @Getter
-    @Setter
     private Angle maxAngle;
 
     public ServoIOPWM(Device.PWM id, String name, Angle minAngle, Angle maxAngle) {
@@ -48,22 +43,11 @@ public class ServoIOPWM implements ServoIO {
         this.maxAngle = maxAngle;
     }
 
-    @Override
-    public void updateInputs(ServoInputs inputs) {
-        inputs.position = Degrees.of(servo.getAngle());
-    }
-
-    /** The range of the servo, in degrees */
-    public double getServoAngleRange() {
-        return maxAngle.minus(minAngle).in(Degrees);
-    }
-
     /**
      * Set the servo position.
      *
      * @param value Position from 0.0 to 1.0, corresponding to the range of full left to full right.
      */
-    @Override
     public void setScaledPosition(double value) {
         servo.set(MathUtil.clamp(value, 0.0, 1.0));
     }
@@ -79,7 +63,8 @@ public class ServoIOPWM implements ServoIO {
      * @param degrees The angle in degrees to set the servo.
      */
     public void setAngle(double degrees) {
-        servo.set((MathUtil.clamp(degrees, minAngle.in(Degrees), maxAngle.in(Degrees)) - minAngle.in(Degrees)) / getServoAngleRange());
+        var servoAngleRange = maxAngle.minus(minAngle).in(Degrees);
+        servo.set((MathUtil.clamp(degrees, minAngle.in(Degrees), maxAngle.in(Degrees)) - minAngle.in(Degrees)) / servoAngleRange);
     }
 
     /**

@@ -43,25 +43,15 @@ public class ServoIOSim implements ServoIO {
         this.minAngle = minAngle;
         this.maxAngle = maxAngle;
     }
-
-    @Override
-    public void updateInputs(ServoInputs inputs) {
-        inputs.position = getGoalPosition();
-    }
-
-    /** The range of the servo, in degrees */
-    public double getServoAngleRange() {
-        return maxAngle.minus(minAngle).in(Degrees);
-    }
-
+    
     /**
      * Set the servo position.
      *
      * @param value Position from 0.0 to 1.0, corresponding to the range of full left to full right.
      */
-    @Override
     public void setScaledPosition(double value) {
-        goalPosition = Degrees.of(MathUtil.clamp(value, 0.0, 1.0)*getServoAngleRange() + minAngle.in(Degrees));
+        var servoAngleRange = maxAngle.minus(minAngle).in(Degrees);
+        goalPosition = Degrees.of(MathUtil.clamp(value, 0.0, 1.0)*servoAngleRange + minAngle.in(Degrees));
     }
 
     /**

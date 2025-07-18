@@ -16,18 +16,9 @@
 
 package frc.lib.io.servo;
 
-import static edu.wpi.first.units.Units.Radians;
-import org.littletonrobotics.junction.AutoLog;
 import edu.wpi.first.units.measure.Angle;
 
 public interface ServoIO {
-    
-    @AutoLog
-    abstract class ServoInputs 
-    {
-        /** Servo position. */
-        public Angle position = Radians.of(0.0);
-    }
 
     /**
      * Getter for the name of the servo
@@ -40,21 +31,6 @@ public interface ServoIO {
     }
 
     /**
-     * Updates the provided {@link ServoInputs} instance with the latest sensor readings.
-     *
-     * @param inputs The structure to populate with updated sensor values.
-     */
-    public default void updateInputs(ServoInputs inputs)
-    {}
-
-    /**
-     * Runs the servo to position using a scaled 0 to 1.0 value. 
-     * 0.0 corresponds to one extreme of the servo and 1.0 corresponds to the other.
-     * @param value
-     */
-    public default void setScaledPosition(double value) {}
-
-    /**
      * Runs the servo to position using an {@link Angle} value.
      * The value should not exceed the lower and upper limits of the servo.
      * @param position
@@ -64,8 +40,4 @@ public interface ServoIO {
     /** Runs the servo at neutral mode. */
     public default void stop() {}
 
-    public default double getServoAngleRange() 
-    {
-        return 0.0;
-    }
 }
