@@ -36,6 +36,8 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
+import frc.robot.subsystems.servo1.Servo1;
+import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -52,6 +54,7 @@ public class RobotContainer {
     private final LEDs leds;
     private final LaserCAN1 laserCAN1;
     private final BeamBreak1 beamBreak1;
+    private final Servo1 servo1;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -77,6 +80,7 @@ public class RobotContainer {
                 leds = new LEDs(LEDsConstants.getLightsIOReal());
                 laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal());
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
+                servo1 = new Servo1(Servo1Constants.getReal());
             }
 
             case SIM -> {
@@ -93,6 +97,7 @@ public class RobotContainer {
                     new LaserCAN1(LaserCAN1Constants.getSim());
                 beamBreak1 = new BeamBreak1(
                     BeamBreak1Constants.getSim());
+                servo1 = new Servo1(Servo1Constants.getSim());
             }
 
             default -> {
@@ -109,6 +114,7 @@ public class RobotContainer {
                     new LaserCAN1(LaserCAN1Constants.getReplay());
                 beamBreak1 =
                     new BeamBreak1(BeamBreak1Constants.getReplay());
+                servo1 = new Servo1(Servo1Constants.getReplay());
             }
 
         }
@@ -172,6 +178,14 @@ public class RobotContainer {
                         new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
                     drive)
                     .ignoringDisable(true));
+
+        // Y Button: Move the servo to EXTENDED state when presssed, RETRACTED when released.
+        controller
+            .y()
+            .onTrue(
+                Commands.runOnce(() -> servo1.setState(Servo1.State.EXTENDED), servo1))
+            .onFalse(
+                Commands.runOnce(() -> servo1.setState(Servo1.State.RETRACTED), servo1));
     }
 
     /**

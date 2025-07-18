@@ -37,7 +37,7 @@ public interface ServoIO {
      */
     public default void setAngle(Angle position) {}
 
-    /** Runs the servo at neutral mode. */
+    /* Disables output until told to run to a position again. */
     public default void stop() {}
 
 }

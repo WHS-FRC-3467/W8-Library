@@ -14,24 +14,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot;
+package frc.lib.subsystems;
 
-import frc.lib.util.Device;
-import frc.lib.util.Device.CAN;
-import frc.lib.util.Device.DIO;
-import frc.lib.util.Device.PWM;
+import edu.wpi.first.units.measure.Angle;
+import frc.lib.io.servo.ServoIO;
 
-public class Ports {
-    /*
-     * LIST OF CHANNEL AND CAN IDS
+public class Servo {
+    private final ServoIO io;
+    
+    /**
+     * Constructs a Servo.
      */
+    public Servo(ServoIO io) {
+        this.io = io;
+    }
 
-    public static final Device.CAN laserCAN1 = new CAN(0, "rio");
-    public static final Device.CAN lights = new CAN(1, "rio");
+    /**
+     * Sets the servo position using a scaled value.
+     *
+     * @param value Position from 0.0 to 1.0, corresponding to the range of full left to full right.
+     */
+    public void setAngle(Angle angle) {
+        io.setAngle(angle);
+    }
 
-    public static final Device.DIO diobeambreak = new DIO(2);
-
-    public static final Device.CAN pdh = new CAN(50, "rio");
-
-    public static final Device.PWM servo1 = new PWM(1);
+    /**
+     * If servo is real, this method disables the PWM output until told to run to a position again.
+     */
+    public void stop() {
+        io.stop();
+    }
 }
