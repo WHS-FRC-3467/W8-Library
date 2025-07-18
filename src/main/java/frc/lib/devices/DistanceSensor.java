@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.subsystems;
+package frc.lib.devices;
 
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;

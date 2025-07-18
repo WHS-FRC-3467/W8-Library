@@ -17,8 +17,8 @@ package frc.robot.subsystems.beambreak1;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.lib.devices.BeamBreak;
 import frc.lib.io.beambreak.BeamBreakIO;
-import frc.lib.subsystems.BeamBreak;
 
 public class BeamBreak1 extends SubsystemBase {
 
