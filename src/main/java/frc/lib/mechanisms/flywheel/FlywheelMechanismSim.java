@@ -50,7 +50,7 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
     {
         if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
             throw new IllegalArgumentException(
-                "momentOfInertia must be greater than or equal to zero!");
+                "momentOfInertia must be greater than zero!");
 
         this.io = io;
         sim = new FlywheelSim(LinearSystemId.createFlywheelSystem(characteristics,
