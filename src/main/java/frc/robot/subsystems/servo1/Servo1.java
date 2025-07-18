@@ -19,6 +19,7 @@ package frc.robot.subsystems.servo1;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.servo.ServoIO;
 import frc.lib.subsystems.Servo;
+import org.littletonrobotics.junction.Logger;
 
 public class Servo1 extends SubsystemBase {
     
@@ -34,6 +35,11 @@ public class Servo1 extends SubsystemBase {
 
     public Servo1(ServoIO io) {
         servo = new Servo(io);
+    }
+
+    @Override
+    public void periodic() {
+        Logger.recordOutput(Servo1Constants.NAME + "/state", state.toString());	
     }
 
     public void setState(State state) {
