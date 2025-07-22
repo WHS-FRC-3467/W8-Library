@@ -32,7 +32,7 @@ public class Servo {
     /**
      * Sets the servo position using a scaled value.
      *
-     * @param value Position from 0.0 to 1.0, corresponding to the range of full left to full right.
+     * @param angle position, where an angle with measure 0 corresponds to the leftmost position of the servo.
      */
     public void setAngle(Angle angle) {
         io.setAngle(angle);

@@ -77,6 +77,7 @@ public class ServoIOPWM implements ServoIO {
      *
      * @param angle The Angle set the servo.
      */
+    @Override
     public void setAngle(Angle angle) {
         setAngle(angle.in(Degrees));
     }
@@ -84,6 +85,7 @@ public class ServoIOPWM implements ServoIO {
     /**
      * Disables the PWM output until told to run to a position again.
      */
+    @Override
     public void stop() {
         servo.setDisabled();
     }

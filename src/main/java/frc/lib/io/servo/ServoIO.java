@@ -33,7 +33,6 @@ public interface ServoIO {
     /**
      * Runs the servo to position using an {@link Angle} value.
      * The value should not exceed the lower and upper limits of the servo.
-     * @param position
      */
     public default void setAngle(Angle position) {}
 

@@ -16,17 +16,26 @@
 
 package frc.robot.subsystems.servo1;
 
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.devices.Servo;
 import frc.lib.io.servo.ServoIO;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import static edu.wpi.first.units.Units.Degrees;
 import org.littletonrobotics.junction.Logger;
 
 public class Servo1 extends SubsystemBase {
     
+    @RequiredArgsConstructor
     public enum State {
-        IDLE,
-        RETRACTED,
-        EXTENDED
+        IDLE(null),
+        RETRACTED(Degrees.of(0.0)),
+        EXTENDED(Degrees.of(180.0));
+
+        @Getter
+        private final Angle output;
+
     }
 
     State state = State.IDLE;
@@ -44,15 +53,8 @@ public class Servo1 extends SubsystemBase {
 
     public void setState(State state) {
         switch (state) {
-            case IDLE:
-                servo.stop();
-                break;
-            case RETRACTED:
-                servo.setAngle(Servo1Constants.RETRACTED_ANGLE);
-                break;
-            case EXTENDED:
-                servo.setAngle(Servo1Constants.EXTENDED_ANGLE);
-                break;
+            case IDLE -> servo.stop();
+            default -> servo.setAngle(state.getOutput());
         }
         this.state = state;
     }

@@ -13,44 +13,48 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.subsystems;
+package frc.lib.devices;
 
-import org.littletonrobotics.junction.Logger;
-import frc.lib.io.beambreak.BeamBreakIO;
-import frc.lib.io.beambreak.BeamBreakInputsAutoLogged;
+import java.util.List;
+import com.ctre.phoenix6.controls.ControlRequest;
+
+import frc.lib.io.lights.LightsIO;
 
 /**
- * Class for simplified BeamBreakIO implementation
+ * Class for simplified Lights implementation
  */
-public class BeamBreak {
-    private final BeamBreakIO io;
-    private final BeamBreakInputsAutoLogged inputs = new BeamBreakInputsAutoLogged();
+public class Lights {
+    private final LightsIO io;
 
     /**
-     * Constructs a Beam Break.
+     * Constructs Lights.
      *
      * @param io the IO to interact with.
      */
-    public BeamBreak(BeamBreakIO io)
+    public Lights(LightsIO io)
     {
         this.io = io;
     }
 
-    /** Call this method periodically */
-    public void periodic()
+    /**
+     * Passes ControlRequest to IO layer
+     *
+     * @param request {@link ControlRequest}
+     */
+    public void setAnimation(ControlRequest request)
     {
-        io.updateInputs(inputs);
-        Logger.processInputs(io.getName(), inputs);
+        io.setAnimation(request);
     }
 
     /**
-     * Whether the beam is broken
-     * 
-     * @return Whether the beam is broken
+     * Passes ControlRequests to IO layer
+     *
+     * @param requests {@link ControlRequest}
      */
-    public boolean isBroken()
+    public void setAnimations(List<ControlRequest> requests)
     {
-        return inputs.isBroken;
+        for (ControlRequest request : requests) {
+            io.setAnimation(request);
+        }
     }
-
 }

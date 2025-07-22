@@ -13,29 +13,11 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.subsystems.beambreak1;
+package frc.lib.annotations;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.lib.devices.BeamBreak;
-import frc.lib.io.beambreak.BeamBreakIO;
+import java.lang.annotation.*;
 
-public class BeamBreak1 extends SubsystemBase {
-
-    private final BeamBreak beamBreak;
-
-    public final Trigger broken;
-
-    public BeamBreak1(BeamBreakIO io)
-    {
-        beamBreak = new BeamBreak(io);
-
-        broken = new Trigger(beamBreak::isBroken);
-    }
-
-    @Override
-    public void periodic()
-    {
-        beamBreak.periodic();
-    }
+@Target(ElementType.PARAMETER)
+@Retention(RetentionPolicy.CLASS)
+public @interface NoSubtypeAllowed {
 }

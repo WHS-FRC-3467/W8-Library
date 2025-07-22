@@ -27,10 +27,8 @@ public class Servo1Constants {
     
     public final static String NAME = "Servo #1";
 
-    public final static Angle RETRACTED_ANGLE = Degrees.of(0.0);
-    public final static Angle EXTENDED_ANGLE = Degrees.of(180.0);
-
     public final static Angle MINIMUM_ANGLE = Degrees.of(0.0);
+    // Change as necessary
     public final static Angle MAXIMUM_ANGLE = Degrees.of(180.0);
 
     public static ServoIOPWM getReal()
