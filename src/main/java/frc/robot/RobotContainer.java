@@ -36,6 +36,8 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.flywheel.Flywheel;
+import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
@@ -49,12 +51,14 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
  * subsystems, commands, and button mappings) should be declared here.
  */
+@SuppressWarnings("unused")
 public class RobotContainer {
     // Subsystems
     public final Drive drive;
     private final LEDs leds;
     private final LaserCAN1 laserCAN1;
     private final BeamBreak1 beamBreak1;
+    private final Flywheel flywheel;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -80,6 +84,7 @@ public class RobotContainer {
                 leds = new LEDs(LEDsConstants.getLightsIOReal());
                 laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal());
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
+                flywheel = new Flywheel(FlywheelConstants.getReal());
             }
 
             case SIM -> {
@@ -96,6 +101,7 @@ public class RobotContainer {
                     new LaserCAN1(LaserCAN1Constants.getSim());
                 beamBreak1 = new BeamBreak1(
                     BeamBreak1Constants.getSim());
+                flywheel = new Flywheel(FlywheelConstants.getSim());
             }
 
             default -> {
@@ -112,8 +118,8 @@ public class RobotContainer {
                     new LaserCAN1(LaserCAN1Constants.getReplay());
                 beamBreak1 =
                     new BeamBreak1(BeamBreak1Constants.getReplay());
+                flywheel = new Flywheel(FlywheelConstants.getReplay());
             }
-
         }
 
         // Set up auto routines

@@ -80,6 +80,7 @@ dependencies {
     annotationProcessor wpi.java.deps.wpilibAnnotations()
 
     errorprone("com.google.errorprone:error_prone_core:latest.release")
+    errorprone project(":processor")
 
     implementation wpi.java.deps.wpilib()
     implementation wpi.java.vendor.java()
@@ -103,6 +104,9 @@ dependencies {
 
     def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
     annotationProcessor "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
+
+    compileOnly 'com.google.errorprone:error_prone_annotations:latest.release'
+    annotationProcessor 'com.google.errorprone:error_prone_core:latest.release'
 }
 
 test {
