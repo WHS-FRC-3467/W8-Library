@@ -17,8 +17,8 @@
 package frc.robot.subsystems.servo1;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.devices.Servo;
 import frc.lib.io.servo.ServoIO;
-import frc.lib.subsystems.Servo;
 import org.littletonrobotics.junction.Logger;
 
 public class Servo1 extends SubsystemBase {
