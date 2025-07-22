@@ -34,6 +34,8 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.flywheel.Flywheel;
+import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
@@ -46,12 +48,14 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
  * subsystems, commands, and button mappings) should be declared here.
  */
+@SuppressWarnings("unused")
 public class RobotContainer {
     // Subsystems
     private final Drive drive;
     private final LEDs leds;
     private final LaserCAN1 laserCAN1;
     private final BeamBreak1 beamBreak1;
+    private final Flywheel flywheel;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -65,7 +69,7 @@ public class RobotContainer {
     public RobotContainer()
     {
         switch (Constants.currentMode) {
-            case REAL:
+            case REAL -> {
                 // Real robot, instantiate hardware IO implementations
                 drive = new Drive(
                     new GyroIOPigeon2(),
@@ -77,10 +81,10 @@ public class RobotContainer {
                 leds = new LEDs(LEDsConstants.getLightsIOReal());
                 laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal());
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
+                flywheel = new Flywheel(FlywheelConstants.getReal());
+            }
 
-                break;
-
-            case SIM:
+            case SIM -> {
                 // Sim robot, instantiate physics sim IO implementations
                 drive = new Drive(
                     new GyroIO() {},
@@ -90,13 +94,14 @@ public class RobotContainer {
                     new ModuleIOSim(DriveConstants.BackRight));
 
                 leds = new LEDs(LEDsConstants.getLightsIOSim());
-                laserCAN1 = new LaserCAN1(LaserCAN1Constants.getSim());
+                laserCAN1 =
+                    new LaserCAN1(LaserCAN1Constants.getSim());
                 beamBreak1 = new BeamBreak1(
                     BeamBreak1Constants.getSim());
+                flywheel = new Flywheel(FlywheelConstants.getSim());
+            }
 
-                break;
-
-            default:
+            default -> {
                 // Replayed robot, disable IO implementations
                 drive = new Drive(
                     new GyroIO() {},
@@ -106,32 +111,30 @@ public class RobotContainer {
                     new ModuleIO() {});
 
                 leds = new LEDs(LEDsConstants.getLightsIOReplay());
-                laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReplay());
-                beamBreak1 = new BeamBreak1(
-                    BeamBreak1Constants.getReplay());
-
-                break;
+                laserCAN1 =
+                    new LaserCAN1(LaserCAN1Constants.getReplay());
+                beamBreak1 =
+                    new BeamBreak1(BeamBreak1Constants.getReplay());
+                flywheel = new Flywheel(FlywheelConstants.getReplay());
+            }
         }
 
         // Set up auto routines
         autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
         // Set up SysId routines
-        autoChooser.addOption(
-            "Drive Wheel Radius Characterization",
+        autoChooser.addOption("Drive Wheel Radius Characterization",
             DriveCommands.wheelRadiusCharacterization(drive));
-        autoChooser.addOption(
-            "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-        autoChooser.addOption(
-            "Drive SysId (Quasistatic Forward)",
+        autoChooser.addOption("Drive Simple FF Characterization",
+            DriveCommands.feedforwardCharacterization(drive));
+        autoChooser.addOption("Drive SysId (Quasistatic Forward)",
             drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-            "Drive SysId (Quasistatic Reverse)",
+        autoChooser.addOption("Drive SysId (Quasistatic Reverse)",
             drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption(
-            "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-            "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption("Drive SysId (Dynamic Forward)",
+            drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption("Drive SysId (Dynamic Reverse)",
+            drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Configure the button bindings
         configureButtonBindings();

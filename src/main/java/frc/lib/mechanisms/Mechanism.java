@@ -13,9 +13,8 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.subsystems;
+package frc.lib.mechanisms;
 
-import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
@@ -23,82 +22,52 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
-import frc.lib.io.motor.MotorInputsAutoLogged;
 
-/**
- * Class for simplified MotorIO implementation
- */
-public class Motor {
-    private final MotorIO io;
-    private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
-
-    /**
-     * Constructs a Motor.
-     *
-     * @param io the IO to interact with.
-     */
-    public Motor(MotorIO io)
-    {
-        this.io = io;
-    }
+public interface Mechanism {
 
     /** Call this method periodically */
-    public void periodic()
-    {
-        io.updateInputs(inputs);
-        Logger.processInputs(io.getName(), inputs);
-    }
+    public default void periodic()
+    {}
 
     /**
-     * Sets the motor to coast mode.
+     * Sets the mechanism to coast mode.
      */
-    public void runCoast()
-    {
-        io.runCoast();
-    }
+    public default void runCoast()
+    {}
 
     /**
-     * Sets the motor to brake mode.
+     * Sets the mechanism to brake mode.
      */
-    public void runBrake()
-    {
-        io.runBrake();
-    }
+    public default void runBrake()
+    {}
 
     /**
-     * Runs the motor using direct voltage control.
+     * Runs the mechanism using direct voltage control.
      *
      * @param voltage Desired voltage output.
      */
-    public void runVoltage(Voltage voltage)
-    {
-        io.runVoltage(voltage);
-    }
+    public default void runVoltage(Voltage voltage)
+    {}
 
     /**
-     * Runs the motor with a specified current output.
+     * Runs the mechanism with a specified current output.
      *
      * @param current Desired torque-producing current.
      */
-    public void runCurrent(Current current)
-    {
-        io.runCurrent(current);
-    }
+    public default void runCurrent(Current current)
+    {}
 
     /**
-     * Runs the motor using duty cycle (percentage of available voltage).
+     * Runs the mechanism using duty cycle (percentage of available voltage).
      *
      * @param dutyCycle Fractional output between 0 and 1.
      */
-    public void runDutyCycle(double dutyCycle)
-    {
-        io.runDutyCycle(dutyCycle);
-    }
+    public default void runDutyCycle(double dutyCycle)
+    {}
 
     /**
-     * Runs the motor to a specific position.
+     * Runs the mechanism to a specific position.
      *
      * @param position Target position.
      * @param cruiseVelocity Cruise velocity.
@@ -106,23 +75,19 @@ public class Motor {
      * @param maxJerk Max jerk (rate of acceleration).
      * @param slot PID slot index.
      */
-    public void runPosition(Angle position, AngularVelocity cruiseVelocity,
+    public default void runPosition(Angle position, AngularVelocity cruiseVelocity,
         AngularAcceleration acceleration,
         Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
-    {
-        io.runPosition(position, cruiseVelocity, acceleration, maxJerk, slot);
-    }
+    {}
 
     /**
-     * Runs the motor at a target velocity.
+     * Runs the mechanism at a target velocity.
      *
      * @param velocity Desired velocity.
      * @param acceleration Max acceleration.
      * @param slot PID slot index.
      */
-    public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
+    public default void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
         PIDSlot slot)
-    {
-        io.runVelocity(velocity, acceleration, slot);
-    }
+    {}
 }
