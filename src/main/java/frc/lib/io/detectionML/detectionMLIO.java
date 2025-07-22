@@ -13,48 +13,57 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.io.detectionML;
+package frc.lib.io.DetectionML;
 
 import org.littletonrobotics.junction.AutoLog;
+import java.util.List;
 
 /**
  * Standardized interface for ML-IO used in FRC.
  */
-public interface detectionMLIO {
+public interface DetectionMLIO {
 
-    /* Abstract class effectively behaving as a visible structure for data encapsulation. */
+    /*
+     * Abstract class defining data type for updateInputs method.
+     */
     @AutoLog
-    abstract class detectionMLIOInputs {
+    abstract class DetectionMLIOInputs {
         /** Whether the camera is connected. */
         public boolean connected = false;
+        /** Data structure (via record) containing target information. */
+        public List<TargetObservation> LatestTargetObservation;
+    }
+
+    /* Data structure of target information. */
+    public static record TargetObservation(
         /** ID of detected object. */
-        public int objID = -1000;
+        int ObjID,
         /** Confidence of detected object. */
-        public float objConf = -1000.0f;
+        float ObjConf,
         /** Circumscribed area of detected object. */
-        public double objArea = -1000.0;
+        double ObjArea,
         /** Pitch of detected object. */
-        public double pitch = -1000.0;
+        double pitch,
         /** Yaw of detected object. */
-        public double yaw = -1000.0;
+        double yaw,
         /** Skew of detected object. */
-        public double skew = -1000.0;
+        double skew) {
     }
 
     /*
      * Name of the camera capturing optical data.
      */
-    public default String cameraString()
+    public default String getCamera()
     {
         return "";
     }
 
     /*
      * Updates the provided {@link detectionMLIOInputs} instance using the latest camera readings.
-     * If the camera is not connected, it populates the field with default values.
+     * If the camera is not connected, DetectionMLIOInput fields remain empty.
      * 
      * @param inputs The structure to populate with updated camera readings.
      */
-    public default void updateInputs(detectionMLIOInputs inputs)
+    public default void updateInputs(DetectionMLIOInputs inputs)
     {}
 }
