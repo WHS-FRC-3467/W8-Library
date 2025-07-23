@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.io.DetectionML;
+package frc.lib.io.detectionML;
 
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
@@ -28,24 +28,24 @@ import java.util.List;
  */
 public class DetectionMLIOPhotonVision implements DetectionMLIO {
     protected final PhotonCamera camera;
-    protected final String ReturnName;
-    private final Alert DisconnectedAlert;
+    protected final String cameraName;
+    private final Alert disconnectedAlert;
 
     /**
      * Constructs a {@link DetectionMLIOPhotonVision} object with the specified camera name.
      *
-     * @param CameraName The name of the camera
+     * @param cameraName The name of the camera
      */
-    public DetectionMLIOPhotonVision(String CameraName)
+    public DetectionMLIOPhotonVision(String cameraName)
     {
         // CameraName is the name of the NetworkTable that PhotonVision is broadcasting information
         // over.
         // The name of the NetworkTable should be the same as the camera’s nickname (from the
         // PhotonVision UI).
-        camera = new PhotonCamera(CameraName);
-        DisconnectedAlert =
-            new Alert("PhotoVision Camera " + CameraName + " is not connected.", AlertType.kError);
-        ReturnName = CameraName;
+        camera = new PhotonCamera(cameraName);
+        disconnectedAlert =
+            new Alert("PhotoVision Camera " + cameraName + " is not connected.", AlertType.kError);
+        this.cameraName = cameraName;
     }
 
     @Override
@@ -55,43 +55,43 @@ public class DetectionMLIOPhotonVision implements DetectionMLIO {
         inputs.connected = camera.isConnected();
         /* Update results. */
         if (inputs.connected) {
-            DisconnectedAlert.set(false);
+            disconnectedAlert.set(false);
             // PhotonVision container containing all information about stored targets from
             // camera.
             // List retrieved via .getAllUnreadResults() is FIFO, max size 20, and each call clears
             // the queue. Call once per loop().
             List<PhotonPipelineResult> result = camera.getAllUnreadResults();
-            boolean HasTargets = !result.isEmpty();
+            boolean hasTargets = !result.isEmpty();
             // Manipulating targets data when HasTargets is false may result in null pointer
             // exception.
-            if (HasTargets) {
+            if (hasTargets) {
                 // Most recent set of targets.
-                List<PhotonTrackedTarget> CurrentTargets = result.get(0).getTargets();
-                int TargetSize = CurrentTargets.size();
+                List<PhotonTrackedTarget> currentTargets = result.get(0).getTargets();
+                int TargetSize = currentTargets.size();
                 // Clear last timestamp's observations to prevent accumulation.
-                inputs.LatestTargetObservation.clear();
+                inputs.latestTargetObservation.clear();
                 // Add all detected targets within most recent pipeline result to
                 // inputs.LatestTargetObservation.
                 for (int i = 0; i < TargetSize; i++) {
-                    inputs.LatestTargetObservation.add(i, new TargetObservation(
-                        CurrentTargets.get(i).getDetectedObjectClassID(),
-                        CurrentTargets.get(i).getDetectedObjectConfidence(),
-                        CurrentTargets.get(i).getArea(),
-                        CurrentTargets.get(i).getPitch(),
-                        CurrentTargets.get(i).getYaw(),
-                        CurrentTargets.get(i).getSkew()));
+                    inputs.latestTargetObservation.add(i, new TargetObservation(
+                        currentTargets.get(i).getDetectedObjectClassID(),
+                        currentTargets.get(i).getDetectedObjectConfidence(),
+                        currentTargets.get(i).getArea(),
+                        currentTargets.get(i).getPitch(),
+                        currentTargets.get(i).getYaw(),
+                        currentTargets.get(i).getSkew()));
                 }
             } else {
                 // Pass
             }
         } else {
-            DisconnectedAlert.set(true);
+            disconnectedAlert.set(true);
         }
     }
 
     @Override
     public String getCamera()
     {
-        return ReturnName;
+        return cameraName;
     }
 }
