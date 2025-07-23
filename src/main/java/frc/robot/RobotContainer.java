@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.util.CommandXboxControllerExtended;
+import frc.robot.Constants.PathConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.OnTheFlyPathCommand;
 import frc.robot.subsystems.beambreak1.BeamBreak1;
@@ -143,17 +144,10 @@ public class RobotContainer {
         configureButtonBindings();
 
         // Example Pathfinding/Path generation Commands
-        SmartDashboard.putData("Example Pathfind to Pose", DriveCommands.pathFindToPose(() -> drive.getPose(),
-            new Pose2d(3, 7, Rotation2d.kZero), Constants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, 0.02));
-        SmartDashboard.putData("Example On The Fly Path", new OnTheFlyPathCommand(drive, () -> drive.getPose(), null,
-            new Pose2d(6, 6, Rotation2d.k180deg), Constants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, true, 0.02));
-        
-        ArrayList<Pose2d> waypointPoses = new ArrayList<>();
-        waypointPoses.add(new Pose2d(1, 1, Rotation2d.kCCW_90deg));
-        waypointPoses.add(new Pose2d(2, 5, Rotation2d.kCW_90deg));
-        waypointPoses.add(new Pose2d(5, 2, Rotation2d.k180deg));
-        SmartDashboard.putData("Example Waypoints On The Fly Path", new OnTheFlyPathCommand(drive, () -> drive.getPose(), waypointPoses,
-            new Pose2d(6, 6, Rotation2d.k180deg), Constants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, false, 0.02));
+        SmartDashboard.putData("Pathfind to Pose 1", DriveCommands.pathFindToPose(() -> drive.getPose(),
+            PathConstants.PATHFIND_TO_POSE_1_TARGET, PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
+        SmartDashboard.putData("On The Fly Path 1", new OnTheFlyPathCommand(drive, () -> drive.getPose(), null,
+            PathConstants.ON_THE_FLY_PATH_1_TARGET, PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, true, PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
         
     }
 
@@ -196,9 +190,15 @@ public class RobotContainer {
                     drive)
                     .ignoringDisable(true));
 
-        // Go to a specific Pose when the Y button is pressed - can replace example pose with an offset from a FieldConstants pose
+        // Pathfind to Pose 2 when the Y button is pressed
         controller.y().onTrue(
-            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(3, 3, Rotation2d.kZero), Constants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, 0.02)
+            DriveCommands.pathFindToPose(() -> drive.getPose(), PathConstants.PATHFIND_TO_POSE_2_TARGET, PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, PathConstants.PATHGENERATION_DRIVE_TOLERANCE)
+        );
+
+        // On-the-fly path with waypoints while the Right Bumper is held
+        controller.rightBumper().whileTrue(
+            new OnTheFlyPathCommand(drive, () -> drive.getPose(), PathConstants.ON_THE_FLY_PATH_2_WAYPOINTS,
+            PathConstants.ON_THE_FLY_PATH_2_TARGET, PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE)
         );
     }
 

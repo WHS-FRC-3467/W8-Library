@@ -48,11 +48,11 @@ public class OnTheFlyPathCommand extends Command {
     /**
      * Automatically generates a PathPlanner path on-the-fly based on dynamic inputs.
      * @param drive The Drive subsystem to get the current pose from
+     * @param currentPose A Supplier that provides the current pose of the robot.
      * @param waypointPoses A list of Pose2d waypoints to include in the path.
      * @param targetPose The final target pose for the path.
      * @param constraints The PathConstraints to apply to the path.
      * @param goalEndVelocity The final velocity in meters/sec.
-     * @param shouldFlipPath Whether to flip the path from the blue/red alliance side of the field
      * @param shouldMirrorPath Whether to mirror the path from the left/right side of the field
      * @param tolerance The allowed tolerance, in meters, of the robot's position from the target pose.
      * Saves the path and command for retrieval to be executed by the CommandScheduler in Robot.java
