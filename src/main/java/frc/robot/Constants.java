@@ -15,11 +15,7 @@
 
 package frc.robot;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import com.pathplanner.lib.path.PathConstraints;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -48,21 +44,7 @@ public final class Constants {
 
     public static final class PathConstants {
 
-        public static final double PATHGENERATION_DRIVE_TOLERANCE = 0.02; // 2 cm tolerance for pathfinding
-
-        public static final Pose2d 
-            PATHFIND_TO_POSE_1_TARGET = new Pose2d(3, 7, Rotation2d.kZero);
-        public static final Pose2d 
-            PATHFIND_TO_POSE_2_TARGET = new Pose2d(3, 3, Rotation2d.kZero);
-
-        public static final Pose2d ON_THE_FLY_PATH_1_TARGET = new Pose2d(6, 6, Rotation2d.k180deg);
-        public static final Pose2d ON_THE_FLY_PATH_2_TARGET = new Pose2d(6, 6, Rotation2d.k180deg);
-
-        public static final ArrayList<Pose2d> ON_THE_FLY_PATH_2_WAYPOINTS = new ArrayList<>(Arrays.asList(
-            new Pose2d(1, 1, Rotation2d.kCCW_90deg), 
-            new Pose2d(2, 5, Rotation2d.kCW_90deg), 
-            new Pose2d(5, 2, Rotation2d.k180deg)
-        ));
+        public static final double PATHGENERATION_DRIVE_TOLERANCE = Units.inchesToMeters(3.0); // 3 in robot position tolerance
 
         // Tune the maxAcceleration, maxAngularVelocityRadPerSec, and maxAngularAccelerationRacPerSecSq constraints for pathfinding
         public static final PathConstraints ON_THE_FLY_PATH_CONSTRAINTS = new PathConstraints(

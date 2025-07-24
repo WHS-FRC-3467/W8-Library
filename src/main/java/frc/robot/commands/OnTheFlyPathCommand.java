@@ -29,6 +29,8 @@ import com.pathplanner.lib.path.Waypoint;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.drive.Drive;
 
@@ -44,6 +46,9 @@ public class OnTheFlyPathCommand extends Command {
     boolean shouldMirrorPath;
     double tolerance;
     Command command;
+
+    private List<Pose2d> onTheFlyPathPoses = new ArrayList<Pose2d>();
+    private Field2d pathGenerationTrajectory = new Field2d();
 
     /**
      * Automatically generates a PathPlanner path on-the-fly based on dynamic inputs.
@@ -67,6 +72,9 @@ public class OnTheFlyPathCommand extends Command {
         this.goalEndVelocity = goalEndVelocity;
         this.shouldMirrorPath = shouldMirrorPath;
         this.tolerance = tolerance;
+
+        // Create a Field in the Dashboard to visualize automatically generated paths
+        SmartDashboard.putData("Path Generation Preview", pathGenerationTrajectory);
     }
 
     @Override
@@ -124,6 +132,14 @@ public class OnTheFlyPathCommand extends Command {
     @Override
     public void execute() {
         command.execute();
+
+        pathGenerationTrajectory.setRobotPose(currentPose.get());
+
+        // Display the onTheFlyPath while the command is running
+        onTheFlyPathPoses.addAll(path.getPathPoses());
+
+        // Displays robot poses on Field2d widget
+        pathGenerationTrajectory.getObject("PathGenerationTrajectory").setPoses(onTheFlyPathPoses);
     }
 
     @Override
@@ -136,6 +152,10 @@ public class OnTheFlyPathCommand extends Command {
     public void end(boolean interrupted) {
         DriveCommands.setOnTheFlyPath(null);
         command.end(interrupted);
+
+        // Clear the on-the-fly path poses from the Field2d widget
+        onTheFlyPathPoses.clear();
+        pathGenerationTrajectory.getObject("PathGenerationTrajectory").setPoses(onTheFlyPathPoses);
     }
     
 }

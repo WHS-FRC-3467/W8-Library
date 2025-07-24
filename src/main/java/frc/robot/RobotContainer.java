@@ -44,6 +44,7 @@ import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
 import java.util.ArrayList;
+import java.util.Arrays;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -142,13 +143,6 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
-
-        // Example Pathfinding/Path generation Commands
-        SmartDashboard.putData("Pathfind to Pose 1", DriveCommands.pathFindToPose(() -> drive.getPose(),
-            PathConstants.PATHFIND_TO_POSE_1_TARGET, PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
-        SmartDashboard.putData("On The Fly Path 1", new OnTheFlyPathCommand(drive, () -> drive.getPose(), null,
-            PathConstants.ON_THE_FLY_PATH_1_TARGET, PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, true, PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
-        
     }
 
     /**
@@ -190,15 +184,15 @@ public class RobotContainer {
                     drive)
                     .ignoringDisable(true));
 
-        // Pathfind to Pose 2 when the Y button is pressed
+        // Pathfind to Pose when the Y button is pressed
         controller.y().onTrue(
-            DriveCommands.pathFindToPose(() -> drive.getPose(), PathConstants.PATHFIND_TO_POSE_2_TARGET, PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, PathConstants.PATHGENERATION_DRIVE_TOLERANCE)
+            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(3, 3, Rotation2d.kZero), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, PathConstants.PATHGENERATION_DRIVE_TOLERANCE)
         );
 
         // On-the-fly path with waypoints while the Right Bumper is held
         controller.rightBumper().whileTrue(
-            new OnTheFlyPathCommand(drive, () -> drive.getPose(), PathConstants.ON_THE_FLY_PATH_2_WAYPOINTS,
-            PathConstants.ON_THE_FLY_PATH_2_TARGET, PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE)
+            new OnTheFlyPathCommand(drive, () -> drive.getPose(), new ArrayList<>(Arrays.asList()), // List of waypoints
+            new Pose2d(6, 6, Rotation2d.k180deg), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE)
         );
     }
 
