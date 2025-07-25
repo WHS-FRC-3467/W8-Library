@@ -19,7 +19,7 @@ package frc.robot.commands;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-
+import org.littletonrobotics.junction.Logger;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.IdealStartingState;
@@ -140,6 +140,7 @@ public class OnTheFlyPathCommand extends Command {
 
         // Displays robot poses on Field2d widget
         pathGenerationTrajectory.getObject("PathGenerationTrajectory").setPoses(onTheFlyPathPoses);
+        Logger.recordOutput("OnTheFlyPathCommand/Poses", onTheFlyPathPoses.toArray(new Pose2d[0]));
     }
 
     @Override
@@ -156,6 +157,7 @@ public class OnTheFlyPathCommand extends Command {
         // Clear the on-the-fly path poses from the Field2d widget
         onTheFlyPathPoses.clear();
         pathGenerationTrajectory.getObject("PathGenerationTrajectory").setPoses(onTheFlyPathPoses);
+        Logger.recordOutput("OnTheFlyPathCommand", onTheFlyPathPoses.toArray(new Pose2d[0]));
     }
     
 }
