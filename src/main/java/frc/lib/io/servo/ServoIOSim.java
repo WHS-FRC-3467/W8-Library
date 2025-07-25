@@ -80,6 +80,6 @@ public class ServoIOSim implements ServoIO {
      */
     @Override
     public void setAngle(Angle angle) {
-        goalPosition = angle;
+        goalPosition = Degrees.of(MathUtil.clamp(angle.in(Degrees), minAngle.in(Degrees), maxAngle.in(Degrees)));
     }
 }

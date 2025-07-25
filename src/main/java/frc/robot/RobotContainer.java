@@ -184,14 +184,6 @@ public class RobotContainer {
                         new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
                     drive)
                     .ignoringDisable(true));
-
-        // Y Button: Move the servo to EXTENDED state when presssed, RETRACTED when released.
-        controller
-            .y()
-            .onTrue(
-                Commands.runOnce(() -> servo1.setState(Servo1.State.EXTENDED), servo1))
-            .onFalse(
-                Commands.runOnce(() -> servo1.setState(Servo1.State.RETRACTED), servo1));
     }
 
     /**
