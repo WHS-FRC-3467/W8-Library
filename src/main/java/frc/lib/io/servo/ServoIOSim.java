@@ -25,11 +25,11 @@ public class ServoIOSim implements ServoIO {
     
     @Getter
     private final String name;
-    private final Angle minAngle;
-    private final Angle maxAngle;
+    private final double minAngle;
+    private final double maxAngle;
 
     @Getter
-    private Angle goalPosition = Degrees.of(0.0);
+    private double goalPosition;
 
     /**
      * Constructs a {@link ServoIOSim} object with the specified name and limits.
@@ -38,7 +38,7 @@ public class ServoIOSim implements ServoIO {
      * @param minAngle The lower limit of the servo in degrees.
      * @param maxAngle The upper limit of the servo in degrees.
      */
-    public ServoIOSim(String name, Angle minAngle, Angle maxAngle) {
+    public ServoIOSim(String name, double minAngle, double maxAngle) {
         this.name = name;
         this.minAngle = minAngle;
         this.maxAngle = maxAngle;
@@ -50,8 +50,8 @@ public class ServoIOSim implements ServoIO {
      * @param value Position from 0.0 to 1.0, corresponding to the range of full left to full right.
      */
     public void setScaledPosition(double value) {
-        var servoAngleRange = maxAngle.minus(minAngle).in(Degrees);
-        goalPosition = Degrees.of(MathUtil.clamp(value, 0.0, 1.0)*servoAngleRange + minAngle.in(Degrees));
+        var servoAngleRange = maxAngle - minAngle;
+        goalPosition = MathUtil.clamp(value, 0.0, 1.0)*servoAngleRange + minAngle;
     }
 
     /**
@@ -65,7 +65,7 @@ public class ServoIOSim implements ServoIO {
      * @param degrees The angle in degrees to set the servo.
      */
     public void setAngle(double degrees) {
-        goalPosition = Degrees.of(MathUtil.clamp(degrees, minAngle.in(Degrees), maxAngle.in(Degrees)));
+        goalPosition = MathUtil.clamp(degrees, minAngle, maxAngle);
     }
 
     /**
@@ -80,6 +80,6 @@ public class ServoIOSim implements ServoIO {
      */
     @Override
     public void setAngle(Angle angle) {
-        goalPosition = Degrees.of(MathUtil.clamp(angle.in(Degrees), minAngle.in(Degrees), maxAngle.in(Degrees)));
+        goalPosition = MathUtil.clamp(angle.in(Degrees), minAngle, maxAngle);
     }
 }
