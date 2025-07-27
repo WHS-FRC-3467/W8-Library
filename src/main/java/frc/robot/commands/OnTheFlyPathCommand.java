@@ -45,6 +45,7 @@ public class OnTheFlyPathCommand extends Command {
     boolean shouldFlipPath;
     boolean shouldMirrorPath;
     double tolerance;
+    double rotToleranceDegrees;
     Command command;
 
     private List<Pose2d> onTheFlyPathPoses = new ArrayList<Pose2d>();
@@ -63,7 +64,7 @@ public class OnTheFlyPathCommand extends Command {
      * Saves the path and command for retrieval to be executed by the CommandScheduler in Robot.java
      */
     public OnTheFlyPathCommand(Drive drive, Supplier<Pose2d> currentPose, List<Pose2d> waypointPoses, Pose2d targetPose, 
-        PathConstraints constraints, double goalEndVelocity, boolean shouldMirrorPath, double tolerance) {
+        PathConstraints constraints, double goalEndVelocity, boolean shouldMirrorPath, double tolerance, double rotToleranceDegrees) {
         addRequirements(drive);
         this.currentPose = currentPose;
         this.waypointPoses = waypointPoses;
@@ -72,6 +73,7 @@ public class OnTheFlyPathCommand extends Command {
         this.goalEndVelocity = goalEndVelocity;
         this.shouldMirrorPath = shouldMirrorPath;
         this.tolerance = tolerance;
+        this.rotToleranceDegrees = rotToleranceDegrees;
 
         // Create a Field in the Dashboard to visualize automatically generated paths
         SmartDashboard.putData("Path Generation Preview", pathGenerationTrajectory);
@@ -135,18 +137,17 @@ public class OnTheFlyPathCommand extends Command {
 
         pathGenerationTrajectory.setRobotPose(currentPose.get());
 
-        // Display the onTheFlyPath while the command is running
-        onTheFlyPathPoses.addAll(path.getPathPoses());
-
-        // Displays robot poses on Field2d widget
-        pathGenerationTrajectory.getObject("PathGenerationTrajectory").setPoses(onTheFlyPathPoses);
-        Logger.recordOutput("OnTheFlyPathCommand/Poses", onTheFlyPathPoses.toArray(new Pose2d[0]));
+        // Displays robot poses from the onTheFlyPath on Field2d widget while the command is being executed
+        pathGenerationTrajectory.getObject("PathGenerationTrajectory").setPoses(path.getPathPoses());
+        Logger.recordOutput("OnTheFlyPathCommand/Poses", path.getPathPoses().toArray(Pose2d[]::new));
     }
 
     @Override
     public boolean isFinished() {
         // Is the magnitude of the difference between the current pose and the target pose (last pose of the path) less than the tolerance?
-        return currentPose.get().minus(path.getPathPoses().get(path.getPathPoses().size()-1)).getTranslation().getNorm() < tolerance;
+        // Check rotation as well
+        return (currentPose.get().minus(path.getPathPoses().get(path.getPathPoses().size()-1)).getTranslation().getNorm() < tolerance)
+            && (Math.abs(currentPose.get().minus(path.getPathPoses().get(path.getPathPoses().size()-1)).getRotation().getDegrees()) < rotToleranceDegrees);
     }
 
     @Override
@@ -155,9 +156,9 @@ public class OnTheFlyPathCommand extends Command {
         command.end(interrupted);
 
         // Clear the on-the-fly path poses from the Field2d widget
-        onTheFlyPathPoses.clear();
-        pathGenerationTrajectory.getObject("PathGenerationTrajectory").setPoses(onTheFlyPathPoses);
-        Logger.recordOutput("OnTheFlyPathCommand", onTheFlyPathPoses.toArray(new Pose2d[0]));
+        //onTheFlyPathPoses.clear();
+        pathGenerationTrajectory.getObject("PathGenerationTrajectory").setPoses(new Pose2d[]{});
+        Logger.recordOutput("OnTheFlyPathCommand/Poses", new Pose2d[]{});
     }
     
 }

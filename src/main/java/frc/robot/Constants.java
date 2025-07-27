@@ -45,7 +45,7 @@ public final class Constants {
     public static final class PathConstants {
 
         public static final double PATHGENERATION_DRIVE_TOLERANCE = Units.inchesToMeters(3.0); // 3 in robot position tolerance
-
+        public static final double PATHGENERATION_ROT_TOLERANCE_DEGREES = 5.0; // 5 degrees rotation tolerance
         // Tune the maxAcceleration, maxAngularVelocityRadPerSec, and maxAngularAccelerationRacPerSecSq constraints for pathfinding
         public static final PathConstraints ON_THE_FLY_PATH_CONSTRAINTS = new PathConstraints(
             DriveConstants.kSpeedAt12Volts.magnitude(), 

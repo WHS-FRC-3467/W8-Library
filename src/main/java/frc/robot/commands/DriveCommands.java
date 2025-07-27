@@ -311,12 +311,13 @@ public class DriveCommands {
     }
 
     /** 
-     * Pathfinding command that uses the AutoBuilder to generate a path to a target pose.
+     * Pathfinding command that uses the AutoBuilder to generate a path to a target position.
      * @param currentPose Supplier for the robot's current pose
      * @param targetPose The target pose to pathfind to.
      * @param constraints The PathContraints to apply
      * @param goalEndVelocity The goal final velocity in meters/sec.
      * @param tolerance The allowed tolerance in meters of the robot's position from the target pose.
+     * Note that this pathfinding feature does not take the robot to a desired rotation.
      */
     public static Command pathFindToPose(Supplier<Pose2d> currentPose, Pose2d targetPose, PathConstraints constraints, double goalEndVelocity, double tolerance) {
 

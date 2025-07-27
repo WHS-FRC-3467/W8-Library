@@ -192,7 +192,7 @@ public class RobotContainer {
         // On-the-fly path with waypoints while the Right Bumper is held
         controller.rightBumper().whileTrue(
             new OnTheFlyPathCommand(drive, () -> drive.getPose(), new ArrayList<>(Arrays.asList()), // List of waypoints
-            new Pose2d(6, 6, Rotation2d.k180deg), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE)
+            new Pose2d(6, 6, Rotation2d.k180deg), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE, PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES)
         );
     }
 
