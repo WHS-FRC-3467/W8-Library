@@ -185,22 +185,7 @@ public class Robot extends LoggedRobot {
     /** This function is called periodically during operator control. */
     @Override
     public void teleopPeriodic()
-    {
-
-        /*
-        onTheFlyPath = DriveCommands.getOnTheFlyPath();
-        pathGenerationTrajectory.setRobotPose(robotContainer.drive.getPose());
-
-        // Display the onTheFlyPath if there is one
-        if (onTheFlyPath != null) {
-            onTheFlyPathPoses.addAll(onTheFlyPath.getPathPoses());
-        } else {
-            onTheFlyPathPoses.clear();
-        }
-        // Displays robot poses on Field2d widget
-        pathGenerationTrajectory.getObject("PathGenerationTrajectory").setPoses(onTheFlyPathPoses);
-        */
-    }
+    {}
 
     /** This function is called once when test mode is enabled. */
     @Override

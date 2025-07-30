@@ -48,7 +48,6 @@ public class OnTheFlyPathCommand extends Command {
     double rotToleranceDegrees;
     Command command;
 
-    private List<Pose2d> onTheFlyPathPoses = new ArrayList<Pose2d>();
     private Field2d pathGenerationTrajectory = new Field2d();
 
     /**
@@ -124,9 +123,7 @@ public class OnTheFlyPathCommand extends Command {
         
         // Prevent the path from being flipped - if the robot is switching alliances, then input the correct end pose
         path.preventFlipping = true;
-        // path = shouldMirrorPath ? path.mirrorPath() : path;
-        // Start the pathfinding path tracker
-        DriveCommands.setOnTheFlyPath(path);   
+
         command = AutoBuilder.followPath(path);
         command.initialize();
     }
@@ -152,13 +149,10 @@ public class OnTheFlyPathCommand extends Command {
 
     @Override
     public void end(boolean interrupted) {
-        DriveCommands.setOnTheFlyPath(null);
         command.end(interrupted);
 
         // Clear the on-the-fly path poses from the Field2d widget
-        //onTheFlyPathPoses.clear();
         pathGenerationTrajectory.getObject("PathGenerationTrajectory").setPoses(new Pose2d[]{});
         Logger.recordOutput("OnTheFlyPathCommand/Poses", new Pose2d[]{});
     }
-    
 }
