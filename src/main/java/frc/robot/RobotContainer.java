@@ -25,6 +25,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.util.AutoChooser;
+import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.autos.ExampleAuto;
@@ -68,7 +70,7 @@ public class RobotContainer {
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
 
     // Dashboard inputs
-    private final LoggedDashboardChooser<Command> autoChooser;
+    private final AutoChooser<AutoCommand> autoChooser;
     public static Field2d autoPreviewField = new Field2d();
 
     /**
@@ -131,11 +133,17 @@ public class RobotContainer {
         }
 
         // Set up auto routines
-        autoChooser = new LoggedDashboardChooser<>("Auto Choices");
+        autoChooser = new AutoChooser<>("Auto Choices");
         SmartDashboard.putData("Auto Preview", autoPreviewField);
 
         autoChooser.addDefaultOption("None", new NoneAuto());
         autoChooser.addOption("ExampleAuto", new ExampleAuto(drive));
+
+        autoChooser.onChange(auto -> {
+            autoPreviewField.getObject("path").setPoses(auto.getAllPathPoses());
+        });
+
+
 
         // // Set up SysId routines
         // autoChooser.addOption("Drive Wheel Radius Characterization",
