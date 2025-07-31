@@ -29,6 +29,7 @@ import frc.lib.util.AutoChooser;
 import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.autos.BranchingAuto;
 import frc.robot.commands.autos.ExampleAuto;
 import frc.robot.commands.autos.NoneAuto;
 import frc.robot.subsystems.beambreak1.BeamBreak1;
@@ -71,6 +72,7 @@ public class RobotContainer {
 
     // Dashboard inputs
     private final AutoChooser<AutoCommand> autoChooser;
+    private final LoggedDashboardChooser<Boolean> conditionalChooser;
     public static Field2d autoPreviewField = new Field2d();
 
     /**
@@ -132,12 +134,18 @@ public class RobotContainer {
             }
         }
 
+        conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
+        conditionalChooser.addOption("True", true);
+        conditionalChooser.addOption("False", false);
+
         // Set up auto routines
         autoChooser = new AutoChooser<>("Auto Choices");
         SmartDashboard.putData("Auto Preview", autoPreviewField);
 
         autoChooser.addDefaultOption("None", new NoneAuto());
         autoChooser.addOption("ExampleAuto", new ExampleAuto(drive));
+        autoChooser.addOption("BranchingAuto",
+            new BranchingAuto(drive, () -> conditionalChooser.get()));
 
         autoChooser.onChange(auto -> {
             autoPreviewField.getObject("path").setPoses(auto.getAllPathPoses());
