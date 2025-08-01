@@ -41,6 +41,8 @@ import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
+import frc.robot.subsystems.servo1.Servo1;
+import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
 import java.util.ArrayList;
@@ -60,6 +62,7 @@ public class RobotContainer {
     private final LEDs leds;
     private final LaserCAN1 laserCAN1;
     private final BeamBreak1 beamBreak1;
+    private final Servo1 servo1;
     private final Flywheel flywheel;
 
     // Controller
@@ -86,6 +89,7 @@ public class RobotContainer {
                 leds = new LEDs(LEDsConstants.getLightsIOReal());
                 laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal());
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
+                servo1 = new Servo1(Servo1Constants.getReal());
                 flywheel = new Flywheel(FlywheelConstants.getReal());
             }
 
@@ -103,6 +107,7 @@ public class RobotContainer {
                     new LaserCAN1(LaserCAN1Constants.getSim());
                 beamBreak1 = new BeamBreak1(
                     BeamBreak1Constants.getSim());
+                servo1 = new Servo1(Servo1Constants.getSim());
                 flywheel = new Flywheel(FlywheelConstants.getSim());
             }
 
@@ -120,6 +125,7 @@ public class RobotContainer {
                     new LaserCAN1(LaserCAN1Constants.getReplay());
                 beamBreak1 =
                     new BeamBreak1(BeamBreak1Constants.getReplay());
+                servo1 = new Servo1(Servo1Constants.getReplay());
                 flywheel = new Flywheel(FlywheelConstants.getReplay());
             }
         }
