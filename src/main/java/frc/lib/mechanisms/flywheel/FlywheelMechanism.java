@@ -15,7 +15,9 @@
 
 package frc.lib.mechanisms.flywheel;
 
+import edu.wpi.first.units.measure.Current;
 import frc.lib.mechanisms.Mechanism;
 
 public interface FlywheelMechanism extends Mechanism {
+    public Current getSupplyCurrent();
 }

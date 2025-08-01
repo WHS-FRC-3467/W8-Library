@@ -4,9 +4,11 @@
 
 package frc.robot.subsystems.flywheel;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import frc.lib.io.motor.MotorIOTalonFX;
 import frc.lib.io.motor.MotorIOTalonFXSim;
@@ -37,6 +39,12 @@ public class FlywheelConstants {
 
     public static FlywheelMechanism getReplay()
     {
-        return new FlywheelMechanism() {};
+        return new FlywheelMechanism() {
+
+            @Override
+            public Current getSupplyCurrent()
+            {
+                return Amps.of(0);
+            }};
     }
 }

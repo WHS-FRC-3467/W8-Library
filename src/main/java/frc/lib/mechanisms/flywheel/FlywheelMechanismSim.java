@@ -126,4 +126,9 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
     {
         io.runVelocity(velocity, acceleration, slot);
     }
+
+    public Current getSupplyCurrent()
+    {
+        return inputs.supplyCurrent;
+    }
 }

@@ -306,7 +306,7 @@ public class Drive extends SubsystemBase {
     /**
      * Returns the module positions (turn angles and drive positions) for all of the modules.
      */
-    private SwerveModulePosition[] getModulePositions()
+    protected SwerveModulePosition[] getModulePositions()
     {
         SwerveModulePosition[] states = new SwerveModulePosition[4];
         for (int i = 0; i < 4; i++) {

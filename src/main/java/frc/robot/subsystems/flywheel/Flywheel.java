@@ -5,6 +5,8 @@
 package frc.robot.subsystems.flywheel;
 
 import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Volts;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.mechanisms.flywheel.FlywheelMechanism;
@@ -27,5 +29,19 @@ public class Flywheel extends SubsystemBase { // Don't extend if contained in su
     public Command shoot()
     {
         return this.runOnce(() -> io.runCurrent(Amps.of(30)));
+    }
+
+    public void setSupplyVoltage(double voltage)
+    {
+        io.runVoltage(Volts.of(voltage));
+    }
+
+    public Current getSupplyCurrent() {
+        return io.getSupplyCurrent();
+    }
+
+    // For unit testing
+    protected void coast() {
+        io.runCoast();
     }
 }
