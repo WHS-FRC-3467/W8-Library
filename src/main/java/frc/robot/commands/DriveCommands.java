@@ -31,12 +31,15 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
+
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathConstraints;
 
 public class DriveCommands {
     private static final double DEADBAND = 0.1;
@@ -299,5 +302,27 @@ public class DriveCommands {
         double[] positions = new double[4];
         Rotation2d lastAngle = new Rotation2d();
         double gyroDelta = 0.0;
+    }
+
+    /** 
+     * Pathfinding command that uses the AutoBuilder to generate a path to a target position.
+     * @param currentPose Supplier for the robot's current pose
+     * @param targetPose The target pose to pathfind to.
+     * @param constraints The PathContraints to apply
+     * @param goalEndVelocity The goal final velocity in meters/sec.
+     * @param tolerance The allowed tolerance in meters of the robot's position from the target pose.
+     * Note that this pathfinding feature does not take the robot to a desired rotation.
+     */
+    public static Command pathFindToPose(Supplier<Pose2d> currentPose, Pose2d targetPose, PathConstraints constraints, double goalEndVelocity, double tolerance) {
+
+        // Since AutoBuilder is configured, we can use it to build pathfinding commands
+        return AutoBuilder.pathfindToPose(
+            targetPose,
+            constraints,
+            goalEndVelocity // Goal end velocity in meters/sec
+        ).raceWith(
+            // Interrupt the pathfinding command once the robot gets within the tolerance of the target pose
+            Commands.waitUntil(() -> currentPose.get().minus(targetPose).getTranslation().getNorm() < tolerance)
+        );
     }
 }
