@@ -13,24 +13,28 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.subsystems.DetectionML;
+package frc.robot.subsystems.objectDetector;
 
-import frc.lib.io.DetectionML.DetectionMLIO;
+import frc.lib.devices.DetectionML;
+import frc.lib.io.detectionML.DetectionMLIO;
+import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class DetectionML extends SubsystemBase {
-    private final DetectionMLIO inputs;
+public class objectDetector extends SubsystemBase {
+    private final DetectionML detectionML;
 
-    public DetectionML(DetectionMLIO io)
+    public objectDetector(DetectionMLIO io)
     {
-        this.inputs = io;
+        detectionML = new DetectionML(io);
 
-        // Initialize inputs
-        this.inputs = new VisionIOInputsAutoLogged[io.length];
-        for (
+    }
 
-            int i = 0; i < inputs.length; i++) {
-            inputs[i] = new VisionIOInputsAutoLogged();
-        }
+    @Override
+    public void periodic()
+    {
+        detectionML.periodic();
+
+        Logger.recordOutput("Detection/" + "Test Yaw",
+            detectionML.getTargetObservations()[0].yaw());
     }
 }
