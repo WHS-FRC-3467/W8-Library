@@ -40,7 +40,7 @@ public class RotarySubsystemConstants {
     public static final Velocity<AngularAccelerationUnit> JERK = ACCELERATION.per(Second);
 
     private static final double GEARING = (2.0 / 1.0);
-    private static final Angle MIN_ANGLE = Degrees.of(10.0);
+    private static final Angle MIN_ANGLE = Degrees.of(-800.0);
     private static final Angle MAX_ANGLE = Degrees.of(800.0);
 
     private static final Distance ARM_LENGTH = Meters.of(1.0);

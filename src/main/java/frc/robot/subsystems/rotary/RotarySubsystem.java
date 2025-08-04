@@ -64,11 +64,6 @@ public class RotarySubsystem extends SubsystemBase {
             PIDSlot.SLOT_1));
     };
 
-    public Command shoot()
-    {
-        return this.runOnce(() -> io.runCurrent(Amps.of(120)));
-    }
-
     // public Command setpointCommandWithWait(State state)
     // {
     // return waitForPositionCommand(state.setpoint)
