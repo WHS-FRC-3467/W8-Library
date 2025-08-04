@@ -2,23 +2,31 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.rotarysubsystem;
+package frc.robot.subsystems.rotary;
 
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.KilogramSquareMeters;
+import static edu.wpi.first.units.Units.Kilograms;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Meters;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.Units;
-import edu.wpi.first.units.VelocityUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Velocity;
-import frc.lib.io.motor.MotorIO;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.lib.io.motor.MotorIOTalonFX;
+import frc.lib.io.motor.MotorIOTalonFXSim;
+import frc.lib.mechanisms.rotary.*;
 import frc.robot.Ports;
 import frc.robot.Robot;
 
@@ -33,7 +41,14 @@ public class RotarySubsystemConstants {
 
     private static final double GEARING = (2.0 / 1.0);
     private static final Angle MIN_ANGLE = Degrees.of(10.0);
-    private static final Angle MAX_ANGLE = Degrees.of(80.0);
+    private static final Angle MAX_ANGLE = Degrees.of(800.0);
+
+    private static final Distance ARM_LENGTH = Meters.of(1.0);
+    private static final Mass ARM_MASS = Kilograms.of(.01);
+    private static final DCMotor CHARACTERISTICS = DCMotor.getKrakenX60(1);
+    public static final MomentOfInertia MOI = KilogramSquareMeters
+        .of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), ARM_MASS.in(Kilograms)));
+    private static final Angle STARTING_ANGLE = Radians.of(0.0);
 
 
     public static TalonFXConfiguration getFXConfig()
@@ -64,19 +79,21 @@ public class RotarySubsystemConstants {
         return config;
     }
 
-    public static MotorIO getReal()
+    public static RotaryMechanismReal getReal()
     {
-        return new MotorIOTalonFX(NAME + "Motor", getFXConfig(), Ports.RotarySubsystemMotorMain,
-            Ports.RotarySubsystemMotorFollower);
+        return new RotaryMechanismReal(
+            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain));
     }
 
-    public static MotorIO getSim()
+    public static RotaryMechanismSim getSim()
     {
-        return new MotorIO() {}; // TODO: Change to sim motor when implemented
+        return new RotaryMechanismSim(
+            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain),
+            CHARACTERISTICS, MOI, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, true, STARTING_ANGLE);
     }
 
-    public static MotorIO getReplay()
+    public static RotaryMechanism getReplay()
     {
-        return new MotorIO() {};
+        return new RotaryMechanism() {};
     }
 }

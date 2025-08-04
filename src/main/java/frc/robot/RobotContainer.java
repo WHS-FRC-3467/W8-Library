@@ -41,6 +41,8 @@ import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
+import frc.robot.subsystems.rotary.RotarySubsystem;
+import frc.robot.subsystems.rotary.RotarySubsystemConstants;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
@@ -64,6 +66,7 @@ public class RobotContainer {
     private final BeamBreak1 beamBreak1;
     private final Servo1 servo1;
     private final Flywheel flywheel;
+    private final RotarySubsystem rotary;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -91,6 +94,7 @@ public class RobotContainer {
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
                 servo1 = new Servo1(Servo1Constants.getReal());
                 flywheel = new Flywheel(FlywheelConstants.getReal());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
             }
 
             case SIM -> {
@@ -109,6 +113,7 @@ public class RobotContainer {
                     BeamBreak1Constants.getSim());
                 servo1 = new Servo1(Servo1Constants.getSim());
                 flywheel = new Flywheel(FlywheelConstants.getSim());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
             }
 
             default -> {
@@ -127,6 +132,7 @@ public class RobotContainer {
                     new BeamBreak1(BeamBreak1Constants.getReplay());
                 servo1 = new Servo1(Servo1Constants.getReplay());
                 flywheel = new Flywheel(FlywheelConstants.getReplay());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());
             }
         }
 
@@ -192,14 +198,25 @@ public class RobotContainer {
 
         // Pathfind to Pose when the Y button is pressed
         controller.y().onTrue(
-            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(3, 3, Rotation2d.kZero), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, PathConstants.PATHGENERATION_DRIVE_TOLERANCE)
-        );
+            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(3, 3, Rotation2d.kZero),
+                PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0,
+                PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
 
         // On-the-fly path with waypoints while the Right Bumper is held
         controller.rightBumper().whileTrue(
-            new OnTheFlyPathCommand(drive, () -> drive.getPose(), new ArrayList<>(Arrays.asList()), // List of waypoints
-            new Pose2d(6, 6, Rotation2d.k180deg), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE, PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES)
-        );
+            new OnTheFlyPathCommand(drive, () -> drive.getPose(), new ArrayList<>(Arrays.asList()), // List
+                                                                                                    // of
+                                                                                                    // waypoints
+                new Pose2d(6, 6, Rotation2d.k180deg), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS,
+                0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
+                PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES));
+
+        SmartDashboard.putData("Rotary: Set STOW",
+            Commands.runOnce(() -> rotary.setState(RotarySubsystem.State.STOW), rotary));
+
+        SmartDashboard.putData("Rotary: Set Current 30", rotary.shoot());
+
+        SmartDashboard.putData("Flywheel: Set Current 30", flywheel.shoot());
     }
 
     /**
