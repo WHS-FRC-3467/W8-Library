@@ -6,8 +6,8 @@ package frc.robot.commands.autos;
 
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.lib.util.AllianceFlipUtil;
 import frc.robot.subsystems.drive.Drive;
 
 public class AutoCommands {
@@ -18,18 +18,11 @@ public class AutoCommands {
             () -> {
                 Pose2d pose =
                     path.getStartingHolonomicPose().get();
-                // if (isRedAlliance()) {
-                // pose = GeometryUtil.flipFieldPose(pose);
-                // }
+                if (AllianceFlipUtil.shouldFlip()) {
+                    pose = AllianceFlipUtil.apply(pose);
+                }
 
                 drive.setPose(pose);
             });
     }
-
-    // public static boolean isRedAlliance()
-    // {
-    // return DriverStation.getAlliance()
-    // .filter(value -> value == DriverStation.Alliance.Red)
-    // .isPresent();
-    // }
 }
