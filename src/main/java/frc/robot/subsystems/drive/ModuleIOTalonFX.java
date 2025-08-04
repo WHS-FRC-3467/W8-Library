@@ -15,8 +15,6 @@
 
 package frc.robot.subsystems.drive;
 
-import static frc.robot.util.PhoenixUtil.*;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -42,7 +40,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
-
+import frc.lib.util.CANUpdateThread;
 import java.util.Queue;
 
 /**
@@ -95,15 +93,18 @@ public class ModuleIOTalonFX implements ModuleIO {
     private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
     private final Debouncer turnEncoderConnectedDebounce = new Debouncer(0.5);
 
+    // Configuration Thread
+    CANUpdateThread updateThread = new CANUpdateThread();
+
     public ModuleIOTalonFX(
         SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants)
     {
         this.constants = constants;
         driveTalon =
-            new TalonFX(constants.DriveMotorId, DriveConstants.DrivetrainConstants.CANBusName);
+            new TalonFX(constants.DriveMotorId, DriveConstants.drivetrainConstants.CANBusName);
         turnTalon =
-            new TalonFX(constants.SteerMotorId, DriveConstants.DrivetrainConstants.CANBusName);
-        cancoder = new CANcoder(constants.EncoderId, DriveConstants.DrivetrainConstants.CANBusName);
+            new TalonFX(constants.SteerMotorId, DriveConstants.drivetrainConstants.CANBusName);
+        cancoder = new CANcoder(constants.EncoderId, DriveConstants.drivetrainConstants.CANBusName);
 
         // Configure drive motor
         var driveConfig = constants.DriveMotorInitialConfigs;
@@ -117,8 +118,10 @@ public class ModuleIOTalonFX implements ModuleIO {
         driveConfig.MotorOutput.Inverted = constants.DriveMotorInverted
             ? InvertedValue.Clockwise_Positive
             : InvertedValue.CounterClockwise_Positive;
-        tryUntilOk(5, () -> driveTalon.getConfigurator().apply(driveConfig, 0.25));
-        tryUntilOk(5, () -> driveTalon.setPosition(0.0, 0.25));
+        updateThread
+            .CTRECheckErrorAndRetry(() -> driveTalon.getConfigurator().apply(driveConfig, 0.25));
+        updateThread
+            .CTRECheckErrorAndRetry(() -> driveTalon.setPosition(0.0, 0.25));
 
         // Configure turn motor
         var turnConfig = new TalonFXConfiguration();
@@ -142,7 +145,8 @@ public class ModuleIOTalonFX implements ModuleIO {
         turnConfig.MotorOutput.Inverted = constants.SteerMotorInverted
             ? InvertedValue.Clockwise_Positive
             : InvertedValue.CounterClockwise_Positive;
-        tryUntilOk(5, () -> turnTalon.getConfigurator().apply(turnConfig, 0.25));
+        updateThread
+            .CTRECheckErrorAndRetry(() -> turnTalon.getConfigurator().apply(turnConfig, 0.25));
 
         // Configure CANCoder
         CANcoderConfiguration cancoderConfig = constants.EncoderInitialConfigs;

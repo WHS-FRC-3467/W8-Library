@@ -16,7 +16,7 @@
 package frc.lib.io.distancesensor;
 
 import static edu.wpi.first.units.Units.Meters;
-import frc.lib.util.LoggedTunableNumber;
+import edu.wpi.first.units.measure.Distance;
 import lombok.Getter;
 
 /**
@@ -26,7 +26,7 @@ public class DistanceSensorIOSim implements DistanceSensorIO {
     @Getter
     private final String name;
 
-    private final LoggedTunableNumber distance;
+    private Distance distance = Meters.zero();
 
     /**
      * Constructs a new {@link DistanceSensorIOSim} with specified parameters and configuration.
@@ -36,8 +36,16 @@ public class DistanceSensorIOSim implements DistanceSensorIO {
     public DistanceSensorIOSim(String name)
     {
         this.name = name;
+    }
 
-        distance = new LoggedTunableNumber(name + "Meters: ", 0.0);
+    /**
+     * Setter for the simulated distance readout
+     * 
+     * @param distance The new distance readout
+     */
+    public void setDistance(Distance distance)
+    {
+        this.distance = distance;
     }
 
     @Override
@@ -45,6 +53,6 @@ public class DistanceSensorIOSim implements DistanceSensorIO {
     {
         inputs.ambientSignal = 0.0;
         inputs.connected = true;
-        inputs.distance = Meters.of(distance.get());
+        inputs.distance = distance;
     }
 }
