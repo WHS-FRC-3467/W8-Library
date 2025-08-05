@@ -13,25 +13,26 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-// package frc.robot.subsystems.DetectionML;
+package frc.robot.subsystems.DetectionML;
 
-// import frc.lib.io.DetectionML.DetectionMLIO;
-// import frc.lib.io.DetectionML.DetectionMLIOAutoLogged;
-// import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.io.DetectionML.DetectionMLIO;
+import frc.lib.io.DetectionML.DetectionMLIOAutoLogged;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-// public class DetectionML extends SubsystemBase {
-// private final DetectionMLIOAutoLogged inputs;
+public class DetectionML extends SubsystemBase {
+    private final DetectionMLIO[] io;
+    private final DetectionMLIOAutoLogged[] inputs;
 
-// public DetectionML(DetectionMLIO io)
-// {
-// this.inputs = io;
+    public DetectionML(DetectionMLIO io)
+    {
+        this.inputs = io;
 
-// // Initialize inputs
-// this.inputs = new DetectionMLIOAutoLogged[io.length]; // here
-// for (
+        // Initialize inputs
+        this.inputs = new DetectionMLIOAutoLogged[io.length]; // here
+        for (
 
-// int i = 0; i < inputs.length; i++) {
-// inputs[i] = new VisionIOInputsAutoLogged();
-// }
-// }
-// }
+            int i = 0; i < inputs.length; i++) {
+            inputs[i] = new VisionIOInputsAutoLogged();
+        }
+    }
+}
