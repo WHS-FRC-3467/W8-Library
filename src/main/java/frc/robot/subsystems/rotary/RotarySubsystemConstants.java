@@ -37,18 +37,14 @@ import frc.robot.Robot;
 public class RotarySubsystemConstants {
     public static String NAME = "Rotary Subsystem";
     public static final Angle TOLERANCE = Degrees.of(2.0);
-    // public static final AngularVelocity CRUISE_VELOCITY = Units.RadiansPerSecond.of(2 * Math.PI);
-    // public static final AngularAcceleration ACCELERATION =
-    // CRUISE_VELOCITY.div(0.1).per(Units.Second);
-    // public static final Velocity<AngularAccelerationUnit> JERK = ACCELERATION.per(Second);
-
-    public static final AngularVelocity CRUISE_VELOCITY = RadiansPerSecond.of(100);
-    public static final AngularAcceleration ACCELERATION = RadiansPerSecondPerSecond.of(100);
+    public static final AngularVelocity CRUISE_VELOCITY = Units.RadiansPerSecond.of(2 * Math.PI);
+    public static final AngularAcceleration ACCELERATION =
+        CRUISE_VELOCITY.div(0.1).per(Units.Second);
     public static final Velocity<AngularAccelerationUnit> JERK = ACCELERATION.per(Second);
 
     private static final double GEARING = (2.0 / 1.0);
-    private static final Angle MIN_ANGLE = Radians.of(-2.0);
-    private static final Angle MAX_ANGLE = Radians.of(5.0);
+    private static final Angle MIN_ANGLE = Radians.of(-20.0);
+    private static final Angle MAX_ANGLE = Radians.of(20.0);
     private static final Angle STARTING_ANGLE = Degrees.of(180.0);
 
     private static final Distance ARM_LENGTH = Meters.of(1.0);
@@ -56,7 +52,6 @@ public class RotarySubsystemConstants {
     private static final DCMotor CHARACTERISTICS = DCMotor.getKrakenX60(1);
     public static final MomentOfInertia MOI = KilogramSquareMeters
         .of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), ARM_MASS.in(Kilograms)));
-
 
     // Positional PID
     private static Slot0Configs SLOT0CONFIG = new Slot0Configs()

@@ -211,13 +211,9 @@ public class RobotContainer {
                 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
                 PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES));
 
-        SmartDashboard.putData("Rotary: Set STOW",
-            Commands.runOnce(() -> rotary.setState(RotarySubsystem.State.STOW), rotary));
+        SmartDashboard.putData("Rotary: Set STOW", rotary.setState(RotarySubsystem.State.STOW));
 
-        SmartDashboard.putData("Rotary: Set Raised",
-            Commands.runOnce(() -> rotary.setState(RotarySubsystem.State.RAISED), rotary));
-
-        SmartDashboard.putData("Rotary: Set Current 30", rotary.runCurrent());
+        SmartDashboard.putData("Rotary: Set Raised", rotary.setState(RotarySubsystem.State.RAISED));
     }
 
     /**

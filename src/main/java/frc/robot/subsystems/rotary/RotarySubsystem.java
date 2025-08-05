@@ -6,6 +6,7 @@ package frc.robot.subsystems.rotary;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -62,17 +63,11 @@ public class RotarySubsystem extends SubsystemBase {
 
     public Command setState(State state)
     {
-        return run(
+        return this.runOnce(
             () -> io.runPosition(state.getSetpoint(), RotarySubsystemConstants.CRUISE_VELOCITY,
                 RotarySubsystemConstants.ACCELERATION, RotarySubsystemConstants.JERK,
                 PIDSlot.SLOT_1));
     };
-
-    public Command runCurrent()
-    {
-        // return this.runOnce(() -> io.runCurrent(Amps.of(30)));
-        return this.runOnce(() -> io.runDutyCycle(0.2));
-    }
 
     // public Command setpointCommandWithWait(State state)
     // {
