@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.io.DetectionML;
+package frc.lib.io.detectionML;
 
 import org.littletonrobotics.junction.AutoLog;
 import java.util.List;
@@ -31,7 +31,7 @@ public interface DetectionMLIO {
         /** Whether the camera is connected. */
         public boolean connected = false;
         /** Data structure (via record) containing target information. */
-        public List<TargetObservation> latestTargetObservation;
+        public TargetObservation[] latestTargetObservations = new TargetObservation[0];
     }
 
     /* Data structure of target information. */
