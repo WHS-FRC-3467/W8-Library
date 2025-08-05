@@ -12,6 +12,7 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 import org.littletonrobotics.junction.Logger;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
@@ -25,6 +26,12 @@ import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.io.motor.MotorInputsAutoLogged;
@@ -35,6 +42,10 @@ public class RotaryMechanismSim implements RotaryMechanism {
     private final MotorIOSim io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
     private final SingleJointedArmSim sim;
+
+    String mSimName = "Arm test";
+    Mechanism2d mMech;
+    MechanismLigament2d mArm;
 
     private Time lastTime = Seconds.zero();
 
@@ -54,6 +65,14 @@ public class RotaryMechanismSim implements RotaryMechanism {
             maxAngle.in(Radians),
             useGravity,
             startingAngle.in(Radians));
+
+        mMech = new Mechanism2d(50, 50);
+        MechanismRoot2d m_armPivot = mMech.getRoot("ArmPivot", 25, 10);
+        m_armPivot.append(
+            new MechanismLigament2d("ArmTower", 10, -90, 5, new Color8Bit(Color.kRed)));
+        mArm =
+            m_armPivot
+                .append(new MechanismLigament2d("Arm", 10, 0, 3, new Color8Bit(Color.kYellow)));
     }
 
     @Override
@@ -73,6 +92,9 @@ public class RotaryMechanismSim implements RotaryMechanism {
 
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
+
+        mArm.setAngle(Rotation2d.fromRadians(sim.getAngleRads()));
+        SmartDashboard.putData(mSimName, mMech); // Creates mech2d in SmartDashboard
     }
 
     @Override

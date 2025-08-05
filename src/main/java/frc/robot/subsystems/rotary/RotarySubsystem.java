@@ -20,11 +20,14 @@ public class RotarySubsystem extends SubsystemBase {
     private final RotaryMechanism io;
 
     private static final LoggedTunableNumber STOW_SETPOINT = new LoggedTunableNumber("TEST", 0.0);
+    private static final LoggedTunableNumber RASIED_SETPOINT =
+        new LoggedTunableNumber("RAISED", 90.0);
 
     @RequiredArgsConstructor
     @Getter
     public enum State {
-        STOW(Degrees.of(STOW_SETPOINT.get()));
+        STOW(Degrees.of(STOW_SETPOINT.get())),
+        RAISED(Degrees.of(RASIED_SETPOINT.get()));
 
         private final Angle setpoint;
     }
@@ -59,10 +62,17 @@ public class RotarySubsystem extends SubsystemBase {
 
     public Command setState(State state)
     {
-        return run(() -> io.runPosition(state.setpoint, RotarySubsystemConstants.CRUISE_VELOCITY,
-            RotarySubsystemConstants.ACCELERATION, RotarySubsystemConstants.JERK,
-            PIDSlot.SLOT_1));
+        return run(
+            () -> io.runPosition(state.getSetpoint(), RotarySubsystemConstants.CRUISE_VELOCITY,
+                RotarySubsystemConstants.ACCELERATION, RotarySubsystemConstants.JERK,
+                PIDSlot.SLOT_1));
     };
+
+    public Command runCurrent()
+    {
+        // return this.runOnce(() -> io.runCurrent(Amps.of(30)));
+        return this.runOnce(() -> io.runDutyCycle(0.2));
+    }
 
     // public Command setpointCommandWithWait(State state)
     // {

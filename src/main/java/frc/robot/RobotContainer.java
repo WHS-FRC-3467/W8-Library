@@ -214,9 +214,10 @@ public class RobotContainer {
         SmartDashboard.putData("Rotary: Set STOW",
             Commands.runOnce(() -> rotary.setState(RotarySubsystem.State.STOW), rotary));
 
-        SmartDashboard.putData("Rotary: Set Current 30", rotary.shoot());
+        SmartDashboard.putData("Rotary: Set Raised",
+            Commands.runOnce(() -> rotary.setState(RotarySubsystem.State.RAISED), rotary));
 
-        SmartDashboard.putData("Flywheel: Set Current 30", flywheel.shoot());
+        SmartDashboard.putData("Rotary: Set Current 30", rotary.runCurrent());
     }
 
     /**

@@ -8,8 +8,11 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Meters;
+import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -34,22 +37,32 @@ import frc.robot.Robot;
 public class RotarySubsystemConstants {
     public static String NAME = "Rotary Subsystem";
     public static final Angle TOLERANCE = Degrees.of(2.0);
-    public static final AngularVelocity CRUISE_VELOCITY = Units.RadiansPerSecond.of(2 * Math.PI);
-    public static final AngularAcceleration ACCELERATION =
-        CRUISE_VELOCITY.div(0.1).per(Units.Second);
+    // public static final AngularVelocity CRUISE_VELOCITY = Units.RadiansPerSecond.of(2 * Math.PI);
+    // public static final AngularAcceleration ACCELERATION =
+    // CRUISE_VELOCITY.div(0.1).per(Units.Second);
+    // public static final Velocity<AngularAccelerationUnit> JERK = ACCELERATION.per(Second);
+
+    public static final AngularVelocity CRUISE_VELOCITY = RadiansPerSecond.of(100);
+    public static final AngularAcceleration ACCELERATION = RadiansPerSecondPerSecond.of(100);
     public static final Velocity<AngularAccelerationUnit> JERK = ACCELERATION.per(Second);
 
     private static final double GEARING = (2.0 / 1.0);
-    private static final Angle MIN_ANGLE = Degrees.of(-800.0);
-    private static final Angle MAX_ANGLE = Degrees.of(800.0);
+    private static final Angle MIN_ANGLE = Radians.of(-2.0);
+    private static final Angle MAX_ANGLE = Radians.of(5.0);
+    private static final Angle STARTING_ANGLE = Degrees.of(180.0);
 
     private static final Distance ARM_LENGTH = Meters.of(1.0);
     private static final Mass ARM_MASS = Kilograms.of(.01);
     private static final DCMotor CHARACTERISTICS = DCMotor.getKrakenX60(1);
     public static final MomentOfInertia MOI = KilogramSquareMeters
         .of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), ARM_MASS.in(Kilograms)));
-    private static final Angle STARTING_ANGLE = Radians.of(0.0);
 
+
+    // Positional PID
+    private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
+        .withKP(100.0)
+        .withKI(0.0)
+        .withKD(0.0);
 
     public static TalonFXConfiguration getFXConfig()
     {
@@ -76,6 +89,9 @@ public class RotarySubsystemConstants {
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_ANGLE.in(Units.Rotations);
 
         config.Feedback.SensorToMechanismRatio = GEARING;
+
+        config.Slot0 = SLOT0CONFIG;
+
         return config;
     }
 
@@ -89,7 +105,7 @@ public class RotarySubsystemConstants {
     {
         return new RotaryMechanismSim(
             new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain),
-            CHARACTERISTICS, MOI, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, true, STARTING_ANGLE);
+            CHARACTERISTICS, MOI, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, false, STARTING_ANGLE);
     }
 
     public static RotaryMechanism getReplay()
