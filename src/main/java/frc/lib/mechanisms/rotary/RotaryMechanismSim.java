@@ -12,7 +12,6 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 import org.littletonrobotics.junction.Logger;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
@@ -26,12 +25,6 @@ import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
-import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
-import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.io.motor.MotorInputsAutoLogged;
@@ -79,8 +72,9 @@ public class RotaryMechanismSim implements RotaryMechanism {
         lastTime = currentTime;
 
         // TODO: Determine if gear ratio is needed in calc
-        io.setPosition(Radians.of(sim.getAngleRads()));
-        io.setRotorVelocity(RadiansPerSecond.of(sim.getVelocityRadPerSec()));
+        io.setPosition(Radians.of(sim.getAngleRads()).times(io.getGearRatio()));
+        io.setRotorVelocity(
+            RadiansPerSecond.of(sim.getVelocityRadPerSec()).times(io.getGearRatio()));
 
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);

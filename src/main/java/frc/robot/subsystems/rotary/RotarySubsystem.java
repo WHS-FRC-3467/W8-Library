@@ -4,9 +4,8 @@
 
 package frc.robot.subsystems.rotary;
 
-import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
-import edu.wpi.first.math.MathUtil;
+import static edu.wpi.first.units.Units.Radian;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -22,13 +21,13 @@ public class RotarySubsystem extends SubsystemBase {
 
     private static final LoggedTunableNumber STOW_SETPOINT = new LoggedTunableNumber("TEST", 0.0);
     private static final LoggedTunableNumber RASIED_SETPOINT =
-        new LoggedTunableNumber("RAISED", 90.0);
+        new LoggedTunableNumber("RAISED", 3.14);
 
     @RequiredArgsConstructor
     @Getter
     public enum State {
-        STOW(Degrees.of(STOW_SETPOINT.get())),
-        RAISED(Degrees.of(RASIED_SETPOINT.get()));
+        STOW(Radian.of(STOW_SETPOINT.get())),
+        RAISED(Radian.of(RASIED_SETPOINT.get()));
 
         private final Angle setpoint;
     }

@@ -8,8 +8,6 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Meters;
 import com.ctre.phoenix6.configs.*;
@@ -45,7 +43,7 @@ public class RotarySubsystemConstants {
     private static final double GEARING = (2.0 / 1.0);
     private static final Angle MIN_ANGLE = Radians.of(-20.0);
     private static final Angle MAX_ANGLE = Radians.of(20.0);
-    private static final Angle STARTING_ANGLE = Degrees.of(180.0);
+    private static final Angle STARTING_ANGLE = Radians.of(0.0);
 
     private static final Distance ARM_LENGTH = Meters.of(1.0);
     private static final Mass ARM_MASS = Kilograms.of(.01);
@@ -55,7 +53,7 @@ public class RotarySubsystemConstants {
 
     // Positional PID
     private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
-        .withKP(100.0)
+        .withKP(1.0)
         .withKI(0.0)
         .withKD(0.0);
 
@@ -82,6 +80,8 @@ public class RotarySubsystemConstants {
 
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_ANGLE.in(Units.Rotations);
+
+        config.Feedback.RotorToSensorRatio = 1.0;
 
         config.Feedback.SensorToMechanismRatio = GEARING;
 
