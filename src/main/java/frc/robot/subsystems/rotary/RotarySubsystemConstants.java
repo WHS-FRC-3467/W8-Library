@@ -41,8 +41,8 @@ public class RotarySubsystemConstants {
     public static final Velocity<AngularAccelerationUnit> JERK = ACCELERATION.per(Second);
 
     private static final double GEARING = (2.0 / 1.0);
-    private static final Angle MIN_ANGLE = Radians.of(-20.0);
-    private static final Angle MAX_ANGLE = Radians.of(20.0);
+    private static final Angle MIN_ANGLE = Degrees.of(-10.0);
+    private static final Angle MAX_ANGLE = Degrees.of(90.0);
     private static final Angle STARTING_ANGLE = Radians.of(0.0);
 
     private static final Distance ARM_LENGTH = Meters.of(1.0);
@@ -53,7 +53,7 @@ public class RotarySubsystemConstants {
 
     // Positional PID
     private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
-        .withKP(1.0)
+        .withKP(30.0)
         .withKI(0.0)
         .withKD(0.0);
 
@@ -73,7 +73,7 @@ public class RotarySubsystemConstants {
         config.Voltage.PeakReverseVoltage = -12.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
         config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_ANGLE.in(Units.Rotations);
@@ -100,7 +100,7 @@ public class RotarySubsystemConstants {
     {
         return new RotaryMechanismSim(
             new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain),
-            CHARACTERISTICS, MOI, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, false, STARTING_ANGLE);
+            CHARACTERISTICS, MOI, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, true, STARTING_ANGLE);
     }
 
     public static RotaryMechanism getReplay()

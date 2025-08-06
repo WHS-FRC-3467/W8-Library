@@ -57,7 +57,8 @@ public class RotaryMechanismSim implements RotaryMechanism {
             useGravity,
             startingAngle.in(Radians));
 
-        rotaryMeasuredVis = new RotaryVisualizer("Measured", armLength, startingAngle);
+        rotaryMeasuredVis =
+            new RotaryVisualizer("Measured", armLength, minAngle, maxAngle, startingAngle);
     }
 
     @Override
@@ -71,15 +72,16 @@ public class RotaryMechanismSim implements RotaryMechanism {
 
         lastTime = currentTime;
 
-        // TODO: Determine if gear ratio is needed in calc
-        io.setPosition(Radians.of(sim.getAngleRads()).times(io.getGearRatio()));
+        io.setPosition(Radians.of(sim.getAngleRads()));
         io.setRotorVelocity(
-            RadiansPerSecond.of(sim.getVelocityRadPerSec()).times(io.getGearRatio()));
+            RadiansPerSecond.of(sim.getVelocityRadPerSec()));
 
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
 
-        rotaryMeasuredVis.setAngle(Radians.of(sim.getAngleRads()));
+        // TODO: change last param to real setpoint
+        rotaryMeasuredVis.setAngle(Radians.of(sim.getAngleRads()), inputs.activeTrajectoryPosition,
+            inputs.activeTrajectoryPosition);
     }
 
     @Override
