@@ -41,8 +41,7 @@ public class RotaryMechanismSim implements RotaryMechanism {
     private Time lastTime = Seconds.zero();
 
     public RotaryMechanismSim(MotorIOSim io, DCMotor characteristics,
-        MomentOfInertia momentOfInertia, Distance armLength, Angle minAngle, Angle maxAngle,
-        Boolean useGravity, Angle startingAngle)
+        MomentOfInertia momentOfInertia, Boolean useGravity, RotaryMechConstants constants)
     {
         if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
             throw new IllegalArgumentException(
@@ -51,14 +50,14 @@ public class RotaryMechanismSim implements RotaryMechanism {
         this.io = io;
         sim = new SingleJointedArmSim(characteristics, io.getGearRatio(),
             momentOfInertia.in(KilogramSquareMeters),
-            armLength.in(Meters),
-            minAngle.in(Radians),
-            maxAngle.in(Radians),
+            constants.armLength().in(Meters),
+            constants.minAngle().in(Radians),
+            constants.maxAngle().in(Radians),
             useGravity,
-            startingAngle.in(Radians));
+            constants.startingAngle().in(Radians));
 
         rotaryMeasuredVis =
-            new RotaryVisualizer("Measured", armLength, minAngle, maxAngle, startingAngle);
+            new RotaryVisualizer("Measured", constants);
     }
 
     @Override
@@ -79,9 +78,12 @@ public class RotaryMechanismSim implements RotaryMechanism {
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
 
-        // TODO: change last param to real setpoint
-        rotaryMeasuredVis.setAngle(Radians.of(sim.getAngleRads()), inputs.activeTrajectoryPosition,
-            inputs.activeTrajectoryPosition);
+        rotaryMeasuredVis.setCurrentAngle(Radians.of(sim.getAngleRads()));
+        if (inputs.activeTrajectoryPosition != null) {
+            rotaryMeasuredVis.setTrajectoryAngle(inputs.activeTrajectoryPosition);
+        } else {
+            rotaryMeasuredVis.setTrajectoryAngle(Radians.of(sim.getAngleRads()));
+        }
     }
 
     @Override
@@ -120,6 +122,7 @@ public class RotaryMechanismSim implements RotaryMechanism {
         Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
     {
         io.runPosition(position, cruiseVelocity, acceleration, maxJerk, slot);
+        rotaryMeasuredVis.setGoalAngle(position);
     }
 
     @Override
