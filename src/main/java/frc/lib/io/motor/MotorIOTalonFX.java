@@ -156,6 +156,7 @@ public class MotorIOTalonFX implements MotorIO {
         return (control instanceof PositionTorqueCurrentFOC)
             || (control instanceof PositionVoltage)
             || (control instanceof MotionMagicTorqueCurrentFOC)
+            || (control instanceof DynamicMotionMagicTorqueCurrentFOC)
             || (control instanceof MotionMagicVoltage);
     }
 
@@ -182,6 +183,7 @@ public class MotorIOTalonFX implements MotorIO {
     {
         var control = motor.getAppliedControl();
         return (control instanceof MotionMagicTorqueCurrentFOC)
+            || (control instanceof DynamicMotionMagicTorqueCurrentFOC)
             || (control instanceof MotionMagicVelocityTorqueCurrentFOC)
             || (control instanceof MotionMagicVoltage)
             || (control instanceof MotionMagicVelocityVoltage);

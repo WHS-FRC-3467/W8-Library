@@ -55,7 +55,7 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
     @Override
     public void setPosition(Angle position)
     {
-        simState.setRawRotorPosition(position.div(gearRatio));
+        simState.setRawRotorPosition(position.times(gearRatio));
     }
 
     @Override
