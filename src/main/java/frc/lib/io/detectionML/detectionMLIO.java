@@ -16,7 +16,6 @@
 package frc.lib.io.detectionML;
 
 import org.littletonrobotics.junction.AutoLog;
-import java.util.List;
 
 /**
  * Standardized interface for ML-IO used in FRC.
@@ -30,7 +29,10 @@ public interface DetectionMLIO {
     abstract class DetectionMLIOInputs {
         /** Whether the camera is connected. */
         public boolean connected = false;
-        /** Data structure (via record) containing target information. */
+        /**
+         * Each index of latestTargetObservations is a single TargetObservation (defined below) with
+         * members for objID, objConf, etc., effectively acting as a 2D array.
+         */
         public TargetObservation[] latestTargetObservations = new TargetObservation[0];
     }
 
@@ -47,7 +49,15 @@ public interface DetectionMLIO {
         /** Yaw of detected object. */
         double yaw,
         /** Skew of detected object. */
-        double skew) {
+        double skew,
+        /** X-coord & Y-coord of bounding box corner 1. */
+        double[] cornerOne,
+        /** X-coord & Y-coord of bounding box corner 2. */
+        double[] cornerTwo,
+        /** X-coord & Y-coord of bounding box corner 3. */
+        double[] cornerThree,
+        /** X-coord & Y-coord of bounding box corner 4. */
+        double[] cornerFour) {
     }
 
     /*

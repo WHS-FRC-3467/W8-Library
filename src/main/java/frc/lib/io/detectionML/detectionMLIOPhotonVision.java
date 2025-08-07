@@ -20,7 +20,6 @@ import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-import frc.lib.io.vision.VisionIO.PoseObservation;
 import java.util.List;
 
 /**
@@ -69,19 +68,33 @@ public class DetectionMLIOPhotonVision implements DetectionMLIO {
                 // Most recent set of targets.
                 List<PhotonTrackedTarget> currentTargets = result.get(0).getTargets();
                 int TargetSize = currentTargets.size();
-                // Clear last timestamp's observations to prevent accumulation.
+                // Clear last timestamp's observations to prevent accumulation (by re-creating
+                // array, similar to .clear()).
                 inputs.latestTargetObservations = new TargetObservation[TargetSize];
                 // Add all detected targets within most recent pipeline result to
                 // inputs.LatestTargetObservation.
                 for (int i = 0; i < TargetSize; i++) {
+                    double[] corner1 = {currentTargets.get(i).getMinAreaRectCorners().get(0).x,
+                            currentTargets.get(i).getMinAreaRectCorners().get(0).y};
+                    double[] corner2 = {currentTargets.get(i).getMinAreaRectCorners().get(1).x,
+                            currentTargets.get(i).getMinAreaRectCorners().get(1).y};
+                    double[] corner3 = {currentTargets.get(i).getMinAreaRectCorners().get(2).x,
+                            currentTargets.get(i).getMinAreaRectCorners().get(2).y};
+                    double[] corner4 = {currentTargets.get(i).getMinAreaRectCorners().get(3).x,
+                            currentTargets.get(i).getMinAreaRectCorners().get(3).y};
                     inputs.latestTargetObservations[i] = new TargetObservation(
                         currentTargets.get(i).getDetectedObjectClassID(),
                         currentTargets.get(i).getDetectedObjectConfidence(),
                         currentTargets.get(i).getArea(),
                         currentTargets.get(i).getPitch(),
                         currentTargets.get(i).getYaw(),
-                        currentTargets.get(i).getSkew());
+                        currentTargets.get(i).getSkew(),
+                        corner1,
+                        corner2,
+                        corner3,
+                        corner4); // Corners: origin top-left, x positive right, y positive down.
                 }
+
             } else {
                 // Pass
             }
