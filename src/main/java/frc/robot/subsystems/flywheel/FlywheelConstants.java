@@ -40,11 +40,12 @@ public class FlywheelConstants {
     public static FlywheelMechanism getReplay()
     {
         return new FlywheelMechanism() {
-
+            
             @Override
-            public Current getSupplyCurrent()
+            public Current getTorqueCurrent()
             {
                 return Amps.of(0);
-            }};
+            }
+        };
     }
 }

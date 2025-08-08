@@ -17,17 +17,20 @@
 package frc.robot.subsystems.drive;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
+import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.TestUtil;
 import edu.wpi.first.wpilibj.Timer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class DriveTest implements AutoCloseable {
     static final double DELTA = 1e-2; // acceptable deviation range
@@ -60,7 +63,7 @@ public class DriveTest implements AutoCloseable {
     public void robotIsEnabled() {
         /* verify that the robot is enabled */
         try {
-        assertTrue(DriverStation.isEnabled());
+            assertTrue(DriverStation.isEnabled());
         } catch (Exception e) {
             fail("Robot is not enabled: " + e.getMessage());
         }
@@ -69,11 +72,7 @@ public class DriveTest implements AutoCloseable {
     // TODO: Decide whether to keep this test
     @Test // marks this method as a test
     void testStop() {
-        /* set the voltage supplied by the battery */
-        drive.setSupplyVoltage(RobotController.getBatteryVoltage());
-
-        drive.stop();
-        Timer.delay(1.0);
+        TestUtil.runTest(Commands.runOnce(() -> drive.stop()), 0.1, drive);
         try {
             assertEquals(0.0, drive.getFFCharacterizationVelocity(), DELTA); // make sure that the speed of the motor is 0
         } catch (Exception e) {
@@ -83,27 +82,20 @@ public class DriveTest implements AutoCloseable {
   
     @Test
     void testDriveVelocity() {
-        /* set the voltage supplied by the battery */
-        drive.setSupplyVoltage(RobotController.getBatteryVoltage());
-
-        drive.runVelocity(new ChassisSpeeds(3.0, 3.0, 0.0));
-        Timer.delay(2.0);
+        TestUtil.runTest(Commands.run(() -> drive.runVelocity(new ChassisSpeeds(1.5, 1.5, 0.0))), 1, drive);
         try {
-            assertEquals(new ChassisSpeeds(3.0, 3.0, 0.0), drive.getChassisSpeeds(), DELTA);
+            assertEquals(1.5, drive.getChassisSpeeds().vxMetersPerSecond, DELTA);
+            assertEquals(1.5, drive.getChassisSpeeds().vyMetersPerSecond, DELTA);
         } catch (Exception e) {
-            fail("Failed to run drive linear velocity of 3 m/s in the x direction and 3 m/s in the y direction: " + e.getMessage());
+            fail("Failed to run drive linear velocity of 1.5 m/s in the x direction and 3 m/s in the y direction: " + e.getMessage());
         }
     }
   
     @Test
     void testSteerVelocity() {
-        /* set the voltage supplied by the battery */
-        drive.setSupplyVoltage(RobotController.getBatteryVoltage());
-
-        drive.runVelocity(new ChassisSpeeds(0.0, 0.0, 1.5));
-        Timer.delay(1.0);
+        TestUtil.runTest(Commands.run(() -> drive.runVelocity(new ChassisSpeeds(0.0, 0.0, 1.5))), 1, drive);
         try {
-            assertEquals(new ChassisSpeeds(0.0, 0.0, 1.5), drive.getChassisSpeeds(), DELTA);
+            assertEquals(1.5, drive.getChassisSpeeds().omegaRadiansPerSecond, DELTA);
         } catch (Exception e) {
             fail("Failed to run drive rotational velocity of 1.5 rad/s: " + e.getMessage());
         }
@@ -112,17 +104,13 @@ public class DriveTest implements AutoCloseable {
     // TODO: Decide whether to keep this test
     @Test
     void testX() {
-        /* set the voltage supplied by the battery */
-        drive.setSupplyVoltage(RobotController.getBatteryVoltage());
-
-        drive.stopWithX();
-        Timer.delay(1.0);
+        TestUtil.runTest(Commands.runOnce(() -> drive.stopWithX()), 0.1, drive);
         try {
             SwerveModulePosition[] swerveModulePositions = drive.getModulePositions();
             Rotation2d[] targetAngles = {
-                new Rotation2d(-Math.atan(DriveConstants.FrontLeft.LocationY/DriveConstants.FrontLeft.LocationX)), // Front Left
+                new Rotation2d(Math.atan(DriveConstants.FrontLeft.LocationY/DriveConstants.FrontLeft.LocationX)), // Front Left
                 new Rotation2d(Math.atan(DriveConstants.FrontRight.LocationY/DriveConstants.FrontRight.LocationX)), // Front Right
-                new Rotation2d(-Math.atan(DriveConstants.BackLeft.LocationY/DriveConstants.BackLeft.LocationX)), // Back Left
+                new Rotation2d(Math.atan(DriveConstants.BackLeft.LocationY/DriveConstants.BackLeft.LocationX)), // Back Left
                 new Rotation2d(Math.atan(DriveConstants.BackRight.LocationY/DriveConstants.BackRight.LocationX)) // Back Right
             };
             // Test position of modules

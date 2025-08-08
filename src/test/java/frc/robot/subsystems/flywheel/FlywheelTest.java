@@ -18,24 +18,25 @@ package frc.robot.subsystems.flywheel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import edu.wpi.first.hal.HAL;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotController;
+
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
+import frc.robot.TestUtil;
 import edu.wpi.first.wpilibj.Timer;
-import frc.robot.Ports;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static edu.wpi.first.units.Units.Amps;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class FlywheelTest implements AutoCloseable {
     static final double DELTA = 1e-2; // acceptable deviation range
-    Flywheel flywheelSim = new Flywheel(FlywheelConstants.getSim());
+    Flywheel flywheel;
 
     @BeforeEach // this method will run before each test
     void setup() {
         assert HAL.initialize(500, 0); // initialize the HAL, crash if failed
+
+        flywheel = new Flywheel(FlywheelConstants.getSim());
 
         /* enable the robot */
         DriverStationSim.setEnabled(true);
@@ -53,19 +54,14 @@ class FlywheelTest implements AutoCloseable {
  
     @Test // marks this method as a test
     void shoot() {
-        /* set the voltage supplied by the battery */
-        flywheelSim.setSupplyVoltage(RobotController.getBatteryVoltage());
-
-        var command = flywheel.shoot();
-        command.execute();
-        Timer.delay(0.100); // wait for current control to apply
+        TestUtil.runTest(flywheel.shoot(), 0.1, flywheel);
         try {
-            assertEquals(30, flywheelSim.getSupplyCurrent().in(Amps), DELTA);
+            assertEquals(30, flywheel.getTorqueCurrent().in(Amps), DELTA);
 		} catch (Exception e) {
 			fail("Failed to run the Flywheel at 30 amps: " + e.getMessage());
         }
     }
-  
+    
     @Override
     public void close() {
        // do nothing for now

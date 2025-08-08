@@ -192,14 +192,18 @@ public class RobotContainer {
 
         // Pathfind to Pose when the Y button is pressed
         controller.y().onTrue(
-            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(3, 3, Rotation2d.kZero), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, PathConstants.PATHGENERATION_DRIVE_TOLERANCE)
-        );
+            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(3, 3, Rotation2d.kZero),
+                PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0,
+                PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
 
         // On-the-fly path with waypoints while the Right Bumper is held
         controller.rightBumper().whileTrue(
-            new OnTheFlyPathCommand(drive, () -> drive.getPose(), new ArrayList<>(Arrays.asList()), // List of waypoints
-            new Pose2d(6, 6, Rotation2d.k180deg), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE, PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES)
-        );
+            new OnTheFlyPathCommand(drive, () -> drive.getPose(), new ArrayList<>(Arrays.asList()), // List
+                                                                                                    // of
+                                                                                                    // waypoints
+                new Pose2d(6, 6, Rotation2d.k180deg), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS,
+                0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
+                PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES));
     }
 
     /**
