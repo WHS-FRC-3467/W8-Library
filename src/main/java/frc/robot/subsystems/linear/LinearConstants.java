@@ -31,7 +31,9 @@ import frc.robot.Robot;
 /** Add your docs here. */
 public class LinearConstants {
     public static String NAME = "Linear Subsystem";
+
     public static final Distance TOLERANCE = Inches.of(2.0);
+
     public static final AngularVelocity CRUISE_VELOCITY =
         Units.RadiansPerSecond.of(2 * Math.PI).times(10.0);
     public static final AngularAcceleration ACCELERATION =
@@ -49,7 +51,7 @@ public class LinearConstants {
 
     public static final DistanceAngleConverter CONVERTER = new DistanceAngleConverter(DRUM_RADIUS);
 
-    private static final LinearMechCharacteristics LINEAR_MECH_CHARACTERISTICS =
+    private static final LinearMechCharacteristics CHARACTERISTICS =
         new LinearMechCharacteristics(MIN_DISTANCE, MAX_DISTANCE, STARTING_DISTANCE, CONVERTER);
 
     // Positional PID
@@ -104,7 +106,7 @@ public class LinearConstants {
     {
         return new LinearMechanismSim(
             new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.linear),
-            DCMOTOR, CARRIAGE_MASS, LINEAR_MECH_CHARACTERISTICS, true);
+            DCMOTOR, CARRIAGE_MASS, CHARACTERISTICS, true);
     }
 
     public static LinearMechanism getReplay()

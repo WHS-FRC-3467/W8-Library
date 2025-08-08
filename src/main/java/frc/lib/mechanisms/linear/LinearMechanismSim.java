@@ -62,8 +62,7 @@ public class LinearMechanismSim implements LinearMechanism {
             useGravity,
             constraints.startingDistance().in(Meters));
 
-        // TODO: set name correctly
-        visualizer = new LinearMechanismVisualizer("Linear vis", constraints);
+        visualizer = new LinearMechanismVisualizer(io.getName(), constraints);
     }
 
     @Override
@@ -88,6 +87,8 @@ public class LinearMechanismSim implements LinearMechanism {
         visualizer.setMeasuredDistance(Meters.of(sim.getPositionMeters()));
         if (inputs.activeTrajectoryPosition != null) {
             visualizer.setTrajectoryDistance(converter.toDistance(inputs.activeTrajectoryPosition));
+        } else {
+            visualizer.setTrajectoryDistance(Meters.of(sim.getPositionMeters()));
         }
     }
 
