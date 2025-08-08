@@ -10,7 +10,7 @@ import edu.wpi.first.units.measure.Distance;
 
 public interface RotaryMechanism extends Mechanism {
 
-    public static record RotaryMechConstants(
+    public static record RotaryMechCharacteristics(
         Distance armLength,
         Angle minAngle,
         Angle maxAngle,

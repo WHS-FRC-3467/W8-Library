@@ -27,14 +27,16 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.lib.io.motor.MotorIOTalonFX;
 import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.rotary.*;
-import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechConstants;
+import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
 import frc.robot.Ports;
 import frc.robot.Robot;
 
 /** Add your docs here. */
 public class RotarySubsystemConstants {
     public static String NAME = "Rotary Subsystem";
+
     public static final Angle TOLERANCE = Degrees.of(2.0);
+
     public static final AngularVelocity CRUISE_VELOCITY = Units.RadiansPerSecond.of(2 * Math.PI);
     public static final AngularAcceleration ACCELERATION =
         CRUISE_VELOCITY.div(0.1).per(Units.Second);
@@ -42,19 +44,16 @@ public class RotarySubsystemConstants {
 
     private static final double GEARING = (2.0 / 1.0);
 
-
-    private static final Angle MIN_ANGLE = Degrees.of(-10.0);
+    private static final Angle MIN_ANGLE = Degrees.of(0.0);
     private static final Angle MAX_ANGLE = Degrees.of(90.0);
     private static final Angle STARTING_ANGLE = Radians.of(0.0);
-
-
     private static final Distance ARM_LENGTH = Meters.of(1.0);
 
-    private static final RotaryMechConstants CONSTANTS =
-        new RotaryMechConstants(ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
+    private static final RotaryMechCharacteristics CONSTANTS =
+        new RotaryMechCharacteristics(ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
 
     private static final Mass ARM_MASS = Kilograms.of(.01);
-    private static final DCMotor CHARACTERISTICS = DCMotor.getKrakenX60(1);
+    private static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
     public static final MomentOfInertia MOI = KilogramSquareMeters
         .of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), ARM_MASS.in(Kilograms)));
 
@@ -107,7 +106,7 @@ public class RotarySubsystemConstants {
     {
         return new RotaryMechanismSim(
             new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain),
-            CHARACTERISTICS, MOI, true, CONSTANTS);
+            DCMOTOR, MOI, true, CONSTANTS);
     }
 
     public static RotaryMechanism getReplay()

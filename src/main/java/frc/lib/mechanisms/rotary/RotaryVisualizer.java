@@ -15,11 +15,10 @@ import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
-import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechConstants;
+import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
 
 /** Add your docs here. */
 public class RotaryVisualizer {
@@ -32,7 +31,7 @@ public class RotaryVisualizer {
     private final LoggedMechanismLigament2d upperBound;
     private final String name;
 
-    public RotaryVisualizer(String name, RotaryMechConstants constants)
+    public RotaryVisualizer(String name, RotaryMechCharacteristics constants)
     {
         this.name = name;
         mechanism = new LoggedMechanism2d(3.0, 3.0, new Color8Bit(Color.kBlack));
@@ -48,7 +47,7 @@ public class RotaryVisualizer {
             upperBound =
                 new LoggedMechanismLigament2d(name + "Upper Bound",
                     constants.armLength().in(Meters),
-                    constants.maxAngle().in(Radians), 3,
+                    constants.maxAngle().in(Degrees), 3,
                     new Color8Bit(Color.kWhite));
         } else {
             lowerBound =
@@ -58,7 +57,7 @@ public class RotaryVisualizer {
 
             upperBound =
                 new LoggedMechanismLigament2d(name + "Upper Bound", 0.0,
-                    constants.minAngle().in(Degrees), 3,
+                    constants.maxAngle().in(Degrees), 3,
                     new Color8Bit(Color.kWhite));
         }
 
