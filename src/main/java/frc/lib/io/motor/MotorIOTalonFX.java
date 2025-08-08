@@ -332,4 +332,10 @@ public class MotorIOTalonFX implements MotorIO {
             velocityControl.withVelocity(velocity).withAcceleration(acceleration)
                 .withSlot(slot.getNum()));
     }
+
+    @Override
+    public void setEncoderPosition(Angle position)
+    {
+        motor.setPosition(position);
+    }
 }
