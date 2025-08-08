@@ -217,6 +217,7 @@ public class RobotContainer {
 
         SmartDashboard.putData("Linear: Stow", linear.goToSetpoint(Linear.Setpoint.STOW));
         SmartDashboard.putData("Linear: Raised", linear.goToSetpoint(Linear.Setpoint.RAISED));
+        SmartDashboard.putData("Linear: Home", linear.homeCommand());
     }
 
     /**

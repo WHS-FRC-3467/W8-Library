@@ -4,11 +4,17 @@
 
 package frc.robot.subsystems.linear;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Volts;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.linear.LinearMechanism;
 import frc.lib.util.LoggedTunableNumber;
@@ -18,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 /** Add your docs here. */
 public class Linear extends SubsystemBase {
     private final LinearMechanism io;
+    private Trigger homedTrigger;
+    private Debouncer homeDebouncer = new Debouncer(0.1, DebounceType.kRising);
 
     private static final LoggedTunableNumber STOW_SETPOINT =
         new LoggedTunableNumber("Stow Height", 0.0);
@@ -27,6 +35,7 @@ public class Linear extends SubsystemBase {
     @RequiredArgsConstructor
     @Getter
     public enum Setpoint {
+        HOME(Inches.of(0.0)),
         STOW(Inches.of(STOW_SETPOINT.get())),
         RAISED(Inches.of(RASIED_SETPOINT.get()));
 
@@ -41,6 +50,8 @@ public class Linear extends SubsystemBase {
     public Linear(LinearMechanism io)
     {
         this.io = io;
+        homedTrigger =
+            new Trigger(() -> homeDebouncer.calculate(io.getSupplyCurrent().gte(Amps.of(10))));
     }
 
     @Override
@@ -54,5 +65,14 @@ public class Linear extends SubsystemBase {
         return this
             .runOnce(() -> io.runPosition(setpoint.getAngle(), LinearConstants.CRUISE_VELOCITY,
                 LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_1));
+    }
+
+    public Command homeCommand()
+    {
+        return Commands.sequence(
+            runOnce(() -> io.runVoltage(Volts.of(-2))),
+            Commands.waitUntil(homedTrigger),
+            runOnce(() -> io.setEncoderPosition(Setpoint.HOME.getAngle())),
+            goToSetpoint(Setpoint.STOW));
     }
 }

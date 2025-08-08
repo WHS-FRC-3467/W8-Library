@@ -78,6 +78,7 @@ public class LinearMechanismSim implements LinearMechanism {
         lastTime = currentTime;
 
         io.setPosition(converter.toAngle(Meters.of(sim.getPositionMeters())));
+
         io.setRotorVelocity(
             converter.toAngle(Meters.of(sim.getVelocityMetersPerSecond())).per(Seconds));
 
@@ -88,7 +89,6 @@ public class LinearMechanismSim implements LinearMechanism {
         if (inputs.activeTrajectoryPosition != null) {
             visualizer.setTrajectoryDistance(converter.toDistance(inputs.activeTrajectoryPosition));
         }
-
     }
 
     @Override
@@ -135,5 +135,18 @@ public class LinearMechanismSim implements LinearMechanism {
         PIDSlot slot)
     {
         io.runVelocity(velocity, acceleration, slot);
+    }
+
+    @Override
+    public void setEncoderPosition(Angle position)
+    {
+        // io.setEncoderPosition(position);
+        sim.setState(converter.toDistance(position).in(Meters), 0);
+    }
+
+    @Override
+    public Current getSupplyCurrent()
+    {
+        return inputs.supplyCurrent;
     }
 }

@@ -88,4 +88,19 @@ public class LinearMechanismReal implements LinearMechanism {
     {
         io.runVelocity(velocity, acceleration, slot);
     }
+
+    // TODO: Verify operation works correctly on real TalonFX
+    @Override
+    public void setEncoderPosition(Angle position)
+    {
+        io.setEncoderPosition(position);
+    }
+
+    @Override
+    public Current getSupplyCurrent()
+    {
+        return inputs.supplyCurrent;
+    }
+
+
 }
