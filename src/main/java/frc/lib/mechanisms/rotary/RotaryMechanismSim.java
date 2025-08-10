@@ -23,6 +23,8 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorIOSim;
@@ -34,9 +36,7 @@ public class RotaryMechanismSim implements RotaryMechanism {
     private final MotorIOSim io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
     private final SingleJointedArmSim sim;
-
-    RotaryVisualizer visualizer;
-
+    private final RotaryVisualizer visualizer;
     private Time lastTime = Seconds.zero();
 
     public RotaryMechanismSim(MotorIOSim io, DCMotor dcMotor,
@@ -69,6 +69,8 @@ public class RotaryMechanismSim implements RotaryMechanism {
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
+        RoboRioSim.setVInVoltage(
+            BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
 
         lastTime = currentTime;
 
@@ -80,11 +82,7 @@ public class RotaryMechanismSim implements RotaryMechanism {
         Logger.processInputs(io.getName(), inputs);
 
         visualizer.setCurrentAngle(Radians.of(sim.getAngleRads()));
-        if (inputs.activeTrajectoryPosition != null) {
-            visualizer.setTrajectoryAngle(inputs.activeTrajectoryPosition);
-        } else {
-            visualizer.setTrajectoryAngle(Radians.of(sim.getAngleRads()));
-        }
+        visualizer.setTrajectoryAngle(inputs.activeTrajectoryPosition);
     }
 
     @Override
@@ -131,5 +129,11 @@ public class RotaryMechanismSim implements RotaryMechanism {
         PIDSlot slot)
     {
         io.runVelocity(velocity, acceleration, slot);
+    }
+
+    @Override
+    public Angle getPosition()
+    {
+        return inputs.position;
     }
 }

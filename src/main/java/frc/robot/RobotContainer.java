@@ -43,6 +43,7 @@ import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.rotary.RotarySubsystem;
 import frc.robot.subsystems.rotary.RotarySubsystemConstants;
+import frc.robot.subsystems.rotary.RotarySubsystem.Setpoint;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
@@ -211,9 +212,16 @@ public class RobotContainer {
                 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
                 PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES));
 
-        SmartDashboard.putData("Rotary: Set STOW", rotary.setState(RotarySubsystem.State.STOW));
+        SmartDashboard.putData("Rotary: Set STOW",
+            rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
 
-        SmartDashboard.putData("Rotary: Set Raised", rotary.setState(RotarySubsystem.State.RAISED));
+        SmartDashboard.putData("Rotary: Set Raised",
+            rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+
+        SmartDashboard.putData("Rotary: Raise then Stow",
+            Commands.sequence(
+                rotary.setpointCommandWithWait(Setpoint.RAISED),
+                rotary.setpointCommandWithWait(Setpoint.STOW)));
     }
 
     /**

@@ -78,4 +78,10 @@ public class RotaryMechanismReal implements RotaryMechanism {
     {
         io.runVelocity(velocity, acceleration, slot);
     }
+
+    @Override
+    public Angle getPosition()
+    {
+        return inputs.position;
+    }
 }

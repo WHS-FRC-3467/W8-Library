@@ -5,8 +5,11 @@
 package frc.robot.subsystems.rotary;
 
 import static edu.wpi.first.units.Units.Degrees;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.rotary.RotaryMechanism;
@@ -24,7 +27,7 @@ public class RotarySubsystem extends SubsystemBase {
 
     @RequiredArgsConstructor
     @Getter
-    public enum State {
+    public enum Setpoint {
         STOW(Degrees.of(STOW_SETPOINT.get())),
         RAISED(Degrees.of(RASIED_SETPOINT.get()));
 
@@ -44,34 +47,34 @@ public class RotarySubsystem extends SubsystemBase {
         io.periodic();
     }
 
-    // public boolean nearPosition(Angle targetPosition)
-    // {
-    // return MathUtil.isNear(
-    // io.getPosition().in(BaseUnits.AngleUnit),
-    // targetPosition.in(BaseUnits.AngleUnit),
-    // RotarySubsystemConstants.TOLERANCE.in(BaseUnits.AngleUnit));
-    // }
-
-    // public Command waitForPositionCommand(Angle mechanismPosition)
-    // {
-    // return Commands.waitUntil(() -> {
-    // return nearPosition(mechanismPosition);
-    // });
-    // }
-
-    public Command setState(State state)
+    public Command setSetpoint(Setpoint setpoint)
     {
         return this.runOnce(
-            () -> io.runPosition(state.getSetpoint(), RotarySubsystemConstants.CRUISE_VELOCITY,
+            () -> io.runPosition(setpoint.getSetpoint(), RotarySubsystemConstants.CRUISE_VELOCITY,
                 RotarySubsystemConstants.ACCELERATION, RotarySubsystemConstants.JERK,
                 PIDSlot.SLOT_1));
     };
 
-    // public Command setpointCommandWithWait(State state)
-    // {
-    // return waitForPositionCommand(state.setpoint)
-    // .deadlineFor(setState(state));
-    // }
+    public boolean nearPosition(Angle targetPosition)
+    {
+        return MathUtil.isNear(
+            io.getPosition().in(BaseUnits.AngleUnit),
+            targetPosition.in(BaseUnits.AngleUnit),
+            RotarySubsystemConstants.TOLERANCE.in(BaseUnits.AngleUnit));
+    }
+
+    public Command waitForPositionCommand(Angle position)
+    {
+        return Commands.waitUntil(() -> {
+            return nearPosition(position);
+        });
+    }
+
+    public Command setpointCommandWithWait(Setpoint setpoint)
+    {
+        return waitForPositionCommand(setpoint.getSetpoint())
+            .deadlineFor(setSetpoint(setpoint));
+    }
 
 
 }
