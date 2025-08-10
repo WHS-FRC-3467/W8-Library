@@ -41,13 +41,16 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.util.Timestamped;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.util.LocalADStarAK;
@@ -357,6 +360,11 @@ public class Drive extends SubsystemBase {
         return getPose().getRotation();
     }
 
+    public Timestamped<Rotation2d> getTimestampedHeading()
+    {
+        return new Timestamped<Rotation2d>(Seconds.of(Timer.getTimestamp()), getRotation());
+    }
+
     /** Resets the current odometry pose. */
     public void setPose(Pose2d pose)
     {
@@ -366,11 +374,11 @@ public class Drive extends SubsystemBase {
     /** Adds a new timestamped vision measurement. */
     public void addVisionMeasurement(
         Pose2d visionRobotPoseMeters,
-        double timestampSeconds,
+        Time timestamp,
         Matrix<N3, N1> visionMeasurementStdDevs)
     {
         poseEstimator.addVisionMeasurement(
-            visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
+            visionRobotPoseMeters, timestamp.in(Seconds), visionMeasurementStdDevs);
     }
 
     /** Returns the maximum linear speed in meters per sec. */

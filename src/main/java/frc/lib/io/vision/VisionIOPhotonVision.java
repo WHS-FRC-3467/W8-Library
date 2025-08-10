@@ -27,7 +27,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.apache.commons.lang3.ArrayUtils;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
@@ -97,7 +96,16 @@ public class VisionIOPhotonVision implements VisionIO {
                     averageDistance));
         }
 
-        inputs.poseObservations = (PoseObservation[]) estimates.toArray();
-        inputs.tagIds = ArrayUtils.toPrimitive((Integer[]) tagIDs.toArray());
+        // inputs.poseObservations = (PoseObservation[]) estimates.toArray();
+        inputs.poseObservations = new PoseObservation[estimates.size()];
+        for (int i = 0; i < estimates.size(); i++) {
+            inputs.poseObservations[i] = estimates.get(i);
+        }
+        // inputs.tagIds = ArrayUtils.toPrimitive((Integer[]) tagIDs.toArray());
+        inputs.tagIds = new int[tagIDs.size()];
+        int i = 0;
+        for (int id : tagIDs) {
+            inputs.tagIds[i++] = id;
+        }
     }
 }

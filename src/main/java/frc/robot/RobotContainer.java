@@ -23,6 +23,9 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.io.vision.VisionIO;
+import frc.lib.io.vision.VisionIOPhotonVision;
+import frc.lib.io.vision.VisionIOPhotonVisionSim;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.beambreak1.BeamBreak1;
@@ -38,9 +41,12 @@ import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -56,6 +62,7 @@ public class RobotContainer {
     private final LaserCAN1 laserCAN1;
     private final BeamBreak1 beamBreak1;
     private final Flywheel flywheel;
+    private final Vision vision;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -82,6 +89,14 @@ public class RobotContainer {
                 laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal());
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
                 flywheel = new Flywheel(FlywheelConstants.getReal());
+                vision = new Vision(
+                    drive::addVisionMeasurement,
+                    () -> drive.getTimestampedHeading(),
+                    new VisionIOPhotonVision(
+                        VisionConstants.camera0Name,
+                        VisionConstants.robotToCamera0,
+                        VisionConstants.aprilTagLayout,
+                        PoseStrategy.CONSTRAINED_SOLVEPNP));
             }
 
             case SIM -> {
@@ -99,6 +114,15 @@ public class RobotContainer {
                 beamBreak1 = new BeamBreak1(
                     BeamBreak1Constants.getSim());
                 flywheel = new Flywheel(FlywheelConstants.getSim());
+                vision = new Vision(
+                    drive::addVisionMeasurement,
+                    () -> drive.getTimestampedHeading(),
+                    new VisionIOPhotonVisionSim(
+                        () -> drive.getPose(),
+                        VisionConstants.camera0Name,
+                        VisionConstants.robotToCamera0,
+                        VisionConstants.aprilTagLayout,
+                        PoseStrategy.CONSTRAINED_SOLVEPNP));
             }
 
             default -> {
@@ -116,6 +140,10 @@ public class RobotContainer {
                 beamBreak1 =
                     new BeamBreak1(BeamBreak1Constants.getReplay());
                 flywheel = new Flywheel(FlywheelConstants.getReplay());
+                vision = new Vision(
+                    drive::addVisionMeasurement,
+                    () -> drive.getTimestampedHeading(),
+                    new VisionIO() {});
             }
         }
 

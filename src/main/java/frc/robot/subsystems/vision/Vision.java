@@ -50,8 +50,9 @@ public class Vision extends SubsystemBase {
         Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier, VisionIO... io)
     {
         this.consumer = consumer;
-        this.io = io;
         this.timestampedHeadingSupplier = timestampedHeadingSupplier;
+        this.io = io;
+
 
         // Initialize inputs
         this.inputs = new VisionIOInputsAutoLogged[io.length];
