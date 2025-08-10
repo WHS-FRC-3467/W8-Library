@@ -102,5 +102,9 @@ public class LinearMechanismReal implements LinearMechanism {
         return inputs.supplyCurrent;
     }
 
-
+    @Override
+    public Angle getPosition()
+    {
+        return inputs.position;
+    }
 }

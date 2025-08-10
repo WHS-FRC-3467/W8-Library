@@ -31,7 +31,9 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.util.MechanismUtil.DistanceAngleConverter;
 import frc.lib.io.motor.MotorIOSim;
@@ -73,6 +75,8 @@ public class LinearMechanismSim implements LinearMechanism {
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
+        RoboRioSim.setVInVoltage(
+            BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
 
         lastTime = currentTime;
 
@@ -141,7 +145,6 @@ public class LinearMechanismSim implements LinearMechanism {
     @Override
     public void setEncoderPosition(Angle position)
     {
-        // io.setEncoderPosition(position);
         sim.setState(converter.toDistance(position).in(Meters), 0);
     }
 
@@ -149,5 +152,11 @@ public class LinearMechanismSim implements LinearMechanism {
     public Current getSupplyCurrent()
     {
         return inputs.supplyCurrent;
+    }
+
+    @Override
+    public Angle getPosition()
+    {
+        return inputs.position;
     }
 }
