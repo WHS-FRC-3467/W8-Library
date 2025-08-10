@@ -12,7 +12,24 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 
-/** Add your docs here. */
+/**
+ * The {@code FlywheelVisualizer} class is responsible for visualizing a flywheel mechanism using
+ * the Mechanism2d library. It creates a graphical representation of the flywheel and its
+ * components, which can be displayed on the SmartDashboard.
+ * 
+ * <p>
+ * This class initializes a {@code LoggedMechanism2d} object with specified dimensions and
+ * constructs the flywheel mechanism using {@code LoggedMechanismLigament2d} objects. The flywheel
+ * is represented as a series of connected ligaments forming a circular structure.
+ * 
+ * <p>
+ * Example Usage:
+ * 
+ * <pre>
+ * FlywheelVisualizer visualizer = new FlywheelVisualizer("Flywheel");
+ * </pre>
+ * 
+ */
 public class FlywheelVisualizer {
 
     private final LoggedMechanism2d mechanism;
