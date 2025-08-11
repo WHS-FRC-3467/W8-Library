@@ -155,4 +155,12 @@ public interface MotorIO {
     public default void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
         PIDSlot slot)
     {}
+
+    /**
+     * Sets the position of the motor's internal encoder
+     * 
+     * @param position Desired position to set encoder to
+     */
+    public default void setEncoderPosition(Angle position)
+    {}
 }
