@@ -17,7 +17,10 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -25,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.util.CommandXboxControllerExtended;
+import frc.lib.util.GamePieceVisualizer;
 import frc.robot.Constants.PathConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.OnTheFlyPathCommand;
@@ -149,6 +153,9 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
+
+        GamePieceVisualizer algae = new GamePieceVisualizer("Algae",
+            new Pose3d(new Translation3d(3, 3, 1), new Rotation3d(0, 0, 0)));
     }
 
     /**
