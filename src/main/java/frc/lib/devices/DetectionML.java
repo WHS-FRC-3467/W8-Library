@@ -93,12 +93,19 @@ public class DetectionML {
     public double distanceToTarget_Skew(TargetObservation targetObservation, double cameraHeight_in,
         double targetHeight_in, double cameraPitch_deg, double cameraCalFactor)
     {
-        return (cameraCalFactor * ((Math.abs(targetHeight_in - cameraHeight_in))
-            / Math.tan(Math.toRadians(targetObservation.pitch() + cameraPitch_deg))));
-
+        double tolerance = 1.5; // in.
+        // Camera neutral or angled down & above target; target can be either above or below camera
+        // centerline.
+        if (cameraPitch_deg <= 0 && (cameraHeight_in - targetHeight_in) > tolerance) {
+            return (cameraCalFactor * ((Math.abs(targetHeight_in - cameraHeight_in))
+                / Math.tan(Math.toRadians(Math.abs(cameraPitch_deg + targetObservation.pitch())))));
+        } else {
+            return -1.0f;
+            // To-do: other camera/target permutations.
+        }
     }
 
-    // TODO: Add isConnected method
+    // To-do: Add isConnected method
     // Place to add device level methods
 
 }
