@@ -60,14 +60,21 @@ public class DetectionML {
             + b * Math.pow(targetObservation.objArea(), 2) + c * targetObservation.objArea() + d);
     }
 
-    /*
-     * Uses the camera's focal length & trig to estimate distance (in.) from target. Utilizes
-     * pinhole model of a camera; calibration factor is purely empirical and accounts for physical
-     * lens effects like blur, edge distortion, focus, etc. Camera focal length in pixels (from
-     * calibration) = (P * D) / H, where P - perceived width of known object (px), D - known
-     * distance from camera (in.), H - known height of object (in.)
+    /**
+     * Uses the camera's focal length & trig to estimate range from target; requires no measurement
+     * of pitch. Utilizes pinhole model of a camera. Note that camera focal length in pixels = (P *
+     * D) / H, where P = perceived width of known object (px), D = known distance from camera (in.),
+     * H = known height of object (in.).
+     * 
+     * @param targetObservation A data type containing vision pipeline results for a single object.
+     * @param objectPhysicalHeight_in The physical height of the object being targeted (in.).
+     * @param cameraFocalLength_px The camera focal length in pixels as determined by a calibration
+     *        procedure.
+     * @param cameraCalFactor An empirical calibration factor to account for real lens effects (e.g.
+     *        blur, distortion, focus).
+     * @return The estimated range to the object (in.).
      */
-    public double distanceToTarget_FocalLength(TargetObservation targetObservation,
+    public double rangeToTarget_FocalLength(TargetObservation targetObservation,
         double objectPhysicalHeight_in, double cameraFocalLength_px, double cameraCalFactor)
     {
         // Return & sort corners to estimate detected object's digital height in pixels
@@ -75,35 +82,105 @@ public class DetectionML {
             {targetObservation.cornerOne()[2], targetObservation.cornerTwo()[2],
                     targetObservation.cornerThree()[2], targetObservation.cornerFour()[2]};
         Arrays.sort(objectDigitalCorners_px);
-        // Calculate digital height
+        // Calculate object's digital height
         double objectDigitalHeight_px = objectDigitalCorners_px[objectDigitalCorners_px.length - 1]
             - objectDigitalCorners_px[0];
-        // Return estimated distance to object (in.)
+        // Return estimated range to object (in.)
         return (cameraCalFactor
             * ((objectPhysicalHeight_in * cameraFocalLength_px) / objectDigitalHeight_px));
     }
 
-    /*
-     * Calculates distance (in.) to target using object's detected pitch in relation to the camera's
-     * pitch from the floor; calibration factor is purely empirical and accounts for physical lens
-     * effects like blur, edge distortion, focus, etc. Note that pitch is positive where object is
-     * above camera C.L. and negative where below. Small height differentials & camera roll may
-     * introduce instabilities.
+    /**
+     * Estimates range to a target using the target's known elevation. Algorithm similar to
+     * {@link org.photonvision.PhotonUtils}. This method can produce more stable results than
+     * SolvePNP when well tuned, if the full 6d robot pose is not required. Note that this method
+     * requires the camera to have 0 roll (not be skewed clockwise or CCW relative to the floor),
+     * and for there to exist a height differential between goal and camera. The larger this
+     * differential, the more accurate the distance estimate will be.
+     *
+     * @param targetObservation A data type containing vision pipeline results for a single target.
+     * @param cameraHeight_in The physical height of the camera off the floor in inches.
+     * @param targetHeight_in The physical height of the target off the floor in inches. This should
+     *        be the height of whatever is being targeted (i.e. if the targeting region is set to
+     *        top, this should be the height of the top of the target).
+     * @param cameraPitch_deg The pitch of the camera from the horizontal plane in degrees. Positive
+     *        values up.
+     * @param targetPitch_deg The pitch of the target from the centerline of the camera's lens in
+     *        degrees. Positive values up.
+     * @param cameraCalFactor An empirical calibration factor to account for real lens effects (e.g.
+     *        blur, distortion, focus).
+     * @return The estimated range to the target in inches.
      */
-    public double distanceToTarget_Skew(TargetObservation targetObservation, double cameraHeight_in,
+    public double rangeToTarget_Pitch(TargetObservation targetObservation,
+        double cameraHeight_in,
         double targetHeight_in, double cameraPitch_deg, double cameraCalFactor)
     {
         double tolerance = 1.5; // in.
-        // Camera neutral or angled down & above target; target can be either above or below camera
-        // centerline.
+        // Camera angled down & above target; target above or below camera centerline.
         if (cameraPitch_deg <= 0 && (cameraHeight_in - targetHeight_in) > tolerance) {
             return (cameraCalFactor * ((Math.abs(targetHeight_in - cameraHeight_in))
                 / Math.tan(Math.toRadians(Math.abs(cameraPitch_deg + targetObservation.pitch())))));
         } else {
-            return -1.0f;
-            // To-do: other camera/target permutations.
+            // To-do: Mathematically verify other camera/target orientation permutations before
+            // implementation (e.g. camera up) -- copy & paste may result in sign errors.
+            return -1.0d;
         }
     }
+
+    /**
+     * Estimates heading to a target using the target's calculated range. Note that this method
+     * requires the camera to have 0 roll (not be skewed clockwise or CCW relative to the floor),
+     * and for there to exist a finite range between goal and camera. The larger this differential,
+     * the more accurate the distance estimate will be.
+     *
+     * @param targetObservation A data type containing vision pipeline results for a single target.
+     * @param cameraYaw_deg The yaw of the camera from the vertical plane in degrees. Positive
+     *        values left.
+     * @param targetYaw_deg The yaw of the target from the centerline of the camera's lens in
+     *        degrees. Positive values left.
+     * @param cameraCalFactor An empirical calibration factor to account for real lens effects (e.g.
+     *        blur, distortion, focus).
+     * @return The estimated heading to the target in inches.
+     */
+    public double headingToTarget_Yaw(TargetObservation targetObservation, double cameraYaw_deg,
+        double targetRange_in, double cameraCalFactor)
+    {
+        // Camera angled left or right; target left or right of centerline.
+        return (cameraCalFactor
+            * (Math.tan(Math.toRadians(Math.abs(cameraYaw_deg + targetObservation.yaw())))
+                * targetRange_in));
+    }
+
+    /** Calculates an overall distance to a target using range, heading, & elevation for use in localization calculations.
+     * 
+     * @param targetObservation A data type containing vision pipeline results for a single target.
+     * @param cameraPitch_deg The pitch of the camera from the horizontal plane in degrees. Positive
+     *        values up.
+     * @param cameraYaw_deg The yaw of the camera from the vertical plane in degrees. Positive
+     *        values left.
+     * @param cameraHeight_in The physical height of the camera off the floor in inches.
+     * @param targetHeight_in The physical height of the target off the floor in inches. This should
+     *        be the height of whatever is being targeted (i.e. if the targeting region is set to
+     *        top, this should be the height of the top of the target).
+     * @param cameraCalFactor_range An empirical calibration factor to account for real lens effects (e.g.
+     *        blur, distortion, focus) -- applies to range calculation only.
+     * @param cameraCalFactor_heading An empirical calibration factor to account for real lens effects (e.g.
+     *        blur, distortion, focus) -- applies to heading calculation only.
+     * @return
+     */
+    public double translationToTarget(TargetObservation targetObservation, double cameraPitch_deg, 
+    double cameraYaw_deg, double cameraHeight_in, double targetHeight_in, double cameraCalFactor_range, 
+    double cameraCalFactor_heading)
+    {
+        // Return range (x-component of displacement vector) (in.)
+        double range_in = rangeToTarget_Pitch(targetObservation, cameraHeight_in, targetHeight_in, 
+        cameraPitch_deg, cameraCalFactor_range);
+        // Return heading (y-component of displacement vector) (in.)
+        double heading_in = headingToTarget_Yaw(targetObservation, cameraYaw_deg, range_in, 
+        cameraCalFactor_heading);
+        // Calculate z-component of displacement vector (in.)
+        double elevation_in = cameraHeight_in - targetHeight_in;
+        // to-do: transforms
 
     // To-do: Add isConnected method
     // Place to add device level methods
