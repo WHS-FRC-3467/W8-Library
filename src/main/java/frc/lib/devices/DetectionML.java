@@ -151,7 +151,9 @@ public class DetectionML {
                 * targetRange_in));
     }
 
-    /** Calculates an overall distance to a target using range, heading, & elevation for use in localization calculations.
+    /**
+     * Calculates an overall distance to a target using range, heading, & elevation for use in
+     * localization calculations.
      * 
      * @param targetObservation A data type containing vision pipeline results for a single target.
      * @param cameraPitch_deg The pitch of the camera from the horizontal plane in degrees. Positive
@@ -162,27 +164,28 @@ public class DetectionML {
      * @param targetHeight_in The physical height of the target off the floor in inches. This should
      *        be the height of whatever is being targeted (i.e. if the targeting region is set to
      *        top, this should be the height of the top of the target).
-     * @param cameraCalFactor_range An empirical calibration factor to account for real lens effects (e.g.
-     *        blur, distortion, focus) -- applies to range calculation only.
-     * @param cameraCalFactor_heading An empirical calibration factor to account for real lens effects (e.g.
-     *        blur, distortion, focus) -- applies to heading calculation only.
+     * @param cameraCalFactor_range An empirical calibration factor to account for real lens effects
+     *        (e.g. blur, distortion, focus) -- applies to range calculation only.
+     * @param cameraCalFactor_heading An empirical calibration factor to account for real lens
+     *        effects (e.g. blur, distortion, focus) -- applies to heading calculation only.
      * @return
      */
-    public double translationToTarget(TargetObservation targetObservation, double cameraPitch_deg, 
-    double cameraYaw_deg, double cameraHeight_in, double targetHeight_in, double cameraCalFactor_range, 
-    double cameraCalFactor_heading)
+    public double translationToTarget(TargetObservation targetObservation, double cameraPitch_deg,
+        double cameraYaw_deg, double cameraHeight_in, double targetHeight_in,
+        double cameraCalFactor_range,
+        double cameraCalFactor_heading)
     {
         // Return range (x-component of displacement vector) (in.)
-        double range_in = rangeToTarget_Pitch(targetObservation, cameraHeight_in, targetHeight_in, 
-        cameraPitch_deg, cameraCalFactor_range);
+        double range_in = rangeToTarget_Pitch(targetObservation, cameraHeight_in, targetHeight_in,
+            cameraPitch_deg, cameraCalFactor_range);
         // Return heading (y-component of displacement vector) (in.)
-        double heading_in = headingToTarget_Yaw(targetObservation, cameraYaw_deg, range_in, 
-        cameraCalFactor_heading);
+        double heading_in = headingToTarget_Yaw(targetObservation, cameraYaw_deg, range_in,
+            cameraCalFactor_heading);
         // Calculate z-component of displacement vector (in.)
         double elevation_in = cameraHeight_in - targetHeight_in;
         // to-do: transforms
-
-    // To-do: Add isConnected method
-    // Place to add device level methods
-
+        return 1.0d;
+        // To-do: Add isConnected method
+        // Place to add device level methods
+    }
 }
