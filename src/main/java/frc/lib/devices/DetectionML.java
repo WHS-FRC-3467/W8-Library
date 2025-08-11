@@ -183,7 +183,7 @@ public class DetectionML {
             cameraCalFactor_heading);
         // Calculate z-component of displacement vector (in.)
         double elevation_in = cameraHeight_in - targetHeight_in;
-        // to-do: transforms and localization.
+        // to-do: transforms and localizations.
         return 1.0d;
         // To-do: Add isConnected method
         // Place to add device level methods
