@@ -8,6 +8,8 @@ import org.littletonrobotics.junction.Logger;
 import frc.lib.io.detectionML.DetectionMLIO;
 import frc.lib.io.detectionML.DetectionMLIOInputsAutoLogged;
 import frc.lib.io.detectionML.DetectionMLIO.TargetObservation;
+import java.util.Arrays;
+import java.lang.Math;
 
 /**
  * Device level implementation of DetectionML camera. Performs pipeline data operations assuming IO
@@ -47,40 +49,53 @@ public class DetectionML {
     }
 
     /*
-     * Uses a curve fit of objArea to estimate distance. Does not take object orientation into
-     * consideration. e.g. deltaS = a*objArea^2 + b*objArea + c.
+     * Uses a curve fit of objArea to estimate distance (in.). deltaS = a*objArea^3 + b*objArea^2 +
+     * c*objArea + d. Cubic fit required to better match governing physics (tan(x) based). Determine
+     * fit coefficients from empirical calibration procedure.
      */
-    public float distanceToTarget_SingleFactorArea(TargetObservation targetObservation,
-        float conversionFactor)
+    public double distanceToTarget_SingleFactorArea(TargetObservation targetObservation,
+        float a, float b, float c, float d)
     {
-        return 1.0f;
+        return (a * Math.pow(targetObservation.objArea(), 3)
+            + b * Math.pow(targetObservation.objArea(), 2) + c * targetObservation.objArea() + d);
     }
 
     /*
-     * Uses a surface fit of objArea, skew (CW-CCW), pitch (up-down), and yaw (left-right) to
-     * estimate distance.
+     * Uses the camera's focal length & trig to estimate distance (in.) from target. Utilizes
+     * pinhole model of a camera; calibration factor is purely empirical and accounts for physical
+     * lens effects like blur, edge distortion, focus, etc. Camera focal length in pixels (from
+     * calibration) = (P * D) / H, where P - perceived width of known object (px), D - known
+     * distance from camera (in.), H - known height of object (in.)
      */
-    public float distanceToTarget_MultiFactorArea(TargetObservation targetObservation)
+    public double distanceToTarget_FocalLength(TargetObservation targetObservation,
+        double objectPhysicalHeight_in, double cameraFocalLength_px, double cameraCalFactor)
     {
-        return 1.0f;
+        // Return & sort corners to estimate detected object's digital height in pixels
+        double[] objectDigitalCorners_px =
+            {targetObservation.cornerOne()[2], targetObservation.cornerTwo()[2],
+                    targetObservation.cornerThree()[2], targetObservation.cornerFour()[2]};
+        Arrays.sort(objectDigitalCorners_px);
+        // Calculate digital height
+        double objectDigitalHeight_px = objectDigitalCorners_px[objectDigitalCorners_px.length - 1]
+            - objectDigitalCorners_px[0];
+        // Return estimated distance to object (in.)
+        return (cameraCalFactor
+            * ((objectPhysicalHeight_in * cameraFocalLength_px) / objectDigitalHeight_px));
     }
 
-    /* Estimates distance to object as a curve fit of the Y-coordinate of the detObj's centroid. */
-    public float distanceToTarget_YCentroid(TargetObservation targetObservation)
+    /*
+     * Calculates distance (in.) to target using object's detected pitch in relation to the camera's
+     * pitch from the floor; calibration factor is purely empirical and accounts for physical lens
+     * effects like blur, edge distortion, focus, etc. Note that pitch is positive where object is
+     * above camera C.L. and negative where below. Small height differentials & camera roll may
+     * introduce instabilities.
+     */
+    public double distanceToTarget_Skew(TargetObservation targetObservation, double cameraHeight_in,
+        double targetHeight_in, double cameraPitch_deg, double cameraCalFactor)
     {
+        return (cameraCalFactor * ((Math.abs(targetHeight_in - cameraHeight_in))
+            / Math.tan(Math.toRadians(targetObservation.pitch() + cameraPitch_deg))));
 
-        double yCentroid =
-            (targetObservation.cornerOne()[1] + targetObservation.cornerTwo()[1]
-                + targetObservation.cornerThree()[1] + targetObservation.cornerFour()[1]) / 4.0;
-        // TODO: implementation
-
-        return 1.0f;
-    }
-
-    /* Uses the camera's FOV, aspect ratio, & trig to estimate distance from target. */
-    public float distanceToTarget_FOV(TargetObservation targetObservation)
-    {
-        return 1.0f;
     }
 
     // TODO: Add isConnected method
