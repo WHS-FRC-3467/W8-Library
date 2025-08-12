@@ -30,7 +30,10 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
-/** Add your docs here. */
+/**
+ * A simulated implementation of the RotaryMechanism interface that uses SingleJointedArmSim to
+ * simulate the behavior of a rotary mechanism.
+ */
 public class RotaryMechanismSim implements RotaryMechanism {
 
     private final MotorIOSim io;

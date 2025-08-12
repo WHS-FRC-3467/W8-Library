@@ -37,6 +37,10 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
+/**
+ * A simulated implementation of the FlywheelMechanism interface that uses FlywheelSim to simulate
+ * the behavior of a flywheel mechanism.
+ */
 public class FlywheelMechanismSim implements FlywheelMechanism {
 
     private final MotorIOSim io;

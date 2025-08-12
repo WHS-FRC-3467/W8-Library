@@ -20,7 +20,10 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
 
-/** Add your docs here. */
+/**
+ * A visualizer for rotary mechanisms that displays the current angle, trajectory, and goal angle
+ * using a LoggedMechanism2d.
+ */
 public class RotaryVisualizer {
 
     private final LoggedMechanism2d mechanism;

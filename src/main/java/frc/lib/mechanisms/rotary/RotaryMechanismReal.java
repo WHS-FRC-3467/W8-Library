@@ -17,7 +17,10 @@ import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
-/** Add your docs here. */
+/**
+ * A real implementation of the RotaryMechanism interface that interacts with a physical motor
+ * through a MotorIO interface.
+ */
 public class RotaryMechanismReal implements RotaryMechanism {
     private final MotorIO io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
