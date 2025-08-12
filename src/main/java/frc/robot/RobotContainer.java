@@ -41,6 +41,9 @@ import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
+import frc.robot.subsystems.rotary.RotarySubsystem;
+import frc.robot.subsystems.rotary.RotarySubsystemConstants;
+import frc.robot.subsystems.rotary.RotarySubsystem.Setpoint;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
@@ -64,6 +67,7 @@ public class RobotContainer {
     private final BeamBreak1 beamBreak1;
     private final Servo1 servo1;
     private final Flywheel flywheel;
+    private final RotarySubsystem rotary;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -91,6 +95,7 @@ public class RobotContainer {
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
                 servo1 = new Servo1(Servo1Constants.getReal());
                 flywheel = new Flywheel(FlywheelConstants.getReal());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
             }
 
             case SIM -> {
@@ -109,6 +114,7 @@ public class RobotContainer {
                     BeamBreak1Constants.getSim());
                 servo1 = new Servo1(Servo1Constants.getSim());
                 flywheel = new Flywheel(FlywheelConstants.getSim());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
             }
 
             default -> {
@@ -127,6 +133,7 @@ public class RobotContainer {
                     new BeamBreak1(BeamBreak1Constants.getReplay());
                 servo1 = new Servo1(Servo1Constants.getReplay());
                 flywheel = new Flywheel(FlywheelConstants.getReplay());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());
             }
         }
 
@@ -205,8 +212,16 @@ public class RobotContainer {
                 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
                 PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES));
 
-        SmartDashboard.putData("Flywheel: Shoot", flywheel.shoot());
-        SmartDashboard.putData("Flywheel: Stop", flywheel.stop());
+        SmartDashboard.putData("Rotary: Set STOW",
+            rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
+
+        SmartDashboard.putData("Rotary: Set Raised",
+            rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+
+        SmartDashboard.putData("Rotary: Raise then Stow",
+            Commands.sequence(
+                rotary.setpointCommandWithWait(Setpoint.RAISED),
+                rotary.setpointCommandWithWait(Setpoint.STOW)));
     }
 
     /**

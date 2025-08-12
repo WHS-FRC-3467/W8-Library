@@ -1,19 +1,8 @@
-/*
- * Copyright (C) 2025 Windham Windup
- *
- * This program is free software: you can redistribute it and/or modify it under the terms of the
- * GNU General Public License as published by the Free Software Foundation, either version 3 of the
- * License, or any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
- * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program. If
- * not, see <https://www.gnu.org/licenses/>.
- */
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
 
-package frc.lib.mechanisms.flywheel;
+package frc.lib.mechanisms.rotary;
 
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.units.AngularAccelerationUnit;
@@ -29,15 +18,14 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
 /**
- * A real implementation of the FlywheelMechanism interface that interacts with a physical motor
+ * A real implementation of the RotaryMechanism interface that interacts with a physical motor
  * through a MotorIO interface.
  */
-public class FlywheelMechanismReal implements FlywheelMechanism {
+public class RotaryMechanismReal implements RotaryMechanism {
     private final MotorIO io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
 
-
-    public FlywheelMechanismReal(@NoSubtypeAllowed MotorIO io)
+    public RotaryMechanismReal(@NoSubtypeAllowed MotorIO io)
     {
         this.io = io;
     }
@@ -92,5 +80,11 @@ public class FlywheelMechanismReal implements FlywheelMechanism {
         PIDSlot slot)
     {
         io.runVelocity(velocity, acceleration, slot);
+    }
+
+    @Override
+    public Angle getPosition()
+    {
+        return inputs.position;
     }
 }
