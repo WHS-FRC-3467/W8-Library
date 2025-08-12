@@ -51,8 +51,10 @@ public class ExampleAuto extends AutoCommand {
                     AutoBuilder.followPath(path2)));
 
         } catch (Exception e) {
-            DriverStation.reportError("Path Failed to Load!: " + e.getMessage(), e.getStackTrace());
-            addCommands(Commands.none());
+            DriverStation.reportError(
+                "Path Failed to Load in " + this.getName() + " " + e.getMessage(),
+                e.getStackTrace());
+            throw new RuntimeException("Path Failed to Load in " + this.getName());
         }
 
     }

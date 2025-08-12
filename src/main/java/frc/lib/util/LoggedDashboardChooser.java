@@ -17,7 +17,7 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.inputs.LoggableInputs;
 import org.littletonrobotics.junction.networktables.LoggedNetworkInput;
 
-public class AutoChooser<V> extends LoggedNetworkInput {
+public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
     private final String key;
     private String selectedValue = null;
     private String lastSelected = null;
@@ -44,7 +44,7 @@ public class AutoChooser<V> extends LoggedNetworkInput {
      * @param key The key for the chooser, published to "/SmartDashboard/{key}" for NT or
      *        "/DashboardInputs/{key}" when logged.
      */
-    public AutoChooser(String key)
+    public LoggedDashboardChooser(String key)
     {
         this.key = key;
         SmartDashboard.putData(key, sendableChooser);
@@ -61,7 +61,7 @@ public class AutoChooser<V> extends LoggedNetworkInput {
      *        "/DashboardInputs/{key}" when logged.
      */
     @SuppressWarnings("unchecked")
-    public AutoChooser(String key, SendableChooser<V> chooser)
+    public LoggedDashboardChooser(String key, SendableChooser<V> chooser)
     {
         this(key);
 
