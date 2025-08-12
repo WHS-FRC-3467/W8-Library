@@ -32,7 +32,10 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj.util.Color;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.io.motor.MotorInputsAutoLogged;
@@ -46,20 +49,25 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
     private final MotorIOSim io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
     private final FlywheelSim sim;
+    private final FlywheelVisualizer visualizer;
+    private final AngularVelocity tolerance;
 
     private Time lastTime = Seconds.zero();
 
     public FlywheelMechanismSim(MotorIOSim io, DCMotor characteristics,
-        MomentOfInertia momentOfInertia)
+        MomentOfInertia momentOfInertia, AngularVelocity tolerance)
     {
         if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
             throw new IllegalArgumentException(
                 "momentOfInertia must be greater than zero!");
 
         this.io = io;
+        this.tolerance = tolerance;
         sim = new FlywheelSim(LinearSystemId.createFlywheelSystem(characteristics,
             momentOfInertia.in(KilogramSquareMeters),
             io.getGearRatio()), characteristics);
+
+        visualizer = new FlywheelVisualizer(io.getName());
     }
 
     @Override
@@ -70,6 +78,8 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
+        RoboRioSim.setVInVoltage(
+            BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
 
         lastTime = currentTime;
 
@@ -84,6 +94,15 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
 
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
+
+        visualizer.setAngle(inputs.position);
+        if (inputs.velocityError != null) {
+            if (inputs.velocityError.lte(tolerance)) {
+                visualizer.setColor(Color.kGreen);
+            }
+        } else {
+            visualizer.setColor(Color.kBlack);
+        }
     }
 
     @Override

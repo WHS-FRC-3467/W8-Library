@@ -16,6 +16,7 @@
 package frc.lib.mechanisms;
 
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.Amps;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
@@ -99,5 +100,18 @@ public interface Mechanism {
     public default Angle getPosition()
     {
         return Radians.of(0.0);
+    }
+
+    /**
+     * Sets the position of the motor's internal encoder
+     * 
+     * @param position Desired position to set encoder to
+     */
+    public default void setEncoderPosition(Angle position)
+    {}
+
+    public default Current getSupplyCurrent()
+    {
+        return Amps.of(0.0);
     }
 }
