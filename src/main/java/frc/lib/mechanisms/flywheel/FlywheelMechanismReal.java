@@ -28,9 +28,14 @@ import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
+/**
+ * A real implementation of the FlywheelMechanism interface that interacts with a physical motor
+ * through a MotorIO interface.
+ */
 public class FlywheelMechanismReal implements FlywheelMechanism {
     private final MotorIO io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
+
 
     public FlywheelMechanismReal(@NoSubtypeAllowed MotorIO io)
     {

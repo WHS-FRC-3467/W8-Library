@@ -20,6 +20,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -27,7 +28,9 @@ import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
 import frc.lib.io.vision.VisionIOPhotonVisionSim;
 import frc.lib.util.CommandXboxControllerExtended;
+import frc.robot.Constants.PathConstants;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.OnTheFlyPathCommand;
 import frc.robot.subsystems.beambreak1.BeamBreak1;
 import frc.robot.subsystems.beambreak1.BeamBreak1Constants;
 import frc.robot.subsystems.drive.Drive;
@@ -41,10 +44,17 @@ import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
+import frc.robot.subsystems.rotary.RotarySubsystem;
+import frc.robot.subsystems.rotary.RotarySubsystemConstants;
+import frc.robot.subsystems.rotary.RotarySubsystem.Setpoint;
+import frc.robot.subsystems.servo1.Servo1;
+import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
+import java.util.ArrayList;
+import java.util.Arrays;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
@@ -57,12 +67,14 @@ import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 @SuppressWarnings("unused")
 public class RobotContainer {
     // Subsystems
-    private final Drive drive;
+    public final Drive drive;
     private final LEDs leds;
     private final LaserCAN1 laserCAN1;
     private final BeamBreak1 beamBreak1;
+    private final Servo1 servo1;
     private final Flywheel flywheel;
     private final Vision vision;
+    private final RotarySubsystem rotary;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -88,6 +100,7 @@ public class RobotContainer {
                 leds = new LEDs(LEDsConstants.getLightsIOReal());
                 laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal());
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
+                servo1 = new Servo1(Servo1Constants.getReal());
                 flywheel = new Flywheel(FlywheelConstants.getReal());
                 vision = new Vision(
                     drive::addVisionMeasurement,
@@ -97,6 +110,7 @@ public class RobotContainer {
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP));
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
             }
 
             case SIM -> {
@@ -113,6 +127,7 @@ public class RobotContainer {
                     new LaserCAN1(LaserCAN1Constants.getSim());
                 beamBreak1 = new BeamBreak1(
                     BeamBreak1Constants.getSim());
+                servo1 = new Servo1(Servo1Constants.getSim());
                 flywheel = new Flywheel(FlywheelConstants.getSim());
                 vision = new Vision(
                     drive::addVisionMeasurement,
@@ -123,6 +138,7 @@ public class RobotContainer {
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP));
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
             }
 
             default -> {
@@ -139,7 +155,9 @@ public class RobotContainer {
                     new LaserCAN1(LaserCAN1Constants.getReplay());
                 beamBreak1 =
                     new BeamBreak1(BeamBreak1Constants.getReplay());
+                servo1 = new Servo1(Servo1Constants.getReplay());
                 flywheel = new Flywheel(FlywheelConstants.getReplay());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());
                 vision = new Vision(
                     drive::addVisionMeasurement,
                     () -> drive.getTimestampedHeading(),
@@ -206,6 +224,32 @@ public class RobotContainer {
                         new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
                     drive)
                     .ignoringDisable(true));
+
+        // Pathfind to Pose when the Y button is pressed
+        controller.y().onTrue(
+            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(3, 3, Rotation2d.kZero),
+                PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0,
+                PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
+
+        // On-the-fly path with waypoints while the Right Bumper is held
+        controller.rightBumper().whileTrue(
+            new OnTheFlyPathCommand(drive, () -> drive.getPose(), new ArrayList<>(Arrays.asList()), // List
+                                                                                                    // of
+                                                                                                    // waypoints
+                new Pose2d(6, 6, Rotation2d.k180deg), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS,
+                0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
+                PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES));
+
+        SmartDashboard.putData("Rotary: Set STOW",
+            rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
+
+        SmartDashboard.putData("Rotary: Set Raised",
+            rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+
+        SmartDashboard.putData("Rotary: Raise then Stow",
+            Commands.sequence(
+                rotary.setpointCommandWithWait(Setpoint.RAISED),
+                rotary.setpointCommandWithWait(Setpoint.STOW)));
     }
 
     /**

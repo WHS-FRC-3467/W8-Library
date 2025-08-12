@@ -18,7 +18,8 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
-
+import au.grapplerobotics.CanBridge;
+import com.pathplanner.lib.commands.PathfindingCommand;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -45,6 +46,8 @@ public class Robot extends LoggedRobot {
 
     public Robot()
     {
+        CanBridge.runTCP(); // Used for configuring LaserCANs via Grapplehook
+
         // Record metadata
         Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
         Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
@@ -106,6 +109,18 @@ public class Robot extends LoggedRobot {
         robotContainer = new RobotContainer();
 
         DriverStation.silenceJoystickConnectionWarning(!Robot.isReal());
+    }
+
+    @Override
+    public void robotInit() {
+        /* 
+         * Due to the nature of how Java works, the first run of a pathfinding command could have a significantly higher delay compared with subsequent runs.
+         * To help alleviate this issue, run this warmup command in the background when code starts.
+         * This command will not control the robot, it will simply run through a full pathfinding command to warm up the library.
+         * Source: PathPlanner Docs
+         */
+        // DO THIS AFTER CONFIGURATION OF YOUR DESIRED PATHFINDER
+        PathfindingCommand.warmupCommand().schedule();
     }
 
     /** This function is called periodically during all modes. */
