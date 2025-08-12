@@ -21,7 +21,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.lib.util.AutoCommand;
 import frc.robot.Robot;
 import frc.robot.subsystems.drive.Drive;
-import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BooleanSupplier;
@@ -42,7 +41,7 @@ public class BranchingAuto extends AutoCommand {
         try {
             path1 = PathPlannerPath.fromPathFile("path1");
             path3 = PathPlannerPath.fromPathFile("path3");
-            path4 = PathPlannerPath.fromPathFile("path4BAd");
+            path4 = PathPlannerPath.fromPathFile("path4");
 
             if (Robot.isSimulation() && !Logger.hasReplaySource()) {
                 addCommands(AutoCommands.resetOdom(drive, path1));
