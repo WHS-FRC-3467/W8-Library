@@ -53,7 +53,7 @@ public class DetectionML {
      * c*objArea + d. Cubic fit required to better match governing physics (tan(x) based). Determine
      * fit coefficients from empirical calibration procedure.
      */
-    public double distanceToTarget_SingleFactorArea(TargetObservation targetObservation,
+    public double rangeToTarget_SingleFactorArea(TargetObservation targetObservation,
         float a, float b, float c, float d)
     {
         return (a * Math.pow(targetObservation.objArea(), 3)
@@ -64,7 +64,8 @@ public class DetectionML {
      * Uses the camera's focal length & trig to estimate range from target; requires no measurement
      * of pitch. Utilizes pinhole model of a camera. Note that camera focal length in pixels = (P *
      * D) / H, where P = perceived width of known object (px), D = known distance from camera (in.),
-     * H = known height of object (in.).
+     * H = known height of object (in.). For unreliable corner detection or object digital height
+     * calculation, use rangeToTarget_SingleFactorArea.
      * 
      * @param targetObservation A data type containing vision pipeline results for a single object.
      * @param objectPhysicalHeight_in The physical height of the object being targeted (in.).
@@ -96,7 +97,8 @@ public class DetectionML {
      * SolvePNP when well tuned, if the full 6d robot pose is not required. Note that this method
      * requires the camera to have 0 roll (not be skewed clockwise or CCW relative to the floor),
      * and for there to exist a height differential between goal and camera. The larger this
-     * differential, the more accurate the distance estimate will be.
+     * differential, the more accurate the distance estimate will be. For small differentials, use
+     * rangeToTarget_FocalLength.
      *
      * @param targetObservation A data type containing vision pipeline results for a single target.
      * @param cameraHeight_in The physical height of the camera off the floor in inches.
@@ -115,14 +117,14 @@ public class DetectionML {
         double cameraHeight_in,
         double targetHeight_in, double cameraPitch_deg, double cameraCalFactor)
     {
-        double tolerance = 1.5; // in.
-        // Camera angled down & above target; target above or below camera centerline.
-        if (cameraPitch_deg <= 0 && (cameraHeight_in - targetHeight_in) > tolerance) {
-            return (cameraCalFactor * ((Math.abs(targetHeight_in - cameraHeight_in))
-                / Math.tan(Math.toRadians(Math.abs(cameraPitch_deg + targetObservation.pitch())))));
+        double tolerance = 1.5; // Empirically-determined tolerance (in.)
+        // Mathematically verified for camera pitched up or down with target above or below lens
+        // centerline.
+        if (Math.abs(cameraHeight_in - targetHeight_in) > tolerance) {
+            return (cameraCalFactor * ((targetHeight_in - cameraHeight_in)
+                / Math.tan(Math.toRadians(cameraPitch_deg + targetObservation.pitch()))));
         } else {
-            // To-do: Mathematically verify other camera/target orientation permutations before
-            // implementation (e.g. camera up) -- copy & paste may result in sign errors.
+            // Use rangeToTarget_FocalLength.
             return -1.0d;
         }
     }
@@ -145,7 +147,8 @@ public class DetectionML {
     public double headingToTarget_Yaw(TargetObservation targetObservation, double cameraYaw_deg,
         double targetRange_in, double cameraCalFactor)
     {
-        // Camera angled left or right; target left or right of centerline.
+        // Mathematically verified for camera yawed left or right with target left or right of lens
+        // centerline. Absolute value required for camera yawed right.
         return (cameraCalFactor
             * (Math.tan(Math.toRadians(Math.abs(cameraYaw_deg + targetObservation.yaw())))
                 * targetRange_in));
