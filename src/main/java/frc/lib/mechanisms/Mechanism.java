@@ -15,6 +15,7 @@
 
 package frc.lib.mechanisms;
 
+import static edu.wpi.first.units.Units.Amps;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
@@ -89,5 +90,13 @@ public interface Mechanism {
      */
     public default void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
         PIDSlot slot)
+    {}
+
+    public default Current getTorqueCurrent()
+    {
+        return Amps.of(0);
+    }
+
+    public default void close()
     {}
 }

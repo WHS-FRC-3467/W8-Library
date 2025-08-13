@@ -133,7 +133,9 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
         return inputs.torqueCurrent;
     }
 
-    public void close() {
+    @Override
+    public void close()
+    {
         io.close();
     }
 }
