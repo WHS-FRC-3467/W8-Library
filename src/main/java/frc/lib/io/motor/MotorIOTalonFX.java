@@ -330,8 +330,4 @@ public class MotorIOTalonFX implements MotorIO {
             velocityControl.withVelocity(velocity).withAcceleration(acceleration)
                 .withSlot(slot.getNum()));
     }
-
-    public void close() {
-        motor.close();
-    }
 }
