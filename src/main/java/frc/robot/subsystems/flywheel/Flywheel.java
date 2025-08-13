@@ -34,4 +34,8 @@ public class Flywheel extends SubsystemBase { // Don't extend if contained in su
     public Current getTorqueCurrent() {
         return io.getTorqueCurrent();
     }
+
+    public void close() {
+        io.close();
+    }
 }

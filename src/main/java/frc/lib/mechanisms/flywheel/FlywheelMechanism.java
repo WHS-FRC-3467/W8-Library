@@ -15,7 +15,6 @@
 
 package frc.lib.mechanisms.flywheel;
 
-import static edu.wpi.first.units.Units.Amps;
 import edu.wpi.first.units.measure.Current;
 import frc.lib.mechanisms.Mechanism;
 
@@ -24,4 +23,6 @@ public interface FlywheelMechanism extends Mechanism {
     //{
         // return Amps.of(0);
     // }
+
+    public default void close() {}
 }

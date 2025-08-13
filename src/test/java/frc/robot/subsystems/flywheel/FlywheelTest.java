@@ -64,6 +64,6 @@ class FlywheelTest implements AutoCloseable {
     
     @Override
     public void close() {
-       // do nothing for now
+       flywheel.close();
     }
   }

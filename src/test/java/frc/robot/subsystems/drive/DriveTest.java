@@ -69,7 +69,6 @@ public class DriveTest implements AutoCloseable {
         }
     }
 
-    // TODO: Decide whether to keep this test
     @Test // marks this method as a test
     void testStop() {
         TestUtil.runTest(Commands.runOnce(() -> drive.stop()), 0.1, drive);
@@ -101,7 +100,6 @@ public class DriveTest implements AutoCloseable {
         }
     }
   
-    // TODO: Decide whether to keep this test
     @Test
     void testX() {
         TestUtil.runTest(Commands.runOnce(() -> drive.stopWithX()), 0.1, drive);
@@ -125,8 +123,5 @@ public class DriveTest implements AutoCloseable {
     }
 
     @Override
-    public void close() {
-       // do nothing for now
-       // Goal is to close close motor controller resources
-    }
+    public void close() {}
   }
