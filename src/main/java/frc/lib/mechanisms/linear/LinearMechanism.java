@@ -8,7 +8,11 @@ import edu.wpi.first.units.measure.Distance;
 import frc.lib.mechanisms.Mechanism;
 import frc.lib.util.MechanismUtil.DistanceAngleConverter;
 
-/** Add your docs here. */
+/**
+ * Interface for linear mechanisms, which are mechanisms that move in a straight line. This
+ * interface extends the Mechanism interface and provides characteristics specific to linear
+ * mechanisms.
+ */
 public interface LinearMechanism extends Mechanism {
 
     public record LinearMechCharacteristics(

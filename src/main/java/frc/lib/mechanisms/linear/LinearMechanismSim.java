@@ -39,6 +39,10 @@ import frc.lib.util.MechanismUtil.DistanceAngleConverter;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
+/**
+ * A simulated implementation of the LinearMechanism interface that uses ElevatorSim to simulate the
+ * behavior of a linear mechanism.
+ */
 public class LinearMechanismSim implements LinearMechanism {
 
     private final MotorIOSim io;

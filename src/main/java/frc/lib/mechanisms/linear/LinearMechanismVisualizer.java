@@ -14,7 +14,10 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.lib.mechanisms.linear.LinearMechanism.LinearMechCharacteristics;
 
-/** Add your docs here. */
+/**
+ * A visualizer for linear mechanisms that displays the current distance, trajectory, and goal
+ * distance using a LoggedMechanism2d.
+ */
 public class LinearMechanismVisualizer {
 
     private final LoggedMechanism2d mechanism;

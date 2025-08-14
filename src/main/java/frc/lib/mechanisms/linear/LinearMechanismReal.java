@@ -28,6 +28,10 @@ import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
+/**
+ * A real implementation of the LinearMechanism interface that interacts with a physical motor
+ * through a MotorIO interface.
+ */
 public class LinearMechanismReal implements LinearMechanism {
     private final MotorIO io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
