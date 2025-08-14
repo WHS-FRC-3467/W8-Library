@@ -15,6 +15,7 @@
 
 package frc.robot.subsystems.vision;
 
+import static edu.wpi.first.units.Units.Meters;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.Matrix;
@@ -24,15 +25,17 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.vision.VisionIOInputsAutoLogged;
+import frc.lib.util.Timestamped;
 import frc.lib.io.vision.VisionIO;
-import frc.lib.io.vision.VisionIO.PoseObservationType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
@@ -41,10 +44,15 @@ public class Vision extends SubsystemBase {
     private final VisionIOInputsAutoLogged[] inputs;
     private final Alert[] disconnectedAlerts;
 
-    public Vision(VisionConsumer consumer, VisionIO... io)
+    private final Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier;
+
+    public Vision(VisionConsumer consumer,
+        Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier, VisionIO... io)
     {
         this.consumer = consumer;
+        this.timestampedHeadingSupplier = timestampedHeadingSupplier;
         this.io = io;
+
 
         // Initialize inputs
         this.inputs = new VisionIOInputsAutoLogged[io.length];
@@ -60,21 +68,11 @@ public class Vision extends SubsystemBase {
         }
     }
 
-    /**
-     * Returns the X angle to the best target, which can be used for simple servoing with vision.
-     *
-     * @param cameraIndex The index of the camera to use.
-     */
-    public Rotation2d getTargetX(int cameraIndex)
-    {
-        return inputs[cameraIndex].latestTargetObservation.tx();
-    }
-
     @Override
     public void periodic()
     {
         for (int i = 0; i < io.length; i++) {
-            io[i].updateInputs(inputs[i]);
+            io[i].updateInputs(inputs[i], timestampedHeadingSupplier.get());
             Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
         }
 
@@ -133,13 +131,11 @@ public class Vision extends SubsystemBase {
 
                 // Calculate standard deviations
                 double stdDevFactor =
-                    Math.pow(observation.averageTagDistance(), 2.0) / observation.tagCount();
+                    (Math.pow(observation.averageTagDistance().in(Meters), 2.0)
+                        + 10 * observation.ambiguity())
+                        / observation.tagCount();
                 double linearStdDev = linearStdDevBaseline * stdDevFactor;
                 double angularStdDev = angularStdDevBaseline * stdDevFactor;
-                if (observation.type() == PoseObservationType.MEGATAG_2) {
-                    linearStdDev *= linearStdDevMegatag2Factor;
-                    angularStdDev *= angularStdDevMegatag2Factor;
-                }
                 if (cameraIndex < cameraStdDevFactors.length) {
                     linearStdDev *= cameraStdDevFactors[cameraIndex];
                     angularStdDev *= cameraStdDevFactors[cameraIndex];
@@ -188,7 +184,7 @@ public class Vision extends SubsystemBase {
     public static interface VisionConsumer {
         public void accept(
             Pose2d visionRobotPoseMeters,
-            double timestampSeconds,
+            Time timestampSeconds,
             Matrix<N3, N1> visionMeasurementStdDevs);
     }
 }
