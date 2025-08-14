@@ -41,6 +41,8 @@ import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
+import frc.robot.subsystems.linear.Linear;
+import frc.robot.subsystems.linear.LinearConstants;
 import frc.robot.subsystems.rotary.RotarySubsystem;
 import frc.robot.subsystems.rotary.RotarySubsystemConstants;
 import frc.robot.subsystems.rotary.RotarySubsystem.Setpoint;
@@ -67,6 +69,8 @@ public class RobotContainer {
     private final BeamBreak1 beamBreak1;
     private final Servo1 servo1;
     private final Flywheel flywheel;
+
+    private final Linear linear;
     private final RotarySubsystem rotary;
 
     // Controller
@@ -95,6 +99,8 @@ public class RobotContainer {
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
                 servo1 = new Servo1(Servo1Constants.getReal());
                 flywheel = new Flywheel(FlywheelConstants.getReal());
+
+                linear = new Linear(LinearConstants.getReal());
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
             }
 
@@ -114,6 +120,8 @@ public class RobotContainer {
                     BeamBreak1Constants.getSim());
                 servo1 = new Servo1(Servo1Constants.getSim());
                 flywheel = new Flywheel(FlywheelConstants.getSim());
+
+                linear = new Linear(LinearConstants.getSim());
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
             }
 
@@ -133,6 +141,8 @@ public class RobotContainer {
                     new BeamBreak1(BeamBreak1Constants.getReplay());
                 servo1 = new Servo1(Servo1Constants.getReplay());
                 flywheel = new Flywheel(FlywheelConstants.getReplay());
+
+                linear = new Linear(LinearConstants.getReplay());
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());
             }
         }
@@ -212,16 +222,9 @@ public class RobotContainer {
                 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
                 PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES));
 
-        SmartDashboard.putData("Rotary: Set STOW",
-            rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
-
-        SmartDashboard.putData("Rotary: Set Raised",
-            rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
-
-        SmartDashboard.putData("Rotary: Raise then Stow",
-            Commands.sequence(
-                rotary.setpointCommandWithWait(Setpoint.RAISED),
-                rotary.setpointCommandWithWait(Setpoint.STOW)));
+        SmartDashboard.putData("Linear: Stow", linear.goToSetpoint(Linear.Setpoint.STOW));
+        SmartDashboard.putData("Linear: Raised", linear.goToSetpoint(Linear.Setpoint.RAISED));
+        SmartDashboard.putData("Linear: Home", linear.homeCommand());
     }
 
     /**

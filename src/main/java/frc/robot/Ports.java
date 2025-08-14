@@ -29,6 +29,9 @@ public class Ports {
     public static final Device.CAN lights = new CAN(1, "rio");
     public static final Device.CAN flywheel = new CAN(2, "rio");
 
+
+    public static final Device.CAN linear = new CAN(5, "rio");
+
     public static final Device.DIO diobeambreak = new DIO(0);
 
     public static final Device.CAN pdh = new CAN(50, "rio");
@@ -37,4 +40,5 @@ public class Ports {
     public static final Device.CAN RotarySubsystemMotorFollower = new CAN(4, "rio");
 
     public static final Device.PWM servo1 = new PWM(1);
+
 }
