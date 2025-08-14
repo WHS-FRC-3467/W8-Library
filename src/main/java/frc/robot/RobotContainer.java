@@ -20,6 +20,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -27,10 +28,16 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
 import frc.lib.io.vision.VisionIOPhotonVisionSim;
+import frc.lib.util.LoggedDashboardChooser;
+import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.Constants.PathConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.OnTheFlyPathCommand;
+import frc.robot.commands.autos.BranchingAuto;
+import frc.robot.commands.autos.ExampleAuto;
+import frc.robot.commands.autos.NoneAuto;
+import frc.robot.commands.autos.WheelCharacterizationAuto;
 import frc.robot.subsystems.beambreak1.BeamBreak1;
 import frc.robot.subsystems.beambreak1.BeamBreak1Constants;
 import frc.robot.subsystems.drive.Drive;
@@ -57,7 +64,6 @@ import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
 /**
@@ -83,7 +89,9 @@ public class RobotContainer {
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
 
     // Dashboard inputs
-    private final LoggedDashboardChooser<Command> autoChooser;
+    private final LoggedDashboardChooser<AutoCommand> autoChooser;
+    private final LoggedDashboardChooser<Boolean> conditionalChooser;
+    public static Field2d autoPreviewField = new Field2d();
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -174,22 +182,25 @@ public class RobotContainer {
             }
         }
 
-        // Set up auto routines
-        autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+        conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
+        conditionalChooser.addOption("True", true);
+        conditionalChooser.addOption("False", false);
 
-        // Set up SysId routines
+        // Set up auto routines
+        autoChooser = new LoggedDashboardChooser<>("Auto Choices");
+        SmartDashboard.putData("Auto Preview", autoPreviewField);
+
+        autoChooser.addDefaultOption("None", new NoneAuto());
+        autoChooser.addOption("ExampleAuto", new ExampleAuto(drive));
+        autoChooser.addOption("BranchingAuto",
+            new BranchingAuto(drive, () -> conditionalChooser.get()));
+
+        autoChooser.onChange(auto -> {
+            autoPreviewField.getObject("path").setPoses(auto.getAllPathPoses());
+        });
+
         autoChooser.addOption("Drive Wheel Radius Characterization",
-            DriveCommands.wheelRadiusCharacterization(drive));
-        autoChooser.addOption("Drive Simple FF Characterization",
-            DriveCommands.feedforwardCharacterization(drive));
-        autoChooser.addOption("Drive SysId (Quasistatic Forward)",
-            drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption("Drive SysId (Quasistatic Reverse)",
-            drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption("Drive SysId (Dynamic Forward)",
-            drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption("Drive SysId (Dynamic Reverse)",
-            drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+            new WheelCharacterizationAuto(drive));
 
         // Configure the button bindings
         configureButtonBindings();
