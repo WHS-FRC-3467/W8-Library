@@ -24,6 +24,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.io.vision.VisionIO;
+import frc.lib.io.vision.VisionIOPhotonVision;
+import frc.lib.io.vision.VisionIOPhotonVisionSim;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.Constants.PathConstants;
 import frc.robot.commands.DriveCommands;
@@ -48,11 +51,14 @@ import frc.robot.subsystems.rotary.RotarySubsystemConstants;
 import frc.robot.subsystems.rotary.RotarySubsystem.Setpoint;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -69,8 +75,8 @@ public class RobotContainer {
     private final BeamBreak1 beamBreak1;
     private final Servo1 servo1;
     private final Flywheel flywheel;
-
     private final Linear linear;
+    private final Vision vision;
     private final RotarySubsystem rotary;
 
     // Controller
@@ -101,6 +107,14 @@ public class RobotContainer {
                 flywheel = new Flywheel(FlywheelConstants.getReal());
 
                 linear = new Linear(LinearConstants.getReal());
+                vision = new Vision(
+                    drive::addVisionMeasurement,
+                    () -> drive.getTimestampedHeading(),
+                    new VisionIOPhotonVision(
+                        VisionConstants.camera0Name,
+                        VisionConstants.robotToCamera0,
+                        VisionConstants.aprilTagLayout,
+                        PoseStrategy.CONSTRAINED_SOLVEPNP));
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
             }
 
@@ -122,6 +136,15 @@ public class RobotContainer {
                 flywheel = new Flywheel(FlywheelConstants.getSim());
 
                 linear = new Linear(LinearConstants.getSim());
+                vision = new Vision(
+                    drive::addVisionMeasurement,
+                    () -> drive.getTimestampedHeading(),
+                    new VisionIOPhotonVisionSim(
+                        () -> drive.getPose(),
+                        VisionConstants.camera0Name,
+                        VisionConstants.robotToCamera0,
+                        VisionConstants.aprilTagLayout,
+                        PoseStrategy.CONSTRAINED_SOLVEPNP));
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
             }
 
@@ -144,6 +167,10 @@ public class RobotContainer {
 
                 linear = new Linear(LinearConstants.getReplay());
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());
+                vision = new Vision(
+                    drive::addVisionMeasurement,
+                    () -> drive.getTimestampedHeading(),
+                    new VisionIO() {});
             }
         }
 
