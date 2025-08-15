@@ -115,7 +115,9 @@ public class DriveTest implements AutoCloseable {
             for (int i = 0; i < swerveModulePositions.length; i++) {
                 assertEquals(targetAngles[i].getRadians(), swerveModulePositions[i].angle.getRadians(), DELTA);
             }
-            assertEquals(0.0, drive.getFFCharacterizationVelocity(), DELTA); // make sure that the drivetrain reaches a velocity of zero
+            assertEquals(0.0, drive.getChassisSpeeds().vxMetersPerSecond, DELTA); // make sure that the drivetrain reaches a velocity of zero
+            assertEquals(0.0, drive.getChassisSpeeds().vyMetersPerSecond, DELTA);
+            assertEquals(0.0, drive.getChassisSpeeds().omegaRadiansPerSecond, DELTA);
 
         } catch (Exception e) {
             fail("Failed to turn the Drive modules into an X arrangement to resist movement: " + e.getMessage());
