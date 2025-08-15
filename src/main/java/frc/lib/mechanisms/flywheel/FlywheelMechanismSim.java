@@ -149,4 +149,16 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
     {
         io.runVelocity(velocity, acceleration, slot);
     }
+
+    @Override
+    public Current getTorqueCurrent()
+    {
+        return inputs.torqueCurrent;
+    }
+
+    @Override
+    public void close()
+    {
+        io.close();
+    }
 }

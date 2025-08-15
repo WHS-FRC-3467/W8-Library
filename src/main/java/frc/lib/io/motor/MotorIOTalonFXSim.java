@@ -136,4 +136,10 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
             inputs.activeTrajectoryVelocity = null;
         }
     }
+
+    @Override
+    public void close()
+    {
+        super.motor.close();
+    }
 }

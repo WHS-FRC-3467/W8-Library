@@ -114,4 +114,12 @@ public interface Mechanism {
     {
         return Radians.of(0.0);
     }
+
+    public default Current getTorqueCurrent()
+    {
+        return Amps.of(0);
+    }
+
+    public default void close()
+    {}
 }

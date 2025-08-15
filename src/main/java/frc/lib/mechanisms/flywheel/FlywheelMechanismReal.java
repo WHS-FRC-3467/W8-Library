@@ -93,4 +93,10 @@ public class FlywheelMechanismReal implements FlywheelMechanism {
     {
         io.runVelocity(velocity, acceleration, slot);
     }
+
+    @Override
+    public Current getTorqueCurrent()
+    {
+        return inputs.torqueCurrent;
+    }
 }
