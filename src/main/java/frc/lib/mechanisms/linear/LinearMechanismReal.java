@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.mechanisms.flywheel;
+package frc.lib.mechanisms.linear;
 
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.units.AngularAccelerationUnit;
@@ -29,15 +29,14 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
 /**
- * A real implementation of the FlywheelMechanism interface that interacts with a physical motor
+ * A real implementation of the LinearMechanism interface that interacts with a physical motor
  * through a MotorIO interface.
  */
-public class FlywheelMechanismReal implements FlywheelMechanism {
+public class LinearMechanismReal implements LinearMechanism {
     private final MotorIO io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
 
-
-    public FlywheelMechanismReal(@NoSubtypeAllowed MotorIO io)
+    public LinearMechanismReal(@NoSubtypeAllowed MotorIO io)
     {
         this.io = io;
     }
@@ -94,9 +93,22 @@ public class FlywheelMechanismReal implements FlywheelMechanism {
         io.runVelocity(velocity, acceleration, slot);
     }
 
+    // TODO: Verify operation works correctly on real TalonFX
     @Override
-    public Current getTorqueCurrent()
+    public void setEncoderPosition(Angle position)
     {
-        return inputs.torqueCurrent;
+        io.setEncoderPosition(position);
+    }
+
+    @Override
+    public Current getSupplyCurrent()
+    {
+        return inputs.supplyCurrent;
+    }
+
+    @Override
+    public Angle getPosition()
+    {
+        return inputs.position;
     }
 }

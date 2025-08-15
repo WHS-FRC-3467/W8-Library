@@ -54,7 +54,7 @@ class FlywheelTest implements AutoCloseable {
  
     @Test // marks this method as a test
     void shoot() {
-        TestUtil.runTest(flywheel.shoot(), 0.1, flywheel);
+        TestUtil.runTest(flywheel.shootAmps(), 0.1, flywheel);
         try {
             assertEquals(30, flywheel.getTorqueCurrent().in(Amps), DELTA);
 		} catch (Exception e) {

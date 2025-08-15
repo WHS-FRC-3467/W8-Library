@@ -13,61 +13,62 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.mechanisms.flywheel;
+package frc.lib.mechanisms.linear;
 
-import static edu.wpi.first.units.Units.KilogramSquareMeters;
-import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.Kilograms;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.MomentOfInertia;
+import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
-import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
-import edu.wpi.first.wpilibj.util.Color;
 import frc.lib.io.motor.MotorIO.PIDSlot;
+import frc.lib.util.MechanismUtil.DistanceAngleConverter;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
 /**
- * A simulated implementation of the FlywheelMechanism interface that uses FlywheelSim to simulate
- * the behavior of a flywheel mechanism.
+ * A simulated implementation of the LinearMechanism interface that uses ElevatorSim to simulate the
+ * behavior of a linear mechanism.
  */
-public class FlywheelMechanismSim implements FlywheelMechanism {
+public class LinearMechanismSim implements LinearMechanism {
 
     private final MotorIOSim io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
-    private final FlywheelSim sim;
-    private final FlywheelVisualizer visualizer;
-    private final AngularVelocity tolerance;
+    private final ElevatorSim sim;
+    private final DistanceAngleConverter converter;
+    private final LinearMechanismVisualizer visualizer;
 
     private Time lastTime = Seconds.zero();
 
-    public FlywheelMechanismSim(MotorIOSim io, DCMotor characteristics,
-        MomentOfInertia momentOfInertia, AngularVelocity tolerance)
+    public LinearMechanismSim(MotorIOSim io, DCMotor characteristics, Mass mass,
+        LinearMechCharacteristics constraints, Boolean useGravity)
     {
-        if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
-            throw new IllegalArgumentException(
-                "momentOfInertia must be greater than zero!");
-
         this.io = io;
-        this.tolerance = tolerance;
-        sim = new FlywheelSim(LinearSystemId.createFlywheelSystem(characteristics,
-            momentOfInertia.in(KilogramSquareMeters),
-            io.getGearRatio()), characteristics);
+        this.converter = constraints.converter();
+        sim = new ElevatorSim(
+            characteristics,
+            io.getGearRatio(),
+            mass.in(Kilograms),
+            constraints.converter().getDrumRadius().in(Meters),
+            constraints.minDistance().in(Meters),
+            constraints.maxDistance().in(Meters),
+            useGravity,
+            constraints.startingDistance().in(Meters));
 
-        visualizer = new FlywheelVisualizer(io.getName());
+        visualizer = new LinearMechanismVisualizer(io.getName(), constraints);
     }
 
     @Override
@@ -83,25 +84,19 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
 
         lastTime = currentTime;
 
-        io.setRotorVelocity(sim.getAngularVelocity());
-        io.setRotorAcceleration(sim.getAngularAcceleration());
+        io.setPosition(converter.toAngle(Meters.of(sim.getPositionMeters())));
 
-        // Angular displacement kinematic equation (θ = ω₀t + (1/2)αt²)'
-        Angle positionChange = Radians.of(sim.getAngularVelocityRadPerSec() * deltaTime
-            + 0.5 * sim.getAngularAccelerationRadPerSecSq() * Math.pow(deltaTime, 2));
-
-        io.setPosition(inputs.position.plus(positionChange));
+        io.setRotorVelocity(
+            converter.toAngle(Meters.of(sim.getVelocityMetersPerSecond())).per(Seconds));
 
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
 
-        visualizer.setAngle(inputs.position);
-        if (inputs.velocityError != null) {
-            if (inputs.velocityError.lte(tolerance)) {
-                visualizer.setColor(Color.kGreen);
-            }
+        visualizer.setMeasuredDistance(Meters.of(sim.getPositionMeters()));
+        if (inputs.activeTrajectoryPosition != null) {
+            visualizer.setTrajectoryDistance(converter.toDistance(inputs.activeTrajectoryPosition));
         } else {
-            visualizer.setColor(Color.kBlack);
+            visualizer.setTrajectoryDistance(Meters.of(sim.getPositionMeters()));
         }
     }
 
@@ -141,6 +136,7 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
         Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
     {
         io.runPosition(position, cruiseVelocity, acceleration, maxJerk, slot);
+        visualizer.setGoalDistance(converter.toDistance(position));
     }
 
     @Override
@@ -151,14 +147,20 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
     }
 
     @Override
-    public Current getTorqueCurrent()
+    public void setEncoderPosition(Angle position)
     {
-        return inputs.torqueCurrent;
+        sim.setState(converter.toDistance(position).in(Meters), 0);
     }
 
     @Override
-    public void close()
+    public Current getSupplyCurrent()
     {
-        io.close();
+        return inputs.supplyCurrent;
+    }
+
+    @Override
+    public Angle getPosition()
+    {
+        return inputs.position;
     }
 }
