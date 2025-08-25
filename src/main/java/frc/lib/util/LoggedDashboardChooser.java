@@ -27,11 +27,13 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
 
     private final LoggableInputs inputs =
         new LoggableInputs() {
+            @Override
             public void toLog(LogTable table)
             {
                 table.put(key, selectedValue);
             }
 
+            @Override
             public void fromLog(LogTable table)
             {
                 selectedValue = table.get(key, selectedValue);
@@ -133,6 +135,7 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
         return sendableChooser;
     }
 
+    @Override
     public void periodic()
     {
         if (!Logger.hasReplaySource()) {

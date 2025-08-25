@@ -107,8 +107,9 @@ public interface Mechanism {
     }
 
     /**
+     * Getter for angle of the motor
      * 
-     * @return Angle of the motor
+     * @return Angle of the motor or fused encoder
      */
     public default Angle getPosition()
     {
