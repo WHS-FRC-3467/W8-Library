@@ -13,31 +13,6 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-<<<<<<< HEAD:src/main/java/frc/robot/subsystems/DetectionML/DetectionML.java
-package frc.robot.subsystems.DetectionML;
-
-import frc.lib.io.DetectionML.DetectionMLIO;
-import frc.lib.io.DetectionML.DetectionMLIOAutoLogged;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-public class DetectionML extends SubsystemBase {
-    private final DetectionMLIO[] io;
-    private final DetectionMLIOAutoLogged[] inputs;
-
-    public DetectionML(DetectionMLIO io)
-    {
-        this.inputs = io;
-
-        // Initialize inputs
-        this.inputs = new DetectionMLIOAutoLogged[io.length]; // here
-        for (
-
-            int i = 0; i < inputs.length; i++) {
-            inputs[i] = new VisionIOInputsAutoLogged();
-        }
-    }
-}
-=======
 package frc.robot.subsystems.objectDetector;
 
 import frc.lib.devices.DetectionML;
@@ -59,9 +34,11 @@ public class objectDetector extends SubsystemBase {
     {
         detectionML.periodic();
 
-        Logger.recordOutput("Detection/" + "Test Yaw",
-            detectionML.getTargetObservations()[0].yaw());
+        if (detectionML.getTargetObservations().length > 0) {
+            Logger.recordOutput("Detection/" + "Range",
+                detectionML.rangeToTarget_Pitch(detectionML.getTargetObservations()[0], 1, .5, 0,
+                    1));
+        }
     }
 }
 
->>>>>>> 18bbd022267a631023c38df0c3a7da9547705373:src/main/java/frc/robot/subsystems/objectDetector/objectDetector.java

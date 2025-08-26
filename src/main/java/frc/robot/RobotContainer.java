@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.io.vision.VisionIOPhotonVisionSim;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.Constants.PathConstants;
 import frc.robot.commands.DriveCommands;
@@ -41,8 +42,12 @@ import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
+import frc.robot.subsystems.objectDetector.objectDetector;
+import frc.robot.subsystems.objectDetector.objectDetectorConstants;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
 import java.util.ArrayList;
@@ -64,6 +69,7 @@ public class RobotContainer {
     private final BeamBreak1 beamBreak1;
     private final Servo1 servo1;
     private final Flywheel flywheel;
+    private final objectDetector vision;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -91,6 +97,7 @@ public class RobotContainer {
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
                 servo1 = new Servo1(Servo1Constants.getReal());
                 flywheel = new Flywheel(FlywheelConstants.getReal());
+                vision = new objectDetector(objectDetectorConstants.getReal());
             }
 
             case SIM -> {
@@ -109,6 +116,7 @@ public class RobotContainer {
                     BeamBreak1Constants.getSim());
                 servo1 = new Servo1(Servo1Constants.getSim());
                 flywheel = new Flywheel(FlywheelConstants.getSim());
+                vision = new objectDetector(objectDetectorConstants.getSim(() -> drive.getPose()));
             }
 
             default -> {
@@ -127,6 +135,7 @@ public class RobotContainer {
                     new BeamBreak1(BeamBreak1Constants.getReplay());
                 servo1 = new Servo1(Servo1Constants.getReplay());
                 flywheel = new Flywheel(FlywheelConstants.getReplay());
+                vision = new objectDetector(objectDetectorConstants.getReplay());
             }
         }
 

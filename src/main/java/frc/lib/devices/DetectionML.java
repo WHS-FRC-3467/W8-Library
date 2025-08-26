@@ -10,7 +10,9 @@ import frc.lib.io.detectionML.DetectionMLIOInputsAutoLogged;
 import frc.lib.io.detectionML.DetectionMLIO.TargetObservation;
 import java.util.Arrays;
 import java.lang.Math;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 
 /**
  * Device level implementation of DetectionML camera. Performs pipeline data operations assuming IO
@@ -49,10 +51,17 @@ public class DetectionML {
         return inputs.latestTargetObservations;
     }
 
-    /*
+    /**
      * Uses a curve fit of objArea to estimate distance (in.). deltaS = a*objArea^3 + b*objArea^2 +
      * c*objArea + d. Cubic fit required to better match governing physics (tan(x) based). Determine
      * fit coefficients from empirical calibration procedure.
+     * 
+     * @param targetObservation A data type containing vision pipeline results for a single object.
+     * @param a Coefficient for cubic term in curve fit equation.
+     * @param b Coefficient for quadratic term in curve fit equation.
+     * @param c Coefficient for linear term in curve fit equation.
+     * @param d Coefficient for constant term in curve fit equation.
+     * @return The estimated range to the object in meters.
      */
     public double rangeToTarget_SingleFactorArea(TargetObservation targetObservation,
         float a, float b, float c, float d)
@@ -79,16 +88,16 @@ public class DetectionML {
     public double rangeToTarget_FocalLength(TargetObservation targetObservation,
         double objectPhysicalHeightMeters, double cameraFocalLengthPixels, double cameraCalFactor)
     {
-        // Return & sort corners to estimate detected object's digital height in pixels
+        // Return & sort corners to estimate detected object's digital height in pixels.
         double[] objectDigitalCorners_px =
             {targetObservation.cornerOne()[2], targetObservation.cornerTwo()[2],
                     targetObservation.cornerThree()[2], targetObservation.cornerFour()[2]};
         Arrays.sort(objectDigitalCorners_px);
-        // Calculate object's digital height
+        // Calculate object's digital height in pixels.
         double objectPhysicalHeightPixels =
             objectDigitalCorners_px[objectDigitalCorners_px.length - 1]
                 - objectDigitalCorners_px[0];
-        // Return estimated range to object (in.)
+        // Return estimated range to object in meters.
         return (cameraCalFactor
             * ((objectPhysicalHeightMeters * cameraFocalLengthPixels)
                 / objectPhysicalHeightPixels));
@@ -159,29 +168,27 @@ public class DetectionML {
     }
 
     /**
-     * Estimates the target's distance from the camera using target's camera-relative range,
-     * heading, & elevation.
+     * Estimates the target's 2d distance from the camera using target's camera-relative range &
+     * heading.
      *
-     * @param cameraYawDeg The yaw of the camera from the vertical plane in degrees. Positive values
-     *        left.
      * @param targetRangeMeters Range to the target in meters.
-     * @param cameraCalFactor An empirical calibration factor to account for real lens effects (e.g.
-     *        blur, distortion, focus).
-     * @return The estimated distance from the camera to the target in meters.
+     * @param targetHeadingMeters Heading to the target in meters.
+     * @return The estimated 2d distance from the camera to the target in meters.
      */
-    public double headingToTarget_Yaw(double targetRangeMeters, double targetHeadingMeters,
-        double targetElevationMeters)
+    public double distanceToTarget2d(double targetRangeMeters, double targetHeadingMeters)
     {
-        // Return magnitude of displacement vector between camera and target (m)
-        return Math.sqrt((Math.pow(targetRangeMeters, 2) + Math.pow(targetHeadingMeters, 2)
-            + Math.pow(targetElevationMeters, 2)));
+        // Return magnitude of xy displacement vector between camera and target
+        return Math.sqrt((Math.pow(targetRangeMeters, 2) + Math.pow(targetHeadingMeters, 2)));
     }
 
     /**
-     * Calculates the target's camera-relative Translation3d using range, heading, & elevation for
-     * use in localization calculations.
-     * 
+     * Estimates a {@link Transform2d} that maps the camera position to the target position, using
+     * the robot's gyro. Note that the gyro angle provided *must* line up with the field coordinate
+     * system -- that is, it should read zero degrees when pointed towards the opposing alliance
+     * station, and increase as the robot rotates CCW.
+     *
      * @param targetObservation A data type containing vision pipeline results for a single target.
+     * @param robotPose The current robot pose, likely from odometry.
      * @param cameraPitchDegrees The pitch of the camera from the horizontal plane in degrees.
      *        Positive values up.
      * @param cameraYawDeg The yaw of the camera from the vertical plane in degrees. Positive values
@@ -189,14 +196,15 @@ public class DetectionML {
      * @param cameraHeightMeters The physical height of the camera off the floor in meters.
      * @param targetHeightMeters The physical height of the target off the floor in meters. This
      *        should be the height of whatever is being targeted (i.e. if the targeting region is
-     *        set to top, this should be the height of the top of the target).
+     *        set to top, this should be the height of the top of the target).S
      * @param cameraCalFactorRange An empirical calibration factor to account for real lens effects
      *        (e.g. blur, distortion, focus) -- applies to range calculation only.
      * @param cameraCalFactorHeading An empirical calibration factor to account for real lens
      *        effects (e.g. blur, distortion, focus) -- applies to heading calculation only.
      * @return The target's camera-relative 3D translataion.
      */
-    public Translation3d translationToTarget_3D(TargetObservation targetObservation,
+    public Translation2d translationToTarget2d(TargetObservation targetObservation,
+        Pose2d robotPose,
         double cameraPitchDegrees,
         double cameraYawDeg, double cameraHeightMeters, double targetHeightMeters,
         double cameraCalFactorRange,
@@ -209,13 +217,13 @@ public class DetectionML {
         // Calculate heading (y-component of target's camera-relative position vector) (m)
         double headingMeters = headingToTarget_Yaw(targetObservation, cameraYawDeg, rangeMeters,
             cameraCalFactorHeading);
-        // Calculate elevation (z-component of target's camera-relative position vector) (m)
-        double elevationMeters = cameraHeightMeters - targetHeightMeters;
-        // Return 3D Translation to target
-        return new Translation3d(rangeMeters, headingMeters, elevationMeters);
+        // Return dY
+        double dYMeters = Math.sin(Math.abs(robotPose.getRotation().getRadians())) / rangeMeters;
+        // Return dX
+        double dXMeters = 0;
+        // Return 2D position of target
+        return new Translation2d(rangeMeters, headingMeters);
     }
 
     // To-do: Add isConnected method
-    // Place to add device level methods
-
 }

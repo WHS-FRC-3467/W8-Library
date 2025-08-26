@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems.objectDetector;
 
+import java.util.function.Supplier;
+import edu.wpi.first.math.geometry.Pose2d;
 import frc.lib.io.detectionML.*;
 
 /** Add your docs here. */
@@ -15,9 +17,9 @@ public class objectDetectorConstants {
         return new DetectionMLIOPhotonVision(NAME);
     }
 
-    public static DetectionMLIOSim getSim()
+    public static DetectionMLIOSim getSim(Supplier<Pose2d> robotPoseSupplier)
     {
-        return new DetectionMLIOSim(NAME);
+        return new DetectionMLIOSim(NAME, robotPoseSupplier);
     }
 
     public static DetectionMLIO getReplay()
