@@ -43,9 +43,9 @@ public interface MotorIO {
     @Getter
     @AllArgsConstructor
     public enum PIDSlot {
-        SLOT_1(0),
-        SLOT_2(1),
-        SLOT_3(2);
+        SLOT_0(0),
+        SLOT_1(1),
+        SLOT_2(2);
 
         public final int num;
     }
