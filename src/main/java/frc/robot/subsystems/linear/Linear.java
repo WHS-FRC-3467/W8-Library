@@ -6,11 +6,14 @@ package frc.robot.subsystems.linear;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -74,5 +77,13 @@ public class Linear extends SubsystemBase {
             Commands.waitUntil(homedTrigger),
             runOnce(() -> io.setEncoderPosition(Setpoint.HOME.getAngle())),
             goToSetpoint(Setpoint.STOW));
+    }
+
+    public AngularVelocity getVelocity() {
+        return io.getVelocity();
+    }
+
+    public LinearVelocity getLinearVelocity() {
+        return LinearConstants.CONVERTER.toDistance(io.getVelocity().times(Seconds.of(1))).div(Seconds.of(1));
     }
 }
