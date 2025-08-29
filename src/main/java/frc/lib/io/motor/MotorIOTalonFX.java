@@ -284,7 +284,19 @@ public class MotorIOTalonFX implements MotorIO {
     @Override
     public void runCurrent(Current current)
     {
-        motor.setControl(currentControl.withOutput(current));
+        motor.setControl(currentControl.withOutput(current).withMaxAbsDutyCycle(1.0));
+    }
+
+    /**
+     * Runs the motor with a specified current output and duty cycle.
+     *
+     * @param current Desired torque-producing current.
+     * @param dutyCycle Desired dutycycle of current output, limiting top speed
+     */
+    public void runCurrent(Current current, double dutyCycle)
+    {
+        double dutyCyclePercent = MathUtil.clamp(dutyCycle, 0.0, 1.0);
+        motor.setControl(currentControl.withOutput(current).withMaxAbsDutyCycle(dutyCyclePercent));
     }
 
     /**
