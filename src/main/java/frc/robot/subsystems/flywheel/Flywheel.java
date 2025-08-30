@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.flywheel.FlywheelMechanism;
+import frc.lib.util.LoggerHelper;
 
 /** Add your docs here. */
 public class Flywheel extends SubsystemBase { // Don't extend if contained in superstructure
@@ -23,6 +24,7 @@ public class Flywheel extends SubsystemBase { // Don't extend if contained in su
     @Override
     public void periodic()
     {
+        LoggerHelper.recordCurrentCommand(this);
         io.periodic();
     }
 
