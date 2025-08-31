@@ -39,13 +39,15 @@ public class LEDs extends SubsystemBase {
     {
         return this.startEnd(
             () -> lights.setAnimations(LEDsConstants.disabledAnimation),
-            () -> lights.setAnimations(LEDsConstants.offAnimation));
+            () -> lights.setAnimations(LEDsConstants.offAnimation))
+            .withName("Disabled Animation");
     }
 
     public Command runAutoAnimation()
     {
         return this.startEnd(
             () -> lights.setAnimations(LEDsConstants.autoAnimation),
-            () -> lights.setAnimations(LEDsConstants.offAnimation));
+            () -> lights.setAnimations(LEDsConstants.offAnimation))
+            .withName("Auto Animation");
     }
 }

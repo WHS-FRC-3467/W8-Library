@@ -54,7 +54,8 @@ public class RotarySubsystem extends SubsystemBase {
         return this.runOnce(
             () -> io.runPosition(setpoint.getSetpoint(), RotarySubsystemConstants.CRUISE_VELOCITY,
                 RotarySubsystemConstants.ACCELERATION, RotarySubsystemConstants.JERK,
-                PIDSlot.SLOT_1));
+                PIDSlot.SLOT_1))
+                .withName("Go To " + setpoint.toString() + " Setpoint");
     };
 
     public boolean nearPosition(Angle targetPosition)
@@ -69,13 +70,14 @@ public class RotarySubsystem extends SubsystemBase {
     {
         return Commands.waitUntil(() -> {
             return nearPosition(position);
-        });
+        }).withName("Wait for position " + position.toString());
     }
 
     public Command setpointCommandWithWait(Setpoint setpoint)
     {
         return waitForPositionCommand(setpoint.getSetpoint())
-            .deadlineFor(setSetpoint(setpoint));
+            .deadlineFor(setSetpoint(setpoint))
+            .withName("Go To " + setpoint.toString() + " Setpoint with wait");
     }
 
 

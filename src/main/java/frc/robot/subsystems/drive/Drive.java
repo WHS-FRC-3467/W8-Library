@@ -285,14 +285,16 @@ public class Drive extends SubsystemBase {
     {
         return run(() -> runCharacterization(0.0))
             .withTimeout(1.0)
-            .andThen(sysId.quasistatic(direction));
+            .andThen(sysId.quasistatic(direction))
+            .withName("SysId Quasistatic " + direction.toString());
     }
 
     /** Returns a command to run a dynamic test in the specified direction. */
     public Command sysIdDynamic(SysIdRoutine.Direction direction)
     {
         return run(() -> runCharacterization(0.0)).withTimeout(1.0)
-            .andThen(sysId.dynamic(direction));
+            .andThen(sysId.dynamic(direction))
+            .withName("SysId Dynamic " + direction.toString());
     }
 
     /**
