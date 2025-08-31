@@ -47,6 +47,10 @@ public final class Constants {
         public static boolean isComp;
         public static boolean isAlpha;
     
+        // TODO: Fill in with real serial number prefixes. Figure out by displaying/logging String serial.
+        public static final String compSerial = "0001";
+        public static final String alphaSerial = "0000";
+
         static {
             if (Robot.isReal()) {
                 // Roborio id recognition
@@ -56,16 +60,12 @@ public final class Constants {
             }
             RobotConstants.isComp = serial.startsWith(RobotConstants.compSerial);
             RobotConstants.isAlpha = serial.startsWith(RobotConstants.alphaSerial);
-        }
-        
-        // TODO: Fill in with real serial number prefixes
-        public static final String compSerial = "0000";
-        public static final String alphaSerial = "3467";
+        } 
     }
 
-    public static RobotType robotType = RobotConstants.isComp ? RobotType.COMP
-            : RobotConstants.isAlpha ? RobotType.ALPHA
-            : RobotType.NONE;
+    public static RobotType robotType = RobotConstants.isComp ? RobotType.COMP :
+                                        RobotConstants.isAlpha ? RobotType.ALPHA :
+                                        RobotType.NONE;
 
     public enum RobotType {
         COMP,
