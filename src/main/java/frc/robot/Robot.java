@@ -121,6 +121,9 @@ public class Robot extends LoggedRobot {
          */
         // DO THIS AFTER CONFIGURATION OF YOUR DESIRED PATHFINDER
         PathfindingCommand.warmupCommand().schedule();
+
+        // Log first 8 character of robot serial
+        Logger.recordOutput("Robot Serial", Robot.isReal() ? Constants.RobotConstants.serial.subSequence(0,8).toString() : Constants.RobotConstants.serial);
     }
 
     /** This function is called periodically during all modes. */
