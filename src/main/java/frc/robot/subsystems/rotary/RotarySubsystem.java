@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.rotary.RotaryMechanism;
 import frc.lib.util.LoggedTunableNumber;
+import frc.lib.util.LoggerHelper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -22,14 +23,14 @@ public class RotarySubsystem extends SubsystemBase {
     private final RotaryMechanism io;
 
     private static final LoggedTunableNumber STOW_SETPOINT = new LoggedTunableNumber("TEST", 0.0);
-    private static final LoggedTunableNumber RASIED_SETPOINT =
+    private static final LoggedTunableNumber RAISED_SETPOINT =
         new LoggedTunableNumber("RAISED", 90);
 
     @RequiredArgsConstructor
     @Getter
     public enum Setpoint {
         STOW(Degrees.of(STOW_SETPOINT.get())),
-        RAISED(Degrees.of(RASIED_SETPOINT.get()));
+        RAISED(Degrees.of(RAISED_SETPOINT.get()));
 
         private final Angle setpoint;
     }
@@ -44,6 +45,7 @@ public class RotarySubsystem extends SubsystemBase {
     @Override
     public void periodic()
     {
+        LoggerHelper.recordCurrentCommand(this);
         io.periodic();
     }
 
@@ -52,7 +54,8 @@ public class RotarySubsystem extends SubsystemBase {
         return this.runOnce(
             () -> io.runPosition(setpoint.getSetpoint(), RotarySubsystemConstants.CRUISE_VELOCITY,
                 RotarySubsystemConstants.ACCELERATION, RotarySubsystemConstants.JERK,
-                PIDSlot.SLOT_1));
+                PIDSlot.SLOT_1))
+                .withName("Go To " + setpoint.toString() + " Setpoint");
     };
 
     public boolean nearPosition(Angle targetPosition)
@@ -67,13 +70,14 @@ public class RotarySubsystem extends SubsystemBase {
     {
         return Commands.waitUntil(() -> {
             return nearPosition(position);
-        });
+        }).withName("Wait for position " + position.toString());
     }
 
     public Command setpointCommandWithWait(Setpoint setpoint)
     {
         return waitForPositionCommand(setpoint.getSetpoint())
-            .deadlineFor(setSetpoint(setpoint));
+            .deadlineFor(setSetpoint(setpoint))
+            .withName("Go To " + setpoint.toString() + " Setpoint with wait");
     }
 
 

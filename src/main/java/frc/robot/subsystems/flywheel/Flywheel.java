@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.flywheel.FlywheelMechanism;
+import frc.lib.util.LoggerHelper;
 
 /** Add your docs here. */
 public class Flywheel extends SubsystemBase { // Don't extend if contained in superstructure
@@ -23,23 +24,24 @@ public class Flywheel extends SubsystemBase { // Don't extend if contained in su
     @Override
     public void periodic()
     {
+        LoggerHelper.recordCurrentCommand(this);
         io.periodic();
     }
 
     public Command shoot()
     {
         return this.runOnce(() -> io.runVelocity(FlywheelConstants.MAX_VELOCITY,
-            FlywheelConstants.MAX_ACCELERATION, PIDSlot.SLOT_1));
+            FlywheelConstants.MAX_ACCELERATION, PIDSlot.SLOT_1)).withName("Shoot");
     }
 
     public Command stop()
     {
-        return this.runOnce(() -> io.runCoast());
+        return this.runOnce(() -> io.runCoast()).withName("Stop");
     }
 
     // For unit testing
     protected Command shootAmps() {
-        return this.runOnce(() -> io.runCurrent(Amps.of(30)));
+        return this.runOnce(() -> io.runCurrent(Amps.of(30))).withName("Shoot Amps");
     }
 
     public Current getTorqueCurrent() {
