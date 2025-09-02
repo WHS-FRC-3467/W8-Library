@@ -5,6 +5,7 @@
 package frc.robot.subsystems.flywheel;
 
 import static edu.wpi.first.units.Units.Amps;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -46,6 +47,10 @@ public class Flywheel extends SubsystemBase { // Don't extend if contained in su
 
     public Current getTorqueCurrent() {
         return io.getTorqueCurrent();
+    }
+
+    public AngularVelocity getVelocity() {
+        return io.getVelocity();
     }
 
     public void close() {
