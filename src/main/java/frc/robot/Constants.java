@@ -42,6 +42,37 @@ public final class Constants {
         REPLAY
     }
 
+    public class RobotConstants {
+        public static String serial;
+        public static boolean isComp;
+        public static boolean isAlpha;
+    
+        // TODO: Fill in with real serial number prefixes. Figure out by displaying/logging String serial.
+        public static final String compSerial = "0001";
+        public static final String alphaSerial = "0000";
+
+        static {
+            if (Robot.isReal()) {
+                // Roborio id recognition
+                serial = System.getenv("serialnum");
+            } else {
+                serial = "3467";
+            }
+            RobotConstants.isComp = serial.startsWith(RobotConstants.compSerial);
+            RobotConstants.isAlpha = serial.startsWith(RobotConstants.alphaSerial);
+        } 
+    }
+
+    public static RobotType robotType = RobotConstants.isComp ? RobotType.COMP :
+                                        RobotConstants.isAlpha ? RobotType.ALPHA :
+                                        RobotType.NONE;
+
+    public enum RobotType {
+        COMP,
+        ALPHA,
+        NONE
+    }
+
     public static final class PathConstants {
 
         public static final double PATHGENERATION_DRIVE_TOLERANCE = Units.inchesToMeters(3.0); // 3 in robot position tolerance

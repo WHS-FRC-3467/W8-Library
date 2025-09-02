@@ -111,4 +111,9 @@ public class LinearMechanismReal implements LinearMechanism {
     {
         return inputs.position;
     }
+
+    @Override
+    public AngularVelocity getVelocity() {
+        return inputs.velocity;
+    }
 }

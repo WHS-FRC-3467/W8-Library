@@ -157,6 +157,11 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
     }
 
     @Override
+    public AngularVelocity getVelocity() {
+        return inputs.velocity;
+    }
+
+    @Override
     public void close()
     {
         io.close();
