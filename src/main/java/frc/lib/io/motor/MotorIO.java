@@ -124,6 +124,15 @@ public interface MotorIO {
     {}
 
     /**
+     * Runs the motor with a specified current output and duty cycle.
+     *
+     * @param current Desired torque-producing current.
+     * @param dutyCycle Desired dutycycle of current output, limiting top speed
+     */
+    public default void runCurrent(Current current, double dutyCycle)
+    {}
+
+    /**
      * Runs the motor using duty cycle (percentage of available voltage).
      *
      * @param dutyCycle Fractional output between 0 and 1.
