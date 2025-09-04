@@ -7,8 +7,10 @@ package frc.robot.subsystems.linear;
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Volts;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -60,11 +62,40 @@ public class Linear extends SubsystemBase {
         io.periodic();
     }
 
-    public Command goToSetpoint(Setpoint setpoint)
+    public Command setGoal(Setpoint setpoint)
     {
         return this
             .runOnce(() -> io.runPosition(setpoint.getAngle(), LinearConstants.CRUISE_VELOCITY,
                 LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_1));
+    }
+
+    public boolean nearGoal(Distance goalPosition)
+    {
+        return MathUtil.isNear(
+            LinearConstants.CONVERTER.toDistance(io.getPosition()).in(BaseUnits.DistanceUnit),
+            goalPosition.in(BaseUnits.DistanceUnit),
+            LinearConstants.TOLERANCE.in(BaseUnits.DistanceUnit));
+    }
+
+    public boolean nearGoal(Angle goalPosition)
+    {
+        return MathUtil.isNear(
+            io.getPosition().in(BaseUnits.AngleUnit),
+            goalPosition.in(BaseUnits.AngleUnit),
+            LinearConstants.CONVERTER.toAngle(LinearConstants.TOLERANCE).in(BaseUnits.AngleUnit));
+    }
+
+    public Command waitUntilGoalCommand(Distance position)
+    {
+        return Commands.waitUntil(() -> {
+            return nearGoal(position);
+        });
+    }
+
+    public Command setGoalCommandWithWait(Setpoint setpoint)
+    {
+        return waitUntilGoalCommand(setpoint.getSetpoint())
+            .deadlineFor(setGoal(setpoint));
     }
 
     public Command homeCommand()
@@ -73,6 +104,6 @@ public class Linear extends SubsystemBase {
             runOnce(() -> io.runVoltage(Volts.of(-2))),
             Commands.waitUntil(homedTrigger),
             runOnce(() -> io.setEncoderPosition(Setpoint.HOME.getAngle())),
-            goToSetpoint(Setpoint.STOW));
+            setGoal(Setpoint.STOW));
     }
 }

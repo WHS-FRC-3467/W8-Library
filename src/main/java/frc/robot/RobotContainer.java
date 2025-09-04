@@ -53,9 +53,9 @@ import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.linear.Linear;
 import frc.robot.subsystems.linear.LinearConstants;
-import frc.robot.subsystems.rotary.RotarySubsystem;
-import frc.robot.subsystems.rotary.RotarySubsystemConstants;
-import frc.robot.subsystems.rotary.RotarySubsystem.Setpoint;
+import frc.robot.subsystems.rotary.Rotary;
+import frc.robot.subsystems.rotary.RotaryConstants;
+import frc.robot.subsystems.rotary.Rotary.Setpoint;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.vision.Vision;
@@ -83,7 +83,7 @@ public class RobotContainer {
     private final Flywheel flywheel;
     private final Linear linear;
     private final Vision vision;
-    private final RotarySubsystem rotary;
+    private final Rotary rotary;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -123,7 +123,7 @@ public class RobotContainer {
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP));
-                rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
+                rotary = new Rotary(RotaryConstants.getReal());
             }
 
             case SIM -> {
@@ -153,7 +153,7 @@ public class RobotContainer {
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP));
-                rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
+                rotary = new Rotary(RotaryConstants.getSim());
             }
 
             default -> {
@@ -174,7 +174,7 @@ public class RobotContainer {
                 flywheel = new Flywheel(FlywheelConstants.getReplay());
 
                 linear = new Linear(LinearConstants.getReplay());
-                rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());
+                rotary = new Rotary(RotaryConstants.getReplay());
                 vision = new Vision(
                     drive::addVisionMeasurement,
                     () -> drive.getTimestampedHeading(),
@@ -260,8 +260,8 @@ public class RobotContainer {
                 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
                 PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES));
 
-        SmartDashboard.putData("Linear: Stow", linear.goToSetpoint(Linear.Setpoint.STOW));
-        SmartDashboard.putData("Linear: Raised", linear.goToSetpoint(Linear.Setpoint.RAISED));
+        SmartDashboard.putData("Linear: Stow", linear.setGoal(Linear.Setpoint.STOW));
+        SmartDashboard.putData("Linear: Raised", linear.setGoal(Linear.Setpoint.RAISED));
         SmartDashboard.putData("Linear: Home", linear.homeCommand());
     }
 

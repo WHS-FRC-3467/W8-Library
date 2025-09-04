@@ -32,7 +32,7 @@ import frc.robot.Ports;
 import frc.robot.Robot;
 
 /** Add your docs here. */
-public class RotarySubsystemConstants {
+public class RotaryConstants {
     public static String NAME = "Rotary Subsystem";
 
     public static final Angle TOLERANCE = Degrees.of(2.0);
