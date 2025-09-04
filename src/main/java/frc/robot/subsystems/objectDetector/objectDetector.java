@@ -22,6 +22,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class objectDetector extends SubsystemBase {
     private final DetectionML detectionML;
+    private double range;
+    private double heading;
+    private double distance;
 
     public objectDetector(DetectionMLIO io)
     {
@@ -35,9 +38,14 @@ public class objectDetector extends SubsystemBase {
         detectionML.periodic();
 
         if (detectionML.getTargetObservations().length > 0) {
-            Logger.recordOutput("Detection/" + "Range",
-                detectionML.rangeToTarget_Pitch(detectionML.getTargetObservations()[0], 1, .5, 0,
-                    1));
+            range = detectionML.rangeToTarget_Pitch(detectionML.getTargetObservations()[0], 1, .5,
+                0, 1, 0);
+            heading = detectionML.headingToTarget_Yaw(detectionML.getTargetObservations()[0], 0,
+                range, 1, 0);
+            distance = detectionML.distanceToTarget2d(range, heading);
+            Logger.recordOutput("Detection/" + "Range", range);
+            Logger.recordOutput("Detection/" + "Heading", heading);
+            Logger.recordOutput("Detection/" + "Distance", distance);
         }
     }
 }
