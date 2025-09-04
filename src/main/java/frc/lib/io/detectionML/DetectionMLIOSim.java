@@ -4,17 +4,17 @@
 
 package frc.lib.io.detectionML;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonCamera;
-import org.photonvision.estimation.TargetModel;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.simulation.VisionTargetSim;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 
 /** Add your docs here. */
@@ -25,7 +25,9 @@ public class DetectionMLIOSim extends DetectionMLIOPhotonVision {
     private final PhotonCameraSim camSim;
     private final Supplier<Pose2d> robotPoseSupplier;
 
-    public DetectionMLIOSim(String cameraName, Supplier<Pose2d> robotPoseSupplier)
+    public DetectionMLIOSim(String cameraName, Transform3d cameraTransform,
+        Supplier<Pose2d> robotPoseSupplier,
+        String target_name, VisionTargetSim[] targets)
     {
         super(cameraName);
         this.cameraName = cameraName;
@@ -33,14 +35,16 @@ public class DetectionMLIOSim extends DetectionMLIOPhotonVision {
         cam = new PhotonCamera(cameraName);
         camSim = new PhotonCameraSim(cam, new SimCameraProperties());
         visionSim = new VisionSystemSim("objectML");
-        visionSim.addCamera(camSim, new Transform3d(0, 0, 1, new Rotation3d()));
+        visionSim.addCamera(camSim, cameraTransform);
         this.robotPoseSupplier = robotPoseSupplier;
 
-        visionSim.addVisionTargets("ALGAE",
-            new VisionTargetSim(new Pose3d(3, 3, 0.5, new Rotation3d()), new TargetModel(1)));
+        // TODO: find cleaner impl
+        visionSim.addVisionTargets(target_name, targets);
+        Set<VisionTargetSim> test = visionSim.getVisionTargets();
+        List<VisionTargetSim> targetList = new ArrayList<>(test);
 
-        for (VisionTargetSim target : visionSim.getVisionTargets()) {
-            Logger.recordOutput("ALGAE POSE", target.getPose());
+        for (VisionTargetSim target : targetList) {
+            Logger.recordOutput("ALGAE POSE" + targetList.indexOf(target), target.getPose());
         }
 
     }
