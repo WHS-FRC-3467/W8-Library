@@ -52,9 +52,9 @@ public class DetectionML {
     }
 
     /**
-     * Uses a curve fit of objArea to estimate distance (in.). deltaS = a*objArea^3 + b*objArea^2 +
-     * c*objArea + d. Cubic fit required to better match governing physics (tan(x) based). Determine
-     * fit coefficients from empirical calibration procedure.
+     * Uses an empirical curve fit of objArea to estimate distance (in.). deltaS = a*objArea^3 +
+     * b*objArea^2 + c*objArea + d. Cubic fit required to better match governing physics (tan(x)
+     * based). Determine fit coefficients from calibration procedure.
      * 
      * @param targetObservation A data type containing vision pipeline results for a single object.
      * @param a Coefficient for cubic term in curve fit equation.
@@ -104,7 +104,7 @@ public class DetectionML {
     }
 
     /**
-     * Estimates range to a target using the target's known elevation. Algorithm similar to
+     * Estimates range to a target using the target's known height. Algorithm similar to
      * {@link org.photonvision.PhotonUtils}. This method can produce more stable results than
      * SolvePNP when well tuned, if the full 6d robot pose is not required. Note that this method
      * requires the camera to have 0 roll (not be skewed clockwise or CCW relative to the floor),
@@ -116,25 +116,31 @@ public class DetectionML {
      *        Used to determine the pitch of the target from the centerline of the camera's lens in
      *        degrees. Positive values up.
      * @param cameraHeightMeters The physical height of the camera off the floor in meters.
-     * @param targetHeightMeters The physical height of the target off the floor in meters. This
-     *        should be the height of whatever is being targeted (i.e. if the targeting region is
-     *        set to top, this should be the height of the top of the target).
+     * @param targetHeightMeters The physical height of the target off the floor as measured by the
+     *        location of the detection reticle in meters. For example, if your detection reticle is
+     *        set to the center of the bounding box, this height should be the elevation off the
+     *        ground to the center of the target.
      * @param cameraPitchDegrees The pitch of the camera from the horizontal plane in degrees.
      *        Positive values up.
      * @param cameraCalFactor An empirical calibration factor to account for real lens effects (e.g.
      *        blur, distortion, focus).
+     * @param cameraOffset An empirical calibration factor to account for bias in range estimate as
+     *        a result of either camera or installation.
      * @return The estimated range to the target in meters.
      */
     public double rangeToTarget_Pitch(TargetObservation targetObservation,
         double cameraHeightMeters,
-        double targetHeightMeters, double cameraPitchDegrees, double cameraCalFactor)
+        double targetHeightMeters, double cameraPitchDegrees, double cameraCalFactor,
+        double cameraOffset)
     {
-        double tolerance = 1.5 / 39.37; // Empirically-determined tolerance (m)
+        // Empirically-determined tolerance (m)
+        double tolerance = 2.0 / 39.37;
         // Mathematically verified for camera pitched up or down with target above or below lens
         // centerline.
         if (Math.abs(cameraHeightMeters - targetHeightMeters) > tolerance) {
             return (cameraCalFactor * ((targetHeightMeters - cameraHeightMeters)
-                / Math.tan(Math.toRadians(cameraPitchDegrees + targetObservation.pitch()))));
+                / Math.tan(Math.toRadians(cameraPitchDegrees + targetObservation.pitch())))
+                + cameraOffset);
         } else {
             // Use rangeToTarget_FocalLength.
             return -1.0d;
@@ -155,16 +161,19 @@ public class DetectionML {
      * @param targetRangeMeters Range to the target in meters.
      * @param cameraCalFactor An empirical calibration factor to account for real lens effects (e.g.
      *        blur, distortion, focus).
+     * @param cameraOffset An empirical calibration factor to account for bias in heading estimate
+     *        as a result of either camera or installation.
      * @return The estimated heading to the target in meters.
      */
     public double headingToTarget_Yaw(TargetObservation targetObservation, double cameraYawDeg,
-        double targetRangeMeters, double cameraCalFactor)
+        double targetRangeMeters, double cameraCalFactor, double cameraOffset)
     {
         // Mathematically verified for camera yawed left or right with target left or right of lens
         // centerline. Absolute value required for camera yawed right.
         return (cameraCalFactor
             * (Math.tan(Math.toRadians(Math.abs(cameraYawDeg + targetObservation.yaw())))
-                * targetRangeMeters));
+                * targetRangeMeters)
+            + cameraOffset);
     }
 
     /**
@@ -196,27 +205,33 @@ public class DetectionML {
      * @param cameraHeightMeters The physical height of the camera off the floor in meters.
      * @param targetHeightMeters The physical height of the target off the floor in meters. This
      *        should be the height of whatever is being targeted (i.e. if the targeting region is
-     *        set to top, this should be the height of the top of the target).S
+     *        set to top, this should be the height of the top of the target).
      * @param cameraCalFactorRange An empirical calibration factor to account for real lens effects
      *        (e.g. blur, distortion, focus) -- applies to range calculation only.
+     * @param cameraOffsetRange An empirical calibration factor to account for bias in range
+     *        estimate as a result of either camera or installation -- applies to heading
+     *        calculation only -- applies to range calculation only.
      * @param cameraCalFactorHeading An empirical calibration factor to account for real lens
      *        effects (e.g. blur, distortion, focus) -- applies to heading calculation only.
-     * @return The target's camera-relative 3D translataion.
+     * @param cameraOffsetHeading An empirical calibration factor to account for bias in heading
+     *        estimate as a result of either camera or installation -- applies to heading
+     *        calculation only.
+     * @return The target's camera-relative 2D translataion.
      */
     public Translation2d translationToTarget2d(TargetObservation targetObservation,
         Pose2d robotPose,
         double cameraPitchDegrees,
         double cameraYawDeg, double cameraHeightMeters, double targetHeightMeters,
-        double cameraCalFactorRange,
-        double cameraCalFactorHeading)
+        double cameraCalFactorRange, double cameraOffsetRange,
+        double cameraCalFactorHeading, double cameraOffsetHeading)
     {
         // Calculate range (x-component of target's camera-relative displacement vector) (m)
         double rangeMeters =
             rangeToTarget_Pitch(targetObservation, cameraHeightMeters, targetHeightMeters,
-                cameraPitchDegrees, cameraCalFactorRange);
+                cameraPitchDegrees, cameraCalFactorRange, cameraOffsetRange);
         // Calculate heading (y-component of target's camera-relative position vector) (m)
         double headingMeters = headingToTarget_Yaw(targetObservation, cameraYawDeg, rangeMeters,
-            cameraCalFactorHeading);
+            cameraCalFactorHeading, cameraOffsetHeading);
         // Return dY
         double dYMeters = Math.sin(Math.abs(robotPose.getRotation().getRadians())) / rangeMeters;
         // Return dX
