@@ -17,18 +17,21 @@ package frc.robot.subsystems.objectDetector;
 
 import frc.lib.devices.DetectionML;
 import frc.lib.io.detectionML.DetectionMLIO;
+import frc.robot.subsystems.drive.Drive;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class objectDetector extends SubsystemBase {
     private final DetectionML detectionML;
+    private final Drive drive;
     private double range;
     private double heading;
     private double distance;
 
-    public objectDetector(DetectionMLIO io)
+    public objectDetector(DetectionMLIO io, Drive drive)
     {
         detectionML = new DetectionML(io);
+        this.drive = drive;
 
     }
 
@@ -43,9 +46,17 @@ public class objectDetector extends SubsystemBase {
             heading = detectionML.headingToTarget_Yaw(detectionML.getTargetObservations()[0], 0,
                 range, 1, 0);
             distance = detectionML.distanceToTarget2d(range, heading);
-            Logger.recordOutput("Detection/" + "Range", range);
-            Logger.recordOutput("Detection/" + "Heading", heading);
-            Logger.recordOutput("Detection/" + "Distance", distance);
+            Logger.recordOutput("Detection/" + "Calculated Range", range);
+            Logger.recordOutput("Detection/" + "Calculated Heading", heading);
+            Logger.recordOutput("Detection/" + "Calculated Distance", distance);
+
+            Logger.recordOutput("Detection/" + "True Range", 0.0);
+            Logger.recordOutput("Detection/" + "True Heading",
+                objectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
+                    .minus(drive.getPose().getTranslation()).getAngle().getRadians());
+            Logger.recordOutput("Detection/" + "True Distance",
+                objectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
+                    .getDistance(drive.getPose().getTranslation()));
         }
     }
 }
