@@ -134,7 +134,7 @@ public class DetectionML {
         double cameraOffset)
     {
         // Empirically-determined tolerance (m)
-        double tolerance = 2.0 / 39.37;
+        double tolerance = 7 / 39.37;
         // Mathematically verified for camera pitched up or down with target above or below lens
         // centerline.
         if (Math.abs(cameraHeightMeters - targetHeightMeters) > tolerance) {
@@ -156,8 +156,8 @@ public class DetectionML {
      * @param targetObservation A data type containing vision pipeline results for a single target.
      *        Used to determine the yaw of the target from the centerline of the camera's lens in
      *        degrees. Positive values left.
-     * @param cameraYawDeg The yaw of the camera from the vertical plane in degrees. Positive values
-     *        left.
+     * @param cameraYawDegrees The yaw of the camera from the vertical plane in degrees. Positive
+     *        values left.
      * @param targetRangeMeters Range to the target in meters.
      * @param cameraCalFactor An empirical calibration factor to account for real lens effects (e.g.
      *        blur, distortion, focus).
@@ -165,13 +165,13 @@ public class DetectionML {
      *        as a result of either camera or installation.
      * @return The estimated heading to the target in meters.
      */
-    public double headingToTarget_Yaw(TargetObservation targetObservation, double cameraYawDeg,
+    public double headingToTarget_Yaw(TargetObservation targetObservation, double cameraYawDegrees,
         double targetRangeMeters, double cameraCalFactor, double cameraOffset)
     {
         // Mathematically verified for camera yawed left or right with target left or right of lens
         // centerline. Absolute value required for camera yawed right.
         return (cameraCalFactor
-            * (Math.tan(Math.toRadians(Math.abs(cameraYawDeg + targetObservation.yaw())))
+            * (Math.tan(Math.toRadians(Math.abs(cameraYawDegrees + targetObservation.yaw())))
                 * targetRangeMeters)
             + cameraOffset);
     }

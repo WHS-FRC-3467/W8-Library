@@ -41,22 +41,31 @@ public class objectDetector extends SubsystemBase {
         detectionML.periodic();
 
         if (detectionML.getTargetObservations().length > 0) {
-            range = detectionML.rangeToTarget_Pitch(detectionML.getTargetObservations()[0], 1, .5,
-                0, 1, 0);
-            heading = detectionML.headingToTarget_Yaw(detectionML.getTargetObservations()[0], 0,
+            range = detectionML.rangeToTarget_Pitch(detectionML.getTargetObservations()[0],
+                objectDetectorConstants.cameraZ,
+                objectDetectorConstants.algaeHeightMeters / 2,
+                objectDetectorConstants.cameraPitch, 1, 0);
+            heading = detectionML.headingToTarget_Yaw(detectionML.getTargetObservations()[0],
+                objectDetectorConstants.cameraYaw,
                 range, 1, 0);
             distance = detectionML.distanceToTarget2d(range, heading);
             Logger.recordOutput("Detection/" + "Calculated Range", range);
             Logger.recordOutput("Detection/" + "Calculated Heading", heading);
             Logger.recordOutput("Detection/" + "Calculated Distance", distance);
 
-            Logger.recordOutput("Detection/" + "True Range", 0.0);
+            Logger.recordOutput("Detection/" + "True Range",
+                objectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
+                    .minus(drive.getPose().getTranslation()).getX());
             Logger.recordOutput("Detection/" + "True Heading",
                 objectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
-                    .minus(drive.getPose().getTranslation()).getAngle().getRadians());
+                    .minus(drive.getPose().getTranslation()).getY());
             Logger.recordOutput("Detection/" + "True Distance",
                 objectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
                     .getDistance(drive.getPose().getTranslation()));
+            Logger.recordOutput("Detection/" + "Heading Diff",
+                heading / objectDetectorConstants.ALGAE_TARGETS[0]
+                    .getPose().toPose2d().getTranslation().minus(drive.getPose().getTranslation())
+                    .getY());
         }
     }
 }

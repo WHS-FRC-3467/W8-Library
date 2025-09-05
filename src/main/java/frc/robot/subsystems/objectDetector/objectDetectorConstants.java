@@ -15,10 +15,15 @@ import frc.lib.io.detectionML.*;
 
 /** Add your docs here. */
 public class objectDetectorConstants {
-    public final static String CAMERA0_NAME = "Detection Camera #1";
-
+    public final static String CAMERA0_NAME = "Detection Camera #0";
+    public final static double cameraRoll = 0.0; // degrees
+    public final static double cameraPitch = -10.0; // degrees
+    public final static double cameraYaw = 0.0; // degrees
+    public final static double cameraZ = 1.00; // meters
     public static Transform3d CAMERA0TRANSFORM =
-        new Transform3d(0.2, 0.0, 0.2, new Rotation3d(0.0, -0.4, 0.0));
+        new Transform3d(0.0, 0.0, cameraZ,
+            new Rotation3d(Math.toRadians(cameraRoll), Math.toRadians(cameraPitch),
+                Math.toRadians(cameraYaw)));
 
     public final static String ALGAE_NAME = "Algae";
     public final static double algaeHeightMeters = 0.41;
