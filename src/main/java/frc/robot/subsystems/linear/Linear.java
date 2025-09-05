@@ -69,8 +69,8 @@ public class Linear extends SubsystemBase {
     {
         return this
             .runOnce(() -> io.runPosition(setpoint.getAngle(), LinearConstants.CRUISE_VELOCITY,
-                LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_1))
-                .withName("Go To " + setpoint.toString() + " Setpoint");
+                LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_0))
+            .withName("Go To " + setpoint.toString() + " Setpoint");
     }
 
     public Command homeCommand()
@@ -83,11 +83,14 @@ public class Linear extends SubsystemBase {
             .withName("Homing");
     }
 
-    public AngularVelocity getVelocity() {
+    public AngularVelocity getVelocity()
+    {
         return io.getVelocity();
     }
 
-    public LinearVelocity getLinearVelocity() {
-        return LinearConstants.CONVERTER.toDistance(io.getVelocity().times(Seconds.of(1))).div(Seconds.of(1));
+    public LinearVelocity getLinearVelocity()
+    {
+        return LinearConstants.CONVERTER.toDistance(io.getVelocity().times(Seconds.of(1)))
+            .div(Seconds.of(1));
     }
 }
