@@ -139,4 +139,10 @@ public class RotaryMechanismSim implements RotaryMechanism {
     {
         return inputs.position;
     }
+
+    @Override
+    public void close()
+    {
+        io.close();
+    }
 }

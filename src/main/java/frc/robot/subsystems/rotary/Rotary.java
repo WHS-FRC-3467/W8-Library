@@ -64,7 +64,7 @@ public class Rotary extends SubsystemBase {
         return this.runOnce(
             () -> io.runPosition(setpoint.getSetpoint(), RotaryConstants.CRUISE_VELOCITY,
                 RotaryConstants.ACCELERATION, RotaryConstants.JERK,
-                PIDSlot.SLOT_1));
+                PIDSlot.SLOT_0));
     };
 
     public boolean nearGoal(Angle targetPosition)
@@ -86,5 +86,10 @@ public class Rotary extends SubsystemBase {
     {
         return waitUntilGoalCommand(setpoint.getSetpoint())
             .deadlineFor(setGoal(setpoint));
+    }
+
+    public void close()
+    {
+        io.close();
     }
 }

@@ -66,7 +66,7 @@ public class Linear extends SubsystemBase {
     {
         return this
             .runOnce(() -> io.runPosition(setpoint.getAngle(), LinearConstants.CRUISE_VELOCITY,
-                LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_1));
+                LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_0));
     }
 
     public boolean nearGoal(Distance goalPosition)
@@ -105,5 +105,10 @@ public class Linear extends SubsystemBase {
             Commands.waitUntil(homedTrigger),
             runOnce(() -> io.setEncoderPosition(Setpoint.HOME.getAngle())),
             setGoal(Setpoint.STOW));
+    }
+    
+    public void close()
+    {
+        io.close();
     }
 }

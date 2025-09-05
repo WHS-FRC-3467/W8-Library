@@ -163,4 +163,10 @@ public class LinearMechanismSim implements LinearMechanism {
     {
         return inputs.position;
     }
+
+    @Override
+    public void close()
+    {
+        io.close();
+    }
 }
