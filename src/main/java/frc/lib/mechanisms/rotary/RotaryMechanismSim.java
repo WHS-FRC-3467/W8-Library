@@ -141,8 +141,8 @@ public class RotaryMechanismSim implements RotaryMechanism {
     }
 
     @Override
-    public void close()
+    public AngularVelocity getVelocity()
     {
-        io.close();
+        return inputs.velocity;
     }
 }

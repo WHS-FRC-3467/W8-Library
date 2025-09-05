@@ -87,4 +87,10 @@ public class RotaryMechanismReal implements RotaryMechanism {
     {
         return inputs.position;
     }
+
+    @Override
+    public AngularVelocity getVelocity()
+    {
+        return inputs.velocity;
+    }
 }

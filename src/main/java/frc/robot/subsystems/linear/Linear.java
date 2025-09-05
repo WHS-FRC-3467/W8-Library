@@ -6,13 +6,16 @@ package frc.robot.subsystems.linear;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -20,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.linear.LinearMechanism;
 import frc.lib.util.LoggedTunableNumber;
+import frc.lib.util.LoggerHelper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -59,6 +63,7 @@ public class Linear extends SubsystemBase {
     @Override
     public void periodic()
     {
+        LoggerHelper.recordCurrentCommand(this);
         io.periodic();
     }
 
@@ -66,7 +71,8 @@ public class Linear extends SubsystemBase {
     {
         return this
             .runOnce(() -> io.runPosition(setpoint.getAngle(), LinearConstants.CRUISE_VELOCITY,
-                LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_0));
+                LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_0))
+                .withName("Go To " + setpoint.toString() + " Setpoint");
     }
 
     public boolean nearGoal(Distance goalPosition)
@@ -95,7 +101,8 @@ public class Linear extends SubsystemBase {
     public Command setGoalCommandWithWait(Setpoint setpoint)
     {
         return waitUntilGoalCommand(setpoint.getSetpoint())
-            .deadlineFor(setGoal(setpoint));
+            .deadlineFor(setGoal(setpoint))
+            .withName("Go To " + setpoint.toString() + " Setpoint with wait");
     }
 
     public Command homeCommand()
@@ -104,7 +111,16 @@ public class Linear extends SubsystemBase {
             runOnce(() -> io.runVoltage(Volts.of(-2))),
             Commands.waitUntil(homedTrigger),
             runOnce(() -> io.setEncoderPosition(Setpoint.HOME.getAngle())),
-            setGoal(Setpoint.STOW));
+            setGoal(Setpoint.STOW))
+            .withName("Homing");
+    }
+
+    public AngularVelocity getVelocity() {
+        return io.getVelocity();
+    }
+
+    public LinearVelocity getLinearVelocity() {
+        return LinearConstants.CONVERTER.toDistance(io.getVelocity().times(Seconds.of(1))).div(Seconds.of(1));
     }
     
     public void close()

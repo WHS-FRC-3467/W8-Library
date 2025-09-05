@@ -50,6 +50,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.util.LoggerHelper;
 import frc.lib.util.Timestamped;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
@@ -169,6 +170,7 @@ public class Drive extends SubsystemBase {
     @SuppressWarnings("LockNotBeforeTry")
     public void periodic()
     {
+        LoggerHelper.recordCurrentCommand(this);
         odometryLock.lock(); // Prevents odometry updates while reading data
         gyroIO.updateInputs(gyroInputs);
         Logger.processInputs("Drive/Gyro", gyroInputs);
@@ -283,14 +285,16 @@ public class Drive extends SubsystemBase {
     {
         return run(() -> runCharacterization(0.0))
             .withTimeout(1.0)
-            .andThen(sysId.quasistatic(direction));
+            .andThen(sysId.quasistatic(direction))
+            .withName("SysId Quasistatic " + direction.toString());
     }
 
     /** Returns a command to run a dynamic test in the specified direction. */
     public Command sysIdDynamic(SysIdRoutine.Direction direction)
     {
         return run(() -> runCharacterization(0.0)).withTimeout(1.0)
-            .andThen(sysId.dynamic(direction));
+            .andThen(sysId.dynamic(direction))
+            .withName("SysId Dynamic " + direction.toString());
     }
 
     /**
