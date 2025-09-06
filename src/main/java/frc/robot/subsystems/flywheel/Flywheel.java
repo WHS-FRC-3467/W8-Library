@@ -25,7 +25,7 @@ public class Flywheel extends SubsystemBase { // Don't extend if contained in su
     @Override
     public void periodic()
     {
-        LoggerHelper.recordCurrentCommand(this);
+        LoggerHelper.recordCurrentCommand(FlywheelConstants.NAME, this);
         io.periodic();
     }
 
@@ -41,19 +41,23 @@ public class Flywheel extends SubsystemBase { // Don't extend if contained in su
     }
 
     // For unit testing
-    protected Command shootAmps() {
+    protected Command shootAmps()
+    {
         return this.runOnce(() -> io.runCurrent(Amps.of(30))).withName("Shoot Amps");
     }
 
-    public Current getTorqueCurrent() {
+    public Current getTorqueCurrent()
+    {
         return io.getTorqueCurrent();
     }
 
-    public AngularVelocity getVelocity() {
+    public AngularVelocity getVelocity()
+    {
         return io.getVelocity();
     }
 
-    public void close() {
+    public void close()
+    {
         io.close();
     }
 }

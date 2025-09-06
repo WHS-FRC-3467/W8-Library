@@ -135,6 +135,8 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
             inputs.velocityError = null;
             inputs.activeTrajectoryVelocity = null;
         }
+
+        inputs.controlType = super.getCurrentControlType();
     }
 
     @Override

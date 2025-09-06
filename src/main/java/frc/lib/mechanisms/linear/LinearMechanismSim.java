@@ -35,29 +35,25 @@ import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import frc.lib.io.motor.MotorIO.PIDSlot;
-import frc.lib.util.MechanismUtil.DistanceAngleConverter;
 import frc.lib.io.motor.MotorIOSim;
-import frc.lib.io.motor.MotorInputsAutoLogged;
 
 /**
  * A simulated implementation of the LinearMechanism interface that uses ElevatorSim to simulate the
  * behavior of a linear mechanism.
  */
-public class LinearMechanismSim implements LinearMechanism {
+public class LinearMechanismSim extends LinearMechanism {
 
     private final MotorIOSim io;
-    private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
     private final ElevatorSim sim;
-    private final DistanceAngleConverter converter;
-    private final LinearMechanismVisualizer visualizer;
 
     private Time lastTime = Seconds.zero();
 
     public LinearMechanismSim(MotorIOSim io, DCMotor characteristics, Mass mass,
         LinearMechCharacteristics constraints, Boolean useGravity)
     {
+        super(io.getName(), constraints);
+
         this.io = io;
-        this.converter = constraints.converter();
         sim = new ElevatorSim(
             characteristics,
             io.getGearRatio(),
@@ -67,13 +63,13 @@ public class LinearMechanismSim implements LinearMechanism {
             constraints.maxDistance().in(Meters),
             useGravity,
             constraints.startingDistance().in(Meters));
-
-        visualizer = new LinearMechanismVisualizer(io.getName(), constraints);
     }
 
     @Override
     public void periodic()
     {
+        super.periodic();
+
         Time currentTime = Seconds.of(Timer.getTimestamp());
         double deltaTime = currentTime.minus(lastTime).in(Seconds);
 
@@ -91,13 +87,6 @@ public class LinearMechanismSim implements LinearMechanism {
 
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
-
-        visualizer.setMeasuredDistance(Meters.of(sim.getPositionMeters()));
-        if (inputs.activeTrajectoryPosition != null) {
-            visualizer.setTrajectoryDistance(converter.toDistance(inputs.activeTrajectoryPosition));
-        } else {
-            visualizer.setTrajectoryDistance(Meters.of(sim.getPositionMeters()));
-        }
     }
 
     @Override
@@ -136,7 +125,6 @@ public class LinearMechanismSim implements LinearMechanism {
         Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
     {
         io.runPosition(position, cruiseVelocity, acceleration, maxJerk, slot);
-        visualizer.setGoalDistance(converter.toDistance(position));
     }
 
     @Override
@@ -163,6 +151,7 @@ public class LinearMechanismSim implements LinearMechanism {
     {
         return inputs.position;
     }
+
     @Override
     public AngularVelocity getVelocity()
     {

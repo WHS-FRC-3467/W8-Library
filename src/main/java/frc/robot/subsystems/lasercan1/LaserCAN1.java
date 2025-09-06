@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.devices.DistanceSensor;
 import frc.lib.io.distancesensor.DistanceSensorIO;
-import lombok.NonNull;
 
 /** Add your docs here. */
 public class LaserCAN1 extends SubsystemBase { // Don't extend if contained in superstructure
