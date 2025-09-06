@@ -5,9 +5,14 @@
 package frc.lib.mechanisms.linear;
 
 import static edu.wpi.first.units.Units.Meters;
+import java.util.Optional;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
@@ -19,6 +24,8 @@ import frc.lib.mechanisms.linear.LinearMechanism.LinearMechCharacteristics;
  * distance using a LoggedMechanism2d.
  */
 public class LinearMechanismVisualizer {
+
+    private static final double ARM_LENGTH = 0.25;
 
     private final LoggedMechanism2d mechanism;
     private final LoggedMechanismLigament2d measured;
@@ -33,7 +40,7 @@ public class LinearMechanismVisualizer {
     private final LoggedMechanismLigament2d upperBoundArm;
     private final String name;
 
-    private static final double armLength = 0.25;
+    private final Pose3d offset;
 
     public LinearMechanismVisualizer(String name, LinearMechCharacteristics characteristics)
     {
@@ -41,12 +48,14 @@ public class LinearMechanismVisualizer {
         mechanism = new LoggedMechanism2d(3.0, 3.0, new Color8Bit(Color.kBlack));
         LoggedMechanismRoot2d root = mechanism.getRoot(name + " root", 1.5, 0.0);
 
+        offset = new Pose3d(characteristics.offset(), Rotation3d.kZero);
+
         lowerBound =
             new LoggedMechanismLigament2d(name + "lowerBound",
                 characteristics.minDistance().in(Meters), 90.0, 3,
                 new Color8Bit(Color.kWhite));
 
-        lowerBoundArm = new LoggedMechanismLigament2d(name + "lowerBoundArm", armLength, -90, 3,
+        lowerBoundArm = new LoggedMechanismLigament2d(name + "lowerBoundArm", ARM_LENGTH, -90, 3,
             new Color8Bit(Color.kWhite));
 
 
@@ -56,7 +65,7 @@ public class LinearMechanismVisualizer {
                 new Color8Bit(Color.kWhite));
 
         upperBoundArm =
-            new LoggedMechanismLigament2d(name + "upperBoundArm", armLength, -90.0, 3,
+            new LoggedMechanismLigament2d(name + "upperBoundArm", ARM_LENGTH, -90.0, 3,
                 new Color8Bit(Color.kWhite));
 
         measured =
@@ -66,7 +75,7 @@ public class LinearMechanismVisualizer {
                 new Color8Bit(Color.kGreen));
 
         measuredArm =
-            new LoggedMechanismLigament2d(name + "measuredArm", armLength, -90, 3,
+            new LoggedMechanismLigament2d(name + "measuredArm", ARM_LENGTH, -90, 3,
                 new Color8Bit(Color.kGreen));
 
         trajectory =
@@ -76,7 +85,7 @@ public class LinearMechanismVisualizer {
                 new Color8Bit(Color.kYellow));
 
         trajectoryArm =
-            new LoggedMechanismLigament2d(name + "trajectoryArm", armLength, -90, 3,
+            new LoggedMechanismLigament2d(name + "trajectoryArm", ARM_LENGTH, -90, 3,
                 new Color8Bit(Color.kYellow));
 
         goal = new LoggedMechanismLigament2d(name + "goal",
@@ -85,7 +94,7 @@ public class LinearMechanismVisualizer {
             new Color8Bit(Color.kRed));
 
         goalArm =
-            new LoggedMechanismLigament2d(name + "goalArm", armLength, -90, 3,
+            new LoggedMechanismLigament2d(name + "goalArm", ARM_LENGTH, -90, 3,
                 new Color8Bit(Color.kRed));
 
         root.append(lowerBound);
@@ -100,22 +109,46 @@ public class LinearMechanismVisualizer {
         goal.append(goalArm);
     }
 
+    private void update()
+    {
+        SmartDashboard.putData(name + " Visualizer", mechanism);
+        Logger.recordOutput(name + "/Pose3d",
+            offset.plus(new Transform3d(measured.getLength(), 0, 0,
+                Rotation3d.kZero)));
+    }
+
     public void setMeasuredDistance(Distance distance)
     {
         measured.setLength(distance.in(Meters));
-        SmartDashboard.putData(name + " Visualizer", mechanism);
+
+        update();
     }
 
-    public void setTrajectoryDistance(Distance distance)
+    public void setTrajectoryDistance(Optional<Distance> distance)
     {
-        trajectory.setLength(distance.in(Meters));
-        SmartDashboard.putData(name + " Visualizer", mechanism);
+        if (distance.isEmpty()) {
+            trajectoryArm.setLength(0.0);
+        }
+
+        distance.ifPresent(d -> {
+            trajectoryArm.setLength(ARM_LENGTH);
+            trajectory.setLength(d.in(Meters));
+        });
+
+        update();
     }
 
-    public void setGoalDistance(Distance distance)
+    public void setGoalDistance(Optional<Distance> distance)
     {
-        goal.setLength(distance.in(Meters));
-        SmartDashboard.putData(name + " Visualizer", mechanism);
+        if (distance.isEmpty()) {
+            goalArm.setLength(0.0);
+        }
+
+        distance.ifPresent(d -> {
+            goalArm.setLength(ARM_LENGTH);
+            goal.setLength(d.in(Meters));
+        });
+
+        update();
     }
 }
-

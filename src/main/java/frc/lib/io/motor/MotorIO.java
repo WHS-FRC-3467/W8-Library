@@ -50,6 +50,16 @@ public interface MotorIO {
         public final int num;
     }
 
+    public enum ControlType {
+        COAST,
+        BRAKE,
+        VOLTAGE,
+        CURRENT,
+        DUTYCYCLE,
+        POSITION,
+        VELOCITY
+    }
+
     @AutoLog
     abstract class MotorInputs {
         /** Whether the motor is connected. */
@@ -74,6 +84,8 @@ public interface MotorIO {
         public Angle activeTrajectoryPosition = null;
         /** Active trajectory velocity in rotations per second. */
         public AngularVelocity activeTrajectoryVelocity = null;
+        /** Current control type */
+        public ControlType controlType = null;
     }
 
     /**
