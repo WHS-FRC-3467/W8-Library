@@ -25,7 +25,7 @@ public class Flywheel extends SubsystemBase { // Don't extend if contained in su
     @Override
     public void periodic()
     {
-        LoggerHelper.recordCurrentCommand(this);
+        LoggerHelper.recordCurrentCommand(FlywheelConstants.NAME, this);
         io.periodic();
     }
 

@@ -61,7 +61,7 @@ public class Linear extends SubsystemBase {
     @Override
     public void periodic()
     {
-        LoggerHelper.recordCurrentCommand(this);
+        LoggerHelper.recordCurrentCommand(LinearConstants.NAME, this);
         io.periodic();
     }
 

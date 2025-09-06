@@ -40,13 +40,12 @@ public class RotarySubsystem extends SubsystemBase {
     public RotarySubsystem(RotaryMechanism io)
     {
         this.io = io;
-
     }
 
     @Override
     public void periodic()
     {
-        LoggerHelper.recordCurrentCommand(this);
+        LoggerHelper.recordCurrentCommand(RotarySubsystemConstants.NAME, this);
         io.periodic();
     }
 

@@ -26,24 +26,27 @@ import edu.wpi.first.units.measure.Voltage;
 import frc.lib.annotations.NoSubtypeAllowed;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
-import frc.lib.io.motor.MotorInputsAutoLogged;
 
 /**
  * A real implementation of the LinearMechanism interface that interacts with a physical motor
  * through a MotorIO interface.
  */
-public class LinearMechanismReal implements LinearMechanism {
+public class LinearMechanismReal extends LinearMechanism {
     private final MotorIO io;
-    private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
 
-    public LinearMechanismReal(@NoSubtypeAllowed MotorIO io)
+    public LinearMechanismReal(@NoSubtypeAllowed MotorIO io,
+        LinearMechCharacteristics characteristics)
     {
+        super(io.getName(), characteristics);
+
         this.io = io;
     }
 
     @Override
     public void periodic()
     {
+        super.periodic();
+
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
     }
@@ -113,7 +116,8 @@ public class LinearMechanismReal implements LinearMechanism {
     }
 
     @Override
-    public AngularVelocity getVelocity() {
+    public AngularVelocity getVelocity()
+    {
         return inputs.velocity;
     }
 }
