@@ -32,7 +32,7 @@ public class Flywheel extends SubsystemBase { // Don't extend if contained in su
     public Command shoot()
     {
         return this.runOnce(() -> io.runVelocity(FlywheelConstants.MAX_VELOCITY,
-            FlywheelConstants.MAX_ACCELERATION, PIDSlot.SLOT_1)).withName("Shoot");
+            FlywheelConstants.MAX_ACCELERATION, PIDSlot.SLOT_0)).withName("Shoot");
     }
 
     public Command stop()
