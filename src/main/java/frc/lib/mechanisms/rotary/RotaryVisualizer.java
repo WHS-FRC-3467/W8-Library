@@ -98,7 +98,7 @@ public class RotaryVisualizer {
 
     private void update()
     {
-        SmartDashboard.putData(name + "/Visualizer", mechanism);
+        SmartDashboard.putData(name + " Visualizer", mechanism);
         Logger.recordOutput(name + "/Pose3d",
             offset.rotateBy(
                 new Rotation3d(Degrees.of(measured.getAngle()), Degrees.zero(), Degrees.zero())));

@@ -69,7 +69,7 @@ public class Linear extends SubsystemBase {
     {
         return this
             .runOnce(() -> io.runPosition(setpoint.getAngle(), LinearConstants.CRUISE_VELOCITY,
-                LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_1))
+                LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_0))
             .withName("Go To " + setpoint.toString() + " Setpoint");
     }
 

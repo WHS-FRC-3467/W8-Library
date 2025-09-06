@@ -24,7 +24,7 @@ public abstract class RotaryMechanism implements Mechanism {
 
     protected final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
 
-    private RotaryVisualizer visualizer;
+    private final RotaryVisualizer visualizer;
 
     public RotaryMechanism(String name, RotaryMechCharacteristics characteristics)
     {
