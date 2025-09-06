@@ -15,24 +15,25 @@ import edu.wpi.first.units.measure.Voltage;
 import frc.lib.annotations.NoSubtypeAllowed;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
-import frc.lib.io.motor.MotorInputsAutoLogged;
 
 /**
  * A real implementation of the RotaryMechanism interface that interacts with a physical motor
  * through a MotorIO interface.
  */
-public class RotaryMechanismReal implements RotaryMechanism {
+public class RotaryMechanismReal extends RotaryMechanism {
     private final MotorIO io;
-    private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
 
-    public RotaryMechanismReal(@NoSubtypeAllowed MotorIO io)
+    public RotaryMechanismReal(@NoSubtypeAllowed MotorIO io,
+        RotaryMechCharacteristics characteristics)
     {
+        super(io.getName(), characteristics);
         this.io = io;
     }
 
-    @Override
     public void periodic()
     {
+        super.periodic();
+
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
     }
