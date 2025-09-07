@@ -33,14 +33,15 @@ public class AlignTo2DTarget extends Command {
     @Override
     public void initialize()
     {
-        if (vision.getCloseTagObservation().isPresent()) {
-            this.targetTag = vision.getCloseTagObservation().get();
+        if (vision.getClosestTagObservation().isPresent()) {
+            this.targetTag = vision.getClosestTagObservation().get();
             strafeController.reset();
             rotationController.reset();
             rotationController.enableContinuousInput(-Math.PI, Math.PI);
             strafeController.setSetpoint(0);
             rotationController.setSetpoint(
-                FieldConstants.aprilTagLayout.getTagPose(vision.getCloseTagObservation().get().id())
+                FieldConstants.aprilTagLayout
+                    .getTagPose(vision.getClosestTagObservation().get().id())
                     .get().getRotation().getZ() + Math.PI);
 
             Logger.recordOutput("AlignCommand/Strafe Setpoint", strafeController.getSetpoint());
@@ -55,8 +56,8 @@ public class AlignTo2DTarget extends Command {
     @Override
     public void execute()
     {
-        if (vision.getCloseTagObservation().isPresent()) {
-            this.targetTag = vision.getCloseTagObservation().get();
+        if (vision.getClosestTagObservation().isPresent()) {
+            this.targetTag = vision.getClosestTagObservation().get();
             double strafeOutput = strafeController.calculate(targetTag.yaw());
             double rotationOutput =
                 rotationController.calculate(drive.getPose().getRotation().getRadians());

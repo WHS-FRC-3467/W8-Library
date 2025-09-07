@@ -272,7 +272,7 @@ public class RobotContainer {
 
         SmartDashboard.putData("Align2d",
             new AlignTo2DTarget(drive, vision, () -> controller.getLeftY()));
-        SmartDashboard.putData("PointToTaret",
+        SmartDashboard.putData("PointToTarget",
             new PointTo2DTarget(drive, vision));
     }
 

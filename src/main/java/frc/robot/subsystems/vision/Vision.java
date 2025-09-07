@@ -50,7 +50,7 @@ public class Vision extends SubsystemBase {
     private final Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier;
 
     @Getter
-    private Optional<TagObservation> closeTagObservation = Optional.ofNullable(null);
+    private Optional<TagObservation> closestTagObservation = Optional.ofNullable(null);
 
     public Vision(VisionConsumer consumer,
         Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier, VisionIO... io)
@@ -89,7 +89,7 @@ public class Vision extends SubsystemBase {
         List<Pose3d> allRobotPosesRejected = new ArrayList<>();
 
         List<TagObservation> allAlignmentTargets = new ArrayList<>();
-        closeTagObservation = Optional.ofNullable(null);
+        closestTagObservation = Optional.ofNullable(null);
 
         // Loop over cameras
         for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
@@ -194,10 +194,10 @@ public class Vision extends SubsystemBase {
         }
 
         for (var target : allAlignmentTargets) {
-            if (closeTagObservation.isEmpty()) {
-                closeTagObservation = Optional.of(target);
-            } else if (target.area() > closeTagObservation.get().area()) {
-                closeTagObservation = Optional.of(target);
+            if (closestTagObservation.isEmpty()) {
+                closestTagObservation = Optional.of(target);
+            } else if (target.area() > closestTagObservation.get().area()) {
+                closestTagObservation = Optional.of(target);
             }
         }
 
@@ -213,8 +213,9 @@ public class Vision extends SubsystemBase {
             "Vision/Summary/RobotPosesRejected",
             allRobotPosesRejected.toArray(new Pose3d[allRobotPosesRejected.size()]));
 
-        if (closeTagObservation.isPresent()) {
-            Logger.recordOutput("Vision/Summary/ClosestAlignmentTarget", closeTagObservation.get());
+        if (closestTagObservation.isPresent()) {
+            Logger.recordOutput("Vision/Summary/ClosestAlignmentTarget",
+                closestTagObservation.get());
         }
     }
 

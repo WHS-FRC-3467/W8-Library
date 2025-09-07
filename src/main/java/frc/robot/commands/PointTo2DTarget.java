@@ -30,8 +30,8 @@ public class PointTo2DTarget extends Command {
     @Override
     public void initialize()
     {
-        if (vision.getCloseTagObservation().isPresent()) {
-            this.targetTag = vision.getCloseTagObservation().get();
+        if (vision.getClosestTagObservation().isPresent()) {
+            this.targetTag = vision.getClosestTagObservation().get();
             rotationController.reset();
             rotationController.setSetpoint(0);
 
@@ -46,8 +46,8 @@ public class PointTo2DTarget extends Command {
     @Override
     public void execute()
     {
-        if (vision.getCloseTagObservation().isPresent()) {
-            this.targetTag = vision.getCloseTagObservation().get();
+        if (vision.getClosestTagObservation().isPresent()) {
+            this.targetTag = vision.getClosestTagObservation().get();
             double rotationOutput =
                 rotationController.calculate(targetTag.yaw());
 
