@@ -35,6 +35,7 @@ import frc.robot.Constants.PathConstants;
 import frc.robot.commands.AlignTo2DTarget;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.OnTheFlyPathCommand;
+import frc.robot.commands.PointTo2DTarget;
 import frc.robot.commands.autos.BranchingAuto;
 import frc.robot.commands.autos.ExampleAuto;
 import frc.robot.commands.autos.NoneAuto;
@@ -271,6 +272,8 @@ public class RobotContainer {
 
         SmartDashboard.putData("Align2d",
             new AlignTo2DTarget(drive, vision, () -> controller.getLeftY()));
+        SmartDashboard.putData("PointToTaret",
+            new PointTo2DTarget(drive, vision));
     }
 
     /**
