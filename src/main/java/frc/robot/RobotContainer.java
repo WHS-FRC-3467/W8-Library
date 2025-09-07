@@ -32,6 +32,7 @@ import frc.lib.util.LoggedDashboardChooser;
 import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.Constants.PathConstants;
+import frc.robot.commands.AlignTo2DTarget;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.OnTheFlyPathCommand;
 import frc.robot.commands.autos.BranchingAuto;
@@ -267,6 +268,9 @@ public class RobotContainer {
         SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",
             rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+
+        SmartDashboard.putData("Align2d",
+            new AlignTo2DTarget(drive, vision, () -> controller.getLeftY()));
     }
 
     /**

@@ -30,11 +30,14 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.vision.VisionIOInputsAutoLogged;
+import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.util.Timestamped;
+import lombok.Getter;
 import frc.lib.io.vision.VisionIO;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -45,6 +48,9 @@ public class Vision extends SubsystemBase {
     private final Alert[] disconnectedAlerts;
 
     private final Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier;
+
+    @Getter
+    private Optional<TagObservation> closeTagObservation = Optional.ofNullable(null);
 
     public Vision(VisionConsumer consumer,
         Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier, VisionIO... io)
@@ -82,6 +88,9 @@ public class Vision extends SubsystemBase {
         List<Pose3d> allRobotPosesAccepted = new ArrayList<>();
         List<Pose3d> allRobotPosesRejected = new ArrayList<>();
 
+        List<TagObservation> allAlignmentTargets = new ArrayList<>();
+        closeTagObservation = Optional.ofNullable(null);
+
         // Loop over cameras
         for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
             // Update disconnected alert
@@ -92,6 +101,8 @@ public class Vision extends SubsystemBase {
             List<Pose3d> robotPoses = new ArrayList<>();
             List<Pose3d> robotPosesAccepted = new ArrayList<>();
             List<Pose3d> robotPosesRejected = new ArrayList<>();
+
+            List<TagObservation> alignmentTargets = new ArrayList<>();
 
             // Add tag poses
             for (int tagId : inputs[cameraIndex].tagIds) {
@@ -148,6 +159,13 @@ public class Vision extends SubsystemBase {
                     VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
             }
 
+            for (var TagObservation : inputs[cameraIndex].allTargets) {
+                if (alignmentTags.contains(TagObservation.id())) {
+                    alignmentTargets.add(TagObservation);
+
+                }
+            }
+
             // Log camera datadata
             Logger.recordOutput(
                 "Vision/Camera" + Integer.toString(cameraIndex) + "/TagPoses",
@@ -161,10 +179,26 @@ public class Vision extends SubsystemBase {
             Logger.recordOutput(
                 "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesRejected",
                 robotPosesRejected.toArray(new Pose3d[robotPosesRejected.size()]));
+            Logger.recordOutput(
+                "Vision/Camera" + Integer.toString(cameraIndex) + "/AlignmentTargets",
+                alignmentTargets.toArray(new TagObservation[alignmentTargets.size()]));
+
             allTagPoses.addAll(tagPoses);
             allRobotPoses.addAll(robotPoses);
             allRobotPosesAccepted.addAll(robotPosesAccepted);
             allRobotPosesRejected.addAll(robotPosesRejected);
+
+            allAlignmentTargets.addAll(alignmentTargets);
+
+
+        }
+
+        for (var target : allAlignmentTargets) {
+            if (closeTagObservation.isEmpty()) {
+                closeTagObservation = Optional.of(target);
+            } else if (target.area() > closeTagObservation.get().area()) {
+                closeTagObservation = Optional.of(target);
+            }
         }
 
         // Log summary data
@@ -178,6 +212,10 @@ public class Vision extends SubsystemBase {
         Logger.recordOutput(
             "Vision/Summary/RobotPosesRejected",
             allRobotPosesRejected.toArray(new Pose3d[allRobotPosesRejected.size()]));
+
+        if (closeTagObservation.isPresent()) {
+            Logger.recordOutput("Vision/Summary/ClosestAlignmentTarget", closeTagObservation.get());
+        }
     }
 
     @FunctionalInterface

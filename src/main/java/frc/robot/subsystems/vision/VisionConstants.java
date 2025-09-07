@@ -15,6 +15,9 @@
 
 package frc.robot.subsystems.vision;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -51,4 +54,10 @@ public class VisionConstants {
             1.0, // Camera 0
             1.0 // Camera 1
     };
+
+    /**
+     * Tags used for reef alignment
+     */
+    public static List<Integer> alignmentTags =
+        Arrays.asList(6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22);
 }

@@ -7,6 +7,8 @@
 
 package frc.robot;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 
@@ -15,6 +17,10 @@ import edu.wpi.first.math.util.Units;
  * have a blue alliance origin.
  */
 public class FieldConstants {
+
+    public static final AprilTagFieldLayout aprilTagLayout =
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
+
     public static final double FIELDLENGTH = Units.inchesToMeters(690.876);
     public static final double FIELDWIDTH = Units.inchesToMeters(317);
     public static final Translation2d fieldCenter =
