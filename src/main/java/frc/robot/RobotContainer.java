@@ -53,9 +53,9 @@ import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.linear.Linear;
 import frc.robot.subsystems.linear.LinearConstants;
-import frc.robot.subsystems.rotary.Rotary;
-import frc.robot.subsystems.rotary.RotaryConstants;
-import frc.robot.subsystems.rotary.Rotary.Setpoint;
+import frc.robot.subsystems.rotary.RotarySubsystem;
+import frc.robot.subsystems.rotary.RotarySubsystemConstants;
+import frc.robot.subsystems.rotary.RotarySubsystem.Setpoint;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.vision.Vision;
@@ -84,7 +84,7 @@ public class RobotContainer {
     private final Flywheel flywheel;
     private final Linear linear;
     private final Vision vision;
-    private final Rotary rotary;
+    private final RotarySubsystem rotary;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -124,7 +124,7 @@ public class RobotContainer {
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP));
-                rotary = new Rotary(RotaryConstants.getReal());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
             }
 
             case SIM -> {
@@ -154,7 +154,7 @@ public class RobotContainer {
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP));
-                rotary = new Rotary(RotaryConstants.getSim());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
             }
 
             default -> {
@@ -175,7 +175,7 @@ public class RobotContainer {
                 flywheel = new Flywheel(FlywheelConstants.getReplay());
 
                 linear = new Linear(LinearConstants.getReplay());
-                rotary = new Rotary(RotaryConstants.getReplay());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());
                 vision = new Vision(
                     drive::addVisionMeasurement,
                     () -> drive.getTimestampedHeading(),
