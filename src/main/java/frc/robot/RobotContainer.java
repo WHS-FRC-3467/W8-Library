@@ -62,6 +62,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
+import static edu.wpi.first.units.Units.Volts;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
@@ -109,7 +110,7 @@ public class RobotContainer {
                     new ModuleIOTalonFX(DriveConstants.BackRight));
 
                 leds = new LEDs(LEDsConstants.getLightsIOReal());
-                laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal());
+                laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal(), drive);
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
                 servo1 = new Servo1(Servo1Constants.getReal());
                 flywheel = new Flywheel(FlywheelConstants.getReal());
@@ -137,7 +138,7 @@ public class RobotContainer {
 
                 leds = new LEDs(LEDsConstants.getLightsIOSim());
                 laserCAN1 =
-                    new LaserCAN1(LaserCAN1Constants.getSim());
+                    new LaserCAN1(LaserCAN1Constants.getSim(), drive);
                 beamBreak1 = new BeamBreak1(
                     BeamBreak1Constants.getSim());
                 servo1 = new Servo1(Servo1Constants.getSim());
@@ -167,7 +168,7 @@ public class RobotContainer {
 
                 leds = new LEDs(LEDsConstants.getLightsIOReplay());
                 laserCAN1 =
-                    new LaserCAN1(LaserCAN1Constants.getReplay());
+                    new LaserCAN1(LaserCAN1Constants.getReplay(), drive);
                 beamBreak1 =
                     new BeamBreak1(BeamBreak1Constants.getReplay());
                 servo1 = new Servo1(Servo1Constants.getReplay());
@@ -263,6 +264,9 @@ public class RobotContainer {
         SmartDashboard.putData("Linear: Stow", linear.setGoal(Linear.Setpoint.STOW));
         SmartDashboard.putData("Linear: Raised", linear.setGoal(Linear.Setpoint.RAISED));
         SmartDashboard.putData("Linear: Home", linear.homeCommand());
+        SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
+        SmartDashboard.putData("Rotary: Raised",
+            rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
     }
 
     /**

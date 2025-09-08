@@ -4,33 +4,55 @@
 
 package frc.robot.subsystems.lasercan1;
 
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Millimeters;
+import org.littletonrobotics.junction.Logger;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.devices.DistanceSensor;
 import frc.lib.io.distancesensor.DistanceSensorIO;
-import lombok.NonNull;
+import frc.robot.subsystems.drive.Drive;
 
-/** Add your docs here. */
-public class LaserCAN1 extends SubsystemBase { // Don't extend if contained in superstructure
+public class LaserCAN1 extends SubsystemBase {
     private final DistanceSensor distanceSensor;
+    private final Drive drive; // TODO: Refactor once RobotState is implemented
 
     public final Trigger inside =
         new Trigger(() -> betweenDistance(Millimeters.of(5), Millimeters.of(10)));
 
-    public LaserCAN1(DistanceSensorIO io)
+    public LaserCAN1(DistanceSensorIO io, Drive drive)
     {
         distanceSensor = new DistanceSensor(io);
+        this.drive = drive;
     }
 
     @Override
     public void periodic()
     {
         distanceSensor.periodic();
+        Logger.recordOutput(LaserCAN1Constants.NAME + "Sensor Reading Pose",
+            new Pose3d(drive.getPose()).plus(LaserCAN1Constants.LASERCAN_TRANSFORM.plus(
+                new Transform3d(
+                    getDistance(),
+                    Inches.of(0),
+                    Inches.of(0),
+                    new Rotation3d()))));
     }
 
-    private boolean betweenDistance(Distance min, Distance max)
+    public Distance getDistance()
+    {
+        if (distanceSensor.getDistance().isEmpty()) {
+            return Inches.of(-1.0);
+        } else {
+            return distanceSensor.getDistance().get();
+        }
+    }
+
+    public boolean betweenDistance(Distance min, Distance max)
     {
         if (distanceSensor.getDistance().isEmpty()) {
             return false;

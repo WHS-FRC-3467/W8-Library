@@ -63,7 +63,7 @@ public class Linear extends SubsystemBase {
     @Override
     public void periodic()
     {
-        LoggerHelper.recordCurrentCommand(this);
+        LoggerHelper.recordCurrentCommand(LinearConstants.NAME, this);
         io.periodic();
     }
 
@@ -72,7 +72,7 @@ public class Linear extends SubsystemBase {
         return this
             .runOnce(() -> io.runPosition(setpoint.getAngle(), LinearConstants.CRUISE_VELOCITY,
                 LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_0))
-                .withName("Go To " + setpoint.toString() + " Setpoint");
+            .withName("Go To " + setpoint.toString() + " Setpoint");
     }
 
     public boolean nearGoal(Distance goalPosition)
@@ -115,12 +115,15 @@ public class Linear extends SubsystemBase {
             .withName("Homing");
     }
 
-    public AngularVelocity getVelocity() {
+    public AngularVelocity getVelocity()
+    {
         return io.getVelocity();
     }
 
-    public LinearVelocity getLinearVelocity() {
-        return LinearConstants.CONVERTER.toDistance(io.getVelocity().times(Seconds.of(1))).div(Seconds.of(1));
+    public LinearVelocity getLinearVelocity()
+    {
+        return LinearConstants.CONVERTER.toDistance(io.getVelocity().times(Seconds.of(1)))
+            .div(Seconds.of(1));
     }
     
     public void close()

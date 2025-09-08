@@ -32,7 +32,7 @@ public class LEDs extends SubsystemBase {
     @Override
     public void periodic()
     {
-        LoggerHelper.recordCurrentCommand(this);
+        LoggerHelper.recordCurrentCommand(LEDsConstants.NAME, this);
     }
 
     public Command runDisabledAnimation()
