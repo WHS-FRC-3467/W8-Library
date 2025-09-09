@@ -7,6 +7,7 @@
 
 package frc.lib.util;
 
+import static edu.wpi.first.units.Units.Meters;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.FieldConstants;
@@ -14,12 +15,12 @@ import frc.robot.FieldConstants;
 public class AllianceFlipUtil {
     public static double applyX(double x)
     {
-        return shouldFlip() ? FieldConstants.FIELDLENGTH - x : x;
+        return shouldFlip() ? FieldConstants.FIELDLENGTH.in(Meters) - x : x;
     }
 
     public static double applyY(double y)
     {
-        return shouldFlip() ? FieldConstants.FIELDWIDTH - y : y;
+        return shouldFlip() ? FieldConstants.FIELDWIDTH.in(Meters) - y : y;
     }
 
     public static Translation2d apply(Translation2d translation)
