@@ -77,18 +77,7 @@ public class Linear extends SubsystemBase {
 
     public boolean nearGoal(Distance goalPosition)
     {
-        return MathUtil.isNear(
-            LinearConstants.CONVERTER.toDistance(io.getPosition()).in(BaseUnits.DistanceUnit),
-            goalPosition.in(BaseUnits.DistanceUnit),
-            LinearConstants.TOLERANCE.in(BaseUnits.DistanceUnit));
-    }
-
-    public boolean nearGoal(Angle goalPosition)
-    {
-        return MathUtil.isNear(
-            io.getPosition().in(BaseUnits.AngleUnit),
-            goalPosition.in(BaseUnits.AngleUnit),
-            LinearConstants.CONVERTER.toAngle(LinearConstants.TOLERANCE).in(BaseUnits.AngleUnit));
+        return io.nearGoal(goalPosition, LinearConstants.TOLERANCE);
     }
 
     public Command waitUntilGoalCommand(Distance position)

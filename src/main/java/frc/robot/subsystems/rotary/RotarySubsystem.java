@@ -60,10 +60,7 @@ public class RotarySubsystem extends SubsystemBase {
 
     public boolean nearGoal(Angle targetPosition)
     {
-        return MathUtil.isNear(
-            io.getPosition().in(BaseUnits.AngleUnit),
-            targetPosition.in(BaseUnits.AngleUnit),
-            RotarySubsystemConstants.TOLERANCE.in(BaseUnits.AngleUnit));
+        return io.nearGoal(targetPosition, RotarySubsystemConstants.TOLERANCE);
     }
 
     public Command waitUntilGoalCommand(Angle position)

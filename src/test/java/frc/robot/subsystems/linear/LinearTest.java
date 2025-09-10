@@ -55,7 +55,7 @@ public class LinearTest implements AutoCloseable {
         TestUtil.runTest(linear.homeCommand(), 0.1, linear);
         try {
             // Check position to check if it is homed, and within tolerance of STOW setpoint.
-            assertTrue(linear.nearGoal(LinearConstants.CONVERTER.toAngle(Linear.Setpoint.STOW.getSetpoint())));
+            assertTrue(linear.nearGoal(Linear.Setpoint.STOW.getSetpoint()));
 		} catch (Exception e) {
 			fail("Failed to home Linear Subsystem: " + e.getMessage());
         }
@@ -66,7 +66,7 @@ public class LinearTest implements AutoCloseable {
         TestUtil.runTest(linear.setGoal(Linear.Setpoint.RAISED), 1.5, linear);
         try {
             // Check to see if linear subsystem is within tolerance of RAISED setpoint.
-            assertTrue(linear.nearGoal(LinearConstants.CONVERTER.toAngle(Linear.Setpoint.RAISED.getSetpoint())));
+            assertTrue(linear.nearGoal(Linear.Setpoint.RAISED.getSetpoint()));
         } catch (Exception e) {
             fail("Failed to run Linear Subsystem to RAISED: " + e.getMessage());
         }
