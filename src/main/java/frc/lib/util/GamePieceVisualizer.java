@@ -10,7 +10,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import lombok.Getter;
 
-/** Add your docs here. */
+/** Util for tracking pose of a simulated gamepiece, used for visualization in AScope */
 public class GamePieceVisualizer {
 
     private final String name;
@@ -18,6 +18,12 @@ public class GamePieceVisualizer {
     @Getter
     Pose3d gamePiecePose = new Pose3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0));
 
+    /**
+     * Instance of virtual gamepiece
+     * 
+     * @param name Name of instance
+     * @param pose3d Pose3d of instance
+     */
     public GamePieceVisualizer(String name, Pose3d pose3d)
     {
         this.name = name;
@@ -29,6 +35,12 @@ public class GamePieceVisualizer {
     public void setPose(Pose3d pose)
     {
         this.gamePiecePose = pose;
+        Logger.recordOutput(name + " Visualizer", this.gamePiecePose);
+    }
+
+    public void hide()
+    {
+        this.gamePiecePose = new Pose3d();
         Logger.recordOutput(name + " Visualizer", this.gamePiecePose);
     }
 }

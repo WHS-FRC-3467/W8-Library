@@ -214,6 +214,10 @@ public class RobotContainer {
 
         SmartDashboard.putData("Flywheel: Shoot", flywheel.shoot());
         SmartDashboard.putData("Flywheel: Stop", flywheel.stop());
+
+        GamePieceVisualizer algaeViz =
+            new GamePieceVisualizer("Algae #1", new Pose3d(1, 1, 1, new Rotation3d()));
+        SmartDashboard.putData("Hide Algae", Commands.runOnce(() -> algaeViz.hide()));
     }
 
     /**
