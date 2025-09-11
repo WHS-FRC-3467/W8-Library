@@ -190,6 +190,32 @@ public class MotorIOTalonFX implements MotorIO {
     }
 
     /**
+     * Returns the current control type.
+     *
+     * @return The current control type.
+     */
+    protected ControlType getCurrentControlType()
+    {
+        var control = motor.getAppliedControl();
+
+        if (control instanceof StaticBrake) {
+            return ControlType.BRAKE;
+        } else if (control instanceof VoltageOut) {
+            return ControlType.VOLTAGE;
+        } else if (control instanceof TorqueCurrentFOC) {
+            return ControlType.CURRENT;
+        } else if (control instanceof DutyCycleOut) {
+            return ControlType.DUTYCYCLE;
+        } else if (isRunningPositionControl()) {
+            return ControlType.POSITION;
+        } else if (isRunningVelocityControl()) {
+            return ControlType.VELOCITY;
+        }
+
+        return ControlType.COAST;
+    }
+
+    /**
      * Updates the passed-in MotorInputs structure with the latest sensor readings.
      *
      * @param inputs Motor input structure to populate.
@@ -245,6 +271,8 @@ public class MotorIOTalonFX implements MotorIO {
             inputs.velocityError = null;
             inputs.activeTrajectoryVelocity = null;
         }
+
+        inputs.controlType = getCurrentControlType();
     }
 
     /**
@@ -284,7 +312,19 @@ public class MotorIOTalonFX implements MotorIO {
     @Override
     public void runCurrent(Current current)
     {
-        motor.setControl(currentControl.withOutput(current));
+        motor.setControl(currentControl.withOutput(current).withMaxAbsDutyCycle(1.0));
+    }
+
+    /**
+     * Runs the motor with a specified current output and duty cycle.
+     *
+     * @param current Desired torque-producing current.
+     * @param dutyCycle Desired dutycycle of current output, limiting top speed
+     */
+    public void runCurrent(Current current, double dutyCycle)
+    {
+        double dutyCyclePercent = MathUtil.clamp(dutyCycle, 0.0, 1.0);
+        motor.setControl(currentControl.withOutput(current).withMaxAbsDutyCycle(dutyCyclePercent));
     }
 
     /**

@@ -40,6 +40,10 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 
+/**
+ * A simulated implementation of the FlywheelMechanism interface that uses FlywheelSim to simulate
+ * the behavior of a flywheel mechanism.
+ */
 public class FlywheelMechanismSim implements FlywheelMechanism {
 
     private final MotorIOSim io;
@@ -144,5 +148,22 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
         PIDSlot slot)
     {
         io.runVelocity(velocity, acceleration, slot);
+    }
+
+    @Override
+    public Current getTorqueCurrent()
+    {
+        return inputs.torqueCurrent;
+    }
+
+    @Override
+    public AngularVelocity getVelocity() {
+        return inputs.velocity;
+    }
+
+    @Override
+    public void close()
+    {
+        io.close();
     }
 }

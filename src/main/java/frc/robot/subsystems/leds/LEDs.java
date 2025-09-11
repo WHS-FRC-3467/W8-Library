@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.devices.Lights;
 import frc.lib.io.lights.LightsIO;
+import frc.lib.util.LoggerHelper;
 
 public class LEDs extends SubsystemBase {
     private final Lights lights;
@@ -28,17 +29,25 @@ public class LEDs extends SubsystemBase {
         lights = new Lights(io);
     }
 
+    @Override
+    public void periodic()
+    {
+        LoggerHelper.recordCurrentCommand(LEDsConstants.NAME, this);
+    }
+
     public Command runDisabledAnimation()
     {
         return this.startEnd(
             () -> lights.setAnimations(LEDsConstants.disabledAnimation),
-            () -> lights.setAnimations(LEDsConstants.offAnimation));
+            () -> lights.setAnimations(LEDsConstants.offAnimation))
+            .withName("Disabled Animation");
     }
 
     public Command runAutoAnimation()
     {
         return this.startEnd(
             () -> lights.setAnimations(LEDsConstants.autoAnimation),
-            () -> lights.setAnimations(LEDsConstants.offAnimation));
+            () -> lights.setAnimations(LEDsConstants.offAnimation))
+            .withName("Auto Animation");
     }
 }

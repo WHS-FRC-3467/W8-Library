@@ -77,6 +77,12 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
     }
 
     @Override
+    public void setEncoderPosition(Angle position)
+    {
+        super.setEncoderPosition(position.times(gearRatio));
+    }
+
+    @Override
     public void updateInputs(MotorInputs inputs)
     {
         inputs.connected = BaseStatusSignal.refreshAll(
@@ -129,5 +135,13 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
             inputs.velocityError = null;
             inputs.activeTrajectoryVelocity = null;
         }
+
+        inputs.controlType = super.getCurrentControlType();
+    }
+
+    @Override
+    public void close()
+    {
+        super.motor.close();
     }
 }

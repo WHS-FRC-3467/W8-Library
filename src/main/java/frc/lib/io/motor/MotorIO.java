@@ -43,11 +43,21 @@ public interface MotorIO {
     @Getter
     @AllArgsConstructor
     public enum PIDSlot {
-        SLOT_1(0),
-        SLOT_2(1),
-        SLOT_3(2);
+        SLOT_0(0),
+        SLOT_1(1),
+        SLOT_2(2);
 
         public final int num;
+    }
+
+    public enum ControlType {
+        COAST,
+        BRAKE,
+        VOLTAGE,
+        CURRENT,
+        DUTYCYCLE,
+        POSITION,
+        VELOCITY
     }
 
     @AutoLog
@@ -74,6 +84,8 @@ public interface MotorIO {
         public Angle activeTrajectoryPosition = null;
         /** Active trajectory velocity in rotations per second. */
         public AngularVelocity activeTrajectoryVelocity = null;
+        /** Current control type */
+        public ControlType controlType = null;
     }
 
     /**
@@ -121,6 +133,15 @@ public interface MotorIO {
      * @param current Desired torque-producing current.
      */
     public default void runCurrent(Current current)
+    {}
+
+    /**
+     * Runs the motor with a specified current output and duty cycle.
+     *
+     * @param current Desired torque-producing current.
+     * @param dutyCycle Desired dutycycle of current output, limiting top speed
+     */
+    public default void runCurrent(Current current, double dutyCycle)
     {}
 
     /**
