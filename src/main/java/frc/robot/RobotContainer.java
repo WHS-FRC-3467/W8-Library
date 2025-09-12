@@ -18,6 +18,7 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -62,6 +63,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Volts;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -248,7 +250,7 @@ public class RobotContainer {
 
         // Pathfind to Pose when the Y button is pressed
         controller.y().onTrue(
-            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(3, 3, Rotation2d.kZero),
+            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(1, 4, Rotation2d.kZero),
                 PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, 0.0,
                 PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
 
@@ -277,5 +279,34 @@ public class RobotContainer {
     public Command getAutonomousCommand()
     {
         return autoChooser.get();
+    }
+
+    /** This function is called periodically by Robot.java when disabled. */
+    public void disabledPeriodic() {
+
+        /* Starting pose checker for auto */
+        autoPreviewField.setRobotPose(drive.getPose());
+        
+        try {
+            double distanceFromStartPose = drive.getPose().getTranslation()
+                .getDistance(autoPreviewField.getObject("path").getPoses().get(0).getTranslation());
+            double degreesFromStartPose = Math.abs(drive.getPose().getRotation().minus(
+                autoPreviewField.getObject("path").getPoses().get(0).getRotation()).getDegrees());
+
+            SmartDashboard.putNumber("Auto Pose Check/Inches from Start", Math.round(distanceFromStartPose * 100.0) / 100.0);
+            SmartDashboard.putBoolean("Auto Pose Check/Robot Position within " + Units.metersToInches(PathConstants.STARTING_POSE_DRIVE_TOLERANCE) + " inches", 
+                distanceFromStartPose < PathConstants.STARTING_POSE_DRIVE_TOLERANCE);
+            SmartDashboard.putNumber("Auto Pose Check/Degrees from Start", Math.round(degreesFromStartPose * 100.0) / 100.0);
+            SmartDashboard.putBoolean("Auto Pose Check/Robot Rotation within " + PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES + " degrees", 
+                degreesFromStartPose < PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES);
+            
+        } catch (Exception e) {
+            SmartDashboard.putNumber("Auto Pose Check/Inches from Start", -1);
+            SmartDashboard.putBoolean("Auto Pose Check/Robot Position within " + PathConstants.STARTING_POSE_DRIVE_TOLERANCE + " inches", 
+                false);
+            SmartDashboard.putNumber("Auto Pose Check/Degrees from Start", -1);
+            SmartDashboard.putBoolean("Auto Pose Check/Robot Rotation within " + PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES + " degrees", 
+                false);
+        }
     }
 }

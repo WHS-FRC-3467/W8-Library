@@ -22,6 +22,8 @@ import au.grapplerobotics.CanBridge;
 import com.pathplanner.lib.commands.PathfindingCommand;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -122,7 +124,7 @@ public class Robot extends LoggedRobot {
         // DO THIS AFTER CONFIGURATION OF YOUR DESIRED PATHFINDER
         PathfindingCommand.warmupCommand().schedule();
 
-        // Log first 8 character of robot serial
+        // Log first 8 characters of robot serial
         Logger.recordOutput("Robot Serial", Robot.isReal() ? Constants.RobotConstants.serial.subSequence(0,8).toString() : Constants.RobotConstants.serial);
     }
 
@@ -153,7 +155,9 @@ public class Robot extends LoggedRobot {
     /** This function is called periodically when disabled. */
     @Override
     public void disabledPeriodic()
-    {}
+    {
+        robotContainer.disabledPeriodic();
+    }
 
     /**
      * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
@@ -172,7 +176,9 @@ public class Robot extends LoggedRobot {
     /** This function is called periodically during autonomous. */
     @Override
     public void autonomousPeriodic()
-    {}
+    {
+        RobotContainer.autoPreviewField.setRobotPose(robotContainer.drive.getPose());
+    }
 
     /** This function is called once when teleop is enabled. */
     @Override
