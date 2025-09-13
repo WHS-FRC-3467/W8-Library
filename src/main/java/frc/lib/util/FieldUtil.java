@@ -12,10 +12,13 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.FieldConstants;
 
-/** Add your docs here. */
+/** Utility class for field-related methods. */
 public class FieldUtil {
     private static final Translation2d fieldCenter = FieldConstants.FIELDCENTER;
 
+    /**
+     * @return True if the robot is on the red alliance, false if on the blue alliance.
+     */
     public static boolean shouldFlip()
     {
         return DriverStation.getAlliance().isPresent()
@@ -39,6 +42,13 @@ public class FieldUtil {
         return shouldFlip() ? blue_rotation.plus(Rotation2d.k180deg) : blue_rotation;
     }
 
+    /**
+     * Checks if a given pose is within the field boundaries, with a specified margin.
+     * 
+     * @param translation The tranlslation to check.
+     * @param margin The distance inset from the boundaries.
+     * @return True if the pose is within the field boundaries, false otherwise.
+     */
     public static boolean isPoseInField(Translation2d translation, Distance margin)
     {
         return translation.getX() >= margin.in(Meters)
