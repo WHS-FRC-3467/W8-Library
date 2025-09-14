@@ -7,8 +7,10 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Meters;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Distance;
 
 /**
  * Contains various field dimensions and useful reference points. All units are in meters and poses
@@ -21,5 +23,7 @@ public class FieldConstants {
         new Translation2d(FIELDLENGTH / 2, FIELDWIDTH / 2);
     public static final double startingLineX =
         Units.inchesToMeters(299.438); // Measured from the inside of starting
+
+    public static final Distance ALGAEDIAMETER = Meters.of(.41);
 
 }

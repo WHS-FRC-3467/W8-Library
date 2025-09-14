@@ -29,6 +29,7 @@ import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
 import frc.lib.io.vision.VisionIOPhotonVisionSim;
 import frc.lib.util.LoggedDashboardChooser;
+import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.robot.Constants.PathConstants;
@@ -60,8 +61,10 @@ import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
+import static edu.wpi.first.units.Units.FeetPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -267,6 +270,11 @@ public class RobotContainer {
         SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",
             rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+
+        LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
+        SmartDashboard.putData("Shoot Ball", Commands
+            .runOnce(() -> BallSimulator.launch(FeetPerSecond.of(ballVel.getAsDouble()),
+                RobotState.getInstance())));
     }
 
     /**
