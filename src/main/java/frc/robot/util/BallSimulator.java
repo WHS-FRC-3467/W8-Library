@@ -2,6 +2,8 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
+// https://github.com/3015RangerRobotics/2024Public/blob/main/RobotCode2024/src/main/java/frc/robot/util/NoteSimulator.java#L11
+
 package frc.robot.util;
 
 import static edu.wpi.first.units.Units.Inches;
