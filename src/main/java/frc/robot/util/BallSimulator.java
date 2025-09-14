@@ -21,13 +21,13 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 
-/** Add your docs here. */
+/** Simulates a ball being launched from the robot. */
 public class BallSimulator {
     private static Pose3d currentPose = new Pose3d();
     private static Translation3d objectVelocity = new Translation3d();
     private static List<Translation3d> objectTrajectory = new ArrayList<>();
 
-    private static double dT = 0.02;
+    private static double dT = 0.02; // Time step
     private static final double AIR_DENSITY = 1.225;
     private static final double DRAG_COEFFICIENT = 0.45;
     private static final double CROSSECTION_AREA =
@@ -45,7 +45,6 @@ public class BallSimulator {
                 0,
                 -Math.toRadians(45), 0 // 45 degree launch angle
             ));
-
 
     public static void launch(LinearVelocity velocity, RobotState robotState)
     {
