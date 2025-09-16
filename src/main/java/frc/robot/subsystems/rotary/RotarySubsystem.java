@@ -5,8 +5,6 @@
 package frc.robot.subsystems.rotary;
 
 import static edu.wpi.first.units.Units.Degrees;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -58,24 +56,21 @@ public class RotarySubsystem extends SubsystemBase {
             .withName("Go To " + setpoint.toString() + " Setpoint");
     };
 
-    public boolean nearPosition(Angle targetPosition)
+    public boolean nearGoal(Angle targetPosition)
     {
-        return MathUtil.isNear(
-            io.getPosition().in(BaseUnits.AngleUnit),
-            targetPosition.in(BaseUnits.AngleUnit),
-            RotarySubsystemConstants.TOLERANCE.in(BaseUnits.AngleUnit));
+        return io.nearGoal(targetPosition, RotarySubsystemConstants.TOLERANCE);
     }
 
-    public Command waitForPositionCommand(Angle position)
+    public Command waitUntilGoalCommand(Angle position)
     {
         return Commands.waitUntil(() -> {
-            return nearPosition(position);
-        }).withName("Wait for position " + position.toString());
+            return nearGoal(position);
+        });
     }
 
-    public Command setpointCommandWithWait(Setpoint setpoint)
+    public Command setGoalCommandWithWait(Setpoint setpoint)
     {
-        return waitForPositionCommand(setpoint.getSetpoint())
+        return waitUntilGoalCommand(setpoint.getSetpoint())
             .deadlineFor(setSetpoint(setpoint))
             .withName("Go To " + setpoint.toString() + " Setpoint with wait");
     }
@@ -83,5 +78,10 @@ public class RotarySubsystem extends SubsystemBase {
     public AngularVelocity getVelocity()
     {
         return io.getVelocity();
+    }
+
+    public void close()
+    {
+        io.close();
     }
 }

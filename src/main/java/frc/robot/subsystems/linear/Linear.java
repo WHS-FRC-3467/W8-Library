@@ -65,12 +65,31 @@ public class Linear extends SubsystemBase {
         io.periodic();
     }
 
-    public Command goToSetpoint(Setpoint setpoint)
+    public Command setGoal(Setpoint setpoint)
     {
         return this
             .runOnce(() -> io.runPosition(setpoint.getAngle(), LinearConstants.CRUISE_VELOCITY,
                 LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_0))
             .withName("Go To " + setpoint.toString() + " Setpoint");
+    }
+
+    public boolean nearGoal(Distance goalPosition)
+    {
+        return io.nearGoal(goalPosition, LinearConstants.TOLERANCE);
+    }
+
+    public Command waitUntilGoalCommand(Distance position)
+    {
+        return Commands.waitUntil(() -> {
+            return nearGoal(position);
+        });
+    }
+
+    public Command setGoalCommandWithWait(Setpoint setpoint)
+    {
+        return waitUntilGoalCommand(setpoint.getSetpoint())
+            .deadlineFor(setGoal(setpoint))
+            .withName("Go To " + setpoint.toString() + " Setpoint with wait");
     }
 
     public Command homeCommand()
@@ -79,7 +98,7 @@ public class Linear extends SubsystemBase {
             runOnce(() -> io.runVoltage(Volts.of(-2))),
             Commands.waitUntil(homedTrigger),
             runOnce(() -> io.setEncoderPosition(Setpoint.HOME.getAngle())),
-            goToSetpoint(Setpoint.STOW))
+            setGoal(Setpoint.STOW))
             .withName("Homing");
     }
 
@@ -92,5 +111,10 @@ public class Linear extends SubsystemBase {
     {
         return LinearConstants.CONVERTER.toDistance(io.getVelocity().times(Seconds.of(1)))
             .div(Seconds.of(1));
+    }
+
+    public void close()
+    {
+        io.close();
     }
 }

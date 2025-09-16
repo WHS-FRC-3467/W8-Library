@@ -263,8 +263,8 @@ public class RobotContainer {
                 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
                 PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES));
 
-        SmartDashboard.putData("Linear: Stow", linear.goToSetpoint(Linear.Setpoint.STOW));
-        SmartDashboard.putData("Linear: Raised", linear.goToSetpoint(Linear.Setpoint.RAISED));
+        SmartDashboard.putData("Linear: Stow", linear.setGoal(Linear.Setpoint.STOW));
+        SmartDashboard.putData("Linear: Raised", linear.setGoal(Linear.Setpoint.RAISED));
         SmartDashboard.putData("Linear: Home", linear.homeCommand());
         SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",

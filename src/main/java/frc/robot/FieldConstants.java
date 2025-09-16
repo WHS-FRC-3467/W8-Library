@@ -25,8 +25,11 @@ public class FieldConstants {
 
     public static final Distance FIELDLENGTH = Meters.of(aprilTagLayout.getFieldLength());
     public static final Distance FIELDWIDTH = Meters.of(aprilTagLayout.getFieldWidth());
-    public static final Translation2d fieldCenter =
+
+    public static final Distance STARTINGLINEX = Inches.of(299.438);
+
+    public static final Translation2d FIELDCENTER =
         new Translation2d(FIELDLENGTH.in(Meters) / 2, FIELDWIDTH.in(Meters) / 2);
-    public static final Distance startingLineX = Inches.of(299.438);
+
 
 }

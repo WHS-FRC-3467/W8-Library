@@ -15,7 +15,6 @@
 
 package frc.robot.subsystems.vision;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;

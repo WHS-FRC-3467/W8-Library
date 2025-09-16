@@ -31,7 +31,7 @@ import frc.robot.Robot;
 
 /** Add your docs here. */
 public class LinearConstants {
-    public static String NAME = "Linear Subsystem";
+    public static String NAME = "Linear";
 
     public static final Distance TOLERANCE = Inches.of(2.0);
 
