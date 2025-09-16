@@ -282,7 +282,7 @@ public class RobotContainer {
     }
 
     /** This function is called periodically by Robot.java when disabled. */
-    public void disabledPeriodic() {
+    public void checkStartPose() {
 
         /* Starting pose checker for auto */
         autoPreviewField.setRobotPose(drive.getPose());
