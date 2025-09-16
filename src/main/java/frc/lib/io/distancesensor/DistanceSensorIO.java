@@ -49,4 +49,7 @@ public interface DistanceSensorIO {
      */
     public default void updateInputs(DistanceSensorInputs inputs)
     {}
+
+    public default void setDistance(Distance distance)
+    {}
 }
