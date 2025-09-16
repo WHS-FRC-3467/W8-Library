@@ -157,4 +157,10 @@ public class LinearMechanismSim extends LinearMechanism {
     {
         return inputs.velocity;
     }
+
+    @Override
+    public void close()
+    {
+        io.close();
+    }
 }
