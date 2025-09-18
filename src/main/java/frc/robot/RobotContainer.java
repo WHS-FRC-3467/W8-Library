@@ -44,6 +44,7 @@ import frc.robot.commands.autos.BranchingAuto;
 import frc.robot.commands.autos.ExampleAuto;
 import frc.robot.commands.autos.NoneAuto;
 import frc.robot.commands.autos.WheelCharacterizationAuto;
+import frc.robot.commands.autos.WheelSlipAuto;
 import frc.robot.subsystems.beambreak1.BeamBreak1;
 import frc.robot.subsystems.beambreak1.BeamBreak1Constants;
 import frc.robot.subsystems.drive.Drive;
@@ -208,6 +209,8 @@ public class RobotContainer {
 
         autoChooser.addOption("Drive Wheel Radius Characterization",
             new WheelCharacterizationAuto(drive));
+
+        autoChooser.addOption("Wheel Slip Characterization", new WheelSlipAuto(drive));
 
         // Configure the button bindings
         configureButtonBindings();
