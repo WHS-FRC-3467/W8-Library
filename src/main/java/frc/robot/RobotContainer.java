@@ -17,7 +17,10 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -31,6 +34,7 @@ import frc.lib.io.vision.VisionIOPhotonVisionSim;
 import frc.lib.util.LoggedDashboardChooser;
 import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
+import frc.lib.util.GamePieceVisualizer;
 import frc.robot.Constants.PathConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.OnTheFlyPathCommand;
@@ -208,6 +212,9 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
+
+        GamePieceVisualizer algae = new GamePieceVisualizer("Algae",
+            new Pose3d(new Translation3d(3, 3, 1), new Rotation3d(0, 0, 0)));
     }
 
     /**
@@ -270,6 +277,10 @@ public class RobotContainer {
         SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",
             rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+
+        GamePieceVisualizer algaeViz =
+            new GamePieceVisualizer("Algae #1", new Pose3d(1, 1, 1, new Rotation3d()));
+        SmartDashboard.putData("Hide Algae", Commands.runOnce(() -> algaeViz.hide()));
     }
 
     /**
