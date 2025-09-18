@@ -5,8 +5,6 @@
 package frc.robot.subsystems.rotary;
 
 import static edu.wpi.first.units.Units.Degrees;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;

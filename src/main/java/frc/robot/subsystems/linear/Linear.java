@@ -8,10 +8,8 @@ import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
-import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
@@ -114,7 +112,7 @@ public class Linear extends SubsystemBase {
         return LinearConstants.CONVERTER.toDistance(io.getVelocity().times(Seconds.of(1)))
             .div(Seconds.of(1));
     }
-    
+
     public void close()
     {
         io.close();

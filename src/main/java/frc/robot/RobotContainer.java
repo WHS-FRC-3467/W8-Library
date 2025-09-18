@@ -17,7 +17,10 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
@@ -32,9 +35,12 @@ import frc.lib.io.vision.VisionIOPhotonVisionSim;
 import frc.lib.util.LoggedDashboardChooser;
 import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
+import frc.lib.util.GamePieceVisualizer;
 import frc.robot.Constants.PathConstants;
+import frc.robot.commands.AlignTo2DTarget;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.OnTheFlyPathCommand;
+import frc.robot.commands.PointTo2DTarget;
 import frc.robot.commands.autos.BranchingAuto;
 import frc.robot.commands.autos.ExampleAuto;
 import frc.robot.commands.autos.NoneAuto;
@@ -207,6 +213,9 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
+
+        GamePieceVisualizer algae = new GamePieceVisualizer("Algae",
+            new Pose3d(new Translation3d(3, 3, 1), new Rotation3d(0, 0, 0)));
     }
 
     /**
@@ -269,6 +278,15 @@ public class RobotContainer {
         SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",
             rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+
+        SmartDashboard.putData("Align2d",
+            new AlignTo2DTarget(drive, vision, () -> controller.getLeftY()));
+        SmartDashboard.putData("PointToTarget",
+            new PointTo2DTarget(drive, vision));
+
+        GamePieceVisualizer algaeViz =
+            new GamePieceVisualizer("Algae #1", new Pose3d(1, 1, 1, new Rotation3d()));
+        SmartDashboard.putData("Hide Algae", Commands.runOnce(() -> algaeViz.hide()));
     }
 
     /**
@@ -282,30 +300,41 @@ public class RobotContainer {
     }
 
     /** This function is called periodically by Robot.java when disabled. */
-    public void checkStartPose() {
+    public void checkStartPose()
+    {
 
         /* Starting pose checker for auto */
         autoPreviewField.setRobotPose(drive.getPose());
-        
+
         try {
             double distanceFromStartPose = drive.getPose().getTranslation()
                 .getDistance(autoPreviewField.getObject("path").getPoses().get(0).getTranslation());
             double degreesFromStartPose = Math.abs(drive.getPose().getRotation().minus(
                 autoPreviewField.getObject("path").getPoses().get(0).getRotation()).getDegrees());
 
-            SmartDashboard.putNumber("Auto Pose Check/Inches from Start", Math.round(distanceFromStartPose * 100.0) / 100.0);
-            SmartDashboard.putBoolean("Auto Pose Check/Robot Position within " + Units.metersToInches(PathConstants.STARTING_POSE_DRIVE_TOLERANCE) + " inches", 
+            SmartDashboard.putNumber("Auto Pose Check/Inches from Start",
+                Math.round(distanceFromStartPose * 100.0) / 100.0);
+            SmartDashboard.putBoolean(
+                "Auto Pose Check/Robot Position within "
+                    + Units.metersToInches(PathConstants.STARTING_POSE_DRIVE_TOLERANCE) + " inches",
                 distanceFromStartPose < PathConstants.STARTING_POSE_DRIVE_TOLERANCE);
-            SmartDashboard.putNumber("Auto Pose Check/Degrees from Start", Math.round(degreesFromStartPose * 100.0) / 100.0);
-            SmartDashboard.putBoolean("Auto Pose Check/Robot Rotation within " + PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES + " degrees", 
+            SmartDashboard.putNumber("Auto Pose Check/Degrees from Start",
+                Math.round(degreesFromStartPose * 100.0) / 100.0);
+            SmartDashboard.putBoolean(
+                "Auto Pose Check/Robot Rotation within "
+                    + PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES + " degrees",
                 degreesFromStartPose < PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES);
-            
+
         } catch (Exception e) {
             SmartDashboard.putNumber("Auto Pose Check/Inches from Start", -1);
-            SmartDashboard.putBoolean("Auto Pose Check/Robot Position within " + PathConstants.STARTING_POSE_DRIVE_TOLERANCE + " inches", 
+            SmartDashboard.putBoolean(
+                "Auto Pose Check/Robot Position within "
+                    + PathConstants.STARTING_POSE_DRIVE_TOLERANCE + " inches",
                 false);
             SmartDashboard.putNumber("Auto Pose Check/Degrees from Start", -1);
-            SmartDashboard.putBoolean("Auto Pose Check/Robot Rotation within " + PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES + " degrees", 
+            SmartDashboard.putBoolean(
+                "Auto Pose Check/Robot Rotation within "
+                    + PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES + " degrees",
                 false);
         }
     }
