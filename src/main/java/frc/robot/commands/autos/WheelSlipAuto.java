@@ -17,8 +17,11 @@ import frc.lib.util.AutoCommand;
 import frc.robot.subsystems.drive.Drive;
 
 public class WheelSlipAuto extends AutoCommand {
+    private final Drive drive;
+
     public WheelSlipAuto(Drive drive)
     {
+        this.drive = drive;
         addCommands(Commands.sequence(
             Commands.run(() -> drive.runCharacterization(0.0)).withTimeout(2),
             rampUntilVelocity(drive, 0.2, RotationsPerSecond.of(1))));
@@ -33,7 +36,7 @@ public class WheelSlipAuto extends AutoCommand {
     @Override
     public Pose2d getStartingPose()
     {
-        return new Pose2d();
+        return drive.getPose();
     }
 
     private static Command rampUntilVelocity(Drive drive, double rampRate,
