@@ -38,10 +38,10 @@ public class ServoIOSim implements ServoIO {
      * @param minAngle The lower limit of the servo in degrees.
      * @param maxAngle The upper limit of the servo in degrees.
      */
-    public ServoIOSim(String name, double minAngle, double maxAngle) {
+    public ServoIOSim(String name, Angle minAngle, Angle maxAngle) {
         this.name = name;
-        this.minAngle = minAngle;
-        this.maxAngle = maxAngle;
+        this.minAngle = minAngle.in(Degrees);
+        this.maxAngle = maxAngle.in(Degrees);
     }
     
     /**
