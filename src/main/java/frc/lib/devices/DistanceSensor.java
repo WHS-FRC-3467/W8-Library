@@ -75,13 +75,4 @@ public class DistanceSensor {
         return inputs.ambientSignal;
     }
 
-    /**
-     * Sets the simulated distance reading
-     * 
-     * @param distance
-     */
-    public void setDistance(Distance distance)
-    {
-        io.setDistance(distance);
-    }
 }
