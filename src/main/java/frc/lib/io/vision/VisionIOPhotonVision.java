@@ -59,6 +59,8 @@ public class VisionIOPhotonVision implements VisionIO {
         inputs.connected = camera.isConnected();
 
         List<PoseObservation> estimates = new ArrayList<>();
+        List<PhotonTrackedTarget> allTargets = new ArrayList<>();
+        List<TagObservation> tagObservations = new ArrayList<>();
         Set<Integer> tagIDs = new HashSet<>();
 
         poseEstimator.addHeadingData(timestampedHeading.timestamp().in(Seconds),
@@ -67,6 +69,8 @@ public class VisionIOPhotonVision implements VisionIO {
             if (!result.hasTargets()) {
                 continue;
             }
+
+            allTargets.addAll(result.getTargets());
 
             Optional<EstimatedRobotPose> optionalEstimate = poseEstimator.update(result);
             if (optionalEstimate.isEmpty()) {
@@ -99,5 +103,14 @@ public class VisionIOPhotonVision implements VisionIO {
 
         inputs.poseObservations = estimates.toArray(new PoseObservation[0]);
         inputs.tagIds = ArrayUtils.toPrimitive(tagIDs.toArray(new Integer[0]));
+
+        for (PhotonTrackedTarget target : allTargets) {
+            tagObservations.add(new TagObservation(
+                target.fiducialId,
+                target.getPitch(),
+                target.getYaw(),
+                target.getArea()));
+        }
+        inputs.allTargets = tagObservations.toArray(new TagObservation[0]);
     }
 }
