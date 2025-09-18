@@ -17,11 +17,14 @@ import frc.lib.io.detectionML.*;
 public class objectDetectorConstants {
     public final static String CAMERA0_NAME = "Detection Camera #0";
     public final static double cameraRoll = 0.0; // degrees
-    public final static double cameraPitch = -10.0; // degrees
+    public final static double cameraPitch = 0.0; // degrees
     public final static double cameraYaw = 0.0; // degrees
-    public final static double cameraZ = 1.00; // meters
+    public final static double cameraX = 0.0; // meters
+    public final static double cameraY = 0.0; // meters
+    public final static double cameraZ = 0.0; // meters
+
     public static Transform3d CAMERA0TRANSFORM =
-        new Transform3d(0.0, 0.0, cameraZ,
+        new Transform3d(cameraX, cameraY, cameraZ,
             new Rotation3d(Math.toRadians(cameraRoll), Math.toRadians(cameraPitch),
                 Math.toRadians(cameraYaw)));
 
