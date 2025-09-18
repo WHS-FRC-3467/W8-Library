@@ -50,7 +50,7 @@ public class Vision extends SubsystemBase {
     private final Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier;
 
     @Getter
-    private Optional<TagObservation> closestTagObservation = Optional.ofNullable(null);
+    private Optional<TagObservation> closestTagObservation = Optional.empty();
 
     public Vision(VisionConsumer consumer,
         Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier, VisionIO... io)
