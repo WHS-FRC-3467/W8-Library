@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.devices.Servo;
 import frc.lib.io.servo.ServoIO;
+import frc.lib.util.LoggedTunableNumber;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import static edu.wpi.first.units.Units.Degrees;
@@ -27,11 +28,16 @@ import org.littletonrobotics.junction.Logger;
 
 public class Servo1 extends SubsystemBase {
 
+    private static final LoggedTunableNumber RETRACTED_SETPOINT =
+        new LoggedTunableNumber("Servo1/Retracted", 0.0);
+    private static final LoggedTunableNumber EXTENDED_SETPOINT =
+        new LoggedTunableNumber("Servo1/Extended", 180.0);
+
     @RequiredArgsConstructor
     public enum Setpoint {
         IDLE(null),
-        RETRACTED(Degrees.of(0.0)),
-        EXTENDED(Degrees.of(180.0));
+        RETRACTED(Degrees.of(RETRACTED_SETPOINT.get())),
+        EXTENDED(Degrees.of(EXTENDED_SETPOINT.get()));
 
         @Getter
         private final Angle output;
@@ -53,7 +59,7 @@ public class Servo1 extends SubsystemBase {
         Logger.recordOutput(Servo1Constants.NAME + "/Setpoint", setpoint.toString());
     }
 
-    public Command goToSetpoint(Setpoint setpoint)
+    public Command setGoal(Setpoint setpoint)
     {
         return this.runOnce(() -> {
             switch (setpoint) {
