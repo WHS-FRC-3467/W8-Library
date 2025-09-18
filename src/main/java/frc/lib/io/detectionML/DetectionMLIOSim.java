@@ -34,6 +34,9 @@ public class DetectionMLIOSim extends DetectionMLIOPhotonVision {
         // Initialize vision sim
         cam = new PhotonCamera(cameraName);
         camSim = new PhotonCameraSim(cam, new SimCameraProperties());
+        // Wireframe visualizer
+        camSim.enableDrawWireframe(true);
+
         visionSim = new VisionSystemSim("objectML");
         visionSim.addCamera(camSim, cameraTransform);
         this.robotPoseSupplier = robotPoseSupplier;
