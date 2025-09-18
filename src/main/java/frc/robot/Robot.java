@@ -25,7 +25,7 @@ import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.drive.DriveConstants;
-
+import frc.robot.util.BallSimulator;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -112,18 +112,22 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void robotInit() {
-        /* 
-         * Due to the nature of how Java works, the first run of a pathfinding command could have a significantly higher delay compared with subsequent runs.
-         * To help alleviate this issue, run this warmup command in the background when code starts.
-         * This command will not control the robot, it will simply run through a full pathfinding command to warm up the library.
+    public void robotInit()
+    {
+        /*
+         * Due to the nature of how Java works, the first run of a pathfinding command could have a
+         * significantly higher delay compared with subsequent runs. To help alleviate this issue,
+         * run this warmup command in the background when code starts. This command will not control
+         * the robot, it will simply run through a full pathfinding command to warm up the library.
          * Source: PathPlanner Docs
          */
         // DO THIS AFTER CONFIGURATION OF YOUR DESIRED PATHFINDER
         PathfindingCommand.warmupCommand().schedule();
 
         // Log first 8 character of robot serial
-        Logger.recordOutput("Robot Serial", Robot.isReal() ? Constants.RobotConstants.serial.subSequence(0,8).toString() : Constants.RobotConstants.serial);
+        Logger.recordOutput("Robot Serial",
+            Robot.isReal() ? Constants.RobotConstants.serial.subSequence(0, 8).toString()
+                : Constants.RobotConstants.serial);
     }
 
     /** This function is called periodically during all modes. */
@@ -143,6 +147,8 @@ public class Robot extends LoggedRobot {
 
         // Return to non-RT thread priority (do not modify the first argument)
         // Threads.setCurrentThreadPriority(false, 10);
+
+        BallSimulator.update();
     }
 
     /** This function is called once when the robot is disabled. */

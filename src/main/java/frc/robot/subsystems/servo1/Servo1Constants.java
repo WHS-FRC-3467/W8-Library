@@ -15,6 +15,8 @@
 
 package frc.robot.subsystems.servo1;
 
+import static edu.wpi.first.units.Units.Degrees;
+import edu.wpi.first.units.measure.Angle;
 import frc.lib.io.servo.ServoIO;
 import frc.lib.io.servo.ServoIOPWM;
 import frc.lib.io.servo.ServoIOSim;
