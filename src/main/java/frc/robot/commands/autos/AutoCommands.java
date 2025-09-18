@@ -8,7 +8,7 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import frc.lib.util.AllianceFlipUtil;
+import frc.lib.util.FieldUtil;
 import frc.robot.subsystems.drive.Drive;
 
 public class AutoCommands extends SequentialCommandGroup {
@@ -19,8 +19,8 @@ public class AutoCommands extends SequentialCommandGroup {
             () -> {
                 Pose2d pose =
                     path.getStartingHolonomicPose().get();
-                if (AllianceFlipUtil.shouldFlip()) {
-                    pose = AllianceFlipUtil.apply(pose);
+                if (FieldUtil.shouldFlip()) {
+                    pose = FieldUtil.handleAllianceFlip(pose);
                 }
 
                 drive.setPose(pose);
