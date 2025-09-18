@@ -36,8 +36,10 @@ import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.lib.util.GamePieceVisualizer;
 import frc.robot.Constants.PathConstants;
+import frc.robot.commands.AlignTo2DTarget;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.OnTheFlyPathCommand;
+import frc.robot.commands.PointTo2DTarget;
 import frc.robot.commands.autos.BranchingAuto;
 import frc.robot.commands.autos.ExampleAuto;
 import frc.robot.commands.autos.NoneAuto;
@@ -274,6 +276,11 @@ public class RobotContainer {
         SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",
             rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+
+        SmartDashboard.putData("Align2d",
+            new AlignTo2DTarget(drive, vision, () -> controller.getLeftY()));
+        SmartDashboard.putData("PointToTarget",
+            new PointTo2DTarget(drive, vision));
 
         GamePieceVisualizer algaeViz =
             new GamePieceVisualizer("Algae #1", new Pose3d(1, 1, 1, new Rotation3d()));

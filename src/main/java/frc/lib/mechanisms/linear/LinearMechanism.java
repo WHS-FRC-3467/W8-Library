@@ -8,7 +8,6 @@ import java.util.Optional;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.BaseUnits;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import frc.lib.io.motor.MotorIO.ControlType;
 import frc.lib.io.motor.MotorInputsAutoLogged;
@@ -60,7 +59,7 @@ public abstract class LinearMechanism implements Mechanism {
     }
 
     // Checks if mechanism is near a goal position within a specified tolerance
-    public boolean nearGoal(Distance goalPosition, Distance tolerance) 
+    public boolean nearGoal(Distance goalPosition, Distance tolerance)
     {
         return MathUtil.isNear(
             converter.toDistance(getPosition()).in(BaseUnits.DistanceUnit),
