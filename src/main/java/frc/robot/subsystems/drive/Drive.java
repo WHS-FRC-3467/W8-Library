@@ -229,6 +229,9 @@ public class Drive extends SubsystemBase {
 
         // Update global pose
         RobotState.getInstance().setPose(poseEstimator.getEstimatedPosition());
+
+        // Update RobotState velocity
+        RobotState.getInstance().setVelocity(getChassisSpeeds());
     }
 
     /**
