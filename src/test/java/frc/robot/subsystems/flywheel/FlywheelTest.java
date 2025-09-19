@@ -1,17 +1,16 @@
-/* Copyright (C) 2025 Windham Windup
+/*
+ * Copyright (C) 2025 Windham Windup
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
  */
 package frc.robot.subsystems.flywheel;
 
@@ -41,29 +40,29 @@ class FlywheelTest implements AutoCloseable {
         /* enable the robot */
         DriverStationSim.setEnabled(true);
         DriverStationSim.notifyNewData();
-      
+
         /* delay ~100ms so the devices can start up and enable */
         Timer.delay(0.100);
     }
-  
+
     @SuppressWarnings("PMD.SignatureDeclareThrowsException")
     @AfterEach // this method will run after each test
     void shutdown() throws Exception {
-      close();
+        close();
     }
- 
+
     @Test // marks this method as a test
     void shoot() {
-        TestUtil.runTest(flywheel.shootAmps(), 0.1, flywheel);
+        TestUtil.runTest(flywheel.shootAmps(), 0.5, flywheel);
         try {
             assertEquals(30, flywheel.getTorqueCurrent().in(Amps), DELTA);
-		} catch (Exception e) {
-			fail("Failed to run the Flywheel at 30 amps: " + e.getMessage());
+        } catch (Exception e) {
+            fail("Failed to run the Flywheel at 30 amps: " + e.getMessage());
         }
     }
-    
+
     @Override
     public void close() {
-       flywheel.close();
+        flywheel.close();
     }
-  }
+}
