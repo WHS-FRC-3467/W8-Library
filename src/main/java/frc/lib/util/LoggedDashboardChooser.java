@@ -77,7 +77,7 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
             | SecurityException
             | IllegalArgumentException
             | IllegalAccessException e) {
-            e.printStackTrace();
+            throw new IllegalStateException(e.getMessage());
         }
 
         // Get default option
@@ -90,7 +90,7 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
             | SecurityException
             | IllegalArgumentException
             | IllegalAccessException e) {
-            e.printStackTrace();
+            throw new IllegalStateException(e.getMessage());
         }
 
         // Add options

@@ -75,7 +75,9 @@ import static edu.wpi.first.units.Units.FeetPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
+import org.photonvision.simulation.VisionSystemSim;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -104,6 +106,8 @@ public class RobotContainer {
     private final LoggedDashboardChooser<Boolean> conditionalChooser;
     public static Field2d autoPreviewField = new Field2d();
 
+    private final Optional<VisionSystemSim> visionSim;
+
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
@@ -126,6 +130,8 @@ public class RobotContainer {
                 flywheel = new Flywheel(FlywheelConstants.getReal());
 
                 linear = new Linear(LinearConstants.getReal());
+
+                visionSim = Optional.empty();
                 vision = new Vision(
                     drive::addVisionMeasurement,
                     () -> drive.getTimestampedHeading(),
@@ -155,6 +161,8 @@ public class RobotContainer {
                 flywheel = new Flywheel(FlywheelConstants.getSim());
 
                 linear = new Linear(LinearConstants.getSim());
+
+                visionSim = Optional.of(VisionConstants.getSystemSim());
                 vision = new Vision(
                     drive::addVisionMeasurement,
                     () -> drive.getTimestampedHeading(),
@@ -163,7 +171,8 @@ public class RobotContainer {
                         VisionConstants.camera0Name,
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
-                        PoseStrategy.CONSTRAINED_SOLVEPNP));
+                        PoseStrategy.CONSTRAINED_SOLVEPNP,
+                        visionSim.get()));
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
             }
 
@@ -186,6 +195,8 @@ public class RobotContainer {
 
                 linear = new Linear(LinearConstants.getReplay());
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());
+
+                visionSim = Optional.empty();
                 vision = new Vision(
                     drive::addVisionMeasurement,
                     () -> drive.getTimestampedHeading(),

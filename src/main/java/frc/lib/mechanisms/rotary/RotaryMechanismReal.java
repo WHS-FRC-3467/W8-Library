@@ -30,6 +30,7 @@ public class RotaryMechanismReal extends RotaryMechanism {
         this.io = io;
     }
 
+    @Override
     public void periodic()
     {
         super.periodic();
