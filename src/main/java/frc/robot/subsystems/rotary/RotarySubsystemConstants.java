@@ -96,8 +96,9 @@ public class RotarySubsystemConstants {
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_ANGLE.in(Units.Rotations);
 
         config.Feedback.RotorToSensorRatio = ROTOR_TO_SENSOR;
-
         config.Feedback.SensorToMechanismRatio = SENSOR_TO_MECHANISM;
+
+        config.Feedback.FeedbackRemoteSensorID = Ports.RotarySubsystemEncoder.id();
 
         config.Slot0 = SLOT0CONFIG;
 
