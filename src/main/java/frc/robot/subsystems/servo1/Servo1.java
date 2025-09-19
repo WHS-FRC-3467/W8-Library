@@ -34,14 +34,14 @@ public class Servo1 extends SubsystemBase {
         new LoggedTunableNumber("Servo1/Extended", 180.0);
 
     @RequiredArgsConstructor
+    @SuppressWarnings("Immutable")
+    @Getter
     public enum Setpoint {
         IDLE(null),
         RETRACTED(Degrees.of(RETRACTED_SETPOINT.get())),
         EXTENDED(Degrees.of(EXTENDED_SETPOINT.get()));
 
-        @Getter
         private final Angle output;
-
     }
 
     Setpoint setpoint = Setpoint.IDLE;

@@ -159,9 +159,9 @@ public class Vision extends SubsystemBase {
                     VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
             }
 
-            for (var TagObservation : inputs[cameraIndex].allTargets) {
-                if (alignmentTags.contains(TagObservation.id())) {
-                    alignmentTargets.add(TagObservation);
+            for (var tagObservation : inputs[cameraIndex].allTargets) {
+                if (alignmentTags.contains(tagObservation.id())) {
+                    alignmentTargets.add(tagObservation);
 
                 }
             }
