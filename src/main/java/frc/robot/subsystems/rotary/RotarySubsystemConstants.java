@@ -26,6 +26,7 @@ import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.lib.io.motor.MotorIOTalonFX;
+import frc.lib.io.motor.MotorIOTalonFX.TalonFXFollower;
 import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.rotary.*;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
@@ -101,13 +102,16 @@ public class RotarySubsystemConstants {
     public static RotaryMechanismReal getReal()
     {
         return new RotaryMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain), CONSTANTS);
+            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
+                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
+            CONSTANTS);
     }
 
     public static RotaryMechanismSim getSim()
     {
         return new RotaryMechanismSim(
-            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain),
+            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
+                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
             DCMOTOR, MOI, false, CONSTANTS);
     }
 
