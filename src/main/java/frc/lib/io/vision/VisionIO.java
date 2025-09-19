@@ -27,6 +27,7 @@ public interface VisionIO {
     public static class VisionIOInputs {
         public boolean connected = false;
         public PoseObservation[] poseObservations = new PoseObservation[0];
+        public TagObservation[] allTargets = new TagObservation[0];
         public int[] tagIds = new int[0];
     }
 
@@ -37,6 +38,13 @@ public interface VisionIO {
         double ambiguity,
         int tagCount,
         Distance averageTagDistance) {
+    }
+
+    public static record TagObservation(
+        int id,
+        double ptich,
+        double yaw,
+        double area) {
     }
 
     public default void updateInputs(VisionIOInputs inputs,

@@ -12,6 +12,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.Units;
@@ -30,7 +31,7 @@ import frc.robot.Robot;
 
 /** Add your docs here. */
 public class LinearConstants {
-    public static String NAME = "Linear Subsystem";
+    public static String NAME = "Linear";
 
     public static final Distance TOLERANCE = Inches.of(2.0);
 
@@ -52,7 +53,8 @@ public class LinearConstants {
     public static final DistanceAngleConverter CONVERTER = new DistanceAngleConverter(DRUM_RADIUS);
 
     private static final LinearMechCharacteristics CHARACTERISTICS =
-        new LinearMechCharacteristics(MIN_DISTANCE, MAX_DISTANCE, STARTING_DISTANCE, CONVERTER);
+        new LinearMechCharacteristics(new Translation3d(0.0, 0.0, 0.0), MIN_DISTANCE, MAX_DISTANCE,
+            STARTING_DISTANCE, CONVERTER);
 
     // Positional PID
     public static Slot0Configs SLOT0CONFIG = new Slot0Configs()
@@ -99,7 +101,7 @@ public class LinearConstants {
     public static LinearMechanismReal getReal()
     {
         return new LinearMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.linear));
+            new MotorIOTalonFX(NAME, getFXConfig(), Ports.linear), CHARACTERISTICS);
     }
 
     public static LinearMechanismSim getSim()
@@ -111,6 +113,6 @@ public class LinearConstants {
 
     public static LinearMechanism getReplay()
     {
-        return new LinearMechanism() {};
+        return new LinearMechanism(NAME, CHARACTERISTICS) {};
     }
 }

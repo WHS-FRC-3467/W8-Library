@@ -13,6 +13,7 @@ import static edu.wpi.first.units.Units.Meters;
 import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.Units;
@@ -29,11 +30,10 @@ import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.rotary.*;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
 import frc.robot.Ports;
-import frc.robot.Robot;
 
 /** Add your docs here. */
 public class RotarySubsystemConstants {
-    public static String NAME = "Rotary Subsystem";
+    public static String NAME = "Rotary";
 
     public static final Angle TOLERANCE = Degrees.of(2.0);
 
@@ -44,13 +44,15 @@ public class RotarySubsystemConstants {
 
     private static final double GEARING = (2.0 / 1.0);
 
+    private static final Translation3d OFFSET = Translation3d.kZero;
+
     private static final Angle MIN_ANGLE = Degrees.of(0.0);
     private static final Angle MAX_ANGLE = Degrees.of(90.0);
     private static final Angle STARTING_ANGLE = Radians.of(0.0);
     private static final Distance ARM_LENGTH = Meters.of(1.0);
 
     private static final RotaryMechCharacteristics CONSTANTS =
-        new RotaryMechCharacteristics(ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
+        new RotaryMechCharacteristics(OFFSET, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
 
     private static final Mass ARM_MASS = Kilograms.of(.01);
     private static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
@@ -67,12 +69,12 @@ public class RotarySubsystemConstants {
     {
         TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.SupplyCurrentLimitEnable = Robot.isReal();
+        config.CurrentLimits.SupplyCurrentLimitEnable = false;
         config.CurrentLimits.SupplyCurrentLimit = 40.0;
         config.CurrentLimits.SupplyCurrentLowerLimit = 40.0;
         config.CurrentLimits.SupplyCurrentLowerTime = 0.1;
 
-        config.CurrentLimits.StatorCurrentLimitEnable = Robot.isReal();
+        config.CurrentLimits.StatorCurrentLimitEnable = false;
         config.CurrentLimits.StatorCurrentLimit = 80.0;
 
         config.Voltage.PeakForwardVoltage = 12.0;
@@ -81,10 +83,10 @@ public class RotarySubsystemConstants {
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
-        config.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
         config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_ANGLE.in(Units.Rotations);
 
-        config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_ANGLE.in(Units.Rotations);
 
         config.Feedback.RotorToSensorRatio = 1.0;
@@ -99,18 +101,18 @@ public class RotarySubsystemConstants {
     public static RotaryMechanismReal getReal()
     {
         return new RotaryMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain));
+            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain), CONSTANTS);
     }
 
     public static RotaryMechanismSim getSim()
     {
         return new RotaryMechanismSim(
             new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain),
-            DCMOTOR, MOI, true, CONSTANTS);
+            DCMOTOR, MOI, false, CONSTANTS);
     }
 
     public static RotaryMechanism getReplay()
     {
-        return new RotaryMechanism() {};
+        return new RotaryMechanism(NAME, CONSTANTS) {};
     }
 }

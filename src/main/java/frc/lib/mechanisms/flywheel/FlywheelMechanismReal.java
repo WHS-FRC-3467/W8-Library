@@ -99,4 +99,10 @@ public class FlywheelMechanismReal implements FlywheelMechanism {
     {
         return inputs.torqueCurrent;
     }
+
+    @Override
+    public AngularVelocity getVelocity()
+    {
+        return inputs.velocity;
+    }
 }

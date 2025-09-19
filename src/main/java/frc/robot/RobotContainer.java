@@ -17,7 +17,10 @@ package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -29,15 +32,20 @@ import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
 import frc.lib.io.vision.VisionIOPhotonVisionSim;
 import frc.lib.util.LoggedDashboardChooser;
+import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
+import frc.lib.util.GamePieceVisualizer;
 import frc.robot.Constants.PathConstants;
+import frc.robot.commands.AlignTo2DTarget;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.OnTheFlyPathCommand;
+import frc.robot.commands.PointTo2DTarget;
 import frc.robot.commands.autos.BranchingAuto;
 import frc.robot.commands.autos.ExampleAuto;
 import frc.robot.commands.autos.NoneAuto;
 import frc.robot.commands.autos.WheelCharacterizationAuto;
+import frc.robot.commands.autos.WheelSlipAuto;
 import frc.robot.subsystems.beambreak1.BeamBreak1;
 import frc.robot.subsystems.beambreak1.BeamBreak1Constants;
 import frc.robot.subsystems.drive.Drive;
@@ -60,8 +68,11 @@ import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
+import static edu.wpi.first.units.Units.FeetPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
@@ -109,7 +120,7 @@ public class RobotContainer {
                     new ModuleIOTalonFX(DriveConstants.BackRight));
 
                 leds = new LEDs(LEDsConstants.getLightsIOReal());
-                laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal());
+                laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal(), drive);
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
                 servo1 = new Servo1(Servo1Constants.getReal());
                 flywheel = new Flywheel(FlywheelConstants.getReal());
@@ -137,7 +148,7 @@ public class RobotContainer {
 
                 leds = new LEDs(LEDsConstants.getLightsIOSim());
                 laserCAN1 =
-                    new LaserCAN1(LaserCAN1Constants.getSim());
+                    new LaserCAN1(LaserCAN1Constants.getSim(), drive);
                 beamBreak1 = new BeamBreak1(
                     BeamBreak1Constants.getSim());
                 servo1 = new Servo1(Servo1Constants.getSim());
@@ -167,7 +178,7 @@ public class RobotContainer {
 
                 leds = new LEDs(LEDsConstants.getLightsIOReplay());
                 laserCAN1 =
-                    new LaserCAN1(LaserCAN1Constants.getReplay());
+                    new LaserCAN1(LaserCAN1Constants.getReplay(), drive);
                 beamBreak1 =
                     new BeamBreak1(BeamBreak1Constants.getReplay());
                 servo1 = new Servo1(Servo1Constants.getReplay());
@@ -202,8 +213,13 @@ public class RobotContainer {
         autoChooser.addOption("Drive Wheel Radius Characterization",
             new WheelCharacterizationAuto(drive));
 
+        autoChooser.addOption("Wheel Slip Characterization", new WheelSlipAuto(drive));
+
         // Configure the button bindings
         configureButtonBindings();
+
+        GamePieceVisualizer algae = new GamePieceVisualizer("Algae",
+            new Pose3d(new Translation3d(3, 3, 1), new Rotation3d(0, 0, 0)));
     }
 
     /**
@@ -260,9 +276,26 @@ public class RobotContainer {
                 0.0, false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
                 PathConstants.PATHGENERATION_ROT_TOLERANCE_DEGREES));
 
-        SmartDashboard.putData("Linear: Stow", linear.goToSetpoint(Linear.Setpoint.STOW));
-        SmartDashboard.putData("Linear: Raised", linear.goToSetpoint(Linear.Setpoint.RAISED));
+        SmartDashboard.putData("Linear: Stow", linear.setGoal(Linear.Setpoint.STOW));
+        SmartDashboard.putData("Linear: Raised", linear.setGoal(Linear.Setpoint.RAISED));
         SmartDashboard.putData("Linear: Home", linear.homeCommand());
+        SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
+        SmartDashboard.putData("Rotary: Raised",
+            rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+
+        LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
+        SmartDashboard.putData("Shoot Ball", Commands
+            .runOnce(() -> BallSimulator.launch(FeetPerSecond.of(ballVel.getAsDouble()),
+                RobotState.getInstance())));
+
+        SmartDashboard.putData("Align2d",
+            new AlignTo2DTarget(drive, vision, () -> controller.getLeftY()));
+        SmartDashboard.putData("PointToTarget",
+            new PointTo2DTarget(drive, vision));
+
+        GamePieceVisualizer algaeViz =
+            new GamePieceVisualizer("Algae #1", new Pose3d(1, 1, 1, new Rotation3d()));
+        SmartDashboard.putData("Hide Algae", Commands.runOnce(() -> algaeViz.hide()));
     }
 
     /**
