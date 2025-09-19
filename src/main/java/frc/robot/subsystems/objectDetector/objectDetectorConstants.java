@@ -13,20 +13,20 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.lib.io.detectionML.*;
 
-/** Add your docs here. */
+/** +X - towards other alliance's station, +Y - towards center of field from right-side */
 public class objectDetectorConstants {
     public final static String CAMERA0_NAME = "Detection Camera #0";
     public final static double cameraRoll = 0.0; // degrees
-    public final static double cameraPitch = 0.0; // degrees
-    public final static double cameraYaw = 0.0; // degrees
-    public final static double cameraX = 0.0; // meters
-    public final static double cameraY = 0.0; // meters
-    public final static double cameraZ = 0.0; // meters
+    public final static double cameraPitch = -20; // degrees
+    public final static double cameraYaw = -30; // degrees
+    public final static double cameraX = 0.15; // meters
+    public final static double cameraY = -0.15; // meters
+    public final static double cameraZ = 0.75; // meters
 
     public static Transform3d CAMERA0TRANSFORM =
         new Transform3d(cameraX, cameraY, cameraZ,
-            new Rotation3d(Math.toRadians(cameraRoll), Math.toRadians(cameraPitch),
-                Math.toRadians(cameraYaw)));
+            new Rotation3d(Math.toRadians(cameraRoll), Math.toRadians(-cameraPitch),
+                Math.toRadians(-cameraYaw)));
 
     public final static String ALGAE_NAME = "Algae";
     public final static double algaeHeightMeters = 0.41;

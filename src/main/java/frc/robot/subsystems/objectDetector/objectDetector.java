@@ -42,11 +42,11 @@ public class objectDetector extends SubsystemBase {
 
         if (detectionML.getTargetObservations().length > 0) {
             range = detectionML.rangeToTarget_Pitch(detectionML.getTargetObservations()[0],
-                objectDetectorConstants.cameraZ,
+                objectDetectorConstants.CAMERA0TRANSFORM,
                 objectDetectorConstants.algaeHeightMeters / 2,
-                objectDetectorConstants.cameraPitch, 1, 0);
+                1, 0);
             heading = detectionML.headingToTarget_Yaw(detectionML.getTargetObservations()[0],
-                objectDetectorConstants.cameraYaw,
+                objectDetectorConstants.CAMERA0TRANSFORM,
                 range, 1, 0);
             distance = detectionML.distanceToTarget2d(range, heading);
             Logger.recordOutput("Detection/" + "Calculated Range", range);

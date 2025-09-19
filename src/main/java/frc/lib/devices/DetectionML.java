@@ -11,7 +11,7 @@ import frc.lib.io.detectionML.DetectionMLIO.TargetObservation;
 import java.util.Arrays;
 import java.lang.Math;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 /**
@@ -104,7 +104,7 @@ public class DetectionML {
     }
 
     /**
-     * Estimates range to a target using the target's known height. Algorithm similar to
+     * Estimates robot's range to a target using the target's known height. Algorithm similar to
      * {@link org.photonvision.PhotonUtils}. This method can produce more stable results than
      * SolvePNP when well tuned, if the full 6d robot pose is not required. Note that this method
      * requires the camera to have 0 roll (not be skewed clockwise or CCW relative to the floor),
@@ -115,32 +115,35 @@ public class DetectionML {
      * @param targetObservation A data type containing vision pipeline results for a single target.
      *        Used to determine the pitch of the target from the centerline of the camera's lens in
      *        degrees. Positive values up.
-     * @param cameraHeightMeters The physical height of the camera off the floor in meters.
+     * @param cameraTransform Transform3d of the camera relative to the robot. Used to determine the
+     *        camera's height off the ground, the range offset, and installation pitch relative to
+     *        the horizontal plane (positive values up).
      * @param targetHeightMeters The physical height of the target off the floor as measured by the
      *        location of the detection reticle in meters. For example, if your detection reticle is
      *        set to the center of the bounding box, this height should be the elevation off the
      *        ground to the center of the target.
-     * @param cameraPitchDegrees The pitch of the camera from the horizontal plane in degrees.
-     *        Positive values up.
      * @param cameraCalFactor An empirical calibration factor to account for real lens effects (e.g.
      *        blur, distortion, focus).
      * @param cameraOffset An empirical calibration factor to account for bias in range estimate as
      *        a result of either camera or installation.
-     * @return The estimated range to the target in meters.
+     * @return The estimated robot range to the target in meters.
      */
     public double rangeToTarget_Pitch(TargetObservation targetObservation,
-        double cameraHeightMeters,
-        double targetHeightMeters, double cameraPitchDegrees, double cameraCalFactor,
+        Transform3d cameraTransform, double targetHeightMeters, double cameraCalFactor,
         double cameraOffset)
     {
         // Empirically-determined tolerance (m)
-        double tolerance = 7 / 39.37;
+        double tolerance = 0.175;
+        // Salient camera transform parameters
+        double cameraRangeDelta = cameraTransform.getX();
+        double cameraHeightMeters = cameraTransform.getZ();
+        double cameraPitchRadians = -cameraTransform.getRotation().getY();
         // Mathematically verified for camera pitched up or down with target above or below lens
         // centerline.
-        if (Math.abs(cameraHeightMeters - targetHeightMeters) > tolerance) {
-            return (cameraCalFactor * ((targetHeightMeters - cameraHeightMeters)
-                / Math.tan(Math.toRadians(cameraPitchDegrees + targetObservation.pitch())))
-                + cameraOffset);
+        if (Math.abs(targetHeightMeters - cameraHeightMeters) > tolerance) {
+            return ((cameraCalFactor * ((targetHeightMeters - cameraHeightMeters)
+                / Math.tan(cameraPitchRadians + Math.toRadians(targetObservation.pitch())))
+                + cameraOffset) + cameraRangeDelta);
         } else {
             // Use rangeToTarget_FocalLength.
             return -1.0d;
@@ -148,98 +151,55 @@ public class DetectionML {
     }
 
     /**
-     * Estimates heading to a target using the target's calculated range. Note that this method
-     * requires the camera to have 0 roll (not be skewed clockwise or CCW relative to the floor),
-     * and for there to exist a finite range between goal and camera. The larger this differential,
-     * the more accurate the distance estimate will be.
+     * Estimates robot's heading to a target using the target's robot-relative calculated range.
+     * Note that this method requires the camera to have 0 roll (not be skewed clockwise or CCW
+     * relative to the floor), and for there to exist a finite range between goal and camera. The
+     * larger this differential, the more accurate the distance estimate will be.
      *
      * @param targetObservation A data type containing vision pipeline results for a single target.
      *        Used to determine the yaw of the target from the centerline of the camera's lens in
      *        degrees. Positive values left.
-     * @param cameraYawDegrees The yaw of the camera from the vertical plane in degrees. Positive
-     *        values left.
-     * @param targetRangeMeters Range to the target in meters.
+     * @param cameraTransform Transform3d of the camera relative to the robot. Used to determine the
+     *        camera's heading offset and installation yaw relative to the vertical plane (positive
+     *        values left).
+     * @param targetRangeMeters Robot's range to the target in meters.
      * @param cameraCalFactor An empirical calibration factor to account for real lens effects (e.g.
      *        blur, distortion, focus).
      * @param cameraOffset An empirical calibration factor to account for bias in heading estimate
      *        as a result of either camera or installation.
-     * @return The estimated heading to the target in meters.
+     * @return The estimated robot heading to the target in meters.
      */
-    public double headingToTarget_Yaw(TargetObservation targetObservation, double cameraYawDegrees,
-        double targetRangeMeters, double cameraCalFactor, double cameraOffset)
+    public double headingToTarget_Yaw(TargetObservation targetObservation,
+        Transform3d cameraTransform, double targetRangeMeters, double cameraCalFactor,
+        double cameraOffset)
     {
+        // Salient camera transform parameters
+        double cameraHeadingDelta = cameraTransform.getY();
+        double cameraYawRadians = -cameraTransform.getRotation().getZ();
         // Mathematically verified for camera yawed left or right with target left or right of lens
-        // centerline. Absolute value required for camera yawed right.
-        return (cameraCalFactor
-            * (Math.tan(Math.toRadians(Math.abs(cameraYawDegrees + targetObservation.yaw())))
-                * targetRangeMeters)
-            + cameraOffset);
+        // centerline. Absolute value required for camera yawed right case.
+        double headingMeters = ((cameraCalFactor
+            * (Math.tan(Math.abs(cameraYawRadians + Math.toRadians(targetObservation.yaw()))))
+            * targetRangeMeters + cameraOffset) + cameraHeadingDelta);
+        return headingMeters;
     }
 
-
     /**
-     * Estimates the target's 2d distance from the camera using target's camera-relative range &
+     * Estimates the target's 2d distance from the robot using target's robot-relative range &
      * heading.
      *
-     * @param targetRangeMeters Range to the target in meters.
-     * @param targetHeadingMeters Heading to the target in meters.
-     * @return The estimated 2d distance from the camera to the target in meters.
+     * @param targetRangeMeters Robot's range to the target in meters.
+     * @param targetHeadingMeters Robot's heading to the target in meters.
+     * @return The estimated 2d distance from the robot to the target in meters.
      */
     public double distanceToTarget2d(double targetRangeMeters, double targetHeadingMeters)
     {
-        // Return magnitude of xy displacement vector between camera and target
+        // Distance from robot to target
         return Math.sqrt((Math.pow(targetRangeMeters, 2) + Math.pow(targetHeadingMeters, 2)));
     }
 
-    /**
-     * Estimates a {@link Transform2d} that maps the camera position to the target position, using
-     * the robot's gyro. Note that the gyro angle provided *must* line up with the field coordinate
-     * system -- that is, it should read zero degrees when pointed towards the opposing alliance
-     * station, and increase as the robot rotates CCW.
-     *
-     * @param targetObservation A data type containing vision pipeline results for a single target.
-     * @param robotPose The current robot pose, likely from odometry.
-     * @param cameraPitchDegrees The pitch of the camera from the horizontal plane in degrees.
-     *        Positive values up.
-     * @param cameraYawDeg The yaw of the camera from the vertical plane in degrees. Positive values
-     *        left.
-     * @param cameraHeightMeters The physical height of the camera off the floor in meters.
-     * @param targetHeightMeters The physical height of the target off the floor in meters. This
-     *        should be the height of whatever is being targeted (i.e. if the targeting region is
-     *        set to top, this should be the height of the top of the target).
-     * @param cameraCalFactorRange An empirical calibration factor to account for real lens effects
-     *        (e.g. blur, distortion, focus) -- applies to range calculation only.
-     * @param cameraOffsetRange An empirical calibration factor to account for bias in range
-     *        estimate as a result of either camera or installation -- applies to heading
-     *        calculation only -- applies to range calculation only.
-     * @param cameraCalFactorHeading An empirical calibration factor to account for real lens
-     *        effects (e.g. blur, distortion, focus) -- applies to heading calculation only.
-     * @param cameraOffsetHeading An empirical calibration factor to account for bias in heading
-     *        estimate as a result of either camera or installation -- applies to heading
-     *        calculation only.
-     * @return The target's camera-relative 2D translataion.
-     */
-    public Translation2d translationToTarget2d(TargetObservation targetObservation,
-        Pose2d robotPose,
-        double cameraPitchDegrees,
-        double cameraYawDeg, double cameraHeightMeters, double targetHeightMeters,
-        double cameraCalFactorRange, double cameraOffsetRange,
-        double cameraCalFactorHeading, double cameraOffsetHeading)
-    {
-        // Calculate range (x-component of target's camera-relative displacement vector) (m)
-        double rangeMeters =
-            rangeToTarget_Pitch(targetObservation, cameraHeightMeters, targetHeightMeters,
-                cameraPitchDegrees, cameraCalFactorRange, cameraOffsetRange);
-        // Calculate heading (y-component of target's camera-relative position vector) (m)
-        double headingMeters = headingToTarget_Yaw(targetObservation, cameraYawDeg, rangeMeters,
-            cameraCalFactorHeading, cameraOffsetHeading);
-        // Return dY
-        double dYMeters = Math.sin(Math.abs(robotPose.getRotation().getRadians())) / rangeMeters;
-        // Return dX
-        double dXMeters = 0;
-        // Return 2D position of target
-        return new Translation2d(rangeMeters, headingMeters);
-    }
 
-    // To-do: Add isConnected method
+
+    // To-do: Add isConnected method. testing range/heading with yaw on camera. re-test basics from
+    // ground up afterwards.
 }
