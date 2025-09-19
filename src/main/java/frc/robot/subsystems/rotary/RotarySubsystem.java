@@ -39,6 +39,8 @@ public class RotarySubsystem extends SubsystemBase {
     public RotarySubsystem(RotaryMechanism io)
     {
         this.io = io;
+
+        setSetpoint(RotarySubsystemConstants.DEFAULT_SETPOINT).ignoringDisable(true).schedule();
     }
 
     @Override

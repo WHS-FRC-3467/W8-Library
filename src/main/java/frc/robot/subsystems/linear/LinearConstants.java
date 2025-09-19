@@ -58,7 +58,7 @@ public class LinearConstants {
 
     // Positional PID
     public static Slot0Configs SLOT0CONFIG = new Slot0Configs()
-        .withKP(30.0)
+        .withKP(50.0)
         .withKI(0.0)
         .withKD(0.0);
 
