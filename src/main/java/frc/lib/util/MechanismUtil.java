@@ -41,7 +41,7 @@ public class MechanismUtil {
          * Converts an angle measurement to an equal distance measurement based on radius
          * initialized with.
          *
-         * @param distance angle to convert to distance.
+         * @param angle to convert to distance.
          * @return Distance agle is equivalent to.
          */
         public Distance toDistance(Angle angle)

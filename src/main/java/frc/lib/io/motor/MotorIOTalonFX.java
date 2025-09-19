@@ -321,6 +321,7 @@ public class MotorIOTalonFX implements MotorIO {
      * @param current Desired torque-producing current.
      * @param dutyCycle Desired dutycycle of current output, limiting top speed
      */
+    @Override
     public void runCurrent(Current current, double dutyCycle)
     {
         double dutyCyclePercent = MathUtil.clamp(dutyCycle, 0.0, 1.0);

@@ -17,6 +17,8 @@ public class FieldUtil {
     private static final Translation2d fieldCenter = FieldConstants.FIELDCENTER;
 
     /**
+     * Whether or not a pose needs to be flipped
+     * 
      * @return True if the robot is on the red alliance, false if on the blue alliance.
      */
     public static boolean shouldFlip()

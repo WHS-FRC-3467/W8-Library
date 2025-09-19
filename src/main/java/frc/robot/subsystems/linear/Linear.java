@@ -37,6 +37,7 @@ public class Linear extends SubsystemBase {
         new LoggedTunableNumber("Raised Height", 30.0);
 
     @RequiredArgsConstructor
+    @SuppressWarnings("Immutable")
     @Getter
     public enum Setpoint {
         HOME(Inches.of(0.0)),

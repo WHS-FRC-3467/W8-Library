@@ -26,6 +26,7 @@ public class RotarySubsystem extends SubsystemBase {
         new LoggedTunableNumber("RAISED", 90);
 
     @RequiredArgsConstructor
+    @SuppressWarnings("Immutable")
     @Getter
     public enum Setpoint {
         STOW(Degrees.of(STOW_SETPOINT.get())),
