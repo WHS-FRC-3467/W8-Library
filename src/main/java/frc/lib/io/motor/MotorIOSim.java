@@ -48,14 +48,25 @@ public interface MotorIOSim extends MotorIO {
     {}
 
     /**
-     * Getter for the gear ratio to the attached mechanism
+     * Getter for the gear ratio to the sensor
      * 
-     * @return The gear ratio to the attached mechanism
+     * @return The gear ratio to the sensor
      */
-    public default double getGearRatio()
+    public default double getRotorToSensorRatio()
     {
         return 0.0;
     }
 
-    public default void close() {}
+    /**
+     * Getter for the gear ratio from the sensor to the mechanism
+     * 
+     * @return The gear ratio from the sensor to the mechanism
+     */
+    public default double getSensorToMechanismRatio()
+    {
+        return 0.0;
+    }
+
+    public default void close()
+    {}
 }
