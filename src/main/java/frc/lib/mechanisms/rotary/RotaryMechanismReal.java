@@ -38,6 +38,7 @@ public class RotaryMechanismReal extends RotaryMechanism {
         this.absoluteEncoder = absoluteEncoder;
     }
 
+    @Override
     public void periodic()
     {
         super.periodic();

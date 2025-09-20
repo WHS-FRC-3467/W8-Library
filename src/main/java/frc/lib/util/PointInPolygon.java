@@ -18,11 +18,11 @@ package frc.lib.util;
 import edu.wpi.first.math.geometry.Translation2d;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
+import java.util.List;
 
 public class PointInPolygon {
     // Checking if a point is inside a polygon
-    public static boolean pointInPolygon(Translation2d point, ArrayList<Translation2d> polygon)
+    public static boolean pointInPolygon(Translation2d point, List<Translation2d> polygon)
     {
         Path2D path = new Path2D.Double();
 

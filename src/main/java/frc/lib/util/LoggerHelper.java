@@ -2,7 +2,7 @@ package frc.lib.util;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import java.util.ArrayList;
+import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -23,7 +23,7 @@ public class LoggerHelper {
      * @param key the key under which the list of Pose2d objects will be recorded
      * @param list the list of Pose2d objects to be recorded
      */
-    public static void recordPose2dList(String key, ArrayList<Pose2d> list)
+    public static void recordPose2dList(String key, List<Pose2d> list)
     {
         Pose2d[] array = new Pose2d[list.size()];
         list.toArray(array);
