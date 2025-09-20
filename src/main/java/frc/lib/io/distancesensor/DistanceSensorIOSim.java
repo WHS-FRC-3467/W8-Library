@@ -16,7 +16,6 @@
 package frc.lib.io.distancesensor;
 
 import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Meters;
 import edu.wpi.first.units.measure.Distance;
 import frc.lib.util.LoggedTunableNumber;
 import lombok.Getter;
@@ -47,7 +46,6 @@ public class DistanceSensorIOSim implements DistanceSensorIO {
      *
      * @param distance The new distance readout
      */
-    @Override
     public void setDistance(Distance distance)
     {
         this.distance = distance;
