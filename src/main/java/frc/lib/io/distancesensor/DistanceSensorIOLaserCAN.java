@@ -62,7 +62,7 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
                 AlertType.kError);
         disconnectedAlert = new Alert("LaserCAN " + name + " is not connected", AlertType.kError);
         invalidReadingAlert =
-            new Alert("LasercAN " + name + " reading is invald", AlertType.kWarning);
+            new Alert("LaserCAN " + name + " reading is invalid", AlertType.kWarning);
 
         if (!id.bus().equals("rio")) {
             laserCANOnWrongBusAlert.set(true);
@@ -95,6 +95,7 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
 
         if (measure.status != LaserCanInterface.LASERCAN_STATUS_VALID_MEASUREMENT) {
             invalidReadingAlert.set(true);
+            inputs.ambientSignal = 0.0;
             inputs.distance = null;
             return;
         }
