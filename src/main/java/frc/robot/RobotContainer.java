@@ -70,6 +70,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Volts;
 import java.util.ArrayList;
@@ -319,25 +320,25 @@ public class RobotContainer {
                 Math.round(distanceFromStartPose * 100.0) / 100.0);
             SmartDashboard.putBoolean(
                 "Auto Pose Check/Robot Position within "
-                    + Units.metersToInches(PathConstants.STARTING_POSE_DRIVE_TOLERANCE) + " inches",
-                distanceFromStartPose < PathConstants.STARTING_POSE_DRIVE_TOLERANCE);
+                    + PathConstants.STARTING_POSE_DRIVE_TOLERANCE.in(Inches) + " inches",
+                distanceFromStartPose < PathConstants.STARTING_POSE_DRIVE_TOLERANCE.in(Inches));
             SmartDashboard.putNumber("Auto Pose Check/Degrees from Start",
                 Math.round(degreesFromStartPose * 100.0) / 100.0);
             SmartDashboard.putBoolean(
                 "Auto Pose Check/Robot Rotation within "
                     + PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES + " degrees",
-                degreesFromStartPose < PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES);
+                degreesFromStartPose < PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES.in(Degrees));
 
         } catch (Exception e) {
             SmartDashboard.putNumber("Auto Pose Check/Inches from Start", -1);
             SmartDashboard.putBoolean(
                 "Auto Pose Check/Robot Position within "
-                    + PathConstants.STARTING_POSE_DRIVE_TOLERANCE + " inches",
+                    + PathConstants.STARTING_POSE_DRIVE_TOLERANCE.in(Inches) + " inches",
                 false);
             SmartDashboard.putNumber("Auto Pose Check/Degrees from Start", -1);
             SmartDashboard.putBoolean(
                 "Auto Pose Check/Robot Rotation within "
-                    + PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES + " degrees",
+                    + PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES.in(Degrees) + " degrees",
                 false);
         }
     }

@@ -15,8 +15,12 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
 import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.drive.DriveConstants;
 
@@ -75,8 +79,8 @@ public final class Constants {
 
     public static final class PathConstants {
 
-        public static final double STARTING_POSE_DRIVE_TOLERANCE = Units.inchesToMeters(3.0); // For auto
-        public static final double STARTING_POSE_ROT_TOLERANCE_DEGREES = 5.0;
+        public static final Distance STARTING_POSE_DRIVE_TOLERANCE = Meters.of(Units.inchesToMeters(3.0)); // For auto
+        public static final Angle STARTING_POSE_ROT_TOLERANCE_DEGREES = Degrees.of(5.0);
 
         public static final double PATHGENERATION_DRIVE_TOLERANCE = Units.inchesToMeters(3.0); // 3 in robot position tolerance
         public static final double PATHGENERATION_ROT_TOLERANCE_DEGREES = 5.0; // 5 degrees rotation tolerance
