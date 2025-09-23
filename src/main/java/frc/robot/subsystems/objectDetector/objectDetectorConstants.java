@@ -18,10 +18,10 @@ public class objectDetectorConstants {
     public final static String CAMERA0_NAME = "Detection Camera #0";
     public final static double cameraRoll = 0.0; // degrees
     public final static double cameraPitch = 20; // degrees
-    public final static double cameraYaw = 30; // degrees
+    public final static double cameraYaw = 0.0; // degrees
     public final static double cameraX = 0.30; // meters
-    public final static double cameraY = 0.30; // meters
-    public final static double cameraZ = 1.0; // meters
+    public final static double cameraY = -0.30; // meters
+    public final static double cameraZ = 1; // meters
 
     public static Transform3d CAMERA0TRANSFORM =
         new Transform3d(cameraX, cameraY, cameraZ,

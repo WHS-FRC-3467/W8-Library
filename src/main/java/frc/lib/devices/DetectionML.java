@@ -115,11 +115,10 @@ public class DetectionML {
      * @param targetObservation A data type containing vision pipeline results for a single target.
      *        Used to determine the pitch & yaw of the target from the centerline of the camera's
      *        lens in degrees. Centerline assumed through geometric center of conical FOV. Target
-     *        pitch & yaw follow PhotonVision sign conventions.
+     *        pitch is positive above centerline; target yaw is positive right of centerline.
      * @param cameraTransform Transform3d of the camera relative to the robot. Used to determine the
-     *        camera's height off the ground, the range offset, installation pitch relative to the
-     *        horizontal plane (positive values down), and installation yaw relative to the vertical
-     *        plane (positive values left).
+     *        camera's height off the ground, the range offset, installation pitch,, and
+     *        installation yaw.
      * @param targetHeightMeters The physical height of the target off the floor as measured by the
      *        location of the detection reticle in meters. For example, if your detection reticle is
      *        set to the center of the bounding box, this height should be the elevation off the
@@ -176,10 +175,10 @@ public class DetectionML {
      *
      * @param targetObservation A data type containing vision pipeline results for a single target.
      *        Used to determine the yaw of the target from the centerline of the camera's lens in
-     *        degrees. Positive values left.
+     *        degrees. Target pitch is positive above centerline; target yaw is positive right of
+     *        centerline.
      * @param cameraTransform Transform3d of the camera relative to the robot. Used to determine the
-     *        camera's heading offset and installation yaw relative to the vertical plane (positive
-     *        values left).
+     *        camera's heading offset and installation yaw.
      * @param targetRangeMeters Robot's range to the target in meters.
      * @param cameraCalFactor An empirical calibration factor to account for real lens effects (e.g.
      *        blur, distortion, focus).
@@ -191,13 +190,14 @@ public class DetectionML {
         Transform3d cameraTransform, double targetRangeMeters, double cameraCalFactor,
         double cameraOffset)
     {
-        // Salient camera transform parameters
+        // Salient camera transform parametersw
         double cameraHeadingDelta = cameraTransform.getY();
-        double cameraYawRadians = -cameraTransform.getRotation().getZ();
+        // Camera installation yaw math uses positive left and .getZ() uses the same.
+        double cameraYawRadians = cameraTransform.getRotation().getZ();
         // Mathematically verified for camera yawed left or right with target left or right of lens
         // centerline. Absolute value required for camera yawed right case.
         double headingMeters = ((cameraCalFactor
-            * (Math.tan(Math.abs(cameraYawRadians + Math.toRadians(targetObservation.yaw()))))
+            * (Math.tan((cameraYawRadians - Math.toRadians(targetObservation.yaw()))))
             * targetRangeMeters + cameraOffset) + cameraHeadingDelta);
         return headingMeters;
     }
