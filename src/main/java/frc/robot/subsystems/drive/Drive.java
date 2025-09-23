@@ -135,26 +135,28 @@ public class Drive extends SubsystemBase {
         PhoenixOdometryThread.getInstance().start();
 
         // Configure AutoBuilder for PathPlanner
-        AutoBuilder.configure(
-            this::getPose,
-            this::setPose,
-            this::getChassisSpeeds,
-            this::runVelocity,
-            new PPHolonomicDriveController(
-                new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
-            PP_CONFIG,
-            () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-            this);
-        Pathfinding.setPathfinder(new LocalADStarAK());
-        PathPlannerLogging.setLogActivePathCallback(
-            (activePath) -> {
-                Logger.recordOutput(
-                    "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
-            });
-        PathPlannerLogging.setLogTargetPoseCallback(
-            (targetPose) -> {
-                Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
-            });
+        if (!AutoBuilder.isConfigured()) {
+            AutoBuilder.configure(
+                this::getPose,
+                this::setPose,
+                this::getChassisSpeeds,
+                this::runVelocity,
+                new PPHolonomicDriveController(
+                    new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
+                PP_CONFIG,
+                () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+                this);
+            Pathfinding.setPathfinder(new LocalADStarAK());
+            PathPlannerLogging.setLogActivePathCallback(
+                (activePath) -> {
+                    Logger.recordOutput(
+                        "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
+                });
+            PathPlannerLogging.setLogTargetPoseCallback(
+                (targetPose) -> {
+                    Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
+                });
+        }
 
         // Configure SysId
         sysId = new SysIdRoutine(
@@ -229,6 +231,9 @@ public class Drive extends SubsystemBase {
 
         // Update global pose
         RobotState.getInstance().setPose(poseEstimator.getEstimatedPosition());
+
+        // Update RobotState velocity
+        RobotState.getInstance().setVelocity(getChassisSpeeds());
     }
 
     /**

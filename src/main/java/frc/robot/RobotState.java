@@ -51,4 +51,13 @@ public class RobotState {
     {
         return new Timestamped<Rotation2d>(Seconds.of(Timer.getTimestamp()), getRotation());
     }
+
+    public ChassisSpeeds getFieldRelativeVelocity()
+    {
+        return ChassisSpeeds.fromFieldRelativeSpeeds(
+            velocity.vxMetersPerSecond,
+            velocity.vyMetersPerSecond,
+            velocity.omegaRadiansPerSecond,
+            getRotation());
+    }
 }

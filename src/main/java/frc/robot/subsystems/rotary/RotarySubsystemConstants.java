@@ -7,7 +7,7 @@ package frc.robot.subsystems.rotary;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Kilograms;
-import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Meters;
 import com.ctre.phoenix6.configs.*;
@@ -26,6 +26,7 @@ import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.lib.io.motor.MotorIOTalonFX;
+import frc.lib.io.motor.MotorIOTalonFX.TalonFXFollower;
 import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.rotary.*;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
@@ -42,22 +43,26 @@ public class RotarySubsystemConstants {
         CRUISE_VELOCITY.div(0.1).per(Units.Second);
     public static final Velocity<AngularAccelerationUnit> JERK = ACCELERATION.per(Second);
 
-    private static final double GEARING = (2.0 / 1.0);
+    public static final double GEARING = (2.0 / 1.0);
 
-    private static final Translation3d OFFSET = Translation3d.kZero;
+    public static final Translation3d OFFSET = Translation3d.kZero;
 
-    private static final Angle MIN_ANGLE = Degrees.of(0.0);
-    private static final Angle MAX_ANGLE = Degrees.of(90.0);
-    private static final Angle STARTING_ANGLE = Radians.of(0.0);
-    private static final Distance ARM_LENGTH = Meters.of(1.0);
+    public static final Angle MIN_ANGLE = Degrees.of(0.0);
+    public static final Angle MAX_ANGLE = Degrees.of(90.0);
+    public static final Angle STARTING_ANGLE = Rotations.of(0.5);
+    public static final Distance ARM_LENGTH = Meters.of(1.0);
 
-    private static final RotaryMechCharacteristics CONSTANTS =
+    public static final RotaryMechCharacteristics CONSTANTS =
         new RotaryMechCharacteristics(OFFSET, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
 
-    private static final Mass ARM_MASS = Kilograms.of(.01);
-    private static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
+    public static final Mass ARM_MASS = Kilograms.of(.01);
+    public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
     public static final MomentOfInertia MOI = KilogramSquareMeters
         .of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), ARM_MASS.in(Kilograms)));
+
+    public static final RotarySubsystem.Setpoint DEFAULT_SETPOINT = RotarySubsystem.Setpoint.STOW;
+
+
 
     // Positional PID
     private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
@@ -101,13 +106,16 @@ public class RotarySubsystemConstants {
     public static RotaryMechanismReal getReal()
     {
         return new RotaryMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain), CONSTANTS);
+            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
+                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
+            CONSTANTS);
     }
 
     public static RotaryMechanismSim getSim()
     {
         return new RotaryMechanismSim(
-            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain),
+            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
+                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
             DCMOTOR, MOI, false, CONSTANTS);
     }
 

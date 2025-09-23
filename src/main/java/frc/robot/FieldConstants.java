@@ -31,5 +31,6 @@ public class FieldConstants {
     public static final Translation2d FIELDCENTER =
         new Translation2d(FIELDLENGTH.in(Meters) / 2, FIELDWIDTH.in(Meters) / 2);
 
+    public static final Distance ALGAEDIAMETER = Meters.of(.41);
 
 }
