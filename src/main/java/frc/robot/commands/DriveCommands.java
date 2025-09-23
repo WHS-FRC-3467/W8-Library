@@ -25,13 +25,15 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
-
+import static edu.wpi.first.units.Units.Meters;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -320,7 +322,7 @@ public class DriveCommands {
      *        rotation.
      */
     public static Command pathFindToPose(Supplier<Pose2d> currentPose, Pose2d targetPose,
-        PathConstraints constraints, double goalEndVelocity, double tolerance)
+        PathConstraints constraints, LinearVelocity goalEndVelocity, Distance tolerance)
     {
 
         // Since AutoBuilder is configured, we can use it to build pathfinding commands
@@ -332,7 +334,8 @@ public class DriveCommands {
             // Interrupt the pathfinding command once the robot gets within the tolerance of the
             // target pose
             Commands.waitUntil(
-                () -> currentPose.get().minus(targetPose).getTranslation().getNorm() < tolerance))
+                () -> currentPose.get().minus(targetPose).getTranslation().getNorm() < tolerance
+                    .in(Meters)))
             .withName("Pathfind to " + targetPose.toString());
     }
 }
