@@ -19,6 +19,8 @@ import frc.lib.devices.DetectionML;
 import frc.lib.io.detectionML.DetectionMLIO;
 import frc.robot.subsystems.drive.Drive;
 import org.littletonrobotics.junction.Logger;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -68,8 +70,7 @@ public class objectDetector extends SubsystemBase {
                     .getPose().toPose2d().getTranslation().minus(drive.getPose().getTranslation())
                     .getY());
             Logger.recordOutput("Detection/Target Translation",
-                new Translation2d(range, heading)
-                    .plus(drive.getPose().getTranslation()));
+                drive.getPose().transformBy(new Transform2d(range, heading, new Rotation2d())));
         }
     }
 }
