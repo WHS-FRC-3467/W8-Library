@@ -105,20 +105,21 @@ public class DetectionML {
 
     /**
      * Estimates robot's range to a target using the target's known height. Algorithm similar to
-     * {@link org.photonvision.PhotonUtils} but also allows for camera installation yaw. This method
-     * can produce more stable results than SolvePNP when well tuned, if the full 6d robot pose is
-     * not required. Note that this method requires the camera to have 0 roll (not be skewed
-     * clockwise or CCW relative to the floor), and for there to exist a height differential between
-     * goal and camera. The larger this differential, the more accurate the distance estimate will
-     * be. For small differentials, use rangeToTarget_FocalLength.
+     * {@link org.photonvision.PhotonUtils} but also allows for camera installation yaw (at the
+     * expense of accuracy). This method can produce more stable results than SolvePNP when well
+     * tuned, if the full 6d robot pose is not required. Note that this method requires the camera
+     * to have 0 roll (not be skewed clockwise or CCW relative to the floor), and for there to exist
+     * a height differential between goal and camera. The larger this differential, the more
+     * accurate the distance estimate will be. For small differentials, use
+     * rangeToTarget_FocalLength.
      *
      * @param targetObservation A data type containing vision pipeline results for a single target.
      *        Used to determine the pitch & yaw of the target from the centerline of the camera's
      *        lens in degrees. Centerline assumed through geometric center of conical FOV. Target
      *        pitch is positive above centerline; target yaw is positive right of centerline.
      * @param cameraTransform Transform3d of the camera relative to the robot. Used to determine the
-     *        camera's height off the ground, the range offset, installation pitch,, and
-     *        installation yaw.
+     *        camera's height off the ground, the range offset, installation pitch, and installation
+     *        yaw.
      * @param targetHeightMeters The physical height of the target off the floor as measured by the
      *        location of the detection reticle in meters. For example, if your detection reticle is
      *        set to the center of the bounding box, this height should be the elevation off the
@@ -137,23 +138,28 @@ public class DetectionML {
         // Below which, height differential is too small for algorithm to be reliable.
         double tolerance = 0.175;
         // Salient camera transform parameters
-        // X offset of camera from robot center (apply to range calculation)
+        // X offset of camera from robot center (apply to range calculation).
         double cameraRangeDelta = cameraTransform.getX();
-        // Z offset of camera from robot center (used in range calculation)
+        // Z offset of camera from robot center (used in range calculation).
         double cameraHeightMeters = cameraTransform.getZ();
         // Camera installation pitch math uses positive up but .getY() is positive down.
         double cameraPitchRadians = -cameraTransform.getRotation().getY();
         // Camera installation yaw math uses positive left and .getZ() uses the same.
         double cameraYawRadians = cameraTransform.getRotation().getZ();
-        // When significant camera yaw is applied, apply a correction factor to the range formula.
+        // When camera yaw is applied, the pitch triangle becomes non-orthogonal, requiring a
+        // correction.
         double yawCorrection;
         if (Math.abs(targetHeightMeters - cameraHeightMeters) > tolerance) {
             if (cameraYawRadians == 0) {
                 // Mathematically verified for camera pitched up or down with target above or below
-                // lens centerline.
+                // lens centerline. This is the most robust configuration.
+                // Mathematical approach: object projection on lens centerline plane.
                 yawCorrection = 1;
             } else {
-                // Experimental
+                // Empirical, algebraic correction; it's workable but accuracy is relatively limited
+                // and further degrades at extreme angles. Pose estimation or vector transforms are
+                // more appropriate but not implemented.
+                // Mathematical approach: lens centerline projection on object/lens center plane.
                 yawCorrection =
                     Math.cos(Math.abs(cameraYawRadians - Math.toRadians(targetObservation.yaw())));
             }
@@ -190,20 +196,25 @@ public class DetectionML {
         Transform3d cameraTransform, double targetRangeMeters, double cameraCalFactor,
         double cameraOffset)
     {
-        // Salient camera transform parametersw
+        // Salient camera transform parameters
+        // Y offset of camera from robot center (apply to heading calculation).
         double cameraHeadingDelta = cameraTransform.getY();
         // Camera installation yaw math uses positive left and .getZ() uses the same.
         double cameraYawRadians = cameraTransform.getRotation().getZ();
-        // Mathematically verified for camera yawed left or right with target left or right of lens
-        // centerline. Absolute value required for camera yawed right case.
-        double headingMeters = ((cameraCalFactor
-            * (Math.tan((cameraYawRadians - Math.toRadians(targetObservation.yaw()))))
-            * targetRangeMeters + cameraOffset) + cameraHeadingDelta);
-        return headingMeters;
+        if (cameraYawRadians == 0) {
+            // verify this
+            return ((Math.tan(cameraYawRadians - Math.toRadians(targetObservation.yaw())))
+                * targetRangeMeters * cameraCalFactor + cameraOffset + cameraHeadingDelta);
+        } else {
+            // Mathematically verified for camera yawed left or right with target left or right of
+            // lens centerline. Absolute value required for camera yawed right case.
+            return ((Math.tan(Math.abs(cameraYawRadians - Math.toRadians(targetObservation.yaw()))))
+                * targetRangeMeters * cameraCalFactor + cameraOffset + cameraHeadingDelta);
+        }
     }
 
     /**
-     * Estimates the target's 2d distance from the robot using target's robot-relative range &
+     * Estimates the target's 2d distance from the robot using target's robot-relative range &s
      * heading.
      *
      * @param targetRangeMeters Robot's range to the target in meters.
