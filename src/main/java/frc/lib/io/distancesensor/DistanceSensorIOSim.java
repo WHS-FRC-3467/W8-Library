@@ -41,6 +41,16 @@ public class DistanceSensorIOSim implements DistanceSensorIO {
         tunableDistance = new LoggedTunableNumber(name + "/Sim Measurement (Inches)", 0.0);
     }
 
+    /**
+     * Setter for the simulated distance readout
+     *
+     * @param distance The new distance readout
+     */
+    public void setDistance(Distance distance)
+    {
+        this.distance = distance;
+    }
+
     @Override
     public void updateInputs(DistanceSensorInputs inputs)
     {

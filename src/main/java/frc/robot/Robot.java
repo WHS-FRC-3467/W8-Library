@@ -119,7 +119,11 @@ public class Robot extends LoggedRobot {
          * significantly higher delay compared with subsequent runs. To help alleviate this issue,
          * run this warmup command in the background when code starts. This command will not control
          * the robot, it will simply run through a full pathfinding command to warm up the library.
-         * Source: PathPlanner Docs
+         * public void robotInit() { /* Due to the nature of how Java works, the first run of a
+         * pathfinding command could have a significantly higher delay compared with subsequent
+         * runs. To help alleviate this issue, run this warmup command in the background when code
+         * starts. This command will not control the robot, it will simply run through a full
+         * pathfinding command to warm up the library. Source: PathPlanner Docs
          */
         // DO THIS AFTER CONFIGURATION OF YOUR DESIRED PATHFINDER
         PathfindingCommand.warmupCommand().schedule();
@@ -159,7 +163,9 @@ public class Robot extends LoggedRobot {
     /** This function is called periodically when disabled. */
     @Override
     public void disabledPeriodic()
-    {}
+    {
+        robotContainer.checkStartPose();
+    }
 
     /**
      * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
@@ -178,7 +184,9 @@ public class Robot extends LoggedRobot {
     /** This function is called periodically during autonomous. */
     @Override
     public void autonomousPeriodic()
-    {}
+    {
+        RobotContainer.autoPreviewField.setRobotPose(robotContainer.drive.getPose());
+    }
 
     /** This function is called once when teleop is enabled. */
     @Override
