@@ -53,7 +53,7 @@ public class RotaryTest implements AutoCloseable {
     @Test
     void goToGoal()
     {
-        TestUtil.runTest(rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED), 2, rotary);
+        TestUtil.runTest(rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED), 3, rotary);
         try {
             // Check to see if Rotary subsystem is within tolerance of RAISED setpoint.
             assertTrue(rotary.nearGoal(RotarySubsystem.Setpoint.RAISED.getSetpoint()));
@@ -65,7 +65,7 @@ public class RotaryTest implements AutoCloseable {
     @Test // marks this method as a test
     void goToGoalWithWait()
     {
-        TestUtil.runTest(rotary.setGoalCommandWithWait(RotarySubsystem.Setpoint.STOW), 2, rotary);
+        TestUtil.runTest(rotary.setGoalCommandWithWait(RotarySubsystem.Setpoint.STOW), 3, rotary);
         try {
             // Check position to check if the subsystem is actually in tolerance of STOW setpoint.
             assertTrue(rotary.nearGoal(RotarySubsystem.Setpoint.STOW.getSetpoint()));

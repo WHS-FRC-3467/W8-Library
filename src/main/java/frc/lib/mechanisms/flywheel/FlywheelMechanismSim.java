@@ -65,7 +65,7 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
         this.tolerance = tolerance;
         sim = new FlywheelSim(LinearSystemId.createFlywheelSystem(characteristics,
             momentOfInertia.in(KilogramSquareMeters),
-            io.getGearRatio()), characteristics);
+            io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()), characteristics);
 
         visualizer = new FlywheelVisualizer(io.getName());
     }
@@ -157,7 +157,8 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
     }
 
     @Override
-    public AngularVelocity getVelocity() {
+    public AngularVelocity getVelocity()
+    {
         return inputs.velocity;
     }
 

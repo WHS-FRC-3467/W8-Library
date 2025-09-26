@@ -56,7 +56,7 @@ public class LinearMechanismSim extends LinearMechanism {
         this.io = io;
         sim = new ElevatorSim(
             characteristics,
-            io.getGearRatio(),
+            io.getRotorToSensorRatio() * io.getSensorToMechanismRatio(),
             mass.in(Kilograms),
             constraints.converter().getDrumRadius().in(Meters),
             constraints.minDistance().in(Meters),
