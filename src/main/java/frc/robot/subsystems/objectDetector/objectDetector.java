@@ -52,9 +52,12 @@ public class objectDetector extends SubsystemBase {
                 objectDetectorConstants.CAMERA0TRANSFORM,
                 range, 1, 0);
             distance = detectionML.distanceToTarget2d(range, heading);
+            Translation2d targetLocation =
+                detectionML.estimateTargetToField(range, heading, drive.getPose());
             Logger.recordOutput("Detection/" + "Calculated Range", range);
             Logger.recordOutput("Detection/" + "Calculated Heading", heading);
             Logger.recordOutput("Detection/" + "Calculated Distance", distance);
+            Logger.recordOutput("Detection/" + "Calculated Coordinates", targetLocation);
 
             Logger.recordOutput("Detection/" + "True Range",
                 objectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
@@ -74,6 +77,7 @@ public class objectDetector extends SubsystemBase {
         }
     }
 }
+
 // TO-DO: account for camera transform. think range/heading is relative to camera -- need to
 // transform that
 // distance to robot center.

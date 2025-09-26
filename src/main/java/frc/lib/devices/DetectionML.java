@@ -11,7 +11,9 @@ import frc.lib.io.detectionML.DetectionMLIO.TargetObservation;
 import java.util.Arrays;
 import java.lang.Math;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 /**
@@ -224,6 +226,34 @@ public class DetectionML {
     {
         // Distance from robot to target
         return Math.sqrt((Math.pow(targetRangeMeters, 2) + Math.pow(targetHeadingMeters, 2)));
+    }
+
+    /**
+     * Estimates a {@link Transform2d} that maps the camera position to the target position, using
+     * the robot's gyro. Note that the gyro angle provided *must* line up with the field coordinate
+     * system -- that is, it should read zero degrees when pointed towards the opposing alliance
+     * station, and increase as the robot rotates CCW.
+     *
+     * @param cameraToTargetTranslation A Translation2d that encodes the x/y position of the target
+     *        relative to the camera.
+     * @param fieldToTarget A Pose2d representing the target position in the field coordinate
+     *        system.
+     * @param gyroAngle The current robot gyro angle, likely from odometry.
+     * @return A Transform2d that takes us from the camera to the target.
+     */
+    public Translation2d estimateTargetToField(double targetRangeMeters,
+        double targetHeadingMeters, Pose2d robotPose)
+    {
+        // Robot's gyro angle in radians, CCW positive, 0 towards opposing alliance station.
+        double robotGyroAngle = robotPose.getRotation().getRadians();
+        // Robot-relative translation to target (through robot local coordinate system, dX = range &
+        // dY = heading).
+        Translation2d robotToTargetTranslation =
+            new Translation2d(targetRangeMeters, targetHeadingMeters);
+        Translation2d fieldToTargetTranslation = new Translation2d(
+            robotToTargetTranslation.getNorm() * Math.cos(-robotGyroAngle) + robotPose.getX(),
+            robotToTargetTranslation.getNorm() * Math.sin(-robotGyroAngle) + robotPose.getY());
+        return fieldToTargetTranslation;
     }
 
     // To-do: Add isConnected method. quickly re-verify equations. test results in sim. begin
