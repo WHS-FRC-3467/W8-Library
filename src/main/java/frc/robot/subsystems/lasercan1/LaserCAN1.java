@@ -15,11 +15,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.devices.DistanceSensor;
 import frc.lib.io.distancesensor.DistanceSensorIO;
+import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 
 public class LaserCAN1 extends SubsystemBase {
     private final DistanceSensor distanceSensor;
-    private final Drive drive; // TODO: Refactor once RobotState is implemented
+    private final RobotState robotState;
 
     public final Trigger inside =
         new Trigger(() -> betweenDistance(Millimeters.of(5), Millimeters.of(10)));
@@ -27,7 +28,7 @@ public class LaserCAN1 extends SubsystemBase {
     public LaserCAN1(DistanceSensorIO io, Drive drive)
     {
         distanceSensor = new DistanceSensor(io);
-        this.drive = drive;
+        robotState = RobotState.getInstance();
     }
 
     @Override
@@ -35,7 +36,7 @@ public class LaserCAN1 extends SubsystemBase {
     {
         distanceSensor.periodic();
         Logger.recordOutput(LaserCAN1Constants.NAME + "Sensor Reading Pose",
-            new Pose3d(drive.getPose()).plus(LaserCAN1Constants.LASERCAN_TRANSFORM.plus(
+            new Pose3d(robotState.getPose()).plus(LaserCAN1Constants.LASERCAN_TRANSFORM.plus(
                 new Transform3d(
                     getDistance(),
                     Inches.of(0),
