@@ -42,18 +42,18 @@ public class RotarySubsystemConstants {
     public static final Angle TOLERANCE = Degrees.of(2.0);
 
     public static final AngularVelocity CRUISE_VELOCITY =
-        Units.RadiansPerSecond.of(2 * Math.PI).div(8);
+        Units.RadiansPerSecond.of(1);
     public static final AngularAcceleration ACCELERATION =
         CRUISE_VELOCITY.div(0.1).per(Units.Second);
     public static final Velocity<AngularAccelerationUnit> JERK = ACCELERATION.per(Second);
 
-    private static final double ROTOR_TO_SENSOR = (10.0 / 1.0);
+    private static final double ROTOR_TO_SENSOR = (2.0 / 1.0);
     private static final double SENSOR_TO_MECHANISM = (2.0 / 1.0);
 
     public static final Translation3d OFFSET = Translation3d.kZero;
 
     public static final Angle MIN_ANGLE = Degrees.of(0.0);
-    public static final Angle MAX_ANGLE = Rotations.of(50);
+    public static final Angle MAX_ANGLE = Rotations.of(.5);
     public static final Angle STARTING_ANGLE = Rotations.of(0.0);
     public static final Distance ARM_LENGTH = Meters.of(1.0);
 
@@ -71,9 +71,9 @@ public class RotarySubsystemConstants {
 
     // Positional PID
     private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
-        .withKP(1.0)
+        .withKP(30.0)
         .withKI(0.0)
-        .withKD(0.0);
+        .withKD(5.0);
 
     public static TalonFXConfiguration getFXConfig()
     {
