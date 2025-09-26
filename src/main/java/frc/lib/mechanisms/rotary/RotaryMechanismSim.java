@@ -87,12 +87,17 @@ public class RotaryMechanismSim extends RotaryMechanism {
         lastTime = currentTime;
 
         io.setPosition(Radians.of(sim.getAngleRads()));
-        io.setRotorVelocity(
-            RadiansPerSecond.of(sim.getVelocityRadPerSec()));
+        io.setRotorVelocity(RadiansPerSecond.of(sim.getVelocityRadPerSec())
+            .times(io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()));
+
+        Logger.recordOutput(io.getName() + " Sim Angle", sim.getAngleRads());
 
         absoluteEncoderSim.ifPresent(encoderSim -> {
-            encoderSim.setAngle(Radians.of(sim.getAngleRads() * io.getRotorToSensorRatio()));
-            encoderSim.setAngularVelocity(RadiansPerSecond.of(sim.getVelocityRadPerSec()));
+            encoderSim
+                .setAngle(Radians.of(sim.getAngleRads()).times(io.getSensorToMechanismRatio()));
+            encoderSim
+                .setAngularVelocity(RadiansPerSecond.of(sim.getVelocityRadPerSec())
+                    .times(io.getSensorToMechanismRatio()));
 
             encoderSim.updateInputs(absoluteEncoderInputs);
             Logger.processInputs(encoderSim.getName(), absoluteEncoderInputs);

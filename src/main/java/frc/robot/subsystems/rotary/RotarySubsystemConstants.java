@@ -12,6 +12,7 @@ import static edu.wpi.first.units.Units.Second;
 import java.util.Optional;
 import static edu.wpi.first.units.Units.Meters;
 import com.ctre.phoenix6.configs.*;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -40,19 +41,20 @@ public class RotarySubsystemConstants {
 
     public static final Angle TOLERANCE = Degrees.of(2.0);
 
-    public static final AngularVelocity CRUISE_VELOCITY = Units.RadiansPerSecond.of(2 * Math.PI);
+    public static final AngularVelocity CRUISE_VELOCITY =
+        Units.RadiansPerSecond.of(2 * Math.PI).div(8);
     public static final AngularAcceleration ACCELERATION =
         CRUISE_VELOCITY.div(0.1).per(Units.Second);
     public static final Velocity<AngularAccelerationUnit> JERK = ACCELERATION.per(Second);
 
-    private static final double ROTOR_TO_SENSOR = (2.0 / 1.0);
+    private static final double ROTOR_TO_SENSOR = (10.0 / 1.0);
     private static final double SENSOR_TO_MECHANISM = (2.0 / 1.0);
 
     public static final Translation3d OFFSET = Translation3d.kZero;
 
     public static final Angle MIN_ANGLE = Degrees.of(0.0);
-    public static final Angle MAX_ANGLE = Degrees.of(90.0);
-    public static final Angle STARTING_ANGLE = Rotations.of(0.5);
+    public static final Angle MAX_ANGLE = Rotations.of(50);
+    public static final Angle STARTING_ANGLE = Rotations.of(0.0);
     public static final Distance ARM_LENGTH = Meters.of(1.0);
 
     public static final RotaryMechCharacteristics CONSTANTS =
@@ -69,7 +71,7 @@ public class RotarySubsystemConstants {
 
     // Positional PID
     private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
-        .withKP(50.0)
+        .withKP(1.0)
         .withKI(0.0)
         .withKD(0.0);
 
@@ -101,6 +103,7 @@ public class RotarySubsystemConstants {
         config.Feedback.SensorToMechanismRatio = SENSOR_TO_MECHANISM;
 
         config.Feedback.FeedbackRemoteSensorID = Ports.RotarySubsystemEncoder.id();
+        config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
 
         config.Slot0 = SLOT0CONFIG;
 
