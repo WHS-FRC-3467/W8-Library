@@ -5,6 +5,7 @@
 package frc.lib.devices;
 
 import org.littletonrobotics.junction.Logger;
+import java.util.ArrayList;
 import frc.lib.io.detectionML.DetectionMLIO;
 import frc.lib.io.detectionML.DetectionMLIOInputsAutoLogged;
 import frc.lib.io.detectionML.DetectionMLIO.TargetObservation;
@@ -13,7 +14,6 @@ import java.lang.Math;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 /**
@@ -229,17 +229,18 @@ public class DetectionML {
     }
 
     /**
-     * Estimates a {@link Transform2d} that maps the camera position to the target position, using
-     * the robot's gyro. Note that the gyro angle provided *must* line up with the field coordinate
-     * system -- that is, it should read zero degrees when pointed towards the opposing alliance
-     * station, and increase as the robot rotates CCW.
+     * Estimates a {@link Translation2d} that maps the detected target's position in field
+     * coordinates. This function effectively transforms the robot's pose by its local dX (range) &
+     * dY (heading) to the target; the robot local coodinate frame is the one attached to the robot
+     * "center" (the point upon which the camera transform is applied to). Note that the gyro angle
+     * provided *must* line up with the field coordinate system -- that is, it should read zero
+     * degrees when pointed towards the opposing alliance station, and increase as the robot rotates
+     * CCW.
      *
-     * @param cameraToTargetTranslation A Translation2d that encodes the x/y position of the target
-     *        relative to the camera.
-     * @param fieldToTarget A Pose2d representing the target position in the field coordinate
-     *        system.
-     * @param gyroAngle The current robot gyro angle, likely from odometry.
-     * @return A Transform2d that takes us from the camera to the target.
+     * @param targetRangeMeters Robot's range to the target is meters (dX in robot local).
+     * @param targetHeadingMeters Robot's heading to the target in meters (dY in robot local).
+     * @param robotPose The 2D pose of the robot on the field.
+     * @return A Translation2d of the detected object in field coordinates.
      */
     public Translation2d estimateTargetToField(double targetRangeMeters,
         double targetHeadingMeters, Pose2d robotPose)
@@ -254,6 +255,32 @@ public class DetectionML {
             robotToTargetTranslation.getNorm() * Math.cos(-robotGyroAngle) + robotPose.getX(),
             robotToTargetTranslation.getNorm() * Math.sin(-robotGyroAngle) + robotPose.getY());
         return fieldToTargetTranslation;
+    }
+
+    /**
+     * Generates a N-element FIFO array of the last N objects detected by the robot.
+     */
+    public void getLastNDetections(int N,
+        ArrayList<Translation2d> lastNDetections, double toleranceMeters,
+        Translation2d targetTranslation)
+    {
+        Translation2d currentTranslation;
+        boolean isNewDetection = true;
+        for (int i = 0; i < lastNDetections.size(); i++) {
+            currentTranslation = lastNDetections.get(i);
+            if ((Math.abs(targetTranslation.getX() - currentTranslation.getX()) <= toleranceMeters)
+                && (Math
+                    .abs(
+                        targetTranslation.getY() - currentTranslation.getY()) <= toleranceMeters)) {
+                isNewDetection = false;
+            }
+        }
+        if (isNewDetection && lastNDetections.size() > N) {
+            lastNDetections.remove(0);
+            lastNDetections.add(N - 1, targetTranslation);
+        } else if (isNewDetection) {
+            lastNDetections.add(targetTranslation);
+        }
     }
 
     // To-do: Add isConnected method. quickly re-verify equations. test results in sim. begin

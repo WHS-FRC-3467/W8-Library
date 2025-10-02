@@ -23,6 +23,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.ArrayList;
 
 public class objectDetector extends SubsystemBase {
     private final DetectionML detectionML;
@@ -30,6 +31,8 @@ public class objectDetector extends SubsystemBase {
     private double range;
     private double heading;
     private double distance;
+    private Translation2d targetLocation;
+    private ArrayList<Translation2d> lastNDetections = new ArrayList<>(10);
 
     public objectDetector(DetectionMLIO io, Drive drive)
     {
@@ -52,12 +55,15 @@ public class objectDetector extends SubsystemBase {
                 objectDetectorConstants.CAMERA0TRANSFORM,
                 range, 1, 0);
             distance = detectionML.distanceToTarget2d(range, heading);
-            Translation2d targetLocation =
+            targetLocation =
                 detectionML.estimateTargetToField(range, heading, drive.getPose());
+
+            detectionML.getLastNDetections(10, lastNDetections, 5, targetLocation);
             Logger.recordOutput("Detection/" + "Calculated Range", range);
             Logger.recordOutput("Detection/" + "Calculated Heading", heading);
             Logger.recordOutput("Detection/" + "Calculated Distance", distance);
             Logger.recordOutput("Detection/" + "Calculated Coordinates", targetLocation);
+            Logger.recordOutput("Detection/" + "Test", targetLocation.getY());
 
             Logger.recordOutput("Detection/" + "True Range",
                 objectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
