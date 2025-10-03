@@ -33,10 +33,11 @@ public class objectDetectorConstants {
 
     public final static VisionTargetSim[] ALGAE_TARGETS = {
             new VisionTargetSim(new Pose3d(3, 3, algaeHeightMeters / 2, new Rotation3d()),
+                new TargetModel(algaeHeightMeters)),
+            new VisionTargetSim(new Pose3d(5, 6, algaeHeightMeters / 2, new Rotation3d()),
+                new TargetModel(algaeHeightMeters)),
+            new VisionTargetSim((new Pose3d(10, 3, algaeHeightMeters / 2, new Rotation3d())),
                 new TargetModel(algaeHeightMeters))
-            // ,
-            // new VisionTargetSim(new Pose3d(5, 5, algaeHeightMeters / 2, new Rotation3d()),
-            // new TargetModel(algaeHeightMeters))
     };
 
     public static DetectionMLIOPhotonVision getReal()

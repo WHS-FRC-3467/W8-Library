@@ -14,6 +14,7 @@ import java.lang.Math;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 /**
@@ -245,20 +246,15 @@ public class DetectionML {
     public Translation2d estimateTargetToField(double targetRangeMeters,
         double targetHeadingMeters, Pose2d robotPose)
     {
-        // Robot's gyro angle in radians, CCW positive, 0 towards opposing alliance station.
-        double robotGyroAngle = robotPose.getRotation().getRadians();
-        // Robot-relative translation to target (through robot local coordinate system, dX = range &
-        // dY = heading).
-        Translation2d robotToTargetTranslation =
-            new Translation2d(targetRangeMeters, targetHeadingMeters);
-        Translation2d fieldToTargetTranslation = new Translation2d(
-            robotToTargetTranslation.getNorm() * Math.cos(-robotGyroAngle) + robotPose.getX(),
-            robotToTargetTranslation.getNorm() * Math.sin(-robotGyroAngle) + robotPose.getY());
+        Translation2d fieldToTargetTranslation = robotPose
+            .transformBy(new Transform2d(targetRangeMeters, targetHeadingMeters, new Rotation2d()))
+            .getTranslation();
         return fieldToTargetTranslation;
     }
 
     /**
-     * Generates a N-element FIFO array of the last N objects detected by the robot.
+     * Generates an N-element FIFO list of the last N objects detected by the robot. to-do: doc
+     * string
      */
     public void getLastNDetections(int N,
         ArrayList<Translation2d> lastNDetections, double toleranceMeters,
@@ -275,7 +271,7 @@ public class DetectionML {
                 isNewDetection = false;
             }
         }
-        if (isNewDetection && lastNDetections.size() > N) {
+        if (isNewDetection && lastNDetections.size() >= N) {
             lastNDetections.remove(0);
             lastNDetections.add(N - 1, targetTranslation);
         } else if (isNewDetection) {

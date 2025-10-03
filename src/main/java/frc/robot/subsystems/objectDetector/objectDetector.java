@@ -19,8 +19,6 @@ import frc.lib.devices.DetectionML;
 import frc.lib.io.detectionML.DetectionMLIO;
 import frc.robot.subsystems.drive.Drive;
 import org.littletonrobotics.junction.Logger;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
@@ -57,13 +55,18 @@ public class objectDetector extends SubsystemBase {
             distance = detectionML.distanceToTarget2d(range, heading);
             targetLocation =
                 detectionML.estimateTargetToField(range, heading, drive.getPose());
+            detectionML.getLastNDetections(10, lastNDetections, 0.4572,
+                targetLocation);
 
-            detectionML.getLastNDetections(10, lastNDetections, 5, targetLocation);
             Logger.recordOutput("Detection/" + "Calculated Range", range);
             Logger.recordOutput("Detection/" + "Calculated Heading", heading);
             Logger.recordOutput("Detection/" + "Calculated Distance", distance);
-            Logger.recordOutput("Detection/" + "Calculated Coordinates", targetLocation);
-            Logger.recordOutput("Detection/" + "Test", targetLocation.getY());
+            Logger.recordOutput("Detection/" + "Latest Detection's Calculated Coordinates",
+                targetLocation);
+            Logger.recordOutput("Detection/" + "Newest Detection",
+                lastNDetections.get(lastNDetections.size() - 1));
+            Logger.recordOutput("Detection/" + "Oldest Detection", lastNDetections.get(0));
+            Logger.recordOutput("Detection/" + "Detection List Size", lastNDetections.size());
 
             Logger.recordOutput("Detection/" + "True Range",
                 objectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
@@ -74,12 +77,6 @@ public class objectDetector extends SubsystemBase {
             Logger.recordOutput("Detection/" + "True Distance",
                 objectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
                     .getDistance(drive.getPose().getTranslation()));
-            Logger.recordOutput("Detection/" + "Heading Diff",
-                heading / objectDetectorConstants.ALGAE_TARGETS[0]
-                    .getPose().toPose2d().getTranslation().minus(drive.getPose().getTranslation())
-                    .getY());
-            Logger.recordOutput("Detection/Target Translation",
-                drive.getPose().transformBy(new Transform2d(range, heading, new Rotation2d())));
         }
     }
 }
