@@ -69,7 +69,7 @@ public class RobotContainer {
     private final BeamBreak1 beamBreak1;
     private final Servo1 servo1;
     private final Flywheel flywheel;
-    private final objectDetector vision;
+    private final objectDetector machineVision;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -97,7 +97,7 @@ public class RobotContainer {
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
                 servo1 = new Servo1(Servo1Constants.getReal());
                 flywheel = new Flywheel(FlywheelConstants.getReal());
-                vision = new objectDetector(objectDetectorConstants.getReal(), drive);
+                machineVision = new objectDetector(objectDetectorConstants.getReal(), drive);
             }
 
             case SIM -> {
@@ -116,8 +116,9 @@ public class RobotContainer {
                     BeamBreak1Constants.getSim());
                 servo1 = new Servo1(Servo1Constants.getSim());
                 flywheel = new Flywheel(FlywheelConstants.getSim());
-                vision = new objectDetector(objectDetectorConstants.getSim(() -> drive.getPose()),
-                    drive);
+                machineVision =
+                    new objectDetector(objectDetectorConstants.getSim(() -> drive.getPose()),
+                        drive);
             }
 
             default -> {
@@ -136,7 +137,7 @@ public class RobotContainer {
                     new BeamBreak1(BeamBreak1Constants.getReplay());
                 servo1 = new Servo1(Servo1Constants.getReplay());
                 flywheel = new Flywheel(FlywheelConstants.getReplay());
-                vision = new objectDetector(objectDetectorConstants.getReplay(), drive);
+                machineVision = new objectDetector(objectDetectorConstants.getReplay(), drive);
             }
         }
 
