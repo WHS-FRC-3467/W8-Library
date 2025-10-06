@@ -254,7 +254,7 @@ public class DetectionML {
 
     /**
      * Generates an N-element FIFO list of the last N objects detected by the robot. to-do: doc
-     * string
+     * string.
      */
     public void getLastNDetections(int N,
         ArrayList<Translation2d> lastNDetections, double toleranceMeters,
@@ -280,5 +280,5 @@ public class DetectionML {
     }
 
     // To-do: Add isConnected method. quickly re-verify equations. test results in sim. begin
-    // writing simple unit tests.
+    // writing simple unit tests. begin writing commands. time-stamp algo?
 }
