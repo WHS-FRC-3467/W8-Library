@@ -15,7 +15,9 @@
 
 package frc.lib.util;
 
+import static edu.wpi.first.units.Units.Seconds;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -55,6 +57,21 @@ public class CommandXboxControllerExtended extends CommandXboxController {
     {
         return Commands.startEnd(() -> hid.setRumble(side, intensity),
             () -> hid.setRumble(side, 0.0));
+    }
+
+    /**
+     * Rumble controller for a set amount of time
+     * 
+     * @param side Which motor to rumble
+     * @param intensity Percentage for rumble intensity
+     * @param time Length of time to rumble
+     * @return Command to rumble the controller
+     */
+    public Command rumbleForTime(RumbleType side, double intensity, Time time)
+    {
+        return Commands.runOnce(() -> hid.setRumble(side, intensity))
+            .andThen(Commands.waitSeconds(time.in(Seconds)))
+            .andThen(() -> hid.setRumble(side, 0.0));
     }
 
     @Override

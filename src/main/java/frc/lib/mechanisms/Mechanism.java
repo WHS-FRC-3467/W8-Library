@@ -16,6 +16,8 @@
 package frc.lib.mechanisms;
 
 import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
@@ -104,4 +106,27 @@ public interface Mechanism {
     {
         return Amps.of(0.0);
     }
+
+    /**
+     * Getter for angle of the motor
+     * 
+     * @return Angle of the motor or fused encoder
+     */
+    public default Angle getPosition()
+    {
+        return Radians.of(0.0);
+    }
+
+    public default Current getTorqueCurrent()
+    {
+        return Amps.of(0);
+    }
+
+    public default AngularVelocity getVelocity()
+    {
+        return RadiansPerSecond.of(0.0);
+    }
+
+    public default void close()
+    {}
 }

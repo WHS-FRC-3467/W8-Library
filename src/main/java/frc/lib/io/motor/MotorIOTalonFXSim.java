@@ -32,7 +32,8 @@ import frc.lib.util.Device.CAN;
  */
 public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
 
-    private double gearRatio;
+    private double rotorToSensorRatio;
+    private double sensorToMechanismRatio;
     private TalonFXSimState simState;
 
     /**
@@ -48,14 +49,17 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
     {
         super(name, config, main, followerData);
 
-        gearRatio = config.Feedback.RotorToSensorRatio * config.Feedback.SensorToMechanismRatio;
+        rotorToSensorRatio =
+            config.Feedback.RotorToSensorRatio;
+        sensorToMechanismRatio =
+            config.Feedback.SensorToMechanismRatio;
         simState = super.motor.getSimState();
     }
 
     @Override
     public void setPosition(Angle position)
     {
-        simState.setRawRotorPosition(position.times(gearRatio));
+        simState.setRawRotorPosition(position.times(rotorToSensorRatio * sensorToMechanismRatio));
     }
 
     @Override
@@ -71,9 +75,20 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
     }
 
     @Override
-    public double getGearRatio()
+    public double getRotorToSensorRatio()
     {
-        return gearRatio;
+        return rotorToSensorRatio;
+    }
+
+    public double getSensorToMechanismRatio()
+    {
+        return sensorToMechanismRatio;
+    }
+
+    @Override
+    public void setEncoderPosition(Angle position)
+    {
+        super.setEncoderPosition(position.times(rotorToSensorRatio * sensorToMechanismRatio));
     }
 
     @Override
@@ -129,5 +144,13 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
             inputs.velocityError = null;
             inputs.activeTrajectoryVelocity = null;
         }
+
+        inputs.controlType = super.getCurrentControlType();
+    }
+
+    @Override
+    public void close()
+    {
+        super.motor.close();
     }
 }

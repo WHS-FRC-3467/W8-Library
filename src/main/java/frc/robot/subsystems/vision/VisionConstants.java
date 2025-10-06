@@ -15,6 +15,9 @@
 
 package frc.robot.subsystems.vision;
 
+import java.util.Arrays;
+import java.util.List;
+import org.photonvision.simulation.VisionSystemSim;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -52,8 +55,16 @@ public class VisionConstants {
             1.0 // Camera 1
     };
 
-    // Multipliers to apply for MegaTag 2 observations
-    public static double linearStdDevMegatag2Factor = 0.5; // More stable than full 3D solve
-    public static double angularStdDevMegatag2Factor = Double.POSITIVE_INFINITY; // No rotation data
-                                                                                 // available
+    /**
+     * Tags used for reef alignment
+     */
+    public static List<Integer> alignmentTags =
+        Arrays.asList(6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22);
+
+    public static VisionSystemSim getSystemSim()
+    {
+        var system = new VisionSystemSim("main");
+        system.addAprilTags(aprilTagLayout);
+        return system;
+    }
 }

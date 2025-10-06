@@ -41,15 +41,20 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.util.LoggerHelper;
+import frc.lib.util.Timestamped;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
+import frc.robot.RobotState;
 import frc.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -130,26 +135,28 @@ public class Drive extends SubsystemBase {
         PhoenixOdometryThread.getInstance().start();
 
         // Configure AutoBuilder for PathPlanner
-        AutoBuilder.configure(
-            this::getPose,
-            this::setPose,
-            this::getChassisSpeeds,
-            this::runVelocity,
-            new PPHolonomicDriveController(
-                new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
-            PP_CONFIG,
-            () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-            this);
-        Pathfinding.setPathfinder(new LocalADStarAK());
-        PathPlannerLogging.setLogActivePathCallback(
-            (activePath) -> {
-                Logger.recordOutput(
-                    "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
-            });
-        PathPlannerLogging.setLogTargetPoseCallback(
-            (targetPose) -> {
-                Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
-            });
+        if (!AutoBuilder.isConfigured()) {
+            AutoBuilder.configure(
+                this::getPose,
+                this::setPose,
+                this::getChassisSpeeds,
+                this::runVelocity,
+                new PPHolonomicDriveController(
+                    new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
+                PP_CONFIG,
+                () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+                this);
+            Pathfinding.setPathfinder(new LocalADStarAK());
+            PathPlannerLogging.setLogActivePathCallback(
+                (activePath) -> {
+                    Logger.recordOutput(
+                        "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
+                });
+            PathPlannerLogging.setLogTargetPoseCallback(
+                (targetPose) -> {
+                    Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
+                });
+        }
 
         // Configure SysId
         sysId = new SysIdRoutine(
@@ -166,6 +173,7 @@ public class Drive extends SubsystemBase {
     @SuppressWarnings("LockNotBeforeTry")
     public void periodic()
     {
+        LoggerHelper.recordCurrentCommand("Drive", this);
         odometryLock.lock(); // Prevents odometry updates while reading data
         gyroIO.updateInputs(gyroInputs);
         Logger.processInputs("Drive/Gyro", gyroInputs);
@@ -220,6 +228,12 @@ public class Drive extends SubsystemBase {
 
         // Update gyro alert
         gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
+
+        // Update global pose
+        RobotState.getInstance().setPose(poseEstimator.getEstimatedPosition());
+
+        // Update RobotState velocity
+        RobotState.getInstance().setVelocity(getChassisSpeeds());
     }
 
     /**
@@ -280,14 +294,16 @@ public class Drive extends SubsystemBase {
     {
         return run(() -> runCharacterization(0.0))
             .withTimeout(1.0)
-            .andThen(sysId.quasistatic(direction));
+            .andThen(sysId.quasistatic(direction))
+            .withName("SysId Quasistatic " + direction.toString());
     }
 
     /** Returns a command to run a dynamic test in the specified direction. */
     public Command sysIdDynamic(SysIdRoutine.Direction direction)
     {
         return run(() -> runCharacterization(0.0)).withTimeout(1.0)
-            .andThen(sysId.dynamic(direction));
+            .andThen(sysId.dynamic(direction))
+            .withName("SysId Dynamic " + direction.toString());
     }
 
     /**
@@ -306,7 +322,7 @@ public class Drive extends SubsystemBase {
     /**
      * Returns the module positions (turn angles and drive positions) for all of the modules.
      */
-    private SwerveModulePosition[] getModulePositions()
+    protected SwerveModulePosition[] getModulePositions()
     {
         SwerveModulePosition[] states = new SwerveModulePosition[4];
         for (int i = 0; i < 4; i++) {
@@ -317,7 +333,7 @@ public class Drive extends SubsystemBase {
 
     /** Returns the measured chassis speeds of the robot. */
     @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
-    private ChassisSpeeds getChassisSpeeds()
+    protected ChassisSpeeds getChassisSpeeds()
     {
         return kinematics.toChassisSpeeds(getModuleStates());
     }
@@ -357,6 +373,11 @@ public class Drive extends SubsystemBase {
         return getPose().getRotation();
     }
 
+    public Timestamped<Rotation2d> getTimestampedHeading()
+    {
+        return new Timestamped<Rotation2d>(Seconds.of(Timer.getTimestamp()), getRotation());
+    }
+
     /** Resets the current odometry pose. */
     public void setPose(Pose2d pose)
     {
@@ -366,11 +387,11 @@ public class Drive extends SubsystemBase {
     /** Adds a new timestamped vision measurement. */
     public void addVisionMeasurement(
         Pose2d visionRobotPoseMeters,
-        double timestampSeconds,
+        Time timestamp,
         Matrix<N3, N1> visionMeasurementStdDevs)
     {
         poseEstimator.addVisionMeasurement(
-            visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
+            visionRobotPoseMeters, timestamp.in(Seconds), visionMeasurementStdDevs);
     }
 
     /** Returns the maximum linear speed in meters per sec. */

@@ -40,6 +40,7 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
 
     private final Alert laserCANOnWrongBusAlert;
     private final Alert disconnectedAlert;
+    private final Alert invalidReadingAlert;
 
     /**
      * Constructs a new {@link DistanceSensorIOLaserCAN} with specified parameters and
@@ -60,6 +61,8 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
             new Alert("LaserCAN " + name + " must be wired to the RIO's CAN bus",
                 AlertType.kError);
         disconnectedAlert = new Alert("LaserCAN " + name + " is not connected", AlertType.kError);
+        invalidReadingAlert =
+            new Alert("LaserCAN " + name + " reading is invalid", AlertType.kWarning);
 
         if (!id.bus().equals("rio")) {
             laserCANOnWrongBusAlert.set(true);
@@ -88,15 +91,16 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
         }
 
         disconnectedAlert.set(false);
-
         inputs.connected = true;
-        inputs.ambientSignal = measure.ambient;
 
         if (measure.status != LaserCanInterface.LASERCAN_STATUS_VALID_MEASUREMENT) {
+            invalidReadingAlert.set(true);
+            inputs.ambientSignal = 0.0;
             inputs.distance = null;
             return;
         }
 
+        inputs.ambientSignal = measure.ambient;
         inputs.distance = Millimeters.of(measure.distance_mm);
     }
 }

@@ -25,13 +25,15 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
-
+import static edu.wpi.first.units.Units.Meters;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -106,7 +108,8 @@ public class DriveCommands {
                             ? drive.getRotation().plus(new Rotation2d(Math.PI))
                             : drive.getRotation()));
             },
-            drive);
+            drive)
+            .withName("Joystick Drive");
     }
 
     /**
@@ -158,7 +161,8 @@ public class DriveCommands {
             drive)
 
             // Reset PID controller when command starts
-            .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+            .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()))
+            .withName("Joystick Drive At Angle");
     }
 
     /**
@@ -224,7 +228,8 @@ public class DriveCommands {
                             .println("********** Drive FF Characterization Results **********");
                         System.out.println("\tkS: " + formatter.format(kS));
                         System.out.println("\tkV: " + formatter.format(kV));
-                    }));
+                    }))
+            .withName("Feedforward Characterization");
     }
 
     /** Measures the robot's wheel radius by spinning in a circle. */
@@ -295,7 +300,8 @@ public class DriveCommands {
                                     + " meters, "
                                     + formatter.format(Units.metersToInches(wheelRadius))
                                     + " inches");
-                        })));
+                        })))
+            .withName("Wheel Radius Characterization");
     }
 
     private static class WheelRadiusCharacterizationState {
@@ -304,16 +310,20 @@ public class DriveCommands {
         double gyroDelta = 0.0;
     }
 
-    /** 
+    /**
      * Pathfinding command that uses the AutoBuilder to generate a path to a target position.
+     * 
      * @param currentPose Supplier for the robot's current pose
      * @param targetPose The target pose to pathfind to.
      * @param constraints The PathContraints to apply
      * @param goalEndVelocity The goal final velocity in meters/sec.
-     * @param tolerance The allowed tolerance in meters of the robot's position from the target pose.
-     * Note that this pathfinding feature does not take the robot to a desired rotation.
+     * @param tolerance The allowed tolerance in meters of the robot's position from the target
+     *        pose. Note that this pathfinding feature does not take the robot to a desired
+     *        rotation.
      */
-    public static Command pathFindToPose(Supplier<Pose2d> currentPose, Pose2d targetPose, PathConstraints constraints, double goalEndVelocity, double tolerance) {
+    public static Command pathFindToPose(Supplier<Pose2d> currentPose, Pose2d targetPose,
+        PathConstraints constraints, LinearVelocity goalEndVelocity, Distance tolerance)
+    {
 
         // Since AutoBuilder is configured, we can use it to build pathfinding commands
         return AutoBuilder.pathfindToPose(
@@ -321,8 +331,11 @@ public class DriveCommands {
             constraints,
             goalEndVelocity // Goal end velocity in meters/sec
         ).raceWith(
-            // Interrupt the pathfinding command once the robot gets within the tolerance of the target pose
-            Commands.waitUntil(() -> currentPose.get().minus(targetPose).getTranslation().getNorm() < tolerance)
-        );
+            // Interrupt the pathfinding command once the robot gets within the tolerance of the
+            // target pose
+            Commands.waitUntil(
+                () -> currentPose.get().minus(targetPose).getTranslation().getNorm() < tolerance
+                    .in(Meters)))
+            .withName("Pathfind to " + targetPose.toString());
     }
 }

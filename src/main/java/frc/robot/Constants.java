@@ -15,8 +15,13 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
 import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.drive.DriveConstants;
 
@@ -42,15 +47,51 @@ public final class Constants {
         REPLAY
     }
 
+    public static class RobotConstants {
+        public static String serial;
+        public static boolean isComp;
+        public static boolean isAlpha;
+
+        // TODO: Fill in with real serial number prefixes. Figure out by displaying/logging String
+        // serial.
+        public static final String compSerial = "0001";
+        public static final String alphaSerial = "0000";
+
+        static {
+            if (Robot.isReal()) {
+                // Roborio id recognition
+                serial = System.getenv("serialnum");
+            } else {
+                serial = "3467";
+            }
+            RobotConstants.isComp = serial.startsWith(RobotConstants.compSerial);
+            RobotConstants.isAlpha = serial.startsWith(RobotConstants.alphaSerial);
+        }
+    }
+
+    public static RobotType robotType = RobotConstants.isComp ? RobotType.COMP
+        : RobotConstants.isAlpha ? RobotType.ALPHA : RobotType.NONE;
+
+    public enum RobotType {
+        COMP,
+        ALPHA,
+        NONE
+    }
+
     public static final class PathConstants {
 
-        public static final double PATHGENERATION_DRIVE_TOLERANCE = Units.inchesToMeters(3.0); // 3 in robot position tolerance
-        public static final double PATHGENERATION_ROT_TOLERANCE_DEGREES = 5.0; // 5 degrees rotation tolerance
-        // Tune the maxAcceleration, maxAngularVelocityRadPerSec, and maxAngularAccelerationRacPerSecSq constraints for pathfinding
+        public static final Distance STARTING_POSE_DRIVE_TOLERANCE =
+            Inches.of(3.0); // For auto
+        public static final Angle STARTING_POSE_ROT_TOLERANCE_DEGREES = Degrees.of(5.0);
+
+        public static final Distance PATHGENERATION_DRIVE_TOLERANCE = Inches.of(3.0);
+        public static final Angle PATHGENERATION_ROT_TOLERANCE = Degrees.of(5.0);
+        // Tune the maxAcceleration, maxAngularVelocityRadPerSec, and
+        // maxAngularAccelerationRacPerSecSq constraints for pathfinding
         public static final PathConstraints ON_THE_FLY_PATH_CONSTRAINTS = new PathConstraints(
-            DriveConstants.kSpeedAt12Volts.magnitude(), 
-            4.0, 
-            Units.degreesToRadians(540), 
+            DriveConstants.kSpeedAt12Volts.magnitude(),
+            4.0,
+            Units.degreesToRadians(540),
             Units.degreesToRadians(720));
     }
 }

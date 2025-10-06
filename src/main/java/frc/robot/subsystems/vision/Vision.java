@@ -15,6 +15,7 @@
 
 package frc.robot.subsystems.vision;
 
+import static edu.wpi.first.units.Units.Meters;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.Matrix;
@@ -24,15 +25,20 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.vision.VisionIOInputsAutoLogged;
+import frc.lib.io.vision.VisionIO.TagObservation;
+import frc.lib.util.Timestamped;
+import lombok.Getter;
 import frc.lib.io.vision.VisionIO;
-import frc.lib.io.vision.VisionIO.PoseObservationType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
@@ -41,10 +47,18 @@ public class Vision extends SubsystemBase {
     private final VisionIOInputsAutoLogged[] inputs;
     private final Alert[] disconnectedAlerts;
 
-    public Vision(VisionConsumer consumer, VisionIO... io)
+    private final Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier;
+
+    @Getter
+    private Optional<TagObservation> closestTagObservation = Optional.empty();
+
+    public Vision(VisionConsumer consumer,
+        Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier, VisionIO... io)
     {
         this.consumer = consumer;
+        this.timestampedHeadingSupplier = timestampedHeadingSupplier;
         this.io = io;
+
 
         // Initialize inputs
         this.inputs = new VisionIOInputsAutoLogged[io.length];
@@ -60,21 +74,11 @@ public class Vision extends SubsystemBase {
         }
     }
 
-    /**
-     * Returns the X angle to the best target, which can be used for simple servoing with vision.
-     *
-     * @param cameraIndex The index of the camera to use.
-     */
-    public Rotation2d getTargetX(int cameraIndex)
-    {
-        return inputs[cameraIndex].latestTargetObservation.tx();
-    }
-
     @Override
     public void periodic()
     {
         for (int i = 0; i < io.length; i++) {
-            io[i].updateInputs(inputs[i]);
+            io[i].updateInputs(inputs[i], timestampedHeadingSupplier.get());
             Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
         }
 
@@ -83,6 +87,9 @@ public class Vision extends SubsystemBase {
         List<Pose3d> allRobotPoses = new ArrayList<>();
         List<Pose3d> allRobotPosesAccepted = new ArrayList<>();
         List<Pose3d> allRobotPosesRejected = new ArrayList<>();
+
+        List<TagObservation> allAlignmentTargets = new ArrayList<>();
+        closestTagObservation = Optional.ofNullable(null);
 
         // Loop over cameras
         for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
@@ -94,6 +101,8 @@ public class Vision extends SubsystemBase {
             List<Pose3d> robotPoses = new ArrayList<>();
             List<Pose3d> robotPosesAccepted = new ArrayList<>();
             List<Pose3d> robotPosesRejected = new ArrayList<>();
+
+            List<TagObservation> alignmentTargets = new ArrayList<>();
 
             // Add tag poses
             for (int tagId : inputs[cameraIndex].tagIds) {
@@ -133,13 +142,11 @@ public class Vision extends SubsystemBase {
 
                 // Calculate standard deviations
                 double stdDevFactor =
-                    Math.pow(observation.averageTagDistance(), 2.0) / observation.tagCount();
+                    (Math.pow(observation.averageTagDistance().in(Meters), 2.0)
+                        + 10 * observation.ambiguity())
+                        / observation.tagCount();
                 double linearStdDev = linearStdDevBaseline * stdDevFactor;
                 double angularStdDev = angularStdDevBaseline * stdDevFactor;
-                if (observation.type() == PoseObservationType.MEGATAG_2) {
-                    linearStdDev *= linearStdDevMegatag2Factor;
-                    angularStdDev *= angularStdDevMegatag2Factor;
-                }
                 if (cameraIndex < cameraStdDevFactors.length) {
                     linearStdDev *= cameraStdDevFactors[cameraIndex];
                     angularStdDev *= cameraStdDevFactors[cameraIndex];
@@ -150,6 +157,13 @@ public class Vision extends SubsystemBase {
                     observation.pose().toPose2d(),
                     observation.timestamp(),
                     VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
+            }
+
+            for (var tagObservation : inputs[cameraIndex].allTargets) {
+                if (alignmentTags.contains(tagObservation.id())) {
+                    alignmentTargets.add(tagObservation);
+
+                }
             }
 
             // Log camera datadata
@@ -165,10 +179,26 @@ public class Vision extends SubsystemBase {
             Logger.recordOutput(
                 "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesRejected",
                 robotPosesRejected.toArray(new Pose3d[robotPosesRejected.size()]));
+            Logger.recordOutput(
+                "Vision/Camera" + Integer.toString(cameraIndex) + "/AlignmentTargets",
+                alignmentTargets.toArray(new TagObservation[alignmentTargets.size()]));
+
             allTagPoses.addAll(tagPoses);
             allRobotPoses.addAll(robotPoses);
             allRobotPosesAccepted.addAll(robotPosesAccepted);
             allRobotPosesRejected.addAll(robotPosesRejected);
+
+            allAlignmentTargets.addAll(alignmentTargets);
+
+
+        }
+
+        for (var target : allAlignmentTargets) {
+            if (closestTagObservation.isEmpty()) {
+                closestTagObservation = Optional.of(target);
+            } else if (target.area() > closestTagObservation.get().area()) {
+                closestTagObservation = Optional.of(target);
+            }
         }
 
         // Log summary data
@@ -182,13 +212,18 @@ public class Vision extends SubsystemBase {
         Logger.recordOutput(
             "Vision/Summary/RobotPosesRejected",
             allRobotPosesRejected.toArray(new Pose3d[allRobotPosesRejected.size()]));
+
+        if (closestTagObservation.isPresent()) {
+            Logger.recordOutput("Vision/Summary/ClosestAlignmentTarget",
+                closestTagObservation.get());
+        }
     }
 
     @FunctionalInterface
     public static interface VisionConsumer {
         public void accept(
             Pose2d visionRobotPoseMeters,
-            double timestampSeconds,
+            Time timestampSeconds,
             Matrix<N3, N1> visionMeasurementStdDevs);
     }
 }
