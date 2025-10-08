@@ -72,7 +72,7 @@ public interface DetectionMLIO {
      * Updates the provided {@link detectionMLIOInputs} instance using the latest camera readings.
      * If the camera is not connected, DetectionMLIOInput fields remain empty.
      * 
-     * @param inputs The structure to populate with updated camera readings.
+     * inputs is the structure to populate with updated camera readings.
      */
     public default void updateInputs(DetectionMLIOInputs inputs)
     {}
