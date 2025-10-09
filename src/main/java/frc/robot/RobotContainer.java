@@ -101,7 +101,7 @@ public class RobotContainer {
     private final BeamBreak1 beamBreak1;
     private final Servo1 servo1;
     private final Flywheel flywheel;
-    private final objectDetector machineVision;
+    private final objectDetector objectVision;
     private final Linear linear;
     private final Vision vision;
     private final RotarySubsystem rotary;
@@ -136,7 +136,7 @@ public class RobotContainer {
                 beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
                 servo1 = new Servo1(Servo1Constants.getReal());
                 flywheel = new Flywheel(FlywheelConstants.getReal());
-                machineVision = new objectDetector(objectDetectorConstants.getReal(), drive);
+                objectVision = new objectDetector(objectDetectorConstants.getReal(), drive);
 
                 linear = new Linear(LinearConstants.getReal());
 
@@ -168,7 +168,7 @@ public class RobotContainer {
                     BeamBreak1Constants.getSim());
                 servo1 = new Servo1(Servo1Constants.getSim());
                 flywheel = new Flywheel(FlywheelConstants.getSim());
-                machineVision =
+                objectVision =
                     new objectDetector(objectDetectorConstants.getSim(() -> drive.getPose()),
                         drive);
 
@@ -204,7 +204,7 @@ public class RobotContainer {
                     new BeamBreak1(BeamBreak1Constants.getReplay());
                 servo1 = new Servo1(Servo1Constants.getReplay());
                 flywheel = new Flywheel(FlywheelConstants.getReplay());
-                machineVision = new objectDetector(objectDetectorConstants.getReplay(), drive);
+                objectVision = new objectDetector(objectDetectorConstants.getReplay(), drive);
 
                 linear = new Linear(LinearConstants.getReplay());
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());

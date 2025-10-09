@@ -26,9 +26,7 @@ import java.util.ArrayList;
 public class objectDetector extends SubsystemBase {
     private final DetectionML detectionML;
     private final Drive drive;
-    private double range;
-    private double heading;
-    private double distance;
+    private double range, heading, distance;
     private Translation2d targetLocation;
     private ArrayList<Translation2d> lastNDetections = new ArrayList<>(10);
 
