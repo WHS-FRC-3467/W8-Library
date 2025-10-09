@@ -20,7 +20,7 @@ import org.littletonrobotics.junction.AutoLog;
 /**
  * Standardized interface for ML-IO used in FRC.
  */
-public interface DetectionMLIO {
+public interface ObjectDetectionIO {
 
     /*
      * Abstract class defining data type for updateInputs method.
@@ -69,10 +69,8 @@ public interface DetectionMLIO {
     }
 
     /*
-     * Updates the provided {@link detectionMLIOInputs} instance using the latest camera readings.
-     * If the camera is not connected, DetectionMLIOInput fields remain empty.
-     * 
-     * inputs is the structure to populate with updated camera readings.
+     * Updates the provided DetectionMLIOInputs object using the latest camera readings. If the
+     * camera is not connected, DetectionMLIOInput fields remain empty.
      */
     public default void updateInputs(DetectionMLIOInputs inputs)
     {}

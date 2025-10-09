@@ -26,7 +26,7 @@ import java.util.List;
  * A detectionMLIO implementation that uses a camera connected to hardware running the PhotonVision
  * library to detect objects.
  */
-public class DetectionMLIOPhotonVision implements DetectionMLIO {
+public class DetectionMLIOPhotonVision implements ObjectDetectionIO {
     protected final PhotonCamera camera;
     protected final String cameraName;
     private final Alert disconnectedAlert;
@@ -53,53 +53,50 @@ public class DetectionMLIOPhotonVision implements DetectionMLIO {
     {
         /* Verify PhotonVision hardware is connected. */
         inputs.connected = camera.isConnected();
-        /* Update results. */
-        if (inputs.connected) {
-            disconnectedAlert.set(false);
-            // PhotonVision container containing all information about stored targets from
-            // camera.
-            // List retrieved via .getAllUnreadResults() is FIFO, max size 20, and each call clears
-            // the queue. Call once per loop().
-            List<PhotonPipelineResult> result = camera.getAllUnreadResults();
-            boolean hasTargets = !result.isEmpty();
-            // Manipulating targets data when HasTargets is false may result in null pointer
-            // exception.
-            if (hasTargets) {
-                // Most recent set of targets.
-                List<PhotonTrackedTarget> currentTargets = result.get(0).getTargets();
-                int TargetSize = currentTargets.size();
-                // Clear last timestamp's observations to prevent accumulation (by re-creating
-                // array, similar to .clear()).
-                inputs.latestTargetObservations = new TargetObservation[TargetSize];
-                // Add all detected targets within most recent pipeline result to
-                // inputs.LatestTargetObservation.
-                for (int i = 0; i < TargetSize; i++) {
-                    double[] corner1 = {currentTargets.get(i).getMinAreaRectCorners().get(0).x,
-                            currentTargets.get(i).getMinAreaRectCorners().get(0).y};
-                    double[] corner2 = {currentTargets.get(i).getMinAreaRectCorners().get(1).x,
-                            currentTargets.get(i).getMinAreaRectCorners().get(1).y};
-                    double[] corner3 = {currentTargets.get(i).getMinAreaRectCorners().get(2).x,
-                            currentTargets.get(i).getMinAreaRectCorners().get(2).y};
-                    double[] corner4 = {currentTargets.get(i).getMinAreaRectCorners().get(3).x,
-                            currentTargets.get(i).getMinAreaRectCorners().get(3).y};
-                    inputs.latestTargetObservations[i] = new TargetObservation(
-                        currentTargets.get(i).getDetectedObjectClassID(),
-                        currentTargets.get(i).getDetectedObjectConfidence(),
-                        currentTargets.get(i).getArea(),
-                        currentTargets.get(i).getPitch(),
-                        currentTargets.get(i).getYaw(),
-                        currentTargets.get(i).getSkew(),
-                        corner1,
-                        corner2,
-                        corner3,
-                        corner4); // Corners: origin top-left, x positive right, y positive down.
-                }
-
-            } else {
-                // Pass
-            }
-        } else {
+        if (!inputs.connected) {
             disconnectedAlert.set(true);
+            return;
+        }
+        /* Update results. */
+        disconnectedAlert.set(false);
+        // PhotonVision container containing all information about stored targets from
+        // camera.
+        // List retrieved via .getAllUnreadResults() is FIFO, max size 20, and each call clears
+        // the queue. Call once per loop().
+        List<PhotonPipelineResult> result = camera.getAllUnreadResults();
+        // Manipulating targets data when result is empty may result in null pointer
+        // exception.
+        if (result.isEmpty()) {
+            return;
+        }
+        // Most recent set of targets.
+        List<PhotonTrackedTarget> currentTargets = result.get(0).getTargets();
+        int TargetSize = currentTargets.size();
+        // Clear last timestamp's observations to prevent accumulation (by re-creating
+        // array, similar to .clear()).
+        inputs.latestTargetObservations = new TargetObservation[TargetSize];
+        // Add all detected targets within most recent pipeline result to
+        // inputs.LatestTargetObservation.
+        for (int i = 0; i < TargetSize; i++) {
+            double[] corner1 = {currentTargets.get(i).getMinAreaRectCorners().get(0).x,
+                    currentTargets.get(i).getMinAreaRectCorners().get(0).y};
+            double[] corner2 = {currentTargets.get(i).getMinAreaRectCorners().get(1).x,
+                    currentTargets.get(i).getMinAreaRectCorners().get(1).y};
+            double[] corner3 = {currentTargets.get(i).getMinAreaRectCorners().get(2).x,
+                    currentTargets.get(i).getMinAreaRectCorners().get(2).y};
+            double[] corner4 = {currentTargets.get(i).getMinAreaRectCorners().get(3).x,
+                    currentTargets.get(i).getMinAreaRectCorners().get(3).y};
+            inputs.latestTargetObservations[i] = new TargetObservation(
+                currentTargets.get(i).getDetectedObjectClassID(),
+                currentTargets.get(i).getDetectedObjectConfidence(),
+                currentTargets.get(i).getArea(),
+                currentTargets.get(i).getPitch(),
+                currentTargets.get(i).getYaw(),
+                currentTargets.get(i).getSkew(),
+                corner1,
+                corner2,
+                corner3,
+                corner4); // Corners: origin top-left, x positive right, y positive down.
         }
     }
 
