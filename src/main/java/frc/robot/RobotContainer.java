@@ -67,6 +67,8 @@ import frc.robot.subsystems.rotary.RotarySubsystemConstants;
 import frc.robot.subsystems.rotary.RotarySubsystem.Setpoint;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
+import frc.robot.subsystems.turret.TurretSubsystem;
+import frc.robot.subsystems.turret.TurretSubsystemConstants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.util.BallSimulator;
@@ -102,6 +104,7 @@ public class RobotContainer {
     private final Linear linear;
     private final Vision vision;
     private final RotarySubsystem rotary;
+    private final TurretSubsystem turret;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -146,6 +149,7 @@ public class RobotContainer {
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP));
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
+                turret = new TurretSubsystem(TurretSubsystemConstants.getReal());
             }
 
             case SIM -> {
@@ -179,6 +183,8 @@ public class RobotContainer {
                         PoseStrategy.CONSTRAINED_SOLVEPNP,
                         visionSim.get()));
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
+                turret = new TurretSubsystem(TurretSubsystemConstants.getSim());
+
             }
 
             default -> {
@@ -206,6 +212,7 @@ public class RobotContainer {
                     drive::addVisionMeasurement,
                     () -> drive.getTimestampedHeading(),
                     new VisionIO() {});
+                turret = new TurretSubsystem(TurretSubsystemConstants.getReplay());
             }
         }
 
@@ -298,7 +305,8 @@ public class RobotContainer {
         SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",
             rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
-
+        SmartDashboard.putData("Turret: Home", turret.homeZero());
+           SmartDashboard.putData("Turret: Test", turret.move(Degrees.of(150)));
         LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
         SmartDashboard.putData("Shoot Ball", Commands
             .runOnce(() -> BallSimulator.launch(FeetPerSecond.of(ballVel.getAsDouble()),
