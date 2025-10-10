@@ -80,6 +80,8 @@ public class MotorIOTalonFX implements MotorIO {
 
     private final Alert[] followerOnWrongBusAlert;
 
+    protected Angle goalPosition = Rotations.of(0.0);
+
     /**
      * Constructs and initializes a TalonFX motor.
      *
@@ -259,6 +261,10 @@ public class MotorIOTalonFX implements MotorIO {
                 ? Rotations.of(closedLoopTargetValue)
                 : null;
 
+        inputs.goalPosition = isRunningPositionControl
+            ? goalPosition
+            : null;
+
         if (isRunningVelocityControl) {
             inputs.velocityError = RotationsPerSecond.of(closedLoopErrorValue);
             inputs.activeTrajectoryVelocity = RotationsPerSecond.of(closedLoopTargetValue);
@@ -354,6 +360,7 @@ public class MotorIOTalonFX implements MotorIO {
         AngularAcceleration acceleration,
         Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
     {
+        this.goalPosition = position;
         motor.setControl(positionControl.withPosition(position).withVelocity(cruiseVelocity)
             .withAcceleration(acceleration).withJerk(maxJerk).withSlot(slot.getNum()));
     }

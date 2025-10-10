@@ -48,7 +48,7 @@ public abstract class RotaryMechanism implements Mechanism {
             return Optional.empty();
         }
 
-        return Optional.of(inputs.position.plus(inputs.positionError));
+        return Optional.of(inputs.goalPosition);
     }
 
     // Checks if mechanism is near a goal position within a specified tolerance
