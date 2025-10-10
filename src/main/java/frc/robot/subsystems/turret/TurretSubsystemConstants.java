@@ -66,9 +66,9 @@ public class TurretSubsystemConstants {
 
     // Positional PID
     private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
-        .withKP(15.0)
+        .withKP(5.0)
         .withKI(0.0)
-        .withKD(5.0);
+        .withKD(1.0);
 
     public static TalonFXConfiguration getFXConfig()
     {
@@ -105,7 +105,7 @@ public class TurretSubsystemConstants {
     public static RotaryMechanismReal getReal()
     {
         return new RotaryMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain),
+            new MotorIOTalonFX(NAME, getFXConfig(), Ports.TurretSubsystemMotorMain),
             CONSTANTS,
             Optional.empty());
     }
@@ -113,10 +113,11 @@ public class TurretSubsystemConstants {
     public static RotaryMechanismSim getSim()
     {
         return new RotaryMechanismSim(
-            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain),
+            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.TurretSubsystemMotorMain),
             DCMOTOR, MOI, false, CONSTANTS,
             Optional.empty());
     }
+
     public static RotaryMechanism getReplay()
     {
         return new RotaryMechanism(NAME, CONSTANTS) {};
