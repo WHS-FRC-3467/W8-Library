@@ -6,6 +6,7 @@ package frc.lib.devices;
 
 import org.littletonrobotics.junction.Logger;
 import java.util.ArrayList;
+import java.util.Collections;
 import frc.lib.io.detectionML.DetectionMLIO;
 import frc.lib.io.detectionML.DetectionMLIOInputsAutoLogged;
 import frc.lib.io.detectionML.DetectionMLIO.TargetObservation;
@@ -114,7 +115,7 @@ public class DetectionML {
      * 6d robot pose is not required. Note that this method requires the camera to have 0 roll (not
      * be skewed clockwise or CCW relative to the floor), and for there to exist a height
      * differential between goal and camera. The larger this differential, the more accurate the
-     * distance estimate will be. For small differentials, use rangeToTarget_FocalLength.
+     * distance estimate will be. For very small differentials, use rangeToTarget_FocalLength.
      *
      * @param targetObservation A data type containing vision pipeline results for a single target.
      *        Used to determine the pitch & yaw of the target from the centerline of the camera's
@@ -262,6 +263,7 @@ public class DetectionML {
     {
         Translation2d currentTranslation;
         boolean isNewDetection = true;
+        double repeatIndex = 0;
         for (int i = 0; i < lastNDetections.size(); i++) {
             currentTranslation = lastNDetections.get(i);
             if ((Math.abs(targetTranslation.getX() - currentTranslation.getX()) <= toleranceMeters)
@@ -269,12 +271,16 @@ public class DetectionML {
                     .abs(
                         targetTranslation.getY() - currentTranslation.getY()) <= toleranceMeters)) {
                 isNewDetection = false;
+                repeatIndex = i;
             }
         }
         if (isNewDetection && lastNDetections.size() >= N) {
             lastNDetections.remove(0);
             lastNDetections.add(N - 1, targetTranslation);
-        } else if (isNewDetection) {
+        } else if (isNewDetection && lastNDetections.size() < N) {
+            lastNDetections.add(targetTranslation);
+        } else {
+            lastNDetections.remove((int) repeatIndex);
             lastNDetections.add(targetTranslation);
         }
     }
