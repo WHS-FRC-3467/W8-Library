@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.io.detectionML;
+package frc.lib.io.objectDetection;
 
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
@@ -23,20 +23,20 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import java.util.List;
 
 /**
- * A detectionMLIO implementation that uses a camera connected to hardware running the PhotonVision
- * library to detect objects.
+ * An ObjectDetectionIO implementation that uses a camera connected to hardware running the
+ * PhotonVision library to detect objects.
  */
-public class DetectionMLIOPhotonVision implements ObjectDetectionIO {
+public class ObjectDetectionIOPhotonVision implements ObjectDetectionIO {
     protected final PhotonCamera camera;
     protected final String cameraName;
     private final Alert disconnectedAlert;
 
     /**
-     * Constructs a {@link DetectionMLIOPhotonVision} object with the specified camera name.
+     * Constructs a {@link ObjectDetectionIOPhotonVision} object with the specified camera name.
      *
      * @param cameraName The name of the camera
      */
-    public DetectionMLIOPhotonVision(String cameraName)
+    public ObjectDetectionIOPhotonVision(String cameraName)
     {
         // CameraName is the name of the NetworkTable that PhotonVision is broadcasting information
         // over.
@@ -49,7 +49,7 @@ public class DetectionMLIOPhotonVision implements ObjectDetectionIO {
     }
 
     @Override
-    public void updateInputs(DetectionMLIOInputs inputs)
+    public void updateInputs(ObjectDetectionIOInputs inputs)
     {
         /* Verify PhotonVision hardware is connected. */
         inputs.connected = camera.isConnected();

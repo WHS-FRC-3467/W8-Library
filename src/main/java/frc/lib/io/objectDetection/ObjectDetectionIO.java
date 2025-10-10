@@ -13,12 +13,13 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.io.detectionML;
+package frc.lib.io.objectDetection;
 
 import org.littletonrobotics.junction.AutoLog;
 
 /**
- * Standardized interface for ML-IO used in FRC.
+ * Standardized interface for ObjectDetection-IO used in FRC. This interface is often implemented
+ * through an ML pipeline.
  */
 public interface ObjectDetectionIO {
 
@@ -26,7 +27,7 @@ public interface ObjectDetectionIO {
      * Abstract class defining data type for updateInputs method.
      */
     @AutoLog
-    abstract class DetectionMLIOInputs {
+    abstract class ObjectDetectionIOInputs {
         /** Whether the camera is connected. */
         public boolean connected = false;
         /**
@@ -69,9 +70,9 @@ public interface ObjectDetectionIO {
     }
 
     /*
-     * Updates the provided DetectionMLIOInputs object using the latest camera readings. If the
-     * camera is not connected, DetectionMLIOInput fields remain empty.
+     * Updates the provided ObjectDetectionIOInputs object using the latest camera readings. If the
+     * camera is not connected, the ObjectDetectionIOInput fields remain empty.
      */
-    public default void updateInputs(DetectionMLIOInputs inputs)
+    public default void updateInputs(ObjectDetectionIOInputs inputs)
     {}
 }
