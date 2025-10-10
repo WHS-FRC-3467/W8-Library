@@ -12,7 +12,6 @@ import static edu.wpi.first.units.Units.Second;
 import java.util.Optional;
 import static edu.wpi.first.units.Units.Meters;
 import com.ctre.phoenix6.configs.*;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -26,10 +25,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Velocity;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import frc.lib.io.absoluteencoder.AbsoluteEncoderIOCANCoderSim;
 import frc.lib.io.motor.MotorIOTalonFX;
-import frc.lib.io.motor.MotorIOTalonFX.TalonFXFollower;
 import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.rotary.*;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
@@ -62,13 +58,13 @@ public class TurretSubsystemConstants {
 
     public static final Mass ARM_MASS = Kilograms.of(1);
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
-    public static final MomentOfInertia MOI = KilogramSquareMeters.of(0.23);
+    public static final MomentOfInertia MOI = KilogramSquareMeters.of(.023);
 
     // Positional PID
     private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
-        .withKP(5.0)
+        .withKP(200)
         .withKI(0.0)
-        .withKD(1.0);
+        .withKD(50);
 
     public static TalonFXConfiguration getFXConfig()
     {
