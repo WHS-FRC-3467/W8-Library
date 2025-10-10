@@ -84,6 +84,8 @@ public interface MotorIO {
         public Angle activeTrajectoryPosition = null;
         /** Active trajectory velocity in rotations per second. */
         public AngularVelocity activeTrajectoryVelocity = null;
+        /** Goal position */
+        public Angle goalPosition = null;
         /** Current control type */
         public ControlType controlType = null;
     }

@@ -55,7 +55,7 @@ public abstract class LinearMechanism implements Mechanism {
             return Optional.empty();
         }
 
-        return Optional.of(converter.toDistance(inputs.position.plus(inputs.positionError)));
+        return Optional.of(converter.toDistance(inputs.goalPosition));
     }
 
     // Checks if mechanism is near a goal position within a specified tolerance
