@@ -58,7 +58,7 @@ public class TurretSubsystemConstants {
 
     public static final Mass ARM_MASS = Kilograms.of(1);
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
-    public static final MomentOfInertia MOI = KilogramSquareMeters.of(.023);
+    public static final MomentOfInertia MOI = KilogramSquareMeters.of(.23);
 
     // Positional PID
     private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
