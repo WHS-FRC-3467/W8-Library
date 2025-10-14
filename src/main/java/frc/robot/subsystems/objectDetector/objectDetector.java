@@ -15,8 +15,8 @@
 
 package frc.robot.subsystems.objectDetector;
 
-import frc.lib.devices.DetectionML;
-import frc.lib.io.detectionML.DetectionMLIO;
+import frc.lib.devices.ObjectDetection;
+import frc.lib.io.objectDetection.ObjectDetectionIO;
 import frc.robot.subsystems.drive.Drive;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -24,15 +24,15 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
 
 public class objectDetector extends SubsystemBase {
-    private final DetectionML detectionML;
+    private final ObjectDetection objectDetection;
     private final Drive drive;
     private double range, heading, distance;
     private Translation2d targetLocation;
     private ArrayList<Translation2d> lastNDetections = new ArrayList<>(10);
 
-    public objectDetector(DetectionMLIO io, Drive drive)
+    public objectDetector(ObjectDetectionIO io, Drive drive)
     {
-        detectionML = new DetectionML(io);
+        objectDetection = new ObjectDetection(io);
         this.drive = drive;
 
     }
@@ -40,20 +40,21 @@ public class objectDetector extends SubsystemBase {
     @Override
     public void periodic()
     {
-        detectionML.periodic();
+        objectDetection.periodic();
 
-        if (detectionML.getTargetObservations().length > 0) {
-            range = detectionML.rangeToTarget_Pitch(detectionML.getTargetObservations()[0],
+        if (objectDetection.getTargetObservations().length > 0) {
+            range = objectDetection.rangeToTarget_Pitch(objectDetection.getTargetObservations()[0],
                 objectDetectorConstants.CAMERA0TRANSFORM,
                 objectDetectorConstants.algaeHeightMeters / 2,
                 1, 0);
-            heading = detectionML.headingToTarget_Yaw(detectionML.getTargetObservations()[0],
-                objectDetectorConstants.CAMERA0TRANSFORM,
-                range, 1, 0);
-            distance = detectionML.distanceToTarget2d(range, heading);
+            heading =
+                objectDetection.headingToTarget_Yaw(objectDetection.getTargetObservations()[0],
+                    objectDetectorConstants.CAMERA0TRANSFORM,
+                    range, 1, 0);
+            distance = objectDetection.distanceToTarget2d(range, heading);
             targetLocation =
-                detectionML.estimateTargetToField(range, heading, drive.getPose());
-            detectionML.getLastNDetections(10, lastNDetections, 0.4572,
+                objectDetection.estimateTargetToField(range, heading, drive.getPose());
+            objectDetection.getLastNDetections(10, lastNDetections, 0.4572,
                 targetLocation);
 
             Logger.recordOutput("Detection/" + "Calculated Range", range);
@@ -78,7 +79,3 @@ public class objectDetector extends SubsystemBase {
         }
     }
 }
-
-// TO-DO: account for camera transform. think range/heading is relative to camera -- need to
-// transform that
-// distance to robot center.

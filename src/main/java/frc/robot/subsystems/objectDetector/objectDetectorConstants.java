@@ -11,14 +11,14 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import frc.lib.io.detectionML.*;
+import frc.lib.io.objectDetection.*;
 
-/** +X - towards other alliance's station, +Y - towards center of field from starboard */
 public class objectDetectorConstants {
     public final static String CAMERA0_NAME = "Detection Camera #0";
     public final static double cameraRoll = 0.0; // degrees
     public final static double cameraPitch = 25; // degrees
     public final static double cameraYaw = 0.0; // degrees
+    /** +X - towards other alliance's station, +Y - towards center of field from starboard */
     public final static double cameraX = 0.30; // meters
     public final static double cameraY = -0.30; // meters
     public final static double cameraZ = 1; // meters
@@ -40,19 +40,20 @@ public class objectDetectorConstants {
                 new TargetModel(algaeHeightMeters))
     };
 
-    public static DetectionMLIOPhotonVision getReal()
+    public static ObjectDetectionIOPhotonVision getReal()
     {
-        return new DetectionMLIOPhotonVision(CAMERA0_NAME);
+        return new ObjectDetectionIOPhotonVision(CAMERA0_NAME);
     }
 
-    public static DetectionMLIOSim getSim(Supplier<Pose2d> robotPoseSupplier)
+    public static ObjectDetectionIOSim getSim(Supplier<Pose2d> robotPoseSupplier)
     {
-        return new DetectionMLIOSim(CAMERA0_NAME, CAMERA0TRANSFORM, robotPoseSupplier, ALGAE_NAME,
+        return new ObjectDetectionIOSim(CAMERA0_NAME, CAMERA0TRANSFORM, robotPoseSupplier,
+            ALGAE_NAME,
             ALGAE_TARGETS);
     }
 
-    public static DetectionMLIO getReplay()
+    public static ObjectDetectionIO getReplay()
     {
-        return new DetectionMLIO() {};
+        return new ObjectDetectionIO() {};
     }
 }
