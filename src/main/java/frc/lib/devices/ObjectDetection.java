@@ -18,9 +18,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 /**
- * Device level implementation of an object detection camera. Performs pipeline data operations
- * assuming IO is passed in from upstream (IO layer) and specific hardware is passed in from
- * downstream (subsystem layer).
+ * Device level implementation of an object detection camera. While the IO layer is responsible for
+ * defining the variables of interest coming from our camera, the device layer is responsible for
+ * periodically polling that IO and performing relevant calculations on the return results to
+ * generate data for the robot to make decisions.
  */
 public class ObjectDetection {
     // Placeholder for concrete implementation of ObjectDetectionIO.
@@ -254,7 +255,11 @@ public class ObjectDetection {
     }
 
     /**
-     * Generates an N-element FIFO list of the last N objects detected by the robot.
+     * Generates an N-element FIFO list of the last N objects detected by the robot. 0th index
+     * represents the oldest detection (i.e. start of the list), N-1th index represents the most
+     * recent detection (i.e. end of the list). If a detection is deemed a repeat (according to the
+     * passed Translation2D tolerance), it is removed from its current location in robot memory and
+     * re-added to the end of the list.
      */
     public void getLastNDetections(int N,
         ArrayList<Translation2d> lastNDetections, double toleranceMeters,
@@ -263,6 +268,7 @@ public class ObjectDetection {
         Translation2d currentTranslation;
         boolean isNewDetection = true;
         double repeatIndex = 0;
+        // Loop through robot detection memory to determine if the current detection is new.
         for (int i = 0; i < lastNDetections.size(); i++) {
             currentTranslation = lastNDetections.get(i);
             if ((Math.abs(targetTranslation.getX() - currentTranslation.getX()) <= toleranceMeters)
@@ -273,17 +279,31 @@ public class ObjectDetection {
                 repeatIndex = i;
             }
         }
+        // If the detection is new and the list is full, remove the oldest (index 0). Removal of 0
+        // shifts list to the left. Add new detection to the end of the list (index N-1).
         if (isNewDetection && lastNDetections.size() >= N) {
             lastNDetections.remove(0);
             lastNDetections.add(N - 1, targetTranslation);
-        } else if (isNewDetection && lastNDetections.size() < N) {
+        }
+        // If the detection is new and the list isn't full, add it to the end of the list.
+        else if (isNewDetection && lastNDetections.size() < N) {
             lastNDetections.add(targetTranslation);
-        } else {
+        }
+        // If the detection is old, remove it from where it is in the list, shift everything after
+        // it left, and re-add it to the end of the list.
+        else {
             lastNDetections.remove((int) repeatIndex);
             lastNDetections.add(targetTranslation);
         }
     }
 
-    // To-do: Add isConnected method. quickly re-verify equations. test results in sim. begin
-    // writing simple unit tests. begin writing commands. time-stamp algo?
+    /*
+     * Return whether the camera is connected.
+     */
+    public boolean isConnected()
+    {
+        return inputs.connected;
+    }
 }
+
+// TO-DO: test in simulation to verify basic functionality, the put into MR.
