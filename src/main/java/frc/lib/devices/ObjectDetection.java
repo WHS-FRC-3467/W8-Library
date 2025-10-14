@@ -39,7 +39,9 @@ public class ObjectDetection {
         this.io = io;
     }
 
-    /* Periodically retrive most recent DetectionML pipeline results and populate into inputs. */
+    /*
+     * Periodically retrive most recent ObjectDetection pipeline results and populate into inputs.
+     */
     public void periodic()
     {
         io.updateInputs(inputs);
