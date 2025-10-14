@@ -197,8 +197,8 @@ public class ObjectDetection {
      *        blur, distortion, focus).
      * @param cameraOffset An empirical calibration factor to account for bias in heading estimate
      *        as a result of either camera or installation.
-     * @return The estimated robot heading to the target in meters. Positive heading = robot right
-     *         of target; negative heading = robot left of target.
+     * @return The estimated robot heading to the target in meters. Positive heading = robot local X
+     *         axis right of target; negative heading = robot local X axis left of target.
      */
     public double headingToTarget_Yaw(TargetObservation targetObservation,
         Transform3d cameraTransform, double targetRangeMeters, double cameraCalFactor,
@@ -305,5 +305,3 @@ public class ObjectDetection {
         return inputs.connected;
     }
 }
-
-// TO-DO: test in simulation to verify basic functionality, the put into MR.
