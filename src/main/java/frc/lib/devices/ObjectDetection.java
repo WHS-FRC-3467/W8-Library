@@ -23,7 +23,7 @@ import edu.wpi.first.math.geometry.Translation2d;
  * periodically polling that IO and performing relevant calculations on the return results to
  * generate data for the robot to make decisions.
  */
-public class ObjectDetectionTemp {
+public class ObjectDetection {
     // Placeholder for concrete implementation of ObjectDetectionIO.
     private final ObjectDetectionIO io;
     // DetectionMLIOInputs (e.g. skew, yaw, objID, etc.) from the AutoLog file.
@@ -34,7 +34,7 @@ public class ObjectDetectionTemp {
      * Interface as a data type allows ObjectDetection to accept various implementations of
      * ObjectDetectionIO (e.g. ObjectDetectionIOPhotonVision or ObjectDetectionIOLimelight).
      */
-    public ObjectDetectionTemp(ObjectDetectionIO io)
+    public ObjectDetection(ObjectDetectionIO io)
     {
         this.io = io;
     }
