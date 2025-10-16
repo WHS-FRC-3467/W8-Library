@@ -307,3 +307,4 @@ public class ObjectDetection {
         return inputs.connected;
     }
 }
+
