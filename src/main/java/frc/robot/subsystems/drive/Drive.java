@@ -333,7 +333,7 @@ public class Drive extends SubsystemBase {
 
     /** Returns the measured chassis speeds of the robot. */
     @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
-    protected ChassisSpeeds getChassisSpeeds()
+    public ChassisSpeeds getChassisSpeeds()
     {
         return kinematics.toChassisSpeeds(getModuleStates());
     }
