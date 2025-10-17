@@ -37,21 +37,24 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
         // Wireframe visualizer
         camSim.enableDrawWireframe(true);
 
-        visionSim = new VisionSystemSim("objectML");
+        visionSim = new VisionSystemSim("objectDetection");
         visionSim.addCamera(camSim, cameraTransform);
         this.robotPoseSupplier = robotPoseSupplier;
 
-        // TODO: find cleaner impl
+        // Add vision targets to the sim
         visionSim.addVisionTargets(target_name, targets);
-        Set<VisionTargetSim> test = visionSim.getVisionTargets();
-        List<VisionTargetSim> targetList = new ArrayList<>(test);
-
+        // Retrieve the vision targets on the sim field in a set and then convert it to a list for
+        // easy indexing
+        Set<VisionTargetSim> targetSet = visionSim.getVisionTargets();
+        List<VisionTargetSim> targetList = new ArrayList<>(targetSet);
+        // Log the poses of each target for debugging purposes
         for (VisionTargetSim target : targetList) {
             Logger.recordOutput("ALGAE POSE" + targetList.indexOf(target), target.getPose());
         }
 
     }
 
+    // here
     @Override
     public void updateInputs(ObjectDetectionIOInputs inputs)
     {
