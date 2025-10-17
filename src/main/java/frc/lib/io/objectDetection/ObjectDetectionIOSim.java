@@ -54,7 +54,7 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
 
     }
 
-    // here
+    // Update the robot's pose in the sim and use the super's implementation to update inputs
     @Override
     public void updateInputs(ObjectDetectionIOInputs inputs)
     {
