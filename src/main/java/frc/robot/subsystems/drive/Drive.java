@@ -234,6 +234,9 @@ public class Drive extends SubsystemBase {
 
         // Update RobotState velocity
         RobotState.getInstance().setVelocity(getChassisSpeeds());
+
+        Logger.recordOutput("Drive/Speed", new Translation2d(getChassisSpeeds().vxMetersPerSecond,
+            getChassisSpeeds().vyMetersPerSecond).getNorm() * -1);
     }
 
     /**
