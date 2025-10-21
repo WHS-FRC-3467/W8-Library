@@ -167,11 +167,11 @@ public class DriveToPoseBase extends Command {
     {
         boolean withinDistanceTolerance = distanceTolerance
             .map(tolerance -> Math.abs(linearController.getPositionError()) < tolerance)
-            .orElse(false);
+            .orElse(true);
 
         boolean withinAngularTolerance = angleTolerance
             .map(tolerance -> Math.abs(angularController.getPositionError()) < tolerance)
-            .orElse(false);
+            .orElse(true);
 
         Logger.recordOutput("DriveToPose/Distance Tolerance Present",
             distanceTolerance.isPresent());
@@ -180,14 +180,11 @@ public class DriveToPoseBase extends Command {
             angleTolerance.isPresent());
         Logger.recordOutput("DriveToPose/Within Angular Tolerance", withinAngularTolerance);
 
-        if (distanceTolerance.isPresent() && angleTolerance.isPresent()) {
-            return withinDistanceTolerance && withinAngularTolerance;
-        } else if (distanceTolerance.isPresent()) {
-            return withinDistanceTolerance;
-        } else if (angleTolerance.isPresent()) {
-            return withinAngularTolerance;
-        } else {
-            return false;
-        }
+        boolean bothTolerancesSupplied =
+            distanceTolerance.isPresent() && angleTolerance.isPresent();
+
+        return bothTolerancesSupplied
+            ? (withinDistanceTolerance && withinAngularTolerance)
+            : (withinDistanceTolerance || withinAngularTolerance);
     }
 }
