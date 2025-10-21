@@ -16,24 +16,40 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggedTuneableProfiledPID;
 import frc.robot.subsystems.drive.Drive; // TODO: refactor drive to exist in lib
 
 public class DriveToPoseBase extends Command {
     private final Drive drive;
     private final Supplier<Pose2d> targetPose;
-    private LoggedTuneableProfiledPID linearController =
-        new LoggedTuneableProfiledPID("DriveToPose/LinearControllerDefault", 0.0, 0, 0, 0, 0);
-    private LoggedTuneableProfiledPID angularController =
-        new LoggedTuneableProfiledPID("DriveToPose/AngularControllerDefault", 0.0, 0, 0, 0, 0);
+
+    private LoggedTuneableProfiledPID linearController;
+    private LoggedTuneableProfiledPID angularController;
+
+    private LoggedTunableNumber maxLinearSpeed;
+    private LoggedTunableNumber maxAngularSpeed;
+
     private Optional<Double> distanceTolerance = Optional.empty();
     private Optional<Double> angleTolerance = Optional.empty();
 
-    public DriveToPoseBase(Drive drive, Supplier<Pose2d> targetPose)
+
+    public DriveToPoseBase(
+        Drive drive,
+        Supplier<Pose2d> targetPose,
+        LoggedTuneableProfiledPID linearController,
+        LoggedTuneableProfiledPID angularController,
+        LoggedTunableNumber maxLinearSpeed,
+        LoggedTunableNumber maxAngularSpeed)
     {
         this.drive = drive;
         this.targetPose = targetPose;
+        this.linearController = linearController;
+        this.angularController = angularController;
+        this.maxLinearSpeed = maxLinearSpeed;
+        this.maxAngularSpeed = maxAngularSpeed;
 
         angularController.enableContinuousInput(-Math.PI, Math.PI);
         addRequirements(drive);
@@ -93,12 +109,20 @@ public class DriveToPoseBase extends Command {
 
         // Calculate outputs from controllers
         double linearOutput = -linearController.calculate(translationToTarget.getNorm());
-        linearOutput = MathUtil.clamp(linearOutput, drive.getMaxLinearSpeedMetersPerSec(),
-            drive.getMaxLinearSpeedMetersPerSec()); // Clamp to max speed
+
+        linearOutput = MathUtil.clamp(
+            linearOutput,
+            -maxLinearSpeed.get(),
+            maxLinearSpeed.get());
 
         double angularOutput = angularController.calculate(
             drive.getRotation().getRadians(),
             targetPose.get().getRotation().getRadians());
+
+        angularOutput = MathUtil.clamp(
+            angularOutput,
+            -maxAngularSpeed.get(),
+            maxAngularSpeed.get());
 
         // Convert to robot-relative speeds and set request velocities
         var fieldRelativeSpeed = new ChassisSpeeds(

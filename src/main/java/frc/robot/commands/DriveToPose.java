@@ -7,37 +7,34 @@ package frc.robot.commands;
 import java.util.function.Supplier;
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.lib.commands.DriveToPoseBase;
+import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggedTuneableProfiledPID;
 import frc.robot.subsystems.drive.Drive;
 
 public class DriveToPose extends DriveToPoseBase {
 
-    private final LoggedTuneableProfiledPID linearController =
+    private final static LoggedTuneableProfiledPID linearController =
         new LoggedTuneableProfiledPID("DriveToPose/LinearController", 3.0, 0, 0.1, 3.0, 0.0);
-    private final LoggedTuneableProfiledPID angularController =
+    private final static LoggedTuneableProfiledPID angularController =
         new LoggedTuneableProfiledPID("DriveToPose/AngularController", 3.0, 0, 0, 0, 0);
 
-    public DriveToPose(Drive drive, Supplier<Pose2d> targetPose)
+    private final static LoggedTunableNumber maxLinearVel =
+        new LoggedTunableNumber("DriveToPose/MaxLinearVelocity (m/s)", 3.0);
+    private final static LoggedTunableNumber maxAngularVel =
+        new LoggedTunableNumber("DriveToPose/MaxAngularVelocity (rad/s)", 9.0);
+
+
+    public DriveToPose(
+        Drive drive,
+        Supplier<Pose2d> targetPose)
     {
-        super(drive, targetPose);
-    }
-
-    // Called when the command is initially scheduled.
-    public void initialize()
-    {
-        withLinearPID(linearController);
-        withAngularPID(angularController);
-        super.initialize();
+        super(
+            drive,
+            targetPose,
+            linearController,
+            angularController,
+            maxLinearVel,
+            maxAngularVel);
 
     }
-
-    public void execute()
-    {
-        super.execute();
-    }
-
-    // Called once the command ends or is interrupted.
-    @Override
-    public void end(boolean interrupted)
-    {}
 }
