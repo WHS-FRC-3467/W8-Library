@@ -129,13 +129,8 @@ public abstract class AlignToPoseBase extends Command {
 
     private static Translation2d getLinearVelocityFromJoysticks(double x, double y)
     {
-        // Apply deadband
-        double linearMagnitude = MathUtil.applyDeadband(Math.hypot(x, y), 0.1); // TODO: figure out
-                                                                                // deadband
+        double linearMagnitude = Math.pow(Math.hypot(x, y), 2);
         Rotation2d linearDirection = new Rotation2d(Math.atan2(y, x));
-
-        // Square magnitude for more precise control
-        linearMagnitude = linearMagnitude * linearMagnitude;
 
         // Return new linear velocity
         return new Pose2d(new Translation2d(), linearDirection)
