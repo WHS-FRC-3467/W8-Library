@@ -70,18 +70,11 @@ public class DriveToPoseBase extends Command {
         ChassisSpeeds fieldVelocity =
             ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), drive.getRotation());
 
-        Translation2d linearFieldVelocity =
-            new Translation2d(fieldVelocity.vxMetersPerSecond, fieldVelocity.vyMetersPerSecond);
-
         linearController.reset(0.0);
 
         angularController.reset(
             drive.getRotation().getRadians(),
             fieldVelocity.omegaRadiansPerSecond);
-
-        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAA");
-        System.out.println(distanceTolerance.isPresent());
-
     }
 
     // Called every time the scheduler runs while the command is scheduled.
@@ -99,8 +92,8 @@ public class DriveToPoseBase extends Command {
         Rotation2d directionToTarget = translationToTarget.getAngle();
 
         // Calculate outputs from controllers
-        double linearOutput = linearController.calculate(translationToTarget.getNorm());
-        linearOutput = MathUtil.clamp(linearOutput, -drive.getMaxLinearSpeedMetersPerSec(),
+        double linearOutput = -linearController.calculate(translationToTarget.getNorm());
+        linearOutput = MathUtil.clamp(linearOutput, drive.getMaxLinearSpeedMetersPerSec(),
             drive.getMaxLinearSpeedMetersPerSec()); // Clamp to max speed
 
         double angularOutput = angularController.calculate(
@@ -109,8 +102,8 @@ public class DriveToPoseBase extends Command {
 
         // Convert to robot-relative speeds and set request velocities
         var fieldRelativeSpeed = new ChassisSpeeds(
-            -linearOutput * Math.cos(directionToTarget.getRadians()),
-            -linearOutput * Math.sin(directionToTarget.getRadians()),
+            linearOutput * Math.cos(directionToTarget.getRadians()),
+            linearOutput * Math.sin(directionToTarget.getRadians()),
             angularOutput);
 
         drive.runVelocity(
@@ -145,11 +138,14 @@ public class DriveToPoseBase extends Command {
             .map(tolerance -> Math.abs(angularController.getPositionError()) < tolerance)
             .orElse(false);
 
-        Logger.recordOutput("DriveToPose/Within Distance Tolerance", withinDistanceTolerance);
-        Logger.recordOutput("DriveToPose/Within Angular Tolerance", withinAngularTolerance);
         Logger.recordOutput("DriveToPose/Distance Tolerance Present",
             distanceTolerance.isPresent());
-        Logger.recordOutput("DriveToPose/Angular Tolerance Present", angleTolerance.isPresent());
+        Logger.recordOutput("DriveToPose/Within Distance Tolerance", withinDistanceTolerance);
+        Logger.recordOutput("DriveToPose/Angular Tolerance Present",
+            angleTolerance.isPresent());
+        Logger.recordOutput("DriveToPose/Within Angular Tolerance", withinAngularTolerance);
+
+
 
         if (distanceTolerance.isPresent() && angleTolerance.isPresent()) {
             return withinDistanceTolerance && withinAngularTolerance;

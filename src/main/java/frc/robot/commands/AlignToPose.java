@@ -4,25 +4,26 @@
 
 package frc.robot.commands;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import edu.wpi.first.math.geometry.Pose2d;
-import frc.lib.commands.DriveToPoseBase;
+import frc.lib.commands.AlignToPoseBase;
 import frc.lib.util.LoggedTuneableProfiledPID;
 import frc.robot.subsystems.drive.Drive;
 
-public class DriveToPose extends DriveToPoseBase {
+public class AlignToPose extends AlignToPoseBase {
 
     private final LoggedTuneableProfiledPID linearController =
         new LoggedTuneableProfiledPID("DriveToPose/LinearController", 3.0, 0, 0.1, 3.0, 0.0);
     private final LoggedTuneableProfiledPID angularController =
         new LoggedTuneableProfiledPID("DriveToPose/AngularController", 3.0, 0, 0, 0, 0);
 
-    public DriveToPose(Drive drive, Supplier<Pose2d> targetPose)
+    public AlignToPose(Drive drive, Supplier<Pose2d> targetPose, AlignMode mode,
+        DoubleSupplier joystickInput)
     {
-        super(drive, targetPose);
+        super(drive, targetPose, mode, joystickInput);
     }
 
-    // Called when the command is initially scheduled.
     public void initialize()
     {
         withLinearPID(linearController);
@@ -30,14 +31,4 @@ public class DriveToPose extends DriveToPoseBase {
         super.initialize();
 
     }
-
-    public void execute()
-    {
-        super.execute();
-    }
-
-    // Called once the command ends or is interrupted.
-    @Override
-    public void end(boolean interrupted)
-    {}
 }
