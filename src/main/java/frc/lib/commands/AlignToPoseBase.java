@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.util.LoggedTuneableProfiledPID;
 import frc.robot.subsystems.drive.Drive;
 
-public class AlignToPoseBase extends Command {
+public abstract class AlignToPoseBase extends Command {
 
     private final Drive drive;
     private final Supplier<Pose2d> targetPose;

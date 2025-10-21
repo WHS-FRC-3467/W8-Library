@@ -21,7 +21,7 @@ import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggedTuneableProfiledPID;
 import frc.robot.subsystems.drive.Drive; // TODO: refactor drive to exist in lib
 
-public class DriveToPoseBase extends Command {
+public abstract class DriveToPoseBase extends Command {
     private final Drive drive;
     private final Supplier<Pose2d> targetPose;
 
