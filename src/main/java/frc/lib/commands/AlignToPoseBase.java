@@ -120,11 +120,6 @@ public abstract class AlignToPoseBase extends Command {
         drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, drive.getRotation()));
     }
 
-    // Called once the command ends or is interrupted.
-    @Override
-    public void end(boolean interrupted)
-    {}
-
     // Returns true when the command should end.
     @Override
     public boolean isFinished()

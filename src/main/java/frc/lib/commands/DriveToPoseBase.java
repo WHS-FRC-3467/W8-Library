@@ -154,13 +154,6 @@ public abstract class DriveToPoseBase extends Command {
 
     }
 
-    // Called once the command ends or is interrupted.
-    @Override
-    public void end(boolean interrupted)
-    {
-        Logger.recordOutput("DriveToPose/Target Pose", new Pose2d());
-    }
-
     // Returns true when the command should end.
     @Override
     public boolean isFinished()
