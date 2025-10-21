@@ -4,7 +4,6 @@
 
 package frc.lib.commands;
 
-import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import edu.wpi.first.math.MathUtil;
@@ -22,12 +21,8 @@ public class AlignToPoseBase extends Command {
     private final Drive drive;
     private final Supplier<Pose2d> targetPose;
     private final DoubleSupplier joystickInput;
-    private LoggedTuneableProfiledPID linearController =
-        new LoggedTuneableProfiledPID("AlignToPose/LinearControllerDefault", 0.0, 0, 0, 0, 0);
-    private LoggedTuneableProfiledPID angularController =
-        new LoggedTuneableProfiledPID("AlignToPose/AngularControllerDefault", 0.0, 0, 0, 0, 0);
-    private Optional<Double> distanceTolerance = Optional.empty();
-    private Optional<Double> angleTolerance = Optional.empty();
+    private LoggedTuneableProfiledPID linearController;
+    private LoggedTuneableProfiledPID angularController;
 
     public enum AlignMode {
         APPROACH, // Driver controls forward/backward movement while aligning
@@ -36,29 +31,23 @@ public class AlignToPoseBase extends Command {
 
     private final AlignMode mode;
 
-    public AlignToPoseBase(Drive drive, Supplier<Pose2d> targetPose, AlignMode mode,
-        DoubleSupplier joystickInput)
+    public AlignToPoseBase(
+        Drive drive,
+        Supplier<Pose2d> targetPose,
+        AlignMode mode,
+        DoubleSupplier joystickInput,
+        LoggedTuneableProfiledPID linearController,
+        LoggedTuneableProfiledPID angularController)
     {
         this.drive = drive;
         this.targetPose = targetPose;
         this.mode = mode;
         this.joystickInput = joystickInput;
+        this.linearController = linearController;
+        this.angularController = angularController;
 
         angularController.enableContinuousInput(-Math.PI, Math.PI);
         addRequirements(drive);
-    }
-
-    public AlignToPoseBase withLinearPID(LoggedTuneableProfiledPID pid)
-    {
-        this.linearController = pid;
-        return this;
-    }
-
-    public AlignToPoseBase withAngularPID(LoggedTuneableProfiledPID pid)
-    {
-        this.angularController = pid;
-        angularController.enableContinuousInput(-Math.PI, Math.PI);
-        return this;
     }
 
     // Called when the command is initially scheduled.
@@ -86,28 +75,35 @@ public class AlignToPoseBase extends Command {
         var relativePose2d = drive.getPose().relativeTo(targetPose.get());
         var targetRotation2d = targetPose.get().getRotation();
         var linearVelocity = new Translation2d();
+        var offsetVector = new Translation2d();
 
-        if (mode == AlignMode.STRAFE) {
-            Translation2d offsetVector =
-                new Translation2d(linearController.calculate(relativePose2d.getX()), 0);
+        switch (mode) {
+            case STRAFE:
+                offsetVector =
+                    new Translation2d(linearController.calculate(relativePose2d.getX()), 0);
 
-            // Calculate total linear velocity
-            linearVelocity =
-                getLinearVelocityFromJoysticks(0,
-                    -joystickInput.getAsDouble()).times(drive.getMaxLinearSpeedMetersPerSec())
-                        .plus(offsetVector)
-                        .rotateBy(targetRotation2d);
+                // Calculate total linear velocity
+                linearVelocity =
+                    getLinearVelocityFromJoysticks(0,
+                        -joystickInput.getAsDouble()).times(drive.getMaxLinearSpeedMetersPerSec())
+                            .plus(offsetVector)
+                            .rotateBy(targetRotation2d);
+                break;
 
-        } else if (mode == AlignMode.APPROACH) {
-            Translation2d offsetVector =
-                new Translation2d(0, linearController.calculate(relativePose2d.getY()));
+            case APPROACH:
+                offsetVector =
+                    new Translation2d(0, linearController.calculate(relativePose2d.getY()));
 
-            // Calculate total linear velocity
-            linearVelocity =
-                getLinearVelocityFromJoysticks(-joystickInput.getAsDouble(),
-                    0).times(drive.getMaxLinearSpeedMetersPerSec())
-                        .plus(offsetVector)
-                        .rotateBy(targetRotation2d);
+                // Calculate total linear velocity
+                linearVelocity =
+                    getLinearVelocityFromJoysticks(-joystickInput.getAsDouble(),
+                        0).times(drive.getMaxLinearSpeedMetersPerSec())
+                            .plus(offsetVector)
+                            .rotateBy(targetRotation2d);
+                break;
+
+            default:
+                break;
         }
 
         double angularOutput = angularController.calculate(
@@ -121,10 +117,7 @@ public class AlignToPoseBase extends Command {
                 linearVelocity.getY(),
                 angularOutput);
 
-        drive.runVelocity(
-            ChassisSpeeds.fromFieldRelativeSpeeds(
-                speeds,
-                drive.getRotation()));
+        drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, drive.getRotation()));
     }
 
     // Called once the command ends or is interrupted.

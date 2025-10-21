@@ -16,7 +16,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggedTuneableProfiledPID;
@@ -55,28 +54,38 @@ public class DriveToPoseBase extends Command {
         addRequirements(drive);
     }
 
-    public DriveToPoseBase withLinearPID(LoggedTuneableProfiledPID pid)
-    {
-        this.linearController = pid;
-        return this;
-    }
-
-    public DriveToPoseBase withAngularPID(LoggedTuneableProfiledPID pid)
-    {
-        this.angularController = pid;
-        angularController.enableContinuousInput(-Math.PI, Math.PI);
-        return this;
-    }
-
+    /**
+     * Sets the distance tolerance for the command to finish
+     * 
+     * @param tolerance Allowable distance to target pose
+     */
     public DriveToPoseBase withDistanceTolerance(Distance tolerance)
     {
         distanceTolerance = Optional.of(tolerance.in(Meters));
         return this;
     }
 
+    /**
+     * Sets the angular tolerance for the command to finish
+     * 
+     * @param tolerance Allowable angle to target pose
+     */
     public DriveToPoseBase withAngularTolerance(Angle tolerance)
     {
         angleTolerance = Optional.of(tolerance.in(Radians));
+        return this;
+    }
+
+    /**
+     * Sets both distance and angular tolerances for the command to finish
+     * 
+     * @param distanceTolerance Allowable distance to target pose
+     * @param angleTolerance Allowable angle to target pose
+     */
+    public DriveToPoseBase withTolerance(Distance distanceTolerance, Angle angleTolerance)
+    {
+        this.distanceTolerance = Optional.of(distanceTolerance.in(Meters));
+        this.angleTolerance = Optional.of(angleTolerance.in(Radians));
         return this;
     }
 
@@ -148,7 +157,9 @@ public class DriveToPoseBase extends Command {
     // Called once the command ends or is interrupted.
     @Override
     public void end(boolean interrupted)
-    {}
+    {
+        Logger.recordOutput("DriveToPose/Target Pose", new Pose2d());
+    }
 
     // Returns true when the command should end.
     @Override
@@ -168,8 +179,6 @@ public class DriveToPoseBase extends Command {
         Logger.recordOutput("DriveToPose/Angular Tolerance Present",
             angleTolerance.isPresent());
         Logger.recordOutput("DriveToPose/Within Angular Tolerance", withinAngularTolerance);
-
-
 
         if (distanceTolerance.isPresent() && angleTolerance.isPresent()) {
             return withinDistanceTolerance && withinAngularTolerance;

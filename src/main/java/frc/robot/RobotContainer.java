@@ -323,15 +323,15 @@ public class RobotContainer {
 
         SmartDashboard.putData("DriveToPose Command",
             new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
-                // .withDistanceTolerance(Inches.of(3))
-                .withAngularTolerance(Degrees.of(5)));
+                .withTolerance(Inches.of(3), Degrees.of(5)));
 
         // controller.x()
-        // .whileTrue(new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90))));
+        // .whileTrue(new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
+        // .withTolerance(Inches.of(3), Degrees.of(5)));
 
         controller.x()
             .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
-                AlignMode.APPROACH, () -> controller.getRightX()));
+                AlignMode.STRAFE, () -> controller.getRightX()));
     }
 
     /**

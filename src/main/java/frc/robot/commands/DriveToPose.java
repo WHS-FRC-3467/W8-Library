@@ -19,9 +19,9 @@ public class DriveToPose extends DriveToPoseBase {
         new LoggedTuneableProfiledPID("DriveToPose/AngularController", 3.0, 0, 0, 0, 0);
 
     private final static LoggedTunableNumber maxLinearVel =
-        new LoggedTunableNumber("DriveToPose/MaxLinearVelocity (m/s)", 3.0);
+        new LoggedTunableNumber("DriveToPose/MaxLinearVelocity (m s)", 3.0);
     private final static LoggedTunableNumber maxAngularVel =
-        new LoggedTunableNumber("DriveToPose/MaxAngularVelocity (rad/s)", 9.0);
+        new LoggedTunableNumber("DriveToPose/MaxAngularVelocity (rad s)", 9.0);
 
 
     public DriveToPose(
@@ -35,6 +35,5 @@ public class DriveToPose extends DriveToPoseBase {
             angularController,
             maxLinearVel,
             maxAngularVel);
-
     }
 }

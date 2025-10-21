@@ -13,22 +13,20 @@ import frc.robot.subsystems.drive.Drive;
 
 public class AlignToPose extends AlignToPoseBase {
 
-    private final LoggedTuneableProfiledPID linearController =
+    private final static LoggedTuneableProfiledPID linearController =
         new LoggedTuneableProfiledPID("DriveToPose/LinearController", 3.0, 0, 0.1, 3.0, 0.0);
-    private final LoggedTuneableProfiledPID angularController =
+
+    private final static LoggedTuneableProfiledPID angularController =
         new LoggedTuneableProfiledPID("DriveToPose/AngularController", 3.0, 0, 0, 0, 0);
 
     public AlignToPose(Drive drive, Supplier<Pose2d> targetPose, AlignMode mode,
         DoubleSupplier joystickInput)
     {
-        super(drive, targetPose, mode, joystickInput);
-    }
-
-    public void initialize()
-    {
-        withLinearPID(linearController);
-        withAngularPID(angularController);
-        super.initialize();
-
+        super(drive,
+            targetPose,
+            mode,
+            joystickInput,
+            linearController,
+            angularController);
     }
 }
