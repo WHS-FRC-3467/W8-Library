@@ -28,12 +28,16 @@ import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIOCANCoderSim;
+import frc.lib.io.motor.MotorIORevSim;
 import frc.lib.io.motor.MotorIOTalonFX;
 import frc.lib.io.motor.MotorIOTalonFX.TalonFXFollower;
 import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.rotary.*;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
 import frc.robot.Ports;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
 
 /** Add your docs here. */
 public class RotarySubsystemConstants {
@@ -61,7 +65,8 @@ public class RotarySubsystemConstants {
         new RotaryMechCharacteristics(OFFSET, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
 
     public static final Mass ARM_MASS = Kilograms.of(.01);
-    public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
+    // public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
+    public static final DCMotor DCMOTOR = DCMotor.getNeoVortex(1);
     public static final MomentOfInertia MOI = KilogramSquareMeters
         .of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), ARM_MASS.in(Kilograms)));
 
@@ -129,10 +134,30 @@ public class RotarySubsystemConstants {
                 NAME + "Encoder", getCANcoderConfig(false))));
     }
 
+    public static RotaryMechanismSim getRevSim()
+    {
+        return new RotaryMechanismSim(
+            new MotorIORevSim(
+                NAME,
+                Ports.RotarySubsystemMotorMain.id(),
+                true,
+                DCMOTOR, // Missing gearBox parameter
+                new SparkFlexConfig()
+                    .voltageCompensation(12.0)
+                    .idleMode(IdleMode.kBrake)
+                    .inverted(false)),
+            DCMOTOR, MOI, false, CONSTANTS,
+            Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
+                NAME + "Encoder", getCANcoderConfig(true))));
+    }
+
     public static RotaryMechanismSim getSim()
     {
         return new RotaryMechanismSim(
-            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
+            new MotorIOTalonFXSim(
+                NAME,
+                getFXConfig(),
+                Ports.RotarySubsystemMotorMain,
                 new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
             DCMOTOR, MOI, false, CONSTANTS,
             Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,

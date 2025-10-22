@@ -183,7 +183,8 @@ public class RobotContainer {
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP,
                         visionSim.get()));
-                rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
+                // rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getRevSim());
             }
 
             default -> {
