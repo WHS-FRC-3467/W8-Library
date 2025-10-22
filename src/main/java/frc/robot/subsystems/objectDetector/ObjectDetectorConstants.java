@@ -2,9 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-
 package frc.robot.subsystems.objectDetector;
-
 
 import java.util.function.Supplier;
 import org.photonvision.estimation.TargetModel;
@@ -15,51 +13,63 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.lib.io.objectDetection.*;
 
-
+/*
+ * Subsystem constants (e.g. names, transforms) for the various object detector cameras on the
+ * robot.
+ */
 public class ObjectDetectorConstants {
+    /*
+     * Transform sign convention: +X -> towards other alliance's station, +Y -> towards center of
+     * field from starting starboard edge, +theta -> right-hand rule. units: meters & degrees.
+     */
+    // Object detection camera # 0
     public final static String CAMERA0_NAME = "Detection Camera #0";
-    public final static double cameraRoll = 0.0; // degrees
-    public final static double cameraPitch = 25; // degrees
-    public final static double cameraYaw = 0.0; // degrees
-    /** +X - towards other alliance's station, +Y - towards center of field from starboard */
-    public final static double cameraX = 0.30; // meters
-    public final static double cameraY = -0.30; // meters
-    public final static double cameraZ = 1; // meters
+    public final static double CAMERA0_ROLL = 0.0;
+    public final static double CAMERA0_PITCH = 25;
+    public final static double CAMERA0_YAW = 0.0;
+    public final static double CAMERA0_X = 0.30;
+    public final static double CAMERA0_Y = -0.30;
+    public final static double CAMERA0_Z = 1;
 
+    public static Transform3d CAMERA0_TRANSFORM =
+        new Transform3d(CAMERA0_X, CAMERA0_Y, CAMERA0_Z,
+            new Rotation3d(Math.toRadians(CAMERA0_ROLL), Math.toRadians(CAMERA0_PITCH),
+                Math.toRadians(CAMERA0_YAW)));
 
-    public static Transform3d CAMERA0TRANSFORM =
-        new Transform3d(cameraX, cameraY, cameraZ,
-            new Rotation3d(Math.toRadians(cameraRoll), Math.toRadians(cameraPitch),
-                Math.toRadians(cameraYaw)));
+    // Object detection camera # 1
+    // ...
 
-
-    public final static String ALGAE_NAME = "Algae";
-    public final static double algaeHeightMeters = 0.41;
-
-
-    public final static VisionTargetSim[] ALGAE_TARGETS = {
-            new VisionTargetSim(new Pose3d(3, 3, algaeHeightMeters / 2, new Rotation3d()),
-                new TargetModel(algaeHeightMeters)),
-            new VisionTargetSim(new Pose3d(5, 6, algaeHeightMeters / 2, new Rotation3d()),
-                new TargetModel(algaeHeightMeters)),
-            new VisionTargetSim((new Pose3d(10, 3, algaeHeightMeters / 2, new Rotation3d())),
-                new TargetModel(algaeHeightMeters))
-    };
-
-
+    // Real implementation of camera; call real IO layer
     public static ObjectDetectionIOPhotonVision getReal()
     {
         return new ObjectDetectionIOPhotonVision(CAMERA0_NAME);
     }
 
+    // Simulated implementation of camera; call sim IO layer
+    // Simulated targets
+    // 2025 Algae Targets
+    public final static String SIM_NAME = "Algae";
+    public final static double algaeHeightMeters = 0.41;
+    public final static VisionTargetSim[] SIM_TARGETS = {
+            new VisionTargetSim(new Pose3d(3, 3, algaeHeightMeters / 2, new Rotation3d()),
+                new TargetModel(algaeHeightMeters)),
+            new VisionTargetSim(new Pose3d(5, 6, algaeHeightMeters / 2, new Rotation3d()),
+                new TargetModel(algaeHeightMeters)),
+            new VisionTargetSim((new Pose3d(10, 5, algaeHeightMeters / 2, new Rotation3d())),
+                new TargetModel(algaeHeightMeters))
+    };
 
+    // 2026 ??? Targets
+    // ...
+
+    // Simulate the camera(s) with the given robot pose supplier. Return an array of IOSims as
+    // necessary.
     public static ObjectDetectionIOSim getSim(Supplier<Pose2d> robotPoseSupplier)
     {
-        return new ObjectDetectionIOSim(CAMERA0_NAME, CAMERA0TRANSFORM, robotPoseSupplier,
-            ALGAE_NAME,
-            ALGAE_TARGETS);
+        return new ObjectDetectionIOSim(CAMERA0_NAME, CAMERA0_TRANSFORM, robotPoseSupplier,
+            SIM_NAME,
+            SIM_TARGETS);
     }
-
 
     public static ObjectDetectionIO getReplay()
     {

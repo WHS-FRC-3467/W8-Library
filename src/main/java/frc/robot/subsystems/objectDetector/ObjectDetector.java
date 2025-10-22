@@ -44,12 +44,12 @@ public class ObjectDetector extends SubsystemBase {
 
         if (objectDetection.getTargetObservations().length > 0) {
             range = objectDetection.rangeToTarget_Pitch(objectDetection.getTargetObservations()[0],
-                ObjectDetectorConstants.CAMERA0TRANSFORM,
+                ObjectDetectorConstants.CAMERA0_TRANSFORM,
                 ObjectDetectorConstants.algaeHeightMeters / 2,
                 1, 0);
             heading =
                 objectDetection.headingToTarget_Yaw(objectDetection.getTargetObservations()[0],
-                    ObjectDetectorConstants.CAMERA0TRANSFORM,
+                    ObjectDetectorConstants.CAMERA0_TRANSFORM,
                     range, 1, 0);
             distance = objectDetection.distanceToTarget2d(range, heading);
             targetLocation =
@@ -68,13 +68,13 @@ public class ObjectDetector extends SubsystemBase {
             Logger.recordOutput("Detection/" + "Detection List Size", lastNDetections.size());
 
             Logger.recordOutput("Detection/" + "True Range",
-                ObjectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
+                ObjectDetectorConstants.SIM_TARGETS[0].getPose().toPose2d().getTranslation()
                     .minus(drive.getPose().getTranslation()).getX());
             Logger.recordOutput("Detection/" + "True Heading",
-                ObjectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
+                ObjectDetectorConstants.SIM_TARGETS[0].getPose().toPose2d().getTranslation()
                     .minus(drive.getPose().getTranslation()).getY());
             Logger.recordOutput("Detection/" + "True Distance",
-                ObjectDetectorConstants.ALGAE_TARGETS[0].getPose().toPose2d().getTranslation()
+                ObjectDetectorConstants.SIM_TARGETS[0].getPose().toPose2d().getTranslation()
                     .getDistance(drive.getPose().getTranslation()));
         }
     }

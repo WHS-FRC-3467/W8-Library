@@ -153,6 +153,7 @@ public class RobotContainer {
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP));
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
+                objectVision = new ObjectDetector(ObjectDetectorConstants.getReal(), drive);
             }
 
             case SIM -> {
