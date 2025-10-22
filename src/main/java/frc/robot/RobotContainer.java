@@ -74,6 +74,8 @@ import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.subsystems.objectDetector.ObjectDetector;
+import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
@@ -106,6 +108,7 @@ public class RobotContainer {
     private final Flywheel flywheel;
     private final Linear linear;
     private final Vision vision;
+    private final ObjectDetector objectVision;
     private final RotarySubsystem rotary;
 
     // Controller
@@ -115,7 +118,6 @@ public class RobotContainer {
     private final LoggedDashboardChooser<AutoCommand> autoChooser;
     private final LoggedDashboardChooser<Boolean> conditionalChooser;
     public static Field2d autoPreviewField = new Field2d();
-
     private final Optional<VisionSystemSim> visionSim;
 
     /**

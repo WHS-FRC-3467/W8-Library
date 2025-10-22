@@ -16,7 +16,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import frc.lib.io.objectDetection.*;
 
 
-public class objectDetectorConstants {
+public class ObjectDetectorConstants {
     public final static String CAMERA0_NAME = "Detection Camera #0";
     public final static double cameraRoll = 0.0; // degrees
     public final static double cameraPitch = 25; // degrees
