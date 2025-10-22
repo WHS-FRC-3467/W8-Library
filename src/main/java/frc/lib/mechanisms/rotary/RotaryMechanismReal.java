@@ -13,7 +13,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import frc.lib.annotations.NoSubtypeAllowed;
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIO;
 import frc.lib.io.absoluteencoder.AbsoluteEncoderInputsAutoLogged;
 import frc.lib.io.motor.MotorIO;
@@ -30,7 +29,7 @@ public class RotaryMechanismReal extends RotaryMechanism {
         new AbsoluteEncoderInputsAutoLogged();
     private final Optional<AbsoluteEncoderIO> absoluteEncoder;
 
-    public RotaryMechanismReal(@NoSubtypeAllowed MotorIO io,
+    public RotaryMechanismReal(MotorIO io,
         RotaryMechCharacteristics characteristics, Optional<AbsoluteEncoderIO> absoluteEncoder)
     {
         super(io.getName(), characteristics);
