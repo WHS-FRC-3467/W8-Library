@@ -69,7 +69,7 @@ public class ObjectDetectorConstants {
     public static void updateSimTargets()
     {
         SIM_TARGETS[3] = new VisionTargetSim(
-            (new Pose3d(13, 6 * Math.sin(0.5 * Math.PI * 5),
+            (new Pose3d(13, 6 * Math.sin(0.5 * Math.PI * Timer.getFPGATimestamp()),
                 algaeHeightMeters / 2, new Rotation3d())),
             new TargetModel(algaeHeightMeters)); // 0.25 Hz oscillation
     }
@@ -78,7 +78,7 @@ public class ObjectDetectorConstants {
     // necessary.
     public static ObjectDetectionIOSim getSim(Supplier<Pose2d> robotPoseSupplier)
     {
-        // updateSimTargets(); ?
+        updateSimTargets();
         return new ObjectDetectionIOSim(CAMERA0_NAME, CAMERA0_TRANSFORM, robotPoseSupplier,
             SIM_NAME,
             SIM_TARGETS);
