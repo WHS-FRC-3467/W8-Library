@@ -105,8 +105,8 @@ dependencies {
     def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
     annotationProcessor "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
 
-    compileOnly 'com.google.errorprone:error_prone_annotations:latest.release'
-    annotationProcessor 'com.google.errorprone:error_prone_core:latest.release'
+    compileOnly 'com.google.errorprone:error_prone_annotations:2.35.0'
+    annotationProcessor 'com.google.errorprone:error_prone_core:2.35.0'
 
     implementation "org.apache.commons:commons-lang3:3.18.0"
 }
