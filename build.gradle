@@ -79,7 +79,7 @@ repositories {
 dependencies {
     annotationProcessor wpi.java.deps.wpilibAnnotations()
 
-    errorprone("com.google.errorprone:error_prone_core:2.35.0")
+    errorprone("com.google.errorprone:error_prone_core:2.21.1")
     errorprone project(":processor")
 
     implementation wpi.java.deps.wpilib()
