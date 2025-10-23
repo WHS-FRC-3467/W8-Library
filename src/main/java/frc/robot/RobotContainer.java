@@ -74,8 +74,8 @@ import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
-import frc.robot.subsystems.objectDetector.ObjectDetector;
-import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
+// import frc.robot.subsystems.objectDetector.ObjectDetector;
+// import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
@@ -108,7 +108,7 @@ public class RobotContainer {
     private final Flywheel flywheel;
     private final Linear linear;
     private final Vision vision;
-    private final ObjectDetector objectDetection;
+    // private final ObjectDetector objectDetection;
     private final RotarySubsystem rotary;
 
     // Controller
@@ -152,7 +152,7 @@ public class RobotContainer {
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP));
-                objectDetection = new ObjectDetector(ObjectDetectorConstants.getReal(), drive);
+                // objectDetection = new ObjectDetector(ObjectDetectorConstants.getReal(), drive);
 
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
             }
@@ -187,8 +187,8 @@ public class RobotContainer {
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP,
                         visionSim.get()));
-                objectDetection = new ObjectDetector(
-                    ObjectDetectorConstants.getSim(() -> drive.getPose()), drive);
+                // objectDetection = new ObjectDetector(
+                // ObjectDetectorConstants.getSim(() -> drive.getPose()), drive);
 
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
             }
@@ -218,7 +218,7 @@ public class RobotContainer {
                     drive::addVisionMeasurement,
                     () -> drive.getTimestampedHeading(),
                     new VisionIO() {});
-                objectDetection = new ObjectDetector(ObjectDetectorConstants.getReplay(), drive);
+                // objectDetection = new ObjectDetector(ObjectDetectorConstants.getReplay(), drive);
             }
         }
 
