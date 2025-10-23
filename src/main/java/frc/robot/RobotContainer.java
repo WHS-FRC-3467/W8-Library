@@ -108,7 +108,7 @@ public class RobotContainer {
     private final Flywheel flywheel;
     private final Linear linear;
     private final Vision vision;
-    private final ObjectDetector objectVision;
+    private final ObjectDetector objectDetection;
     private final RotarySubsystem rotary;
 
     // Controller
@@ -152,8 +152,9 @@ public class RobotContainer {
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP));
+                objectDetection = new ObjectDetector(ObjectDetectorConstants.getReal(), drive);
+
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
-                objectVision = new ObjectDetector(ObjectDetectorConstants.getReal(), drive);
             }
 
             case SIM -> {
@@ -186,6 +187,9 @@ public class RobotContainer {
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP,
                         visionSim.get()));
+                objectDetection = new ObjectDetector(
+                    ObjectDetectorConstants.getSim(() -> drive.getPose()), drive);
+
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
             }
 
@@ -214,6 +218,7 @@ public class RobotContainer {
                     drive::addVisionMeasurement,
                     () -> drive.getTimestampedHeading(),
                     new VisionIO() {});
+                objectDetection = new ObjectDetector(ObjectDetectorConstants.getReplay(), drive);
             }
         }
 

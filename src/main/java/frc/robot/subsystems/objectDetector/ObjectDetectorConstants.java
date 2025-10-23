@@ -11,11 +11,12 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.wpilibj.Timer;
 import frc.lib.io.objectDetection.*;
 
 /*
  * Subsystem constants (e.g. names, transforms) for the various object detector cameras on the
- * robot.
+ * robot. Used to create object detector subsystems contained in RobotContainer.
  */
 public class ObjectDetectorConstants {
     /*
@@ -56,7 +57,11 @@ public class ObjectDetectorConstants {
             new VisionTargetSim(new Pose3d(5, 6, algaeHeightMeters / 2, new Rotation3d()),
                 new TargetModel(algaeHeightMeters)),
             new VisionTargetSim((new Pose3d(10, 5, algaeHeightMeters / 2, new Rotation3d())),
-                new TargetModel(algaeHeightMeters))
+                new TargetModel(algaeHeightMeters)),
+            new VisionTargetSim(
+                (new Pose3d(12, 12 * Math.sin(0.5 * Math.PI * Timer.getFPGATimestamp()),
+                    algaeHeightMeters / 2, new Rotation3d())),
+                new TargetModel(algaeHeightMeters)), // 0.25 Hz oscillation
     };
 
     // 2026 ??? Targets
@@ -71,6 +76,7 @@ public class ObjectDetectorConstants {
             SIM_TARGETS);
     }
 
+    // Replay implementation of camera; return bare IO layer results
     public static ObjectDetectionIO getReplay()
     {
         return new ObjectDetectionIO() {};

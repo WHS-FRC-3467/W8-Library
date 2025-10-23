@@ -30,6 +30,8 @@ public class ObjectDetector extends SubsystemBase {
     private Translation2d targetLocation;
     private ArrayList<Translation2d> lastNDetections = new ArrayList<>(10);
 
+    // Pass in any object detection IO implementation (e.g. PhotonVision) that implements
+    // objectDetectionIO interface [real or sim]
     public ObjectDetector(ObjectDetectionIO io, Drive drive)
     {
         objectDetection = new ObjectDetection(io);
