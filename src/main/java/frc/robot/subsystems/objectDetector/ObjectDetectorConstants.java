@@ -61,7 +61,7 @@ public class ObjectDetectorConstants {
             new VisionTargetSim(
                 (new Pose3d(12, 12 * Math.sin(0.5 * Math.PI * Timer.getFPGATimestamp()),
                     algaeHeightMeters / 2, new Rotation3d())),
-                new TargetModel(algaeHeightMeters)), // 0.25 Hz oscillation
+                new TargetModel(algaeHeightMeters)) // 0.25 Hz oscillation
     };
 
     // 2026 ??? Targets
