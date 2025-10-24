@@ -24,10 +24,11 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
     private final PhotonCamera cam;
     private final PhotonCameraSim camSim;
     private final Supplier<Pose2d> robotPoseSupplier;
+    private final Supplier<VisionTargetSim[]> visionTargetsSupplier;
 
     public ObjectDetectionIOSim(String cameraName, Transform3d cameraTransform,
         Supplier<Pose2d> robotPoseSupplier,
-        String target_name, Supplier<VisionTargetSim[]> targets)
+        String target_name, Supplier<VisionTargetSim[]> visionTargetsSupplier)
     {
         super(cameraName);
         this.cameraName = cameraName;
@@ -36,13 +37,14 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
         camSim = new PhotonCameraSim(cam, new SimCameraProperties());
         // Wireframe visualizer
         camSim.enableDrawWireframe(true);
-
+        // Create a vision system sim and add the sim camera to it
         visionSim = new VisionSystemSim("objectDetection");
         visionSim.addCamera(camSim, cameraTransform);
+        // Suppliers for dynamic update in sim
         this.robotPoseSupplier = robotPoseSupplier;
-
+        this.visionTargetsSupplier = visionTargetsSupplier;
         // Add vision targets to the sim
-        visionSim.addVisionTargets(target_name, targets.get());
+        visionSim.addVisionTargets(target_name, visionTargetsSupplier.get());
         // Retrieve the vision targets on the sim field in a set and then convert it to a list for
         // easy indexing
         Set<VisionTargetSim> targetSet = visionSim.getVisionTargets();
@@ -51,7 +53,6 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
         for (VisionTargetSim target : targetList) {
             Logger.recordOutput("ALGAE POSE" + targetList.indexOf(target), target.getPose());
         }
-
     }
 
     // Update the robot's pose in the sim and use the super's implementation to update inputs
@@ -67,5 +68,4 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
     {
         return cameraName;
     }
-
 }
