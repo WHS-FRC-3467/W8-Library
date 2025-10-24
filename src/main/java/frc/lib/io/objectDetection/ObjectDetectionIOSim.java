@@ -27,7 +27,7 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
 
     public ObjectDetectionIOSim(String cameraName, Transform3d cameraTransform,
         Supplier<Pose2d> robotPoseSupplier,
-        String target_name, VisionTargetSim[] targets)
+        String target_name, Supplier<VisionTargetSim[]> targets)
     {
         super(cameraName);
         this.cameraName = cameraName;
@@ -42,7 +42,7 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
         this.robotPoseSupplier = robotPoseSupplier;
 
         // Add vision targets to the sim
-        visionSim.addVisionTargets(target_name, targets);
+        visionSim.addVisionTargets(target_name, targets.get());
         // Retrieve the vision targets on the sim field in a set and then convert it to a list for
         // easy indexing
         Set<VisionTargetSim> targetSet = visionSim.getVisionTargets();
