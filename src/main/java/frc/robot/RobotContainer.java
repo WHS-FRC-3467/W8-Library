@@ -67,6 +67,8 @@ import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.linear.Linear;
 import frc.robot.subsystems.linear.LinearConstants;
+import frc.robot.subsystems.revRotary.RevRotarySubsystem;
+import frc.robot.subsystems.revRotary.RevRotarySubsystemConstants;
 import frc.robot.subsystems.rotary.RotarySubsystem;
 import frc.robot.subsystems.rotary.RotarySubsystemConstants;
 import frc.robot.subsystems.rotary.RotarySubsystem.Setpoint;
@@ -107,6 +109,7 @@ public class RobotContainer {
     private final Linear linear;
     private final Vision vision;
     private final RotarySubsystem rotary;
+    private final RevRotarySubsystem revRotary;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -151,6 +154,7 @@ public class RobotContainer {
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP));
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
+                revRotary = new RevRotarySubsystem(RevRotarySubsystemConstants.getReal());
             }
 
             case SIM -> {
@@ -183,8 +187,8 @@ public class RobotContainer {
                         VisionConstants.aprilTagLayout,
                         PoseStrategy.CONSTRAINED_SOLVEPNP,
                         visionSim.get()));
-                // rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
-                rotary = new RotarySubsystem(RotarySubsystemConstants.getRevSim());
+                rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
+                revRotary = new RevRotarySubsystem(RevRotarySubsystemConstants.getSim());
             }
 
             default -> {
@@ -206,6 +210,7 @@ public class RobotContainer {
 
                 linear = new Linear(LinearConstants.getReplay());
                 rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());
+                revRotary = new RevRotarySubsystem(RevRotarySubsystemConstants.getReplay());
 
                 visionSim = Optional.empty();
                 vision = new Vision(
@@ -304,6 +309,10 @@ public class RobotContainer {
         SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",
             rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+        SmartDashboard.putData("REV Rotary: Stow",
+            revRotary.setSetpoint(RevRotarySubsystem.Setpoint.STOW));
+        SmartDashboard.putData("REV Rotary: Raised",
+            revRotary.setSetpoint(RevRotarySubsystem.Setpoint.RAISED));
 
         LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
         SmartDashboard.putData("Shoot Ball", Commands

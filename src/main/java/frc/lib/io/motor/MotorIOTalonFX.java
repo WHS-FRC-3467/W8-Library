@@ -45,6 +45,16 @@ import frc.lib.util.CANUpdateThread;
  */
 public class MotorIOTalonFX implements MotorIO {
 
+    /**
+     * Configuration data for a TalonFX motor that follows another TalonFX motor.
+     * 
+     * <p>
+     * Follower motors mirror the output of a main motor, useful for mechanisms that require
+     * multiple motors working together (like a dual-motor elevator).
+     * 
+     * @param id The CAN device ID of the follower motor
+     * @param opposesMain Whether this follower should spin opposite to the main motor
+     */
     public record TalonFXFollower(Device.CAN id, boolean opposesMain) {
     }
 
@@ -84,11 +94,17 @@ public class MotorIOTalonFX implements MotorIO {
 
     /**
      * Constructs and initializes a TalonFX motor.
-     *
-     * @param name The name of the motor(s)
-     * @param config Configuration to apply to the motor(s)
+     * 
+     * <p>
+     * This constructor applies the provided configuration to the main motor and all followers. It
+     * sets up the follower relationship, initializes status signals for telemetry, and configures
+     * signal update rates. All followers must be on the same CAN bus as the main motor.
+     * 
+     * @param name The name of the motor(s) for logging and identification
+     * @param config Configuration to apply to the motor(s) including PID, limits, and gear ratios
      * @param main CAN ID of the main motor
-     * @param followerData Configuration data for the follower(s)
+     * @param followerData Configuration data for the follower motor(s), can be empty if no
+     *        followers
      */
     public MotorIOTalonFX(String name, TalonFXConfiguration config, Device.CAN main,
         TalonFXFollower... followerData)
@@ -149,8 +165,12 @@ public class MotorIOTalonFX implements MotorIO {
 
     /**
      * Checks if the motor is currently running a position control mode.
-     *
-     * @return True if the motor is using a position control mode.
+     * 
+     * <p>
+     * Position control modes command the motor to move to and hold a specific position. This
+     * includes Motion Magic modes that use motion profiling.
+     * 
+     * @return true if the motor is using a position control mode
      */
     protected boolean isRunningPositionControl()
     {
@@ -164,8 +184,11 @@ public class MotorIOTalonFX implements MotorIO {
 
     /**
      * Checks if the motor is currently running a velocity control mode.
-     *
-     * @return True if the motor is using a velocity control mode.
+     * 
+     * <p>
+     * Velocity control modes command the motor to spin at a specific speed.
+     * 
+     * @return true if the motor is using a velocity control mode
      */
     protected boolean isRunningVelocityControl()
     {
@@ -178,8 +201,12 @@ public class MotorIOTalonFX implements MotorIO {
 
     /**
      * Checks if the motor is running any Motion Magic mode.
-     *
-     * @return True if the motor is using a Motion Magic mode.
+     * 
+     * <p>
+     * Motion Magic is CTRE's advanced motion profiling control mode that automatically generates
+     * smooth motion with controlled velocity, acceleration, and jerk (rate of acceleration).
+     * 
+     * @return true if the motor is using a Motion Magic mode
      */
     protected boolean isRunningMotionMagic()
     {
@@ -192,9 +219,13 @@ public class MotorIOTalonFX implements MotorIO {
     }
 
     /**
-     * Returns the current control type.
-     *
-     * @return The current control type.
+     * Determines the current control type being used by the motor.
+     * 
+     * <p>
+     * This identifies which control mode the motor is currently in (coast, brake, voltage, current,
+     * position, velocity, etc.).
+     * 
+     * @return The current ControlType
      */
     protected ControlType getCurrentControlType()
     {
@@ -219,8 +250,13 @@ public class MotorIOTalonFX implements MotorIO {
 
     /**
      * Updates the passed-in MotorInputs structure with the latest sensor readings.
-     *
-     * @param inputs Motor input structure to populate.
+     * 
+     * <p>
+     * This method refreshes all status signals from the motor and populates the inputs object with
+     * current telemetry data. The data varies based on the current control mode - for example,
+     * position error and trajectory data are only populated during position control.
+     * 
+     * @param inputs Motor input structure to populate with current sensor data
      */
     @Override
     public void updateInputs(MotorInputs inputs)
@@ -282,7 +318,12 @@ public class MotorIOTalonFX implements MotorIO {
     }
 
     /**
-     * Sets the motor to coast mode.
+     * Sets the motor to coast mode (no active braking).
+     * 
+     * <p>
+     * In coast mode, the motor spins freely when not powered. The mechanism will slow down
+     * gradually due to friction but won't actively try to stop. Use this when you want the
+     * mechanism to move freely.
      */
     @Override
     public void runCoast()
@@ -291,7 +332,12 @@ public class MotorIOTalonFX implements MotorIO {
     }
 
     /**
-     * Sets the motor to brake mode.
+     * Sets the motor to brake mode (active braking).
+     * 
+     * <p>
+     * In brake mode, the motor actively resists rotation when not powered. This causes the
+     * mechanism to stop quickly and hold position. Use this when you need the mechanism to stay in
+     * place.
      */
     @Override
     public void runBrake()
@@ -301,8 +347,11 @@ public class MotorIOTalonFX implements MotorIO {
 
     /**
      * Runs the motor using direct voltage control.
-     *
-     * @param voltage Desired voltage output.
+     * 
+     * <p>
+     * Voltage control directly applies a voltage to the motor.
+     * 
+     * @param voltage Desired voltage output (positive = forward, negative = reverse)
      */
     @Override
     public void runVoltage(Voltage voltage)
@@ -311,9 +360,14 @@ public class MotorIOTalonFX implements MotorIO {
     }
 
     /**
-     * Runs the motor with a specified current output.
-     *
-     * @param current Desired torque-producing current.
+     * Runs the motor with a specified torque-producing current output.
+     * 
+     * <p>
+     * Current control directly controls the current flowing through the motor, which is
+     * proportional to torque output. This provides more consistent torque regardless of motor
+     * speed, compared to voltage control.
+     * 
+     * @param current Desired torque-producing current (not total supply current)
      */
     @Override
     public void runCurrent(Current current)
@@ -322,10 +376,14 @@ public class MotorIOTalonFX implements MotorIO {
     }
 
     /**
-     * Runs the motor with a specified current output and duty cycle.
-     *
-     * @param current Desired torque-producing current.
-     * @param dutyCycle Desired dutycycle of current output, limiting top speed
+     * Runs the motor with a specified current output limited by duty cycle.
+     * 
+     * <p>
+     * This version allows you to limit the maximum speed of the motor while using current control.
+     * The duty cycle caps the percentage of available voltage.
+     * 
+     * @param current Desired torque-producing current
+     * @param dutyCycle Maximum duty cycle (0.0 to 1.0) limiting top speed
      */
     @Override
     public void runCurrent(Current current, double dutyCycle)
@@ -335,9 +393,13 @@ public class MotorIOTalonFX implements MotorIO {
     }
 
     /**
-     * Runs the motor using duty cycle (percentage of available voltage).
-     *
-     * @param dutyCycle Fractional output between 0 and 1.
+     * Runs the motor using duty cycle control (percentage of available voltage) with FOC.
+     * 
+     * <p>
+     * Duty cycle control outputs a percentage of the current battery voltage. Unlike direct voltage
+     * control, this automatically adjusts for battery voltage changes.
+     * 
+     * @param dutyCycle Fractional output between 0.0 and 1.0 (will be clamped to this range)
      */
     @Override
     public void runDutyCycle(double dutyCycle)
@@ -347,13 +409,19 @@ public class MotorIOTalonFX implements MotorIO {
     }
 
     /**
-     * Runs the motor to a specific position.
-     *
-     * @param position Target position.
-     * @param cruiseVelocity Cruise velocity.
-     * @param acceleration Max acceleration.
-     * @param maxJerk Max jerk (rate of acceleration).
-     * @param slot PID slot index.
+     * Runs the motor to a specific position using Motion Magic with dynamic profiling.
+     * 
+     * <p>
+     * Motion Magic generates a smooth motion profile with controlled cruise velocity, acceleration,
+     * and jerk. Dynamic Motion Magic allows these parameters to be changed on-the-fly for each new
+     * position command. This provides smooth, predictable motion that's easy on mechanisms and
+     * looks professional.
+     * 
+     * @param position Target position to move to
+     * @param cruiseVelocity Maximum velocity during the move
+     * @param acceleration Maximum acceleration during speed-up and slow-down
+     * @param maxJerk Maximum jerk (rate of acceleration change) for smoothness
+     * @param slot PID slot index to use for position control gains
      */
     @Override
     public void runPosition(Angle position, AngularVelocity cruiseVelocity,
@@ -366,11 +434,15 @@ public class MotorIOTalonFX implements MotorIO {
     }
 
     /**
-     * Runs the motor at a target velocity.
-     *
-     * @param velocity Desired velocity.
-     * @param acceleration Max acceleration.
-     * @param slot PID slot index.
+     * Runs the motor at a target velocity using FOC current control.
+     * 
+     * <p>
+     * Velocity control maintains a constant speed using a PID controller. The motor will
+     * automatically adjust output to maintain the target velocity as load changes.
+     * 
+     * @param velocity Desired angular velocity (positive = forward, negative = reverse)
+     * @param acceleration Maximum acceleration when changing speeds
+     * @param slot PID slot index to use for velocity control gains
      */
     @Override
     public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
@@ -381,6 +453,16 @@ public class MotorIOTalonFX implements MotorIO {
                 .withSlot(slot.getNum()));
     }
 
+    /**
+     * Manually sets the encoder position to a specific value.
+     * 
+     * <p>
+     * This is useful for zeroing the encoder when the mechanism is at a known position, or for
+     * resetting position after hitting a hard stop. Use carefully as incorrect position can cause
+     * the mechanism to move unexpectedly.
+     * 
+     * @param position The new position value to set the encoder to
+     */
     @Override
     public void setEncoderPosition(Angle position)
     {

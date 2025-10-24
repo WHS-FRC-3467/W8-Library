@@ -26,6 +26,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import frc.lib.util.Device;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 public class MotorIORev implements MotorIO {
@@ -118,14 +119,14 @@ public class MotorIORev implements MotorIO {
      */
     public MotorIORev(
         String name,
-        int id,
+        Device.CAN id,
         boolean isFlex,
         SparkBaseConfig config)
     {
         this.name = name;
 
         if (isFlex) {
-            motor = new SparkFlex(id, MotorType.kBrushless);
+            motor = new SparkFlex(id.id(), MotorType.kBrushless);
         } else {
             // motor = new SparkMax(id, MotorType.kBrushless);
         }

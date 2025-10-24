@@ -26,24 +26,28 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Velocity;
+import frc.lib.util.Device;
 
 
 /**
- * Simulates a REV motor controller (SparkFlex or SparkMax) for FRC robot code.
- * <p>
- * Extends {@link MotorIORev} and implements {@link MotorIOSim} to enable simulation of leader and
- * follower motors, closed-loop control, and state updates for testing without hardware.
- * </p>
+ * Simulated implementation of {@link MotorIORev} for REV Robotics motors using WPILib simulation.
+ * Implements {@link MotorIOSim} to provide simulation-specific behavior.
  *
  * <p>
- * Features:
+ * Constructor arguments:
  * <ul>
- * <li>Supports SparkFlex and SparkMax controllers</li>
- * <li>Configures followers with inversion</li>
- * <li>Simulates position and velocity control</li>
- * <li>Updates simulated inputs</li>
+ * <li><b>name</b> - Name of the motor</li>
+ * <li><b>id</b> - CAN ID of the motor</li>
+ * <li><b>isFlex</b> - True if using SparkFlex, false for SparkMax</li>
+ * <li><b>gearBox</b> - DCMotor gearbox model</li>
+ * <li><b>config</b> - Motor configuration</li>
+ * <li><b>followerData</b> - Varargs of follower motor data (ID and inversion)</li>
  * </ul>
- * </p>
+ *
+ * <p>
+ * This class wraps a simulated SparkFlex or SparkMax motor, allowing position and velocity control
+ * in a simulation environment. It provides methods to run the motor in position or velocity mode,
+ * update simulation inputs, and manage simulation state.
  *
  * @see MotorIORev
  * @see MotorIOSim
@@ -71,7 +75,7 @@ public class MotorIORevSim extends MotorIORev implements MotorIOSim {
      */
     public MotorIORevSim(
         String name,
-        int id,
+        Device.CAN id,
         boolean isFlex,
         DCMotor gearBox,
         SparkBaseConfig config,

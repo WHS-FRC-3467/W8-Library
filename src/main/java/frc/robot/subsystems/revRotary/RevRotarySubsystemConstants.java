@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.rotary;
+package frc.robot.subsystems.revRotary;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
@@ -27,21 +27,23 @@ import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import frc.lib.io.absoluteencoder.AbsoluteEncoderIOCANCoderSim;
+import frc.lib.io.motor.MotorIO;
+import frc.lib.io.motor.MotorIORev;
 import frc.lib.io.motor.MotorIORevSim;
-import frc.lib.io.motor.MotorIOTalonFX;
-import frc.lib.io.motor.MotorIOTalonFX.TalonFXFollower;
-import frc.lib.io.motor.MotorIOTalonFXSim;
+import frc.lib.io.motor.MotorIOSim;
 import frc.lib.mechanisms.rotary.*;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
 import frc.robot.Ports;
+import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.config.ClosedLoopConfig;
+import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 
 /** Add your docs here. */
-public class RotarySubsystemConstants {
-    public static String NAME = "Rotary";
+public class RevRotarySubsystemConstants {
+    public static String NAME = "REVRotary";
 
     public static final Angle TOLERANCE = Degrees.of(2.0);
 
@@ -71,13 +73,14 @@ public class RotarySubsystemConstants {
 
     private static final Angle ENCODER_OFFSET = Rotations.of(0.0);
 
-    public static final RotarySubsystem.Setpoint DEFAULT_SETPOINT = RotarySubsystem.Setpoint.STOW;
+    public static final RevRotarySubsystem.Setpoint DEFAULT_SETPOINT =
+        RevRotarySubsystem.Setpoint.STOW;
+
+
 
     // Positional PID
-    private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
-        .withKP(30.0)
-        .withKI(0.0)
-        .withKD(5.0);
+    private static ClosedLoopConfig SLOT0CONFIG = new ClosedLoopConfig()
+        .pid(30.0, 0, 0, ClosedLoopSlot.kSlot0);
 
     /**
      * Creates and returns the TalonFX motor controller configuration for the rotary mechanism.
@@ -96,57 +99,14 @@ public class RotarySubsystemConstants {
      * 
      * @return A configured TalonFXConfiguration object ready to apply to a motor controller
      */
-    public static TalonFXConfiguration getFXConfig()
+    public static SparkBaseConfig getREVConfig()
     {
-        TalonFXConfiguration config = new TalonFXConfiguration();
+        SparkFlexConfig config = new SparkFlexConfig();
 
-        config.CurrentLimits.SupplyCurrentLimitEnable = false;
-        config.CurrentLimits.SupplyCurrentLimit = 40.0;
-        config.CurrentLimits.SupplyCurrentLowerLimit = 40.0;
-        config.CurrentLimits.SupplyCurrentLowerTime = 0.1;
-
-        config.CurrentLimits.StatorCurrentLimitEnable = false;
-        config.CurrentLimits.StatorCurrentLimit = 80.0;
-
-        config.Voltage.PeakForwardVoltage = 12.0;
-        config.Voltage.PeakReverseVoltage = -12.0;
-
-        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-
-        config.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
-        config.SoftwareLimitSwitch.ForwardSoftLimitThreshold = MAX_ANGLE.in(Units.Rotations);
-
-        config.SoftwareLimitSwitch.ReverseSoftLimitEnable = false;
-        config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_ANGLE.in(Units.Rotations);
-
-        config.Feedback.RotorToSensorRatio = ROTOR_TO_SENSOR;
-        config.Feedback.SensorToMechanismRatio = SENSOR_TO_MECHANISM;
-
-        config.Feedback.FeedbackRemoteSensorID = Ports.RotarySubsystemEncoder.id();
-        config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
-
-        config.Slot0 = SLOT0CONFIG;
-
-        return config;
-    }
-
-    /**
-     * Creates and returns the CANcoder absolute encoder configuration.
-     * 
-     * <p>
-     * The CANcoder provides absolute position feedback, meaning it knows the true position of the
-     * mechanism even after power cycling. The magnet offset calibrates the encoder's zero position.
-     * 
-     * @param sim Whether this configuration is for simulation (true) or real robot (false). In
-     *        simulation, the offset is set to 0.0 since it's not needed.
-     * @return A configured CANcoderConfiguration object
-     */
-    public static CANcoderConfiguration getCANcoderConfig(boolean sim)
-    {
-        CANcoderConfiguration config = new CANcoderConfiguration();
-
-        config.MagnetSensor.MagnetOffset = sim ? 0.0 : ENCODER_OFFSET.in(Rotations);
+        config.voltageCompensation(12.0);
+        config.idleMode(IdleMode.kBrake);
+        config.inverted(false);
+        config.apply(SLOT0CONFIG);
 
         return config;
     }
@@ -162,12 +122,9 @@ public class RotarySubsystemConstants {
      */
     public static RotaryMechanismReal getReal()
     {
-        return new RotaryMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
-                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
-            CONSTANTS,
-            Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
-                NAME + "Encoder", getCANcoderConfig(false))));
+        MotorIO io = new MotorIORev(NAME, Ports.RotarySubsystemMotorMain, true, getREVConfig());
+
+        return new RotaryMechanismReal(io, CONSTANTS, null);
     }
 
     /**
@@ -182,15 +139,20 @@ public class RotarySubsystemConstants {
      */
     public static RotaryMechanismSim getSim()
     {
+        MotorIOSim io = new MotorIORevSim(
+            NAME,
+            Ports.RotarySubsystemMotorMain,
+            true,
+            DCMOTOR,
+            getREVConfig());
+
         return new RotaryMechanismSim(
-            new MotorIOTalonFXSim(
-                NAME,
-                getFXConfig(),
-                Ports.RotarySubsystemMotorMain,
-                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
-            DCMOTOR, MOI, false, CONSTANTS,
-            Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
-                NAME + "Encoder", getCANcoderConfig(true))));
+            io,
+            DCMOTOR,
+            MOI,
+            false,
+            CONSTANTS,
+            Optional.empty());
     }
 
     /**

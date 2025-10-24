@@ -19,38 +19,62 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 
+/**
+ * Extension of MotorIO interface for simulated motors.
+ * 
+ * <p>
+ * This interface adds methods specific to simulation, allowing WPILib physics simulations to feed
+ * data back into the motor IO layer. This creates a realistic simulation where the simulated
+ * physics affects the motor's sensor readings.
+ */
 public interface MotorIOSim extends MotorIO {
     /**
-     * Setter for the simulated mechanism position, typically taken from a WPILib mechanism
-     * simulation
+     * Sets the simulated mechanism position.
      * 
-     * @param position The new mechanism position
+     * <p>
+     * This is called by WPILib mechanism simulations (like SingleJointedArmSim) to update the
+     * motor's position sensor based on the simulated physics. This creates a feedback loop where
+     * motor output affects the simulation, and the simulation updates the sensors.
+     * 
+     * @param position The new mechanism position from the physics simulation
      */
     public default void setPosition(Angle position)
     {}
 
     /**
-     * Setter for the simulated mechanism velocity, typically taken from a WPILib mechanism
-     * simulation
+     * Sets the simulated motor rotor velocity.
      * 
-     * @param velocity The new mechanism velocity
+     * <p>
+     * The rotor is the spinning part inside the motor. This method updates the velocity sensor
+     * reading based on what the physics simulation calculated. Rotor velocity is before any gear
+     * reduction.
+     * 
+     * @param velocity The new motor rotor velocity from the physics simulation
      */
     public default void setRotorVelocity(AngularVelocity velocity)
     {}
 
     /**
-     * Setter for the simulated mechanism acceleration, typically taken from a WPILib mechanism
-     * simulation
+     * Sets the simulated motor rotor acceleration.
      * 
-     * @param acceleration The new mechanism acceleration
+     * <p>
+     * This updates the acceleration value based on the physics simulation. Acceleration is useful
+     * for advanced control algorithms and can help detect mechanism problems.
+     * 
+     * @param acceleration The new motor rotor acceleration from the physics simulation
      */
     public default void setRotorAcceleration(AngularAcceleration acceleration)
     {}
 
     /**
-     * Getter for the gear ratio to the sensor
+     * Gets the gear ratio from the motor rotor to the sensor.
      * 
-     * @return The gear ratio to the sensor
+     * <p>
+     * This is the first stage of gearing, from the motor's internal rotor to wherever the encoder
+     * is mounted. For example, if there's a 2:1 reduction between the motor and encoder, this
+     * returns 2.0.
+     * 
+     * @return The rotor-to-sensor gear ratio
      */
     public default double getRotorToSensorRatio()
     {
@@ -58,15 +82,26 @@ public interface MotorIOSim extends MotorIO {
     }
 
     /**
-     * Getter for the gear ratio from the sensor to the mechanism
+     * Gets the gear ratio from the sensor to the final mechanism.
      * 
-     * @return The gear ratio from the sensor to the mechanism
+     * <p>
+     * This is the second stage of gearing, from the encoder to the actual mechanism you're
+     * controlling. For example, if there's a 2:1 reduction between the encoder and your arm pivot,
+     * this returns 2.0. The total reduction is rotor-to-sensor × sensor-to-mechanism.
+     * 
+     * @return The sensor-to-mechanism gear ratio
      */
     public default double getSensorToMechanismRatio()
     {
         return 0.0;
     }
 
+    /**
+     * Closes and cleans up simulation resources.
+     * 
+     * <p>
+     * Called when the simulation is shutting down to properly release any resources.
+     */
     public default void close()
     {}
 }
