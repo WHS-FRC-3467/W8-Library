@@ -47,26 +47,25 @@ public class ObjectDetectorConstants {
     }
 
     // Simulated implementation of camera; call sim IO layer
-    // Simulated targets
-    // 2025 Algae Targets
+    // 2025 Simulated Algae Targets
     public final static String SIM_NAME = "Algae";
     public final static double algaeHeightMeters = 0.41;
-    public static VisionTargetSim[] SIM_TARGETS;
-    public static Supplier<VisionTargetSim[]> visionTargetSimSupplier =
-        () -> SIM_TARGETS = new VisionTargetSim[] {
-                new VisionTargetSim(new Pose3d(3, 3, algaeHeightMeters / 2, new Rotation3d()),
-                    new TargetModel(algaeHeightMeters)),
-                new VisionTargetSim(new Pose3d(5, 6, algaeHeightMeters / 2, new Rotation3d()),
-                    new TargetModel(algaeHeightMeters)),
-                new VisionTargetSim((new Pose3d(15, 8, algaeHeightMeters / 2, new Rotation3d())),
-                    new TargetModel(algaeHeightMeters)),
-                new VisionTargetSim(
-                    (new Pose3d(13, 12 * Math.sin(2 * Math.PI * Timer.getFPGATimestamp()),
-                        algaeHeightMeters / 2, new Rotation3d())),
-                    new TargetModel(algaeHeightMeters))
-        };
+    public static VisionTargetSim[] SIM_TARGETS = new VisionTargetSim[] {
+            new VisionTargetSim(new Pose3d(3, 2, algaeHeightMeters / 2, new Rotation3d()),
+                new TargetModel(algaeHeightMeters)),
+            new VisionTargetSim(new Pose3d(7, 6, algaeHeightMeters / 2, new Rotation3d()),
+                new TargetModel(algaeHeightMeters)),
+            new VisionTargetSim((new Pose3d(12, 7, algaeHeightMeters / 2, new Rotation3d())),
+                new TargetModel(algaeHeightMeters)),
+            null,
+    };
+    public static Supplier<VisionTargetSim> visionTargetSimSupplier =
+        () -> new VisionTargetSim(
+            (new Pose3d(16, 3.5 * Math.sin(0.25 * Math.PI * Timer.getFPGATimestamp()) + 4.1,
+                algaeHeightMeters / 2, new Rotation3d())),
+            new TargetModel(algaeHeightMeters));
 
-    // 2026 ??? Targets
+    // 2026 Targets
     // ...
 
     // Simulate the camera(s) with the given robot pose supplier. Return an array of IOSims as
@@ -74,7 +73,7 @@ public class ObjectDetectorConstants {
     public static ObjectDetectionIOSim getSim(Supplier<Pose2d> robotPoseSupplier)
     {
         return new ObjectDetectionIOSim(CAMERA0_NAME, CAMERA0_TRANSFORM, robotPoseSupplier,
-            SIM_NAME, visionTargetSimSupplier);
+            SIM_NAME, SIM_TARGETS, visionTargetSimSupplier);
     }
 
     // Replay implementation of camera; return bare IO layer results

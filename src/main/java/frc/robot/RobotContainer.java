@@ -121,7 +121,7 @@ public class RobotContainer {
     private final Optional<VisionSystemSim> visionSim;
 
     /**
-     * The container for the robot. Contains subsystems, OI devices, and commands.
+     * The container for the robot. Contains subsystems, IO devices, and commands.
      */
     public RobotContainer()
     {

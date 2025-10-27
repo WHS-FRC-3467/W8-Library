@@ -24,14 +24,20 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
     private final PhotonCamera cam;
     private final PhotonCameraSim camSim;
     private final Supplier<Pose2d> robotPoseSupplier;
-    private final Supplier<VisionTargetSim[]> visionTargetsSupplier;
+    private final Supplier<VisionTargetSim> visionTargetSupplier;
+    private final VisionTargetSim[] visionTargets;
+    private Set<VisionTargetSim> targetSet;
+    private List<VisionTargetSim> targetList;
+    private final String target_name;
 
     public ObjectDetectionIOSim(String cameraName, Transform3d cameraTransform,
         Supplier<Pose2d> robotPoseSupplier,
-        String target_name, Supplier<VisionTargetSim[]> visionTargetsSupplier)
+        String target_name, VisionTargetSim[] visionTargets,
+        Supplier<VisionTargetSim> visionTargetSupplier)
     {
         super(cameraName);
         this.cameraName = cameraName;
+        this.target_name = target_name;
         // Initialize vision sim
         cam = new PhotonCamera(cameraName);
         camSim = new PhotonCameraSim(cam, new SimCameraProperties());
@@ -40,18 +46,21 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
         // Create a vision system sim and add the sim camera to it
         visionSim = new VisionSystemSim("objectDetection");
         visionSim.addCamera(camSim, cameraTransform);
+        // Buffer of vision targets
+        this.visionTargets = visionTargets;
         // Suppliers for dynamic update in sim
         this.robotPoseSupplier = robotPoseSupplier;
-        this.visionTargetsSupplier = visionTargetsSupplier;
+        this.visionTargetSupplier = visionTargetSupplier;
         // Add vision targets to the sim
-        visionSim.addVisionTargets(target_name, visionTargetsSupplier.get());
+        visionTargets[3] = visionTargetSupplier.get();
+        visionSim.addVisionTargets(target_name, visionTargets);
         // Retrieve the vision targets on the sim field in a set and then convert it to a list for
         // easy indexing
-        Set<VisionTargetSim> targetSet = visionSim.getVisionTargets();
-        List<VisionTargetSim> targetList = new ArrayList<>(targetSet);
-        // Log the poses of each target for debugging purposes
+        targetSet = visionSim.getVisionTargets();
+        targetList = new ArrayList<>(targetSet);
+        // Initialize sim target pose logging -- update in periodic below for AScope
         for (VisionTargetSim target : targetList) {
-            Logger.recordOutput("ALGAE POSE" + targetList.indexOf(target), target.getPose());
+            Logger.recordOutput("TARGET POSE" + targetList.indexOf(target), target.getPose());
         }
     }
 
@@ -59,7 +68,17 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
     @Override
     public void updateInputs(ObjectDetectionIOInputs inputs)
     {
+        // Update robot & target poses
         visionSim.update(robotPoseSupplier.get());
+        visionSim.clearVisionTargets();
+        visionTargets[3] = visionTargetSupplier.get();
+        visionSim.addVisionTargets(target_name, visionTargets);
+        // Log updated target poses for AScope
+        targetSet = visionSim.getVisionTargets();
+        targetList = new ArrayList<>(targetSet);
+        for (VisionTargetSim target : targetList) {
+            Logger.recordOutput("TARGET POSE" + targetList.indexOf(target), target.getPose());
+        }
         super.updateInputs(inputs);
     }
 

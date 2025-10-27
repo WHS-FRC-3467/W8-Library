@@ -69,13 +69,13 @@ public class ObjectDetector extends SubsystemBase {
             Logger.recordOutput("Detection/" + "Oldest Detection", lastNDetections.get(0));
             Logger.recordOutput("Detection/" + "Detection List Size", lastNDetections.size());
 
-            Logger.recordOutput("Detection/" + "True Range",
+            Logger.recordOutput("Detection/" + "Sim Target #0 True Range",
                 ObjectDetectorConstants.SIM_TARGETS[0].getPose().toPose2d().getTranslation()
                     .minus(drive.getPose().getTranslation()).getX());
-            Logger.recordOutput("Detection/" + "True Heading",
+            Logger.recordOutput("Detection/" + "Sim Target #0 True Heading",
                 ObjectDetectorConstants.SIM_TARGETS[0].getPose().toPose2d().getTranslation()
                     .minus(drive.getPose().getTranslation()).getY());
-            Logger.recordOutput("Detection/" + "True Distance",
+            Logger.recordOutput("Detection/" + "Sim Target #0 True Distance",
                 ObjectDetectorConstants.SIM_TARGETS[0].getPose().toPose2d().getTranslation()
                     .getDistance(drive.getPose().getTranslation()));
         }
