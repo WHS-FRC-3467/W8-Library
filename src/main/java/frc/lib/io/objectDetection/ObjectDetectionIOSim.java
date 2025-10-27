@@ -46,6 +46,7 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
         // Create a vision system sim and add the sim camera to it
         visionSim = new VisionSystemSim("objectDetection");
         visionSim.addCamera(camSim, cameraTransform);
+        // Initialize sim vision targets
         // Buffer of vision targets
         this.visionTargets = visionTargets;
         // Suppliers for dynamic update in sim
@@ -58,7 +59,7 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
         // easy indexing
         targetSet = visionSim.getVisionTargets();
         targetList = new ArrayList<>(targetSet);
-        // Initialize sim target pose logging -- update in periodic below for AScope
+        // Initialize sim target pose logging; update in periodic below for AScope
         for (VisionTargetSim target : targetList) {
             Logger.recordOutput("TARGET POSE" + targetList.indexOf(target), target.getPose());
         }
