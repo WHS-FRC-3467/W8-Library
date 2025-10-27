@@ -33,10 +33,11 @@ import frc.lib.io.motor.MotorIOTalonFX.TalonFXFollower;
 import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.rotary.*;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
+import frc.robot.Constants;
 import frc.robot.Ports;
 
 /** Add your docs here. */
-public class RotarySubsystemConstants {
+public class RotaryConstants {
     public static String NAME = "Rotary";
 
     public static final Angle TOLERANCE = Degrees.of(2.0);
@@ -67,7 +68,7 @@ public class RotarySubsystemConstants {
 
     private static final Angle ENCODER_OFFSET = Rotations.of(0.0);
 
-    public static final RotarySubsystem.Setpoint DEFAULT_SETPOINT = RotarySubsystem.Setpoint.STOW;
+    public static final Rotary.Setpoint DEFAULT_SETPOINT = Rotary.Setpoint.STOW;
 
     // Positional PID
     private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
@@ -119,28 +120,27 @@ public class RotarySubsystemConstants {
         return config;
     }
 
-    public static RotaryMechanismReal getReal()
+    public static Rotary get()
     {
-        return new RotaryMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
-                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
-            CONSTANTS,
-            Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
-                NAME + "Encoder", getCANcoderConfig(false))));
-    }
-
-    public static RotaryMechanismSim getSim()
-    {
-        return new RotaryMechanismSim(
-            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
-                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
-            DCMOTOR, MOI, false, CONSTANTS,
-            Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
-                NAME + "Encoder", getCANcoderConfig(true))));
-    }
-
-    public static RotaryMechanism getReplay()
-    {
-        return new RotaryMechanism(NAME, CONSTANTS) {};
+        switch (Constants.currentMode) {
+            case REAL:
+                return new Rotary(new RotaryMechanismReal(
+                    new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
+                        new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
+                    CONSTANTS,
+                    Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
+                        NAME + "Encoder", getCANcoderConfig(false)))));
+            case SIM:
+                return new Rotary(new RotaryMechanismSim(
+                    new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
+                        new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
+                    DCMOTOR, MOI, false, CONSTANTS,
+                    Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
+                        NAME + "Encoder", getCANcoderConfig(true)))));
+            case REPLAY:
+                return new Rotary(new RotaryMechanism(NAME, CONSTANTS) {});
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }

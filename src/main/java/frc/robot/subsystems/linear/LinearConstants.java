@@ -26,6 +26,7 @@ import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.linear.*;
 import frc.lib.mechanisms.linear.LinearMechanism.LinearMechCharacteristics;
 import frc.lib.util.MechanismUtil.DistanceAngleConverter;
+import frc.robot.Constants;
 import frc.robot.Ports;
 import frc.robot.Robot;
 
@@ -98,21 +99,20 @@ public class LinearConstants {
         return config;
     }
 
-    public static LinearMechanismReal getReal()
+    public static Linear get()
     {
-        return new LinearMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.linear), CHARACTERISTICS);
-    }
-
-    public static LinearMechanismSim getSim()
-    {
-        return new LinearMechanismSim(
-            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.linear),
-            DCMOTOR, CARRIAGE_MASS, CHARACTERISTICS, true);
-    }
-
-    public static LinearMechanism getReplay()
-    {
-        return new LinearMechanism(NAME, CHARACTERISTICS) {};
+        switch (Constants.currentMode) {
+            case REAL:
+                return new Linear(new LinearMechanismReal(
+                    new MotorIOTalonFX(NAME, getFXConfig(), Ports.linear), CHARACTERISTICS));
+            case SIM:
+                return new Linear(new LinearMechanismSim(
+                    new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.linear),
+                    DCMOTOR, CARRIAGE_MASS, CHARACTERISTICS, true));
+            case REPLAY:
+                return new Linear(new LinearMechanism(NAME, CHARACTERISTICS) {});
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }
