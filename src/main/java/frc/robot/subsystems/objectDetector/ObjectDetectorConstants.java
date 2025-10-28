@@ -4,8 +4,6 @@
 
 package frc.robot.subsystems.objectDetector;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Radian;
 import java.util.function.Supplier;
 import org.photonvision.estimation.TargetModel;
 import org.photonvision.simulation.VisionTargetSim;
@@ -35,11 +33,10 @@ public class ObjectDetectorConstants {
     public final static double CAMERA0_X = 0.30;
     public final static double CAMERA0_Y = -0.30;
     public final static double CAMERA0_Z = 1.0;
-
+    // ROLL, PITCH, YAW
     public static Transform3d CAMERA0_TRANSFORM =
         new Transform3d(CAMERA0_X, CAMERA0_Y, CAMERA0_Z,
-            new Rotation3d(CAMERA0_ROLL.in(Units.Radians), CAMERA0_PITCH.in(Units.Radians),
-                CAMERA0_YAW.in(Units.Radians)));
+            new Rotation3d(CAMERA0_ROLL, CAMERA0_PITCH, CAMERA0_YAW));
 
     // Object detection camera # 1
     // ...
