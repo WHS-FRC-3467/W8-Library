@@ -24,36 +24,34 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
     private final PhotonCamera cam;
     private final PhotonCameraSim camSim;
     private final Supplier<Pose2d> robotPoseSupplier;
-    private final Supplier<VisionTargetSim> visionTargetSupplier;
-    private final VisionTargetSim[] visionTargets;
+    private final Supplier<VisionTargetSim[]> visionTargetSupplier;
+    private VisionTargetSim[] visionTargets;
     private Set<VisionTargetSim> targetSet;
     private List<VisionTargetSim> targetList;
     private final String target_name;
 
     public ObjectDetectionIOSim(String cameraName, Transform3d cameraTransform,
         Supplier<Pose2d> robotPoseSupplier,
-        String target_name, VisionTargetSim[] visionTargets,
-        Supplier<VisionTargetSim> visionTargetSupplier)
+        String target_name, Supplier<VisionTargetSim[]> visionTargetSupplier)
     {
         super(cameraName);
         this.cameraName = cameraName;
         this.target_name = target_name;
-        // Initialize vision sim
+        // Initialize simulated object detection camera
         cam = new PhotonCamera(cameraName);
         camSim = new PhotonCameraSim(cam, new SimCameraProperties());
-        // Wireframe visualizer
+        // Wireframe visualizer for objects
         camSim.enableDrawWireframe(true);
         // Create a vision system sim and add the sim camera to it
         visionSim = new VisionSystemSim("objectDetection");
         visionSim.addCamera(camSim, cameraTransform);
-        // Initialize sim vision targets
-        // Buffer of vision targets
-        this.visionTargets = visionTargets;
-        // Suppliers for dynamic update in sim
+        // Suppliers for dynamic sim object position updates
         this.robotPoseSupplier = robotPoseSupplier;
         this.visionTargetSupplier = visionTargetSupplier;
-        // Add vision targets to the sim
-        visionTargets[3] = visionTargetSupplier.get();
+        // Initialize sim vision targets on field
+        // Current vision targets
+        visionTargets = visionTargetSupplier.get();
+        // Add current vision targets to the sim field
         visionSim.addVisionTargets(target_name, visionTargets);
         // Retrieve the vision targets on the sim field in a set and then convert it to a list for
         // easy indexing
@@ -72,7 +70,7 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
         // Update robot & target poses
         visionSim.update(robotPoseSupplier.get());
         visionSim.clearVisionTargets();
-        visionTargets[3] = visionTargetSupplier.get();
+        visionTargets = visionTargetSupplier.get();
         visionSim.addVisionTargets(target_name, visionTargets);
         // Log updated target poses for AScope
         targetSet = visionSim.getVisionTargets();
