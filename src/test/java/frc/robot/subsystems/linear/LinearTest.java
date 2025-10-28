@@ -34,7 +34,7 @@ public class LinearTest implements AutoCloseable {
     {
         assert HAL.initialize(500, 0); // initialize the HAL, crash if failed
 
-        linear = new Linear(LinearConstants.getSim());
+        linear = LinearConstants.get();
 
         /* enable the robot */
         DriverStationSim.setEnabled(true);

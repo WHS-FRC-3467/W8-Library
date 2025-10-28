@@ -32,10 +32,11 @@ class FlywheelTest implements AutoCloseable {
     Flywheel flywheel;
 
     @BeforeEach // this method will run before each test
-    void setup() {
+    void setup()
+    {
         assert HAL.initialize(500, 0); // initialize the HAL, crash if failed
 
-        flywheel = new Flywheel(FlywheelConstants.getSim());
+        flywheel = FlywheelConstants.get();
 
         /* enable the robot */
         DriverStationSim.setEnabled(true);
@@ -47,12 +48,14 @@ class FlywheelTest implements AutoCloseable {
 
     @SuppressWarnings("PMD.SignatureDeclareThrowsException")
     @AfterEach // this method will run after each test
-    void shutdown() throws Exception {
+    void shutdown() throws Exception
+    {
         close();
     }
 
     @Test // marks this method as a test
-    void shoot() {
+    void shoot()
+    {
         TestUtil.runTest(flywheel.shootAmps(), 0.5, flywheel);
         try {
             assertEquals(30, flywheel.getTorqueCurrent().in(Amps), DELTA);
@@ -62,7 +65,8 @@ class FlywheelTest implements AutoCloseable {
     }
 
     @Override
-    public void close() {
+    public void close()
+    {
         flywheel.close();
     }
 }
