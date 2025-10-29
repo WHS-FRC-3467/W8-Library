@@ -17,7 +17,7 @@ import frc.lib.util.LoggerHelper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-public class RotarySubsystem extends SubsystemBase {
+public class Rotary extends SubsystemBase {
 
     private final RotaryMechanism io;
 
@@ -36,32 +36,32 @@ public class RotarySubsystem extends SubsystemBase {
     }
 
 
-    public RotarySubsystem(RotaryMechanism io)
+    public Rotary(RotaryMechanism io)
     {
         this.io = io;
 
-        setSetpoint(RotarySubsystemConstants.DEFAULT_SETPOINT).ignoringDisable(true).schedule();
+        setSetpoint(RotaryConstants.DEFAULT_SETPOINT).ignoringDisable(true).schedule();
     }
 
     @Override
     public void periodic()
     {
-        LoggerHelper.recordCurrentCommand(RotarySubsystemConstants.NAME, this);
+        LoggerHelper.recordCurrentCommand(RotaryConstants.NAME, this);
         io.periodic();
     }
 
     public Command setSetpoint(Setpoint setpoint)
     {
         return this.runOnce(
-            () -> io.runPosition(setpoint.getSetpoint(), RotarySubsystemConstants.CRUISE_VELOCITY,
-                RotarySubsystemConstants.ACCELERATION, RotarySubsystemConstants.JERK,
+            () -> io.runPosition(setpoint.getSetpoint(), RotaryConstants.CRUISE_VELOCITY,
+                RotaryConstants.ACCELERATION, RotaryConstants.JERK,
                 PIDSlot.SLOT_0))
             .withName("Go To " + setpoint.toString() + " Setpoint");
     };
 
     public boolean nearGoal(Angle targetPosition)
     {
-        return io.nearGoal(targetPosition, RotarySubsystemConstants.TOLERANCE);
+        return io.nearGoal(targetPosition, RotaryConstants.TOLERANCE);
     }
 
     public Command waitUntilGoalCommand(Angle position)
