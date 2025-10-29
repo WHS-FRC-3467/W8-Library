@@ -109,6 +109,7 @@ public class RobotContainer {
     private final Linear linear;
     private final Vision vision;
     private final Rotary rotary;
+    private final ObjectDetector objectDetector;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -134,6 +135,7 @@ public class RobotContainer {
         rotary = RotaryConstants.get();
         servo1 = Servo1Constants.get();
         vision = VisionConstants.get(drive); // TODO: Will be refactored in the future to RobotState
+        objectDetector = ObjectDetectorConstants.get(drive);
 
         conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
         conditionalChooser.addOption("True", true);

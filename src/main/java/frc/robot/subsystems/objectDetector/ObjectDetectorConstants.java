@@ -7,7 +7,6 @@ package frc.robot.subsystems.objectDetector;
 import java.util.function.Supplier;
 import org.photonvision.estimation.TargetModel;
 import org.photonvision.simulation.VisionTargetSim;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -15,16 +14,17 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.io.objectDetection.*;
+import frc.robot.Constants;
+import frc.robot.subsystems.drive.Drive;
 
 /*
  * Subsystem constants (e.g. names, transforms) for the various object detector cameras on the
- * robot. Used to create object detector subsystems contained in RobotContainer.
+ * robot. Used to create object detector subsystems within RobotContainer.
  */
 public class ObjectDetectorConstants {
-    /*
-     * Transform sign convention: +X -> towards other alliance's station, +Y -> towards center of
-     * field from starting starboard edge, +theta -> right-hand rule. units: meters & degrees.
-     */
+    // Camera constants
+    // Transform sign convention: +X -> towards other alliance's station, +Y -> towards center of
+    // field from starting starboard edge, +theta -> right-hand rule. units: meters & degrees.
     // Object detection camera # 0
     public final static String CAMERA0_NAME = "Detection Camera #0";
     public final static Angle CAMERA0_ROLL = Units.Degrees.of(0.0);
@@ -33,21 +33,13 @@ public class ObjectDetectorConstants {
     public final static double CAMERA0_X = 0.30;
     public final static double CAMERA0_Y = -0.30;
     public final static double CAMERA0_Z = 1.0;
-    // ROLL, PITCH, YAW
     public static Transform3d CAMERA0_TRANSFORM =
         new Transform3d(CAMERA0_X, CAMERA0_Y, CAMERA0_Z,
             new Rotation3d(CAMERA0_ROLL, CAMERA0_PITCH, CAMERA0_YAW));
-
     // Object detection camera # 1
     // ...
 
-    // Real implementation of camera; call real IO layer
-    public static ObjectDetectionIOPhotonVision getReal()
-    {
-        return new ObjectDetectionIOPhotonVision(CAMERA0_NAME);
-    }
-
-    // Simulated implementation of camera; call sim IO layer
+    // Sim constants
     // 2025 Simulated Algae Targets
     public final static String SIM_NAME = "Algae";
     public final static double algaeHeightMeters = 0.41;
@@ -75,21 +67,25 @@ public class ObjectDetectorConstants {
                         algaeHeightMeters / 2, new Rotation3d())),
                     new TargetModel(algaeHeightMeters)),
         };
-
     // 2026 Targets
     // ...
 
-    // Simulate the camera(s) with the given robot pose supplier. Return an array of IOSims as
-    // necessary.
-    public static ObjectDetectionIOSim getSim(Supplier<Pose2d> robotPoseSupplier)
+    // Robot runtime mode for use in roboRIO & AKit
+    public static ObjectDetector get(Drive drive)
     {
-        return new ObjectDetectionIOSim(CAMERA0_NAME, CAMERA0_TRANSFORM, robotPoseSupplier,
-            SIM_NAME, visionTargetSimSupplier);
-    }
-
-    // Replay implementation of camera; return bare IO layer results
-    public static ObjectDetectionIO getReplay()
-    {
-        return new ObjectDetectionIO() {};
+        switch (Constants.currentMode) {
+            case REAL:
+                // Real IO, inputs = PhotonVision implementation of ObjectDetectionIO
+                return new ObjectDetector(new ObjectDetectionIOPhotonVision(CAMERA0_NAME), drive);
+            case SIM:
+                // Sim IO, inputs = sim implementation of ObjectionDetectionIO
+                return new ObjectDetector(new ObjectDetectionIOSim(CAMERA0_NAME, CAMERA0_TRANSFORM,
+                    () -> drive.getPose(), SIM_NAME, visionTargetSimSupplier), drive);
+            case REPLAY:
+                // Replayed robot, use logged data for IO
+                return new ObjectDetector(new ObjectDetectionIO() {}, drive);
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }
