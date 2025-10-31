@@ -74,6 +74,8 @@ import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.subsystems.objectDetector.ObjectDetector;
+import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
@@ -107,6 +109,7 @@ public class RobotContainer {
     private final Linear linear;
     private final Vision vision;
     private final Rotary rotary;
+    private final ObjectDetector objectDetector;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -119,7 +122,7 @@ public class RobotContainer {
 
 
     /**
-     * The container for the robot. Contains subsystems, OI devices, and commands.
+     * The container for the robot. Contains subsystems, IO devices, and commands.
      */
     public RobotContainer()
     {
@@ -132,6 +135,7 @@ public class RobotContainer {
         rotary = RotaryConstants.get();
         servo1 = Servo1Constants.get();
         vision = VisionConstants.get(drive); // TODO: Will be refactored in the future to RobotState
+        objectDetector = ObjectDetectorConstants.get(drive);
 
         conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
         conditionalChooser.addOption("True", true);
