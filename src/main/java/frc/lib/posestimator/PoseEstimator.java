@@ -169,17 +169,15 @@ public class PoseEstimator {
 
     private Optional<Rotation2d> getHeadingAtTime(Time time)
     {
-        Optional<Rotation2d> gyroRelativeCurrentHeading =
-            odometryBuffer.getSample(Timer.getTimestamp()).map(Pose2d::getRotation);
-        if (gyroRelativeCurrentHeading.isEmpty())
-            return Optional.empty();
+        Rotation2d gyroRelativeCurrentHeading =
+            odometryPose.getRotation();
 
         Optional<Rotation2d> gyroRelativeHeadingAtTime =
             odometryBuffer.getSample(time.in(Seconds)).map(Pose2d::getRotation);
         if (gyroRelativeHeadingAtTime.isEmpty())
             return Optional.empty();
 
-        Rotation2d delta = gyroRelativeCurrentHeading.get().minus(gyroRelativeHeadingAtTime.get());
+        Rotation2d delta = gyroRelativeCurrentHeading.minus(gyroRelativeHeadingAtTime.get());
         return Optional.of(estimatedPose.getRotation().plus(delta));
     }
 
