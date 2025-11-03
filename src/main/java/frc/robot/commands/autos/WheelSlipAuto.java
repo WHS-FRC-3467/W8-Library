@@ -18,7 +18,7 @@ import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 
 public class WheelSlipAuto extends AutoCommand {
-    private static final RobotState robotState = RobotState.getInstance();
+    private final RobotState robotState = RobotState.getInstance();
 
     public WheelSlipAuto(Drive drive)
     {

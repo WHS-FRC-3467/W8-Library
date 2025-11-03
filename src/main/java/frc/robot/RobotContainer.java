@@ -96,7 +96,7 @@ import org.photonvision.simulation.VisionSystemSim;
  */
 @SuppressWarnings("unused")
 public class RobotContainer {
-    private static final RobotState robotState = RobotState.getInstance();
+    private final RobotState robotState = RobotState.getInstance();
 
     // Subsystems
     public final Drive drive;

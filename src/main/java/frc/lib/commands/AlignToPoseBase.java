@@ -21,7 +21,7 @@ import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 
 public abstract class AlignToPoseBase extends Command {
-    private static final RobotState robotState = RobotState.getInstance();
+    private final RobotState robotState = RobotState.getInstance();
 
     private final Drive drive;
     private final Supplier<Pose2d> targetPose;

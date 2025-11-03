@@ -41,7 +41,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
  * project.
  */
 public class Robot extends LoggedRobot {
-    private static final RobotState robotState = RobotState.getInstance();
+    private final RobotState robotState = RobotState.getInstance();
 
     private Command autonomousCommand;
     private RobotContainer robotContainer;

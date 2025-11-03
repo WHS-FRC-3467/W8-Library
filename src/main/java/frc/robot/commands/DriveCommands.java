@@ -55,8 +55,6 @@ public class DriveCommands {
     private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
     private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
-    private static final RobotState robotState = RobotState.getInstance();
-
     private DriveCommands()
     {}
 
@@ -80,6 +78,7 @@ public class DriveCommands {
         DoubleSupplier ySupplier,
         DoubleSupplier omegaSupplier)
     {
+        RobotState robotState = RobotState.getInstance();
         return Commands.run(
             () -> {
                 // Get linear velocity
@@ -123,6 +122,7 @@ public class DriveCommands {
         DoubleSupplier ySupplier,
         Supplier<Rotation2d> rotationSupplier)
     {
+        RobotState robotState = RobotState.getInstance();
 
         // Create PID controller
         ProfiledPIDController angleController = new ProfiledPIDController(
@@ -238,6 +238,8 @@ public class DriveCommands {
     /** Measures the robot's wheel radius by spinning in a circle. */
     public static Command wheelRadiusCharacterization(Drive drive)
     {
+        RobotState robotState = RobotState.getInstance();
+
         SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
         WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
 

@@ -15,7 +15,7 @@
 // import frc.robot.subsystems.drive.Drive;
 
 // public class AlignTo2DTarget extends Command {
-// private static final RobotState robotState = RobotState.getInstance();
+// private final RobotState robotState = RobotState.getInstance();
 
 // private final Drive drive;
 // private final Vision vision;
