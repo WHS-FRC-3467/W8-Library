@@ -26,14 +26,14 @@ import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import frc.robot.TestUtil;
 
 public class RotaryTest implements AutoCloseable {
-    RotarySubsystem rotary;
+    Rotary rotary;
 
     @BeforeEach // this method will run before each test
     void setup()
     {
         assert HAL.initialize(500, 0); // initialize the HAL, crash if failed
 
-        rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
+        rotary = RotaryConstants.get();
 
         /* enable the robot */
         DriverStationSim.setEnabled(true);
@@ -53,10 +53,10 @@ public class RotaryTest implements AutoCloseable {
     @Test
     void goToGoal()
     {
-        TestUtil.runTest(rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED), 3, rotary);
+        TestUtil.runTest(rotary.setSetpoint(Rotary.Setpoint.RAISED), 3, rotary);
         try {
             // Check to see if Rotary subsystem is within tolerance of RAISED setpoint.
-            assertTrue(rotary.nearGoal(RotarySubsystem.Setpoint.RAISED.getSetpoint()));
+            assertTrue(rotary.nearGoal(Rotary.Setpoint.RAISED.getSetpoint()));
         } catch (Exception e) {
             fail("Failed to run Rotary Subsystem to RAISED: " + e.getMessage());
         }
@@ -65,10 +65,10 @@ public class RotaryTest implements AutoCloseable {
     @Test // marks this method as a test
     void goToGoalWithWait()
     {
-        TestUtil.runTest(rotary.setGoalCommandWithWait(RotarySubsystem.Setpoint.STOW), 3, rotary);
+        TestUtil.runTest(rotary.setGoalCommandWithWait(Rotary.Setpoint.STOW), 3, rotary);
         try {
             // Check position to check if the subsystem is actually in tolerance of STOW setpoint.
-            assertTrue(rotary.nearGoal(RotarySubsystem.Setpoint.STOW.getSetpoint()));
+            assertTrue(rotary.nearGoal(Rotary.Setpoint.STOW.getSetpoint()));
         } catch (Exception e) {
             fail("Failed to run Rotary Subsystem to STOW: " + e.getMessage());
         }

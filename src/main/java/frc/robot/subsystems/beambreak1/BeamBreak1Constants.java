@@ -18,16 +18,12 @@ package frc.robot.subsystems.beambreak1;
 import frc.lib.io.beambreak.BeamBreakIO;
 import frc.lib.io.beambreak.BeamBreakIODIO;
 import frc.lib.io.beambreak.BeamBreakIOSim;
+import frc.robot.Constants;
 import frc.robot.Ports;
 
 public class BeamBreak1Constants {
 
     public final static String NAME = "Beam Break #1";
-
-    public static BeamBreakIODIO getReal()
-    {
-        return new BeamBreakIODIO(Ports.diobeambreak, NAME);
-    }
 
     // private final static RangingMode RANGING_MODE = RangingMode.SHORT;
     // private final static RegionOfInterest ROI = new RegionOfInterest(8, 8, 4, 4);
@@ -41,13 +37,17 @@ public class BeamBreak1Constants {
 
     // }
 
-    public static BeamBreakIOSim getSim()
+    public static BeamBreak1 get()
     {
-        return new BeamBreakIOSim(NAME);
-    }
-
-    public static BeamBreakIO getReplay()
-    {
-        return new BeamBreakIO() {};
+        switch (Constants.currentMode) {
+            case REAL:
+                return new BeamBreak1(new BeamBreakIODIO(Ports.diobeambreak, NAME));
+            case SIM:
+                return new BeamBreak1(new BeamBreakIOSim(NAME));
+            case REPLAY:
+                return new BeamBreak1(new BeamBreakIO() {});
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }

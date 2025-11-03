@@ -46,6 +46,7 @@ import frc.lib.util.LoggedTuneableProfiledPID;
 import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.lib.util.GamePieceVisualizer;
+import frc.robot.Constants.Mode;
 import frc.robot.Constants.PathConstants;
 import frc.robot.commands.AlignTo2DTarget;
 import frc.robot.commands.AlignToPose;
@@ -73,9 +74,11 @@ import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.linear.Linear;
 import frc.robot.subsystems.linear.LinearConstants;
-import frc.robot.subsystems.rotary.RotarySubsystem;
-import frc.robot.subsystems.rotary.RotarySubsystemConstants;
-import frc.robot.subsystems.rotary.RotarySubsystem.Setpoint;
+import frc.robot.subsystems.objectDetector.ObjectDetector;
+import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
+import frc.robot.subsystems.rotary.Rotary;
+import frc.robot.subsystems.rotary.RotaryConstants;
+import frc.robot.subsystems.rotary.Rotary.Setpoint;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.util.BallSimulator;
@@ -111,7 +114,8 @@ public class RobotContainer {
     private final Servo1 servo1;
     private final Flywheel flywheel;
     private final Linear linear;
-    private final RotarySubsystem rotary;
+    private final Rotary rotary;
+    private final ObjectDetector objectDetector;
 
     private final Optional<VisionSystemSim> visionSim;
     private final Vision vision;
@@ -125,99 +129,51 @@ public class RobotContainer {
     public static Field2d autoPreviewField = new Field2d();
 
     /**
-     * The container for the robot. Contains subsystems, OI devices, and commands.
+     * The container for the robot. Contains subsystems, IO devices, and commands.
      */
     public RobotContainer()
     {
-        switch (Constants.currentMode) {
-            case REAL -> {
-                // Real robot, instantiate hardware IO implementations
-                drive = new Drive(
-                    new GyroIOPigeon2(),
-                    new ModuleIOTalonFX(DriveConstants.FrontLeft),
-                    new ModuleIOTalonFX(DriveConstants.FrontRight),
-                    new ModuleIOTalonFX(DriveConstants.BackLeft),
-                    new ModuleIOTalonFX(DriveConstants.BackRight));
+        drive = DriveConstants.get();
+        laserCAN1 = LaserCAN1Constants.get();
+        flywheel = FlywheelConstants.get();
+        leds = LEDsConstants.get();
+        beamBreak1 = BeamBreak1Constants.get();
+        linear = LinearConstants.get();
+        rotary = RotaryConstants.get();
+        servo1 = Servo1Constants.get();
+        objectDetector = ObjectDetectorConstants.get();
 
-                leds = new LEDs(LEDsConstants.getLightsIOReal());
-                laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal(), drive);
-                beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
-                servo1 = new Servo1(Servo1Constants.getReal());
-                flywheel = new Flywheel(FlywheelConstants.getReal());
-                linear = new Linear(LinearConstants.getReal());
-                rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
-
-                visionSim = Optional.empty();
-                new SwerveDriveKinematics(Drive.getModuleTranslations());
-                vision =
-                    new Vision("camera_1", new VisionIOPhotonVision("camera_1",
-                        new Transform3d(Units.inchesToMeters(9.287), Units.inchesToMeters(10.9704),
-                            Units.inchesToMeters(7.9167),
-                            new Rotation3d(0.0, Units.degreesToRadians(-15),
-                                Units.degreesToRadians(-30)))),
-                        observation -> RobotState.getInstance().addVisionObservation(observation));
-            }
-
+        visionSim = switch (Constants.currentMode) {
+            case REAL -> Optional.empty();
             case SIM -> {
-                // Sim robot, instantiate physics sim IO implementations
-                drive = new Drive(
-                    new GyroIO() {},
-                    new ModuleIOSim(DriveConstants.FrontLeft),
-                    new ModuleIOSim(DriveConstants.FrontRight),
-                    new ModuleIOSim(DriveConstants.BackLeft),
-                    new ModuleIOSim(DriveConstants.BackRight));
-
-                leds = new LEDs(LEDsConstants.getLightsIOSim());
-                laserCAN1 =
-                    new LaserCAN1(LaserCAN1Constants.getSim(), drive);
-                beamBreak1 = new BeamBreak1(
-                    BeamBreak1Constants.getSim());
-                servo1 = new Servo1(Servo1Constants.getSim());
-                flywheel = new Flywheel(FlywheelConstants.getSim());
-                linear = new Linear(LinearConstants.getSim());
-                rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
-
-                visionSim = Optional.of(new VisionSystemSim("main"));
-                visionSim.get().addAprilTags(
+                var sim = new VisionSystemSim("main");
+                sim.addAprilTags(
                     AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark));
-                vision = new Vision(
-                    "camera_1",
-                    new VisionIOPhotonVisionSim("camera_1",
-                        new Transform3d(Units.inchesToMeters(9.287), Units.inchesToMeters(10.9704),
-                            Units.inchesToMeters(7.9167),
-                            new Rotation3d(0.0, Units.degreesToRadians(-15),
-                                Units.degreesToRadians(-30))),
-                        visionSim.get(),
-                        () -> RobotState.getInstance().getEstimatedPose(),
-                        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)),
-                    observation -> RobotState.getInstance().addVisionObservation(observation));
+                yield Optional.of(sim);
             }
+            case REPLAY -> Optional.empty();
+        };
 
-            default -> {
-                // Replayed robot, disable IO implementations
-                drive = new Drive(
-                    new GyroIO() {},
-                    new ModuleIO() {},
-                    new ModuleIO() {},
-                    new ModuleIO() {},
-                    new ModuleIO() {});
-
-                leds = new LEDs(LEDsConstants.getLightsIOReplay());
-                laserCAN1 =
-                    new LaserCAN1(LaserCAN1Constants.getReplay(), drive);
-                beamBreak1 =
-                    new BeamBreak1(BeamBreak1Constants.getReplay());
-                servo1 = new Servo1(Servo1Constants.getReplay());
-                flywheel = new Flywheel(FlywheelConstants.getReplay());
-
-                linear = new Linear(LinearConstants.getReplay());
-                rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());
-
-                visionSim = Optional.empty();
-                vision = new Vision("camera_1", new VisionIO() {},
-                    observation -> RobotState.getInstance().addVisionObservation(observation));
-            }
-        }
+        vision = switch (Constants.currentMode) {
+            case REAL -> new Vision("camera_1", new VisionIOPhotonVision("camera_1",
+                new Transform3d(Units.inchesToMeters(9.287), Units.inchesToMeters(10.9704),
+                    Units.inchesToMeters(7.9167),
+                    new Rotation3d(0.0, Units.degreesToRadians(-15),
+                        Units.degreesToRadians(-30)))),
+                observation -> RobotState.getInstance().addVisionObservation(observation));
+            case SIM -> new Vision("camera_1",
+                new VisionIOPhotonVisionSim("camera_1",
+                    new Transform3d(Units.inchesToMeters(9.287), Units.inchesToMeters(10.9704),
+                        Units.inchesToMeters(7.9167),
+                        new Rotation3d(0.0, Units.degreesToRadians(-15),
+                            Units.degreesToRadians(-30))),
+                    visionSim.get(),
+                    () -> RobotState.getInstance().getEstimatedPose(),
+                    AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)),
+                observation -> RobotState.getInstance().addVisionObservation(observation));
+            case REPLAY -> new Vision("camera_1", new VisionIO() {},
+                observation -> RobotState.getInstance().addVisionObservation(observation));
+        };
 
         // conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
         // conditionalChooser.addOption("True", true);
@@ -307,9 +263,9 @@ public class RobotContainer {
         SmartDashboard.putData("Linear: Stow", linear.setGoal(Linear.Setpoint.STOW));
         SmartDashboard.putData("Linear: Raised", linear.setGoal(Linear.Setpoint.RAISED));
         SmartDashboard.putData("Linear: Home", linear.homeCommand());
-        SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
+        SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(Rotary.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",
-            rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+            rotary.setSetpoint(Rotary.Setpoint.RAISED));
 
         LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
         SmartDashboard.putData("Shoot Ball", Commands
