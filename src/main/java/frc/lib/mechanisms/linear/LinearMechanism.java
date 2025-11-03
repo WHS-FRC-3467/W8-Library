@@ -5,7 +5,9 @@
 package frc.lib.mechanisms.linear;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Distance;
@@ -73,5 +75,11 @@ public abstract class LinearMechanism implements Mechanism {
         visualizer.setMeasuredDistance(converter.toDistance(inputs.position));
         visualizer.setTrajectoryDistance(getTrajectoryDistance());
         visualizer.setGoalDistance(getGoalDistance());
+    }
+
+    @Override
+    public Supplier<Pose3d> getPoseSupplier()
+    {
+        return visualizer.getPoseSupplier();
     }
 }

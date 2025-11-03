@@ -6,6 +6,7 @@ package frc.lib.mechanisms.linear;
 
 import static edu.wpi.first.units.Units.Meters;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
@@ -41,6 +42,7 @@ public class LinearMechanismVisualizer {
     private final String name;
 
     private final Pose3d offset;
+    private Pose3d currentPose = new Pose3d();
 
     public LinearMechanismVisualizer(String name, LinearMechCharacteristics characteristics)
     {
@@ -111,10 +113,10 @@ public class LinearMechanismVisualizer {
 
     private void update()
     {
+        currentPose = offset.plus(new Transform3d(measured.getLength(), 0, 0,
+            Rotation3d.kZero));
         SmartDashboard.putData(name + " Visualizer", mechanism);
-        Logger.recordOutput(name + "/Pose3d",
-            offset.plus(new Transform3d(measured.getLength(), 0, 0,
-                Rotation3d.kZero)));
+        Logger.recordOutput(name + "Pose3d", currentPose);
     }
 
     public void setMeasuredDistance(Distance distance)
@@ -150,5 +152,10 @@ public class LinearMechanismVisualizer {
         });
 
         update();
+    }
+
+    public Supplier<Pose3d> getPoseSupplier()
+    {
+        return () -> currentPose;
     }
 }

@@ -14,6 +14,7 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.rotary.RotaryMechanism;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggerHelper;
+import frc.robot.RobotState;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -35,11 +36,13 @@ public class Rotary extends SubsystemBase {
         private final Angle setpoint;
     }
 
+    private final RobotState robotstate;
+
 
     public Rotary(RotaryMechanism io)
     {
         this.io = io;
-
+        this.robotstate = RobotState.getInstance();
         setSetpoint(RotaryConstants.DEFAULT_SETPOINT).ignoringDisable(true).schedule();
     }
 
@@ -48,6 +51,8 @@ public class Rotary extends SubsystemBase {
     {
         LoggerHelper.recordCurrentCommand(RotaryConstants.NAME, this);
         io.periodic();
+        robotstate.setRotaryPose(io.getPoseSupplier().get());
+
     }
 
     public Command setSetpoint(Setpoint setpoint)

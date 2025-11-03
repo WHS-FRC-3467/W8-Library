@@ -65,7 +65,7 @@ public class RotaryConstants {
             MIN_ANGLE,
             MAX_ANGLE,
             STARTING_ANGLE,
-            RotaryAxis.YAW);
+            RotaryAxis.PITCH);
 
     public static final Mass ARM_MASS = Kilograms.of(.01);
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
