@@ -319,11 +319,16 @@ public class PoseEstimator {
      */
     public Optional<Pose2d> getTrigPose(int tagId)
     {
-        Optional<TrigPoseRecord> data = Optional.ofNullable(trigPoses.get(tagId));
-        if (data.isEmpty() || isTrigStale(data.get().timestamp()))
+        if (!trigPoses.containsKey(tagId)) {
             return Optional.empty();
+        }
+        var data = trigPoses.get(tagId);
+        if (isTrigStale(data.timestamp)) {
+            return Optional.empty();
+        }
 
-        return odometryBuffer.getSample(data.get().timestamp().in(Seconds))
-            .map(pose2d -> data.get().pose().plus(new Transform2d(pose2d, odometryPose)));
+        var sample = odometryBuffer.getSample(data.timestamp().in(Seconds));
+        return sample.map(pose2d -> data.pose().plus(new Transform2d(pose2d, odometryPose)));
     }
+
 }
