@@ -64,6 +64,7 @@ public class VisionIOPhotonVision implements VisionIO {
                 target.area,
                 Degrees.of(target.pitch),
                 Degrees.of(target.yaw),
+                target.detectedCorners,
                 Meters.of(GeomUtil.toPose3d(target.bestCameraToTarget).getTranslation().getNorm()));
 
             observations.add(observation);
@@ -83,7 +84,6 @@ public class VisionIOPhotonVision implements VisionIO {
             return new VisionObservation(
                 timestamp,
                 cameraProperties,
-                result,
                 multiTag.estimatedPose.best,
                 multiTag.estimatedPose.ambiguity,
                 tagObservationsFromPipelineResult(result).get());
@@ -97,7 +97,6 @@ public class VisionIOPhotonVision implements VisionIO {
         var singleTagResult = new VisionObservation(
             timestamp,
             cameraProperties,
-            result,
             bestTarget.bestCameraToTarget,
             bestTarget.poseAmbiguity,
             tagObservationsFromPipelineResult(result).get());

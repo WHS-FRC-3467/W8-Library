@@ -25,11 +25,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.littletonrobotics.junction.AutoLogOutput;
-import org.photonvision.EstimatedRobotPose;
-import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.ConstrainedSolvepnpParams;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
-
+import org.photonvision.estimation.TargetModel;
+import org.photonvision.estimation.VisionEstimation;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -38,7 +35,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Twist2d;
@@ -80,7 +76,6 @@ public class PoseEstimator {
     }
 
     private final AprilTagFieldLayout fieldLayout;
-    private final PhotonPoseEstimator constrainedPoseEstimator;
     private final SwerveDrivePoseEstimator swerveEstimator;
     private final SwerveDriveKinematics kinematics;
 
@@ -114,10 +109,6 @@ public class PoseEstimator {
     {
         this.fieldLayout = fieldLayout;
         this.kinematics = kinematics;
-
-        constrainedPoseEstimator =
-            new PhotonPoseEstimator(fieldLayout, PoseStrategy.CONSTRAINED_SOLVEPNP,
-                Transform3d.kZero);
 
         swerveEstimator = new SwerveDrivePoseEstimator(
             kinematics, Rotation2d.kZero, lastModulePositions, Pose2d.kZero);
@@ -254,22 +245,26 @@ public class PoseEstimator {
         }
 
         Rotation2d heading = sampledPose.get().getRotation();
-        constrainedPoseEstimator.addHeadingData(timestampSeconds, heading);
-        constrainedPoseEstimator.setRobotToCameraTransform(observation.camera().robotToCamera());
-
-        Optional<EstimatedRobotPose> optionalEstimate =
-            constrainedPoseEstimator.update(
-                observation.photonResult(),
-                Optional.of(observation.camera().cameraMatrix()),
-                Optional.of(observation.camera().distCoeffs()),
-                Optional.of(new ConstrainedSolvepnpParams(false, 10.0)));
+        Optional<Pose3d> optionalEstimate =
+            VisionEstimation.estimateRobotPoseConstrainedSolvepnp(
+                observation.camera().cameraMatrix(),
+                observation.camera().distCoeffs(),
+                observation.tagObservations().stream().map(TagObservation::toPhotonTarget).toList(),
+                observation.camera().robotToCamera(),
+                GeomUtil.toPose3d(observation.bestCameraToTarget()
+                    .plus(observation.camera().robotToCamera().inverse())),
+                fieldLayout,
+                TargetModel.kAprilTag36h11,
+                false,
+                heading,
+                10.0).map(estimate -> GeomUtil.toPose3d(estimate.best));
 
         if (optionalEstimate.isEmpty()) {
             estimatedPose = swerveEstimator.getEstimatedPosition();
             return;
         }
 
-        Pose3d estimate = optionalEstimate.get().estimatedPose;
+        Pose3d estimate = optionalEstimate.get();
         if (Math.abs(estimate.getZ()) > 0.75
             || estimate.getX() < 0.0
             || estimate.getX() > fieldLayout.getFieldLength()
@@ -290,7 +285,7 @@ public class PoseEstimator {
         double angularStdDev = 0.4 * stdDevFactor;
 
         swerveEstimator.addVisionMeasurement(
-            optionalEstimate.get().estimatedPose.toPose2d(),
+            optionalEstimate.get().toPose2d(),
             timestampSeconds,
             VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
 

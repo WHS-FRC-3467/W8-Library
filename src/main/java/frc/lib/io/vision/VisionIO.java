@@ -23,9 +23,11 @@ import edu.wpi.first.math.numbers.N8;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
+import static edu.wpi.first.units.Units.Degrees;
 import java.util.List;
 import org.littletonrobotics.junction.AutoLog;
-import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
+import org.photonvision.targeting.TargetCorner;
 
 public interface VisionIO {
     @AutoLog
@@ -43,14 +45,30 @@ public interface VisionIO {
         double area,
         Angle pitch,
         Angle yaw,
+        List<TargetCorner> targetCorners,
         Distance distance) {
+        public PhotonTrackedTarget toPhotonTarget()
+        {
+            return new PhotonTrackedTarget(
+                pitch.in(Degrees),
+                yaw.in(Degrees),
+                area,
+                0,
+                id,
+                0,
+                0,
+                null,
+                null,
+                0,
+                null,
+                targetCorners);
+        }
     }
 
     /** Represents a robot pose sample used for pose estimation. */
     public static record VisionObservation(
         Time timestamp,
         Camera camera,
-        PhotonPipelineResult photonResult,
         Transform3d bestCameraToTarget,
         double ambiguity,
         List<TagObservation> tagObservations) {
