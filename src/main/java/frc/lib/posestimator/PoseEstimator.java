@@ -15,7 +15,6 @@
 
 package frc.lib.posestimator;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Seconds;
@@ -126,11 +125,6 @@ public class PoseEstimator {
         odometryBuffer = TimeInterpolatableBuffer.createBuffer(headingBufferSize.in(Seconds));
     }
 
-    /**
-     * Updates the timestamp of the most recent odometry observation.
-     *
-     * @param timestamp Time of the latest odometry
-     */
     private void updateLatestOdometryTimestamp(Time timestamp)
     {
         if (latestOdometryTimestamp.isEmpty()) {
