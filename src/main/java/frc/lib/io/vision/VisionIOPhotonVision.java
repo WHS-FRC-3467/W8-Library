@@ -17,20 +17,16 @@ package frc.lib.io.vision;
 
 import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.Num;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 import frc.lib.util.GeomUtil;
-import frc.lib.util.Timestamped;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
 
