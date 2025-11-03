@@ -46,12 +46,14 @@ public class BallSimulator {
                 -Math.toRadians(45), 0 // 45 degree launch angle
             ));
 
-    public static void launch(LinearVelocity velocity, RobotState robotState)
+    public static void launch(LinearVelocity velocity)
     {
+        RobotState robotState = RobotState.getInstance();
+
         objectTrajectory.clear();
 
         // Set initial position
-        currentPose = new Pose3d(robotState.getPose()).plus(shooterOffset);
+        currentPose = new Pose3d(robotState.getEstimatedPose()).plus(shooterOffset);
 
         // Set initial velocity
         objectVelocity = new Translation3d(velocity.in(MetersPerSecond), currentPose.getRotation());

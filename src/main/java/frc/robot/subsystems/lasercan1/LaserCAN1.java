@@ -36,12 +36,13 @@ public class LaserCAN1 extends SubsystemBase {
     {
         distanceSensor.periodic();
         Logger.recordOutput(LaserCAN1Constants.NAME + "Sensor Reading Pose",
-            new Pose3d(robotState.getPose()).plus(LaserCAN1Constants.LASERCAN_TRANSFORM.plus(
-                new Transform3d(
-                    getDistance(),
-                    Inches.of(0),
-                    Inches.of(0),
-                    new Rotation3d()))));
+            new Pose3d(robotState.getEstimatedPose())
+                .plus(LaserCAN1Constants.LASERCAN_TRANSFORM.plus(
+                    new Transform3d(
+                        getDistance(),
+                        Inches.of(0),
+                        Inches.of(0),
+                        new Rotation3d()))));
     }
 
     public Distance getDistance()

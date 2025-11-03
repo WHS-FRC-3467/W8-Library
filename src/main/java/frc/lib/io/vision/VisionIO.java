@@ -15,39 +15,49 @@
 
 package frc.lib.io.vision;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.numbers.N8;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
-import frc.lib.util.Timestamped;
+import java.util.List;
 import org.littletonrobotics.junction.AutoLog;
+import org.photonvision.targeting.PhotonPipelineResult;
 
 public interface VisionIO {
     @AutoLog
     public static class VisionIOInputs {
         public boolean connected = false;
-        public PoseObservation[] poseObservations = new PoseObservation[0];
-        public TagObservation[] allTargets = new TagObservation[0];
-        public int[] tagIds = new int[0];
+        public VisionObservation[] poseObservations = null;
     }
 
-    /** Represents a robot pose sample used for pose estimation. */
-    public static record PoseObservation(
-        Time timestamp,
-        Pose3d pose,
-        double ambiguity,
-        int tagCount,
-        Distance averageTagDistance) {
+    public record Camera(String name, Transform3d robotToCamera, Matrix<N3, N3> cameraMatrix,
+        Matrix<N8, N1> distCoeffs) {
     }
 
     public static record TagObservation(
         int id,
-        double ptich,
-        double yaw,
-        double area) {
+        double area,
+        Angle pitch,
+        Angle yaw,
+        Distance distance) {
     }
 
-    public default void updateInputs(VisionIOInputs inputs,
-        Timestamped<Rotation2d> timestampedHeading)
+    /** Represents a robot pose sample used for pose estimation. */
+    public static record VisionObservation(
+        Time timestamp,
+        Camera camera,
+        PhotonPipelineResult photonResult,
+        Transform3d bestCameraToTarget,
+        double ambiguity,
+        List<TagObservation> tagObservations) {
+    }
+
+    public default void updateInputs(VisionIOInputs inputs)
     {}
 }

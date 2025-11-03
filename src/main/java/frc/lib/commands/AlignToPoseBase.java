@@ -17,9 +17,11 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.util.LoggedTuneableProfiledPID;
+import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 
 public abstract class AlignToPoseBase extends Command {
+    private static final RobotState robotState = RobotState.getInstance();
 
     private final Drive drive;
     private final Supplier<Pose2d> targetPose;
@@ -58,12 +60,13 @@ public abstract class AlignToPoseBase extends Command {
     public void initialize()
     {
         ChassisSpeeds fieldVelocity =
-            ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), drive.getRotation());
+            ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(),
+                robotState.getEstimatedPose().getRotation());
 
         linearController.reset(0.0);
 
         angularController.reset(
-            drive.getRotation().getRadians(),
+            robotState.getEstimatedPose().getRotation().getRadians(),
             fieldVelocity.omegaRadiansPerSecond);
     }
 
@@ -75,7 +78,7 @@ public abstract class AlignToPoseBase extends Command {
         linearController.updatePID();
         angularController.updatePID();
 
-        var relativePose2d = drive.getPose().relativeTo(targetPose.get());
+        var relativePose2d = robotState.getEstimatedPose().relativeTo(targetPose.get());
         var targetRotation2d = targetPose.get().getRotation();
         var linearVelocity = new Translation2d();
         var offsetVector = new Translation2d();
@@ -110,7 +113,7 @@ public abstract class AlignToPoseBase extends Command {
         }
 
         double angularOutput = angularController.calculate(
-            drive.getRotation().getRadians(),
+            robotState.getEstimatedPose().getRotation().getRadians(),
             targetPose.get().getRotation().getRadians());
 
         // Convert to field relative speeds & send command
@@ -120,7 +123,8 @@ public abstract class AlignToPoseBase extends Command {
                 linearVelocity.getY(),
                 angularOutput);
 
-        drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, drive.getRotation()));
+        drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds,
+            robotState.getEstimatedPose().getRotation()));
     }
 
     // Returns true when the command should end.
