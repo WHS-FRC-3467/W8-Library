@@ -17,6 +17,7 @@ package frc.lib.posestimator;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.HashMap;
@@ -198,20 +199,15 @@ public class PoseEstimator {
         Pose2d cameraPose2d = GeomUtil.toPose3d(camera.robotToCamera()).toPose2d();
 
         Translation2d camToTagTranslation =
-            new Pose3d(Translation3d.kZero,
-                new Rotation3d(Degrees.zero(), observation.pitch(), observation.yaw().unaryMinus()))
-                    .transformBy(
-                        new Transform3d(
-                            new Translation3d(observation.distance(), Meters.zero(), Meters.zero()),
-                            Rotation3d.kZero))
-                    .getTranslation()
-                    .rotateBy(new Rotation3d(0, camera.robotToCamera().getRotation().getY(), 0))
-                    .toTranslation2d();
-
-        Rotation2d camToTagRotation =
-            fieldRelativeRobotHeading.get()
-                .plus(cameraPose2d.getRotation())
-                .plus(camToTagTranslation.getAngle());
+            new Translation3d(
+                observation.distance().in(Meters),
+                new Rotation3d(
+                    0,
+                    -observation.pitch().in(Radians),
+                    -observation.yaw().in(Radians)))
+                        .rotateBy(camera.robotToCamera().getRotation())
+                        .toTranslation2d()
+                        .rotateBy(fieldRelativeRobotHeading.get());
 
         Optional<Pose2d> tagPose2d =
             fieldLayout.getTagPose(observation.id()).map(Pose3d::toPose2d);
@@ -219,9 +215,7 @@ public class PoseEstimator {
             return Optional.empty();
 
         Translation2d fieldToCameraTranslation =
-            new Pose2d(tagPose2d.get().getTranslation(), camToTagRotation.plus(Rotation2d.kPi))
-                .transformBy(GeomUtil.toTransform2d(camToTagTranslation.getNorm(), 0.0))
-                .getTranslation();
+            tagPose2d.get().getTranslation().plus(camToTagTranslation.unaryMinus());
 
         Pose2d cameraPoseField =
             new Pose2d(fieldToCameraTranslation,

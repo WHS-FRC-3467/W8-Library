@@ -16,6 +16,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Seconds;
+import java.util.Optional;
 import org.littletonrobotics.junction.AutoLogOutput;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -24,6 +25,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.Timer;
+import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.io.vision.VisionIO.VisionObservation;
 import frc.lib.posestimator.PoseEstimator;
 import frc.lib.posestimator.PoseEstimator.OdometryObservation;
@@ -49,6 +51,8 @@ public class RobotState {
     private Pose2d estimatedPose = Pose2d.kZero;
     @AutoLogOutput(key = "Odometry/Test")
     private Pose2d testPose = Pose2d.kZero;
+    @Getter
+    private Optional<TagObservation> closestTagObservation = Optional.empty();
 
     @Getter
     @Setter
@@ -63,6 +67,14 @@ public class RobotState {
 
     public void addVisionObservation(VisionObservation observation)
     {
+        closestTagObservation = observation.tagObservations().stream().sorted((t1, t2) -> {
+            if (t2.distance().lt(t1.distance()))
+                return -1;
+            if (t2.distance().gt(t1.distance()))
+                return 1;
+            return 0;
+        }).findFirst();
+
         poseEstimator.addVisionObservation(observation);
         estimatedPose = poseEstimator.getEstimatedPose();
         testPose = poseEstimator.getTrigPose(10).orElse(Pose2d.kZero);

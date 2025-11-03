@@ -33,6 +33,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.commands.AlignToPoseBase.AlignMode;
 import frc.lib.devices.Vision;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
@@ -46,8 +47,12 @@ import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.lib.util.GamePieceVisualizer;
 import frc.robot.Constants.PathConstants;
+import frc.robot.commands.AlignTo2DTarget;
+import frc.robot.commands.AlignToPose;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.DriveToPose;
 import frc.robot.commands.OnTheFlyPathCommand;
+import frc.robot.commands.PointTo2DTarget;
 import frc.robot.commands.autos.BranchingAuto;
 import frc.robot.commands.autos.ExampleAuto;
 import frc.robot.commands.autos.NoneAuto;
@@ -145,7 +150,11 @@ public class RobotContainer {
                 visionSim = Optional.empty();
                 new SwerveDriveKinematics(Drive.getModuleTranslations());
                 vision =
-                    new Vision("camera_1", new VisionIOPhotonVision("camera_1", Transform3d.kZero),
+                    new Vision("camera_1", new VisionIOPhotonVision("camera_1",
+                        new Transform3d(Units.inchesToMeters(9.287), Units.inchesToMeters(10.9704),
+                            Units.inchesToMeters(7.9167),
+                            new Rotation3d(0.0, Units.degreesToRadians(-15),
+                                Units.degreesToRadians(-30)))),
                         observation -> RobotState.getInstance().addVisionObservation(observation));
             }
 
@@ -173,7 +182,12 @@ public class RobotContainer {
                     AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark));
                 vision = new Vision(
                     "camera_1",
-                    new VisionIOPhotonVisionSim("camera_1", Transform3d.kZero, visionSim.get(),
+                    new VisionIOPhotonVisionSim("camera_1",
+                        new Transform3d(Units.inchesToMeters(9.287), Units.inchesToMeters(10.9704),
+                            Units.inchesToMeters(7.9167),
+                            new Rotation3d(0.0, Units.degreesToRadians(-15),
+                                Units.degreesToRadians(-30))),
+                        visionSim.get(),
                         () -> RobotState.getInstance().getEstimatedPose(),
                         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)),
                     observation -> RobotState.getInstance().addVisionObservation(observation));
@@ -274,21 +288,21 @@ public class RobotContainer {
                     .ignoringDisable(true));
 
         // Pathfind to Pose when the Y button is pressed
-        // controller.y().onTrue(
-        // DriveCommands.pathFindToPose(() -> robotState.getEstimatedPose(),
-        // new Pose2d(1, 4, Rotation2d.kZero),
-        // PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, MetersPerSecond.of(0.0),
-        // PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
+        controller.y().onTrue(
+            DriveCommands.pathFindToPose(() -> robotState.getEstimatedPose(),
+                new Pose2d(1, 4, Rotation2d.kZero),
+                PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, MetersPerSecond.of(0.0),
+                PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
 
         // On-the-fly path with waypoints while the Right Bumper is held
-        // controller.rightBumper().whileTrue(
-        // new OnTheFlyPathCommand(drive, () -> robotState.getEstimatedPose(),
-        // new ArrayList<>(Arrays.asList()), // List
-        // // of
-        // // waypoints
-        // new Pose2d(6, 6, Rotation2d.k180deg), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS,
-        // MetersPerSecond.of(0.0), false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
-        // PathConstants.PATHGENERATION_ROT_TOLERANCE));
+        controller.rightBumper().whileTrue(
+            new OnTheFlyPathCommand(drive, () -> robotState.getEstimatedPose(),
+                new ArrayList<>(Arrays.asList()), // List
+                // of
+                // waypoints
+                new Pose2d(6, 6, Rotation2d.k180deg), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS,
+                MetersPerSecond.of(0.0), false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
+                PathConstants.PATHGENERATION_ROT_TOLERANCE));
 
         SmartDashboard.putData("Linear: Stow", linear.setGoal(Linear.Setpoint.STOW));
         SmartDashboard.putData("Linear: Raised", linear.setGoal(Linear.Setpoint.RAISED));
@@ -301,10 +315,10 @@ public class RobotContainer {
         SmartDashboard.putData("Shoot Ball", Commands
             .runOnce(() -> BallSimulator.launch(FeetPerSecond.of(ballVel.getAsDouble()))));
 
-        // SmartDashboard.putData("Align2d",
-        // new AlignTo2DTarget(drive, vision, () -> controller.getLeftY()));
-        // SmartDashboard.putData("PointToTarget",
-        // new PointTo2DTarget(drive, vision));
+        SmartDashboard.putData("Align2d",
+            new AlignTo2DTarget(drive, () -> controller.getLeftY()));
+        SmartDashboard.putData("PointToTarget",
+            new PointTo2DTarget(drive));
 
         GamePieceVisualizer algaeViz =
             new GamePieceVisualizer("Algae #1", new Pose3d(1, 1, 1, new Rotation3d()));
@@ -313,17 +327,17 @@ public class RobotContainer {
         LoggedTuneableProfiledPID linearController =
             new LoggedTuneableProfiledPID("DriveToPose/LinearController", 3.0, 0, 0.1, 0, 3.0);
 
-        // SmartDashboard.putData("DriveToPose Command",
-        // new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
-        // .withTolerance(Inches.of(3), Degrees.of(5)));
+        SmartDashboard.putData("DriveToPose Command",
+            new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
+                .withTolerance(Inches.of(3), Degrees.of(5)));
 
-        // controller.x()
-        // .whileTrue(new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
-        // .withTolerance(Inches.of(3), Degrees.of(5)));
+        controller.x()
+            .whileTrue(new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
+                .withTolerance(Inches.of(3), Degrees.of(5)));
 
-        // controller.x()
-        // .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
-        // AlignMode.STRAFE, () -> controller.getRightX()));
+        controller.x()
+            .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
+                AlignMode.STRAFE, () -> controller.getRightX()));
     }
 
     /**
