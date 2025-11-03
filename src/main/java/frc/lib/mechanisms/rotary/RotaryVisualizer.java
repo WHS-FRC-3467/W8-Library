@@ -42,9 +42,12 @@ public class RotaryVisualizer {
 
     private final Pose3d offset;
 
+    private final RotaryMechCharacteristics constants;
+
     public RotaryVisualizer(String name, RotaryMechCharacteristics constants)
     {
         this.name = name;
+        this.constants = constants;
         mechanism = new LoggedMechanism2d(3.0, 3.0, new Color8Bit(Color.kBlack));
         LoggedMechanismRoot2d root = mechanism.getRoot(name + " root", 1.5, 1.5);
 
@@ -99,9 +102,29 @@ public class RotaryVisualizer {
     private void update()
     {
         SmartDashboard.putData(name + " Visualizer", mechanism);
-        Logger.recordOutput(name + "/Pose3d",
-            offset.rotateBy(
-                new Rotation3d(Degrees.of(measured.getAngle()), Degrees.zero(), Degrees.zero())));
+        switch (constants.axis()) {
+            case ROLL:
+                Logger.recordOutput(name + "/Pose3d",
+                    offset.rotateBy(
+                        new Rotation3d(Degrees.of(measured.getAngle()), Degrees.zero(),
+                            Degrees.zero())));
+                break;
+            case PITCH:
+                Logger.recordOutput(name + "/Pose3d",
+                    offset.rotateBy(
+                        new Rotation3d(Degrees.zero(), Degrees.of(measured.getAngle()),
+                            Degrees.zero())));
+                break;
+            case YAW:
+                Logger.recordOutput(name + "/Pose3d",
+                    offset.rotateBy(
+                        new Rotation3d(Degrees.zero(), Degrees.zero(),
+                            Degrees.of(measured.getAngle()))));
+                break;
+
+            default:
+                break;
+        }
     }
 
     public void setCurrentAngle(Angle angle)

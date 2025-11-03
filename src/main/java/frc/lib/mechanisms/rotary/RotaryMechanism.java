@@ -16,12 +16,19 @@ import edu.wpi.first.units.measure.Distance;
 
 public abstract class RotaryMechanism implements Mechanism {
 
+    public static enum RotaryAxis {
+        PITCH,
+        YAW,
+        ROLL
+    }
+
     public static record RotaryMechCharacteristics(
         Translation3d offset,
         Distance armLength,
         Angle minAngle,
         Angle maxAngle,
-        Angle startingAngle) {
+        Angle startingAngle,
+        RotaryAxis axis) {
     }
 
     protected final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();

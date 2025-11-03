@@ -23,7 +23,7 @@ public class Rotary extends SubsystemBase {
 
     private static final LoggedTunableNumber STOW_SETPOINT = new LoggedTunableNumber("TEST", 0.0);
     private static final LoggedTunableNumber RAISED_SETPOINT =
-        new LoggedTunableNumber("RAISED", 90);
+        new LoggedTunableNumber("RAISED", -90);
 
     @RequiredArgsConstructor
     @SuppressWarnings("Immutable")
