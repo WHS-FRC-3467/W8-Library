@@ -21,8 +21,6 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.util.Timestamped;
@@ -72,6 +70,11 @@ public class RobotState {
     @Getter
     @Setter
     private Pose3d linearPose = new Pose3d();
+
+    /**
+     * Publishes the mechanism poses to the logger for 3d visualization. This should be changed to
+     * match the mechanical kinematics of the robot.
+     */
 
     public void publishMechanismPoses()
     {

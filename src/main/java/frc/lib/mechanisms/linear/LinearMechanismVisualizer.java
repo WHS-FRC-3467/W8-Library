@@ -44,9 +44,12 @@ public class LinearMechanismVisualizer {
     private final Pose3d offset;
     private Pose3d currentPose = new Pose3d();
 
+    private final LinearMechCharacteristics characteristics;
+
     public LinearMechanismVisualizer(String name, LinearMechCharacteristics characteristics)
     {
         this.name = name;
+        this.characteristics = characteristics;
         mechanism = new LoggedMechanism2d(3.0, 3.0, new Color8Bit(Color.kBlack));
         LoggedMechanismRoot2d root = mechanism.getRoot(name + " root", 1.5, 0.0);
 
@@ -113,8 +116,25 @@ public class LinearMechanismVisualizer {
 
     private void update()
     {
-        currentPose = offset.plus(new Transform3d(measured.getLength(), 0, 0,
-            Rotation3d.kZero));
+        switch (characteristics.axis()) {
+            case X:
+                currentPose = offset.plus(new Transform3d(measured.getLength(), 0, 0,
+                    Rotation3d.kZero));
+                break;
+
+            case Y:
+                currentPose = offset.plus(new Transform3d(0, measured.getLength(), 0,
+                    Rotation3d.kZero));
+                break;
+            case Z:
+                currentPose = offset.plus(new Transform3d(0, 0, measured.getLength(),
+                    Rotation3d.kZero));
+                break;
+
+            default:
+                break;
+        }
+
         SmartDashboard.putData(name + " Visualizer", mechanism);
         Logger.recordOutput(name + "Pose3d", currentPose);
     }

@@ -23,12 +23,19 @@ import frc.lib.util.MechanismUtil.DistanceAngleConverter;
  */
 public abstract class LinearMechanism implements Mechanism {
 
+    public enum LinearAxis {
+        X,
+        Y,
+        Z
+    }
+
     public record LinearMechCharacteristics(
         Translation3d offset,
         Distance minDistance,
         Distance maxDistance,
         Distance startingDistance,
-        DistanceAngleConverter converter) {
+        DistanceAngleConverter converter,
+        LinearAxis axis) {
     }
 
     protected final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
