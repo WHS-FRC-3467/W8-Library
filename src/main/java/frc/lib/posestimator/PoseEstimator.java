@@ -158,24 +158,11 @@ public class PoseEstimator {
         estimatedPose = swerveEstimator.getEstimatedPosition();
     }
 
-    private Optional<Rotation2d> getHeadingAtTime(Time time)
-    {
-        Rotation2d gyroRelativeCurrentHeading =
-            odometryPose.getRotation();
-
-        Optional<Rotation2d> gyroRelativeHeadingAtTime =
-            odometryBuffer.getSample(time.in(Seconds)).map(Pose2d::getRotation);
-        if (gyroRelativeHeadingAtTime.isEmpty())
-            return Optional.empty();
-
-        Rotation2d delta = gyroRelativeCurrentHeading.minus(gyroRelativeHeadingAtTime.get());
-        return Optional.of(estimatedPose.getRotation().plus(delta));
-    }
-
     private Optional<Pose2d> solveTrigPosition(Camera camera, Time timestamp,
         TagObservation observation)
     {
-        Optional<Rotation2d> fieldRelativeRobotHeading = getHeadingAtTime(timestamp);
+        Optional<Rotation2d> fieldRelativeRobotHeading =
+            swerveEstimator.sampleAt(timestamp.in(Seconds)).map(Pose2d::getRotation);
         if (fieldRelativeRobotHeading.isEmpty())
             return Optional.empty();
 
