@@ -47,8 +47,19 @@ public class VisionIOPhotonVision implements VisionIO {
         cameraProperties =
             new Camera(name, robotToCamera,
                 camera.getCameraMatrix().orElse(
-                    MatBuilder.fill(Nat.N3(), Nat.N3(), 0, 0, 0, 0, 0, 0, 0, 0, 0)),
-                camera.getDistCoeffs().orElse(VecBuilder.fill(0, 0, 0, 0, 0, 0, 0, 0)));
+                    MatBuilder.fill(Nat.N3(), Nat.N3(),
+                        2002.948392331919, 0.0, 783.9099067246102,
+                        0.0, 1999.0390684862123, 662.7694019679813,
+                        0.0, 0.0, 1.0)),
+                camera.getDistCoeffs().orElse(VecBuilder.fill(
+                    0.09905119793103302,
+                    -0.06388083628565337,
+                    3.87402720846368E-5,
+                    1.4421218015997156E-4,
+                    -0.16329892957216433,
+                    -0.004599206903333014,
+                    0.0029050841273878885,
+                    0.0067195798658376375)));
     }
 
     private Optional<List<TagObservation>> tagObservationsFromPipelineResult(
