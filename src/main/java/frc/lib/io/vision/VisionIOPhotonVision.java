@@ -32,7 +32,9 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
+import org.photonvision.PhotonPoseEstimator.ConstrainedSolvepnpParams;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
+import org.photonvision.jni.ConstrainedSolvepnpJni;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
@@ -40,6 +42,7 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 public class VisionIOPhotonVision implements VisionIO {
     protected final PhotonCamera camera;
     protected final PhotonPoseEstimator poseEstimator;
+    private final Optional<ConstrainedSolvepnpParams> constrainedPnpParams;
 
     /**
      * Creates a new VisionIOPhotonVision.
@@ -51,6 +54,7 @@ public class VisionIOPhotonVision implements VisionIO {
         AprilTagFieldLayout fieldLayout, PoseStrategy strategy)
     {
         camera = new PhotonCamera(name);
+        constrainedPnpParams = Optional.of(new ConstrainedSolvepnpParams(true, 0.0));
         poseEstimator = new PhotonPoseEstimator(fieldLayout, strategy, robotToCamera);
     }
 
@@ -72,7 +76,8 @@ public class VisionIOPhotonVision implements VisionIO {
 
             allTargets.addAll(result.getTargets());
 
-            Optional<EstimatedRobotPose> optionalEstimate = poseEstimator.update(result);
+            Optional<EstimatedRobotPose> optionalEstimate = poseEstimator.update(result,
+                Optional.empty(), Optional.empty(), constrainedPnpParams);
             if (optionalEstimate.isEmpty()) {
                 continue;
             }
