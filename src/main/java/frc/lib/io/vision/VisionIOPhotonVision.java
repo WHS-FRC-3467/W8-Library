@@ -19,6 +19,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.Timer;
 import frc.lib.util.Timestamped;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
@@ -63,8 +64,7 @@ public class VisionIOPhotonVision implements VisionIO {
         List<TagObservation> tagObservations = new ArrayList<>();
         Set<Integer> tagIDs = new HashSet<>();
 
-        poseEstimator.addHeadingData(timestampedHeading.timestamp().in(Seconds),
-            timestampedHeading.get());
+        poseEstimator.addHeadingData(Timer.getFPGATimestamp(), timestampedHeading.get());
         for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
             if (!result.hasTargets()) {
                 continue;
