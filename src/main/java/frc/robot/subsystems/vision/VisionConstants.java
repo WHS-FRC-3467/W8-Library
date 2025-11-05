@@ -85,7 +85,7 @@ public class VisionConstants {
                         VisionConstants.camera0Name,
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
-                        PoseStrategy.CONSTRAINED_SOLVEPNP));
+                        PoseStrategy.PNP_DISTANCE_TRIG_SOLVE));
             case SIM:
                 return new Vision(
                     drive::addVisionMeasurement,
@@ -95,7 +95,7 @@ public class VisionConstants {
                         VisionConstants.camera0Name,
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
-                        PoseStrategy.CONSTRAINED_SOLVEPNP,
+                        PoseStrategy.PNP_DISTANCE_TRIG_SOLVE,
                         getSystemSim()));
             case REPLAY:
                 return new Vision(
