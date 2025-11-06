@@ -194,9 +194,10 @@ public class PoseEstimator {
         Translation3d camToTagRobotFrame =
             camToTagCamFrame.rotateBy(camera.robotToCamera().getRotation());
         // Compute robot position in field frame
-        Translation2d robotToTagFieldFrame =
-            (tagPose2d.get().getTranslation().minus(camToTagRobotFrame.toTranslation2d()))
-                .plus(camera.robotToCamera().getTranslation().toTranslation2d().unaryMinus());
+        Translation3d robotToTagRobotFrame =
+            camera.robotToCamera().getTranslation().plus(camToTagRobotFrame);
+        Translation2d fieldToRobot =
+            tagPose2d.get().getTranslation().minus(robotToTagRobotFrame.toTranslation2d());
 
         // Compute robot heading using both odometry and observed yaw
         // Tag yaw gives robot heading relative to the tag
@@ -207,7 +208,7 @@ public class PoseEstimator {
             observedHeading.interpolate(fieldRelativeRobotHeading.get(), 0.05);
 
         // Build final robot pose
-        Pose2d robotPose = new Pose2d(robotToTagFieldFrame, fusedHeading);
+        Pose2d robotPose = new Pose2d(fieldToRobot, fusedHeading);
 
         return Optional.of(robotPose);
     }
