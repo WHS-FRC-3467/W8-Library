@@ -205,11 +205,12 @@ public class PoseEstimator {
 
         // Compute robot heading using both odometry and observed yaw
         // Tag yaw gives robot heading relative to the tag
-        Rotation2d observedHeading = tagPose2d.get().getRotation().minus(new Rotation2d(yaw));
+        Rotation2d observedHeading = tagPose2d.get().getRotation().plus(new Rotation2d(yaw))
+            .rotateBy(Rotation2d.fromDegrees(180));
         // Fuse with odometry (weighting can be tuned -- weightVision parameter based on angular
-        // velocity or Kalman filter). Breaks if set to < 1 during pure translation
+        // velocity or Kalman filter)
         Rotation2d fusedHeading =
-            observedHeading.interpolate(fieldRelativeRobotHeading.get(), 1);
+            observedHeading.interpolate(fieldRelativeRobotHeading.get(), 0.5);
 
         // Build final robot pose
         Pose2d robotPose = new Pose2d(fieldToRobot, fusedHeading);
