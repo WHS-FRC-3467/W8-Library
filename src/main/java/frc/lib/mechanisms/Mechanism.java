@@ -18,6 +18,8 @@ package frc.lib.mechanisms;
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import java.util.function.Supplier;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
@@ -129,4 +131,14 @@ public interface Mechanism {
 
     public default void close()
     {}
+
+    /**
+     * Supplier for the Pose3d of the mechanism
+     * 
+     * @return Supplier for the Pose3d
+     */
+    public default Supplier<Pose3d> getPoseSupplier()
+    {
+        return () -> Pose3d.kZero;
+    }
 }

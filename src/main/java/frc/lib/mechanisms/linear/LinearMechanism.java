@@ -5,7 +5,9 @@
 package frc.lib.mechanisms.linear;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Distance;
@@ -21,12 +23,19 @@ import frc.lib.util.MechanismUtil.DistanceAngleConverter;
  */
 public abstract class LinearMechanism implements Mechanism {
 
+    public enum LinearAxis {
+        X,
+        Y,
+        Z
+    }
+
     public record LinearMechCharacteristics(
         Translation3d offset,
         Distance minDistance,
         Distance maxDistance,
         Distance startingDistance,
-        DistanceAngleConverter converter) {
+        DistanceAngleConverter converter,
+        LinearAxis axis) {
     }
 
     protected final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
@@ -73,5 +82,11 @@ public abstract class LinearMechanism implements Mechanism {
         visualizer.setMeasuredDistance(converter.toDistance(inputs.position));
         visualizer.setTrajectoryDistance(getTrajectoryDistance());
         visualizer.setGoalDistance(getGoalDistance());
+    }
+
+    @Override
+    public Supplier<Pose3d> getPoseSupplier()
+    {
+        return visualizer.getPoseSupplier();
     }
 }
