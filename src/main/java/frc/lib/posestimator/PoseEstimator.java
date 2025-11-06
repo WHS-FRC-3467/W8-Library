@@ -27,6 +27,7 @@ import java.util.Optional;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.photonvision.estimation.TargetModel;
 import org.photonvision.estimation.VisionEstimation;
+import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -37,9 +38,12 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry3d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
@@ -162,39 +166,48 @@ public class PoseEstimator {
         TagObservation observation)
     {
         Optional<Rotation2d> fieldRelativeRobotHeading =
-            swerveEstimator.sampleAt(timestamp.in(Seconds)).map(Pose2d::getRotation);
+            swerveEstimator.sampleAt(timestamp.in(Seconds)).map(Pose2d::getRotation); // latency
+                                                                                      // correction?
+                                                                                      // may need IO
+                                                                                      // layer
+                                                                                      // change
         if (fieldRelativeRobotHeading.isEmpty())
             return Optional.empty();
 
-        Pose2d cameraPose2d = GeomUtil.toPose3d(camera.robotToCamera()).toPose2d();
-
-        Translation2d camToTagTranslation =
-            new Translation3d(
-                observation.distance().in(Meters),
-                new Rotation3d(
-                    0,
-                    -observation.pitch().in(Radians),
-                    -observation.yaw().in(Radians)))
-                        .rotateBy(camera.robotToCamera().getRotation())
-                        .toTranslation2d()
-                        .rotateBy(fieldRelativeRobotHeading.get());
-
+        // Check if tag pose is known
         Optional<Pose2d> tagPose2d =
             fieldLayout.getTagPose(observation.id()).map(Pose3d::toPose2d);
         if (tagPose2d.isEmpty())
             return Optional.empty();
 
-        Translation2d fieldToCameraTranslation =
-            tagPose2d.get().getTranslation().plus(camToTagTranslation.unaryMinus());
+        // Calculate robot pose using trig-based triangulation
+        // PV tag observations
+        double camToTagNorm = observation.distance().in(Meters);
+        double pitch = observation.pitch().in(Radians);
+        double yaw = observation.yaw().in(Radians);
 
-        Pose2d cameraPoseField =
-            new Pose2d(fieldToCameraTranslation,
-                fieldRelativeRobotHeading.get().plus(cameraPose2d.getRotation()));
+        // Spherical to Cartesian coordinate conversion (R, phi, theta) -> (x, y, z) of cam-tag norm
+        // in camera frame
+        Translation3d camToTagCamFrame =
+            new Translation3d(camToTagNorm, new Rotation3d(0, -pitch, -yaw));
+        // Rotate to robot frame
+        Translation3d camToTagRobotFrame =
+            camToTagCamFrame.rotateBy(camera.robotToCamera().getRotation());
+        // Compute robot position in field frame
+        Translation2d robotToTagFieldFrame =
+            (tagPose2d.get().getTranslation().minus(camToTagRobotFrame.toTranslation2d()))
+                .plus(camera.robotToCamera().getTranslation().toTranslation2d().unaryMinus());
 
-        Pose2d robotPose = cameraPoseField.transformBy(
-            new Transform2d(cameraPose2d, Pose2d.kZero));
+        // Compute robot heading using both odometry and observed yaw
+        // Tag yaw gives robot heading relative to the tag
+        Rotation2d observedHeading = tagPose2d.get().getRotation().minus(new Rotation2d(yaw));
+        // Fuse with odometry (weighting can be tuned -- weightVision parameter based on angular
+        // velocity or Kalman filter).
+        Rotation2d fusedHeading =
+            observedHeading.interpolate(fieldRelativeRobotHeading.get(), 0.05);
 
-        robotPose = new Pose2d(robotPose.getTranslation(), fieldRelativeRobotHeading.get());
+        // Build final robot pose
+        Pose2d robotPose = new Pose2d(robotToTagFieldFrame, fusedHeading);
 
         return Optional.of(robotPose);
     }
