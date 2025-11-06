@@ -41,6 +41,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry3d;
@@ -86,6 +87,13 @@ public class PoseEstimator {
     private Optional<Time> latestOdometryTimestamp = Optional.empty();
     private final TimeInterpolatableBuffer<Pose2d> odometryBuffer;
     private final Map<Integer, TrigPoseRecord> trigPoses = new HashMap<>();
+
+    private static double lastOdometryTimeStamp = 0.0;
+    private static double currentOdometryTimeStamp = 0.0;
+    private static double lastRobotHeading = 0.0;
+    private static double currentRobotHeading = 0.0;
+    public static boolean odometryPoseEstimationEnabled = false; // TO-DO: scuffed impl, can
+                                                                 // optimize later
 
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[] {
             new SwerveModulePosition(),
@@ -142,6 +150,10 @@ public class PoseEstimator {
         updateLatestOdometryTimestamp(observation.timestamp());
 
         double timestampSeconds = observation.timestamp().in(Seconds);
+        // Update class-wide timestamps
+        lastOdometryTimeStamp = currentOdometryTimeStamp;
+        currentOdometryTimeStamp = timestampSeconds;
+
         SwerveModulePosition[] currentPositions =
             observation.swervePositions().toArray(new SwerveModulePosition[0]);
 
@@ -165,16 +177,17 @@ public class PoseEstimator {
     private Optional<Pose2d> solveTrigPosition(Camera camera, Time timestamp,
         TagObservation observation)
     {
-        double timestampLatencySeconds = 0.0; // observation.latency().in(Seconds); want to offset
-                                              // timestamp by this?
+        // latency correction? may need IO layer change
+        // observation.latency().in(Seconds); want to offset timestamp by this?
         Optional<Rotation2d> fieldRelativeRobotHeading =
-            swerveEstimator.sampleAt(timestamp.in(Seconds)).map(Pose2d::getRotation); // latency
-                                                                                      // correction?
-                                                                                      // may need IO
-                                                                                      // layer
-                                                                                      // change
+            swerveEstimator.sampleAt(timestamp.in(Seconds)).map(Pose2d::getRotation);
+
         if (fieldRelativeRobotHeading.isEmpty())
             return Optional.empty();
+
+        // Update class-wide robot headings
+        lastRobotHeading = currentRobotHeading;
+        currentRobotHeading = fieldRelativeRobotHeading.get().getDegrees();
 
         // Check if tag pose is known
         Optional<Pose2d> tagPose2d =
@@ -210,11 +223,18 @@ public class PoseEstimator {
         // Fuse with odometry (weighting can be tuned -- weightVision parameter based on angular
         // velocity or Kalman filter)
         Rotation2d fusedHeading =
-            observedHeading.interpolate(fieldRelativeRobotHeading.get(), 0.90);
+            observedHeading.interpolate(fieldRelativeRobotHeading.get(), 0.9);
 
         // Build final robot pose
         Pose2d robotPose = new Pose2d(fieldToRobot, fusedHeading);
-
+        if (Math.abs((currentRobotHeading - lastRobotHeading)
+            / (currentOdometryTimeStamp - lastOdometryTimeStamp)) > 50) { // TO-DO: scuffed impl,
+                                                                          // can optimize later
+            odometryPoseEstimationEnabled = true;
+            return Optional.of(swerveEstimator.getEstimatedPosition());
+        }
+        System.out.println(odometryPoseEstimationEnabled);
+        odometryPoseEstimationEnabled = false;
         return Optional.of(robotPose);
     }
 
