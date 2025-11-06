@@ -20,6 +20,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.lib.util.Timestamped;
+import lombok.experimental.var;
 import java.util.function.Supplier;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
@@ -49,7 +50,8 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
         this.system = system;
 
         // Add sim camera
-        var cameraProperties = new SimCameraProperties();
+        SimCameraProperties cameraProperties = SimCameraProperties.LL2_1280_720();
+        cameraProperties.setFPS(20);
         cameraSim = new PhotonCameraSim(camera, cameraProperties, fieldLayout);
         this.system.addCamera(cameraSim, robotToCamera);
     }

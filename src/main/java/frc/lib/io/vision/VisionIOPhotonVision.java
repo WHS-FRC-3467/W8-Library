@@ -16,6 +16,9 @@
 package frc.lib.io.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Distance;
@@ -29,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.lang3.ArrayUtils;
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
@@ -54,7 +58,7 @@ public class VisionIOPhotonVision implements VisionIO {
         AprilTagFieldLayout fieldLayout, PoseStrategy strategy)
     {
         camera = new PhotonCamera(name);
-        constrainedPnpParams = Optional.of(new ConstrainedSolvepnpParams(true, 0.0));
+        constrainedPnpParams = Optional.of(new ConstrainedSolvepnpParams(true, 10.0));
         poseEstimator = new PhotonPoseEstimator(fieldLayout, strategy, robotToCamera);
     }
 
@@ -68,7 +72,7 @@ public class VisionIOPhotonVision implements VisionIO {
         List<TagObservation> tagObservations = new ArrayList<>();
         Set<Integer> tagIDs = new HashSet<>();
 
-        poseEstimator.addHeadingData(Timer.getFPGATimestamp(), timestampedHeading.get());
+
         for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
             if (!result.hasTargets()) {
                 continue;
@@ -76,13 +80,40 @@ public class VisionIOPhotonVision implements VisionIO {
 
             allTargets.addAll(result.getTargets());
 
-            Optional<EstimatedRobotPose> optionalEstimate = poseEstimator.update(result,
-                Optional.empty(), Optional.empty(), constrainedPnpParams);
+            poseEstimator.addHeadingData(timestampedHeading.timestamp().in(Seconds),
+                timestampedHeading.get());
+            Optional<EstimatedRobotPose> optionalEstimate =
+                poseEstimator.update(result, Optional.of(MatBuilder.fill(Nat.N3(), Nat.N3(),
+                    // Intrinsic and distort from SimCameraProperties.LL2_1280_720()
+                    // intrinsic
+                    1011.3749416937393,
+                    0.0,
+                    645.4955139388737,
+                    0.0,
+                    1008.5391755084075,
+                    508.32877656020196,
+                    0.0,
+                    0.0,
+                    1.0)), Optional.of(
+                        VecBuilder.fill( // distort
+                            0.13730101577061535,
+                            -0.2904345656989261,
+                            8.32475714507539E-4,
+                            -3.694397782014239E-4,
+                            0.09487962227027584,
+                            0,
+                            0,
+                            0)),
+                    constrainedPnpParams);
+
             if (optionalEstimate.isEmpty()) {
                 continue;
             }
 
             EstimatedRobotPose estimate = optionalEstimate.get();
+            Logger.recordOutput("Vision/Strategy", estimate.strategy.toString());
+            Logger.recordOutput("Vision/Odom Heading", timestampedHeading.get());
+            Logger.recordOutput("Vision/estimate heading", estimate.estimatedPose.getRotation());
 
             int tagCount = estimate.targetsUsed.size();
 
@@ -117,5 +148,6 @@ public class VisionIOPhotonVision implements VisionIO {
                 target.getArea()));
         }
         inputs.allTargets = tagObservations.toArray(new TagObservation[0]);
+
     }
 }
