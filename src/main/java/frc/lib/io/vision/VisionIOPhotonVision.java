@@ -24,6 +24,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.util.Timestamped;
+import frc.robot.RobotState;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class VisionIOPhotonVision implements VisionIO {
         AprilTagFieldLayout fieldLayout, PoseStrategy strategy)
     {
         camera = new PhotonCamera(name);
-        constrainedPnpParams = Optional.of(new ConstrainedSolvepnpParams(true, 10.0));
+        constrainedPnpParams = Optional.of(new ConstrainedSolvepnpParams(false, 1));
         poseEstimator = new PhotonPoseEstimator(fieldLayout, strategy, robotToCamera);
     }
 
@@ -111,6 +112,7 @@ public class VisionIOPhotonVision implements VisionIO {
             }
 
             EstimatedRobotPose estimate = optionalEstimate.get();
+            Logger.recordOutput("Vision/Estimate", estimate.estimatedPose);
             Logger.recordOutput("Vision/Strategy", estimate.strategy.toString());
             Logger.recordOutput("Vision/Odom Heading", timestampedHeading.get());
             Logger.recordOutput("Vision/estimate heading", estimate.estimatedPose.getRotation());
