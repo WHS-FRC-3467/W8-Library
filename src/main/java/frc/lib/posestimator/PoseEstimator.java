@@ -210,7 +210,7 @@ public class PoseEstimator {
         // Fuse with odometry (weighting can be tuned -- weightVision parameter based on angular
         // velocity or Kalman filter)
         Rotation2d fusedHeading =
-            observedHeading.interpolate(fieldRelativeRobotHeading.get(), 0.5);
+            observedHeading.interpolate(fieldRelativeRobotHeading.get(), 0.90);
 
         // Build final robot pose
         Pose2d robotPose = new Pose2d(fieldToRobot, fusedHeading);
