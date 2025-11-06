@@ -22,6 +22,7 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.linear.LinearMechanism;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggerHelper;
+import frc.robot.RobotState;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -52,6 +53,8 @@ public class Linear extends SubsystemBase {
         }
     }
 
+    private final RobotState robotstate = RobotState.getInstance();
+
     public Linear(LinearMechanism io)
     {
         this.io = io;
@@ -64,6 +67,7 @@ public class Linear extends SubsystemBase {
     {
         LoggerHelper.recordCurrentCommand(LinearConstants.NAME, this);
         io.periodic();
+        robotstate.setLinearPose(io.getPoseSupplier().get());
     }
 
     public Command setGoal(Setpoint setpoint)

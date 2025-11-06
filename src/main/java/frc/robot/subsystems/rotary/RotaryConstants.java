@@ -32,11 +32,11 @@ import frc.lib.io.motor.MotorIOTalonFX;
 import frc.lib.io.motor.MotorIOTalonFX.TalonFXFollower;
 import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.rotary.*;
+import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryAxis;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
 import frc.robot.Constants;
 import frc.robot.Ports;
 
-/** Add your docs here. */
 public class RotaryConstants {
     public static String NAME = "Rotary";
 
@@ -53,13 +53,19 @@ public class RotaryConstants {
 
     public static final Translation3d OFFSET = Translation3d.kZero;
 
-    public static final Angle MIN_ANGLE = Degrees.of(0.0);
+    public static final Angle MIN_ANGLE = Degrees.of(-130.0);
     public static final Angle MAX_ANGLE = Rotations.of(.5);
     public static final Angle STARTING_ANGLE = Rotations.of(0.0);
     public static final Distance ARM_LENGTH = Meters.of(1.0);
 
     public static final RotaryMechCharacteristics CONSTANTS =
-        new RotaryMechCharacteristics(OFFSET, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
+        new RotaryMechCharacteristics(
+            OFFSET,
+            ARM_LENGTH,
+            MIN_ANGLE,
+            MAX_ANGLE,
+            STARTING_ANGLE,
+            RotaryAxis.PITCH);
 
     public static final Mass ARM_MASS = Kilograms.of(.01);
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);

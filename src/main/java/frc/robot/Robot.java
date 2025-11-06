@@ -155,6 +155,7 @@ public class Robot extends LoggedRobot {
         // Threads.setCurrentThreadPriority(false, 10);
 
         BallSimulator.update();
+        RobotState.getInstance().publishMechanismPoses();
     }
 
     /** This function is called once when the robot is disabled. */
