@@ -165,6 +165,8 @@ public class PoseEstimator {
     private Optional<Pose2d> solveTrigPosition(Camera camera, Time timestamp,
         TagObservation observation)
     {
+        double timestampLatencySeconds = 0.0; // observation.latency().in(Seconds); want to offset
+                                              // timestamp by this?
         Optional<Rotation2d> fieldRelativeRobotHeading =
             swerveEstimator.sampleAt(timestamp.in(Seconds)).map(Pose2d::getRotation); // latency
                                                                                       // correction?
@@ -196,16 +198,18 @@ public class PoseEstimator {
         // Compute robot position in field frame
         Translation3d robotToTagRobotFrame =
             camera.robotToCamera().getTranslation().plus(camToTagRobotFrame);
+        Translation2d robotToTagFieldFrame =
+            robotToTagRobotFrame.toTranslation2d().rotateBy(fieldRelativeRobotHeading.get());
         Translation2d fieldToRobot =
-            tagPose2d.get().getTranslation().minus(robotToTagRobotFrame.toTranslation2d());
+            tagPose2d.get().getTranslation().minus(robotToTagFieldFrame);
 
         // Compute robot heading using both odometry and observed yaw
         // Tag yaw gives robot heading relative to the tag
         Rotation2d observedHeading = tagPose2d.get().getRotation().minus(new Rotation2d(yaw));
         // Fuse with odometry (weighting can be tuned -- weightVision parameter based on angular
-        // velocity or Kalman filter).
+        // velocity or Kalman filter). Breaks if set to < 1 during pure translation
         Rotation2d fusedHeading =
-            observedHeading.interpolate(fieldRelativeRobotHeading.get(), 0.05);
+            observedHeading.interpolate(fieldRelativeRobotHeading.get(), 1);
 
         // Build final robot pose
         Pose2d robotPose = new Pose2d(fieldToRobot, fusedHeading);
