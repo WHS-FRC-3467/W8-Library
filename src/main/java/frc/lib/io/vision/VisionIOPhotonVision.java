@@ -16,15 +16,11 @@
 package frc.lib.io.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.MatBuilder;
-import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.Timer;
+import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.Timestamped;
-import frc.robot.RobotState;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 import java.util.ArrayList;
@@ -39,7 +35,6 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.ConstrainedSolvepnpParams;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
-import org.photonvision.jni.ConstrainedSolvepnpJni;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
@@ -48,6 +43,8 @@ public class VisionIOPhotonVision implements VisionIO {
     protected final PhotonCamera camera;
     protected final PhotonPoseEstimator poseEstimator;
     private final Optional<ConstrainedSolvepnpParams> constrainedPnpParams;
+    LoggedTunableNumber timeOffset = new LoggedTunableNumber(
+        "Vision/Time Offset", 0.0);
 
     /**
      * Creates a new VisionIOPhotonVision.
@@ -81,30 +78,14 @@ public class VisionIOPhotonVision implements VisionIO {
 
             allTargets.addAll(result.getTargets());
 
-            poseEstimator.addHeadingData(timestampedHeading.timestamp().in(Seconds),
+            poseEstimator.addHeadingData(
+                timestampedHeading.timestamp().in(Seconds),
                 timestampedHeading.get());
             Optional<EstimatedRobotPose> optionalEstimate =
-                poseEstimator.update(result, Optional.of(MatBuilder.fill(Nat.N3(), Nat.N3(),
-                    // Intrinsic and distort from SimCameraProperties.LL2_1280_720()
-                    // intrinsic
-                    1011.3749416937393,
-                    0.0,
-                    645.4955139388737,
-                    0.0,
-                    1008.5391755084075,
-                    508.32877656020196,
-                    0.0,
-                    0.0,
-                    1.0)), Optional.of(
-                        VecBuilder.fill( // distort
-                            0.13730101577061535,
-                            -0.2904345656989261,
-                            8.32475714507539E-4,
-                            -3.694397782014239E-4,
-                            0.09487962227027584,
-                            0,
-                            0,
-                            0)),
+                poseEstimator.update(
+                    result,
+                    Optional.of(camera.getCameraMatrix().get()),
+                    Optional.of(camera.getDistCoeffs().get()),
                     constrainedPnpParams);
 
             if (optionalEstimate.isEmpty()) {

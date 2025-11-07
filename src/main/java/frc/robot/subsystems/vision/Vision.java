@@ -34,6 +34,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.vision.VisionIOInputsAutoLogged;
 import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.util.Timestamped;
+import frc.robot.RobotState;
 import lombok.Getter;
 import frc.lib.io.vision.VisionIO;
 
@@ -127,7 +128,9 @@ public class Vision extends SubsystemBase {
                     || observation.pose().getX() < 0.0
                     || observation.pose().getX() > aprilTagLayout.getFieldLength()
                     || observation.pose().getY() < 0.0
-                    || observation.pose().getY() > aprilTagLayout.getFieldWidth();
+                    || observation.pose().getY() > aprilTagLayout.getFieldWidth()
+                    || Math
+                        .abs(RobotState.getInstance().getVelocity().omegaRadiansPerSecond) > 90.0;
 
                 // Add pose to log
                 robotPoses.add(observation.pose());
@@ -160,10 +163,10 @@ public class Vision extends SubsystemBase {
 
                 // Send vision observation
                 // TODO: UNCOMMENT TO UPDATE DRIVE ODOM
-                // consumer.accept(
-                // observation.pose().toPose2d(),
-                // observation.timestamp(),
-                // VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
+                consumer.accept(
+                    observation.pose().toPose2d(),
+                    observation.timestamp(),
+                    VecBuilder.fill(linearStdDev, linearStdDev, 1e5));
             }
 
             for (var tagObservation : inputs[cameraIndex].allTargets) {
