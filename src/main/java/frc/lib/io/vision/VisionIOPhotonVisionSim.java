@@ -16,11 +16,12 @@
 package frc.lib.io.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.MatBuilder;
-import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.numbers.N8;
 import java.util.function.Supplier;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
@@ -44,7 +45,9 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
         Transform3d robotToCamera,
         VisionSystemSim system,
         Supplier<Pose2d> poseSupplier,
-        AprilTagFieldLayout fieldLayout)
+        AprilTagFieldLayout fieldLayout,
+        Matrix<N3, N3> cameraIntrinsics,
+        Vector<N8> distCoeffs)
     {
         super(name, robotToCamera);
         this.poseSupplier = poseSupplier;
@@ -54,19 +57,8 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
         // Add sim camera
         var cameraProperties = new SimCameraProperties();
         cameraProperties.setCalibration(1600, 1304,
-            MatBuilder.fill(Nat.N3(), Nat.N3(),
-                2002.948392331919, 0.0, 783.9099067246102,
-                0.0, 1999.0390684862123, 662.7694019679813,
-                0.0, 0.0, 1.0),
-            VecBuilder.fill(
-                0.09905119793103302,
-                -0.06388083628565337,
-                3.87402720846368E-5,
-                1.4421218015997156E-4,
-                -0.16329892957216433,
-                -0.004599206903333014,
-                0.0029050841273878885,
-                0.0067195798658376375));
+            cameraIntrinsics,
+            distCoeffs);
         cameraProperties.setFPS(60);
         cameraSim = new PhotonCameraSim(camera, cameraProperties, fieldLayout);
         this.system.addCamera(cameraSim, robotToCamera);

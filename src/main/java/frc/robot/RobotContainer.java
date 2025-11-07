@@ -18,6 +18,9 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -169,7 +172,20 @@ public class RobotContainer {
                             Units.degreesToRadians(-30))),
                     visionSim.get(),
                     () -> RobotState.getInstance().getEstimatedPose(),
-                    AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark)),
+                    AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark),
+                    MatBuilder.fill(Nat.N3(), Nat.N3(),
+                        2002.948392331919, 0.0, 783.9099067246102,
+                        0.0, 1999.0390684862123, 662.7694019679813,
+                        0.0, 0.0, 1.0),
+                    VecBuilder.fill(
+                        0.09905119793103302,
+                        -0.06388083628565337,
+                        3.87402720846368E-5,
+                        1.4421218015997156E-4,
+                        -0.16329892957216433,
+                        -0.004599206903333014,
+                        0.0029050841273878885,
+                        0.0067195798658376375)),
                 observation -> RobotState.getInstance().addVisionObservation(observation));
             case REPLAY -> new Vision("camera_1", new VisionIO() {},
                 observation -> RobotState.getInstance().addVisionObservation(observation));
