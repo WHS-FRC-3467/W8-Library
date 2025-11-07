@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.photonvision.estimation.TargetModel;
 import org.photonvision.estimation.VisionEstimation;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -51,29 +50,31 @@ import frc.lib.io.vision.VisionIO.VisionObservation;
 import frc.lib.util.GeomUtil;
 
 import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
-/**
- * PoseEstimator combines swerve odometry and vision-based pose estimation (PhotonVision and
- * trig-based triangulation) to maintain an accurate estimate of the robot's pose on the field.
- */
+@Accessors(chain = true)
 public class PoseEstimator {
 
-    /**
-     * Represents a single odometry observation at a point in time. Includes swerve module positions
-     * and optionally a gyro angle.
-     */
-    public static final record OdometryObservation(
-        Time timestamp,
-        List<SwerveModulePosition> swervePositions,
-        Optional<Rotation2d> gyroAngle) {
-    }
+    private static final double DEFAULT_AMBIGUITY_THRESHOLD = 0.3;
+    private static final double DEFAULT_MAX_Z_METERS = 0.75;
+    private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
+    private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
+    private static final double DEFAULT_TRIG_STALE_TIME_SECONDS = 0.2;
+    private static final double DEFAULT_GYRO_HEADING_SCALE_FACTOR = 10.0;
 
-    /**
-     * Stores a pose estimate derived from trig-based vision, including distance to target and
-     * timestamp.
-     */
-    private static final record TrigPoseRecord(Pose2d pose, Distance distance, Time timestamp) {
-    }
+    @Setter
+    private double ambiguityThreshold = DEFAULT_AMBIGUITY_THRESHOLD;
+    @Setter
+    private double maxZMeters = DEFAULT_MAX_Z_METERS;
+    @Setter
+    private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
+    @Setter
+    private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
+    @Setter
+    private double trigStaleTimeSeconds = DEFAULT_TRIG_STALE_TIME_SECONDS;
+    @Setter
+    private double gyroHeadingScaleFactor = DEFAULT_GYRO_HEADING_SCALE_FACTOR;
 
     private final AprilTagFieldLayout fieldLayout;
     private final SwerveDrivePoseEstimator swerveEstimator;
@@ -90,20 +91,12 @@ public class PoseEstimator {
             new SwerveModulePosition()
     };
 
-    @AutoLogOutput(key = "Odometry/OdometryPose")
+    @Getter
     private Pose2d odometryPose = Pose2d.kZero;
 
     @Getter
     private Pose2d estimatedPose = Pose2d.kZero;
 
-    /**
-     * Constructs a PoseEstimator with the given field layout, swerve kinematics, and heading buffer
-     * size.
-     *
-     * @param fieldLayout AprilTag field layout used for vision-based estimation
-     * @param kinematics SwerveDriveKinematics instance for odometry calculations
-     * @param headingBufferSize Duration to store past headings for interpolation
-     */
     public PoseEstimator(AprilTagFieldLayout fieldLayout, SwerveDriveKinematics kinematics,
         Time headingBufferSize)
     {
@@ -118,21 +111,11 @@ public class PoseEstimator {
 
     private void updateLatestOdometryTimestamp(Time timestamp)
     {
-        if (latestOdometryTimestamp.isEmpty()) {
-            latestOdometryTimestamp = Optional.of(timestamp);
-            return;
-        }
-
-        if (timestamp.gt(latestOdometryTimestamp.get())) {
+        if (latestOdometryTimestamp.isEmpty() || timestamp.gt(latestOdometryTimestamp.get())) {
             latestOdometryTimestamp = Optional.of(timestamp);
         }
     }
 
-    /**
-     * Adds a new odometry observation and updates the pose estimate accordingly.
-     *
-     * @param observation Odometry data including module positions and gyro angle
-     */
     public void addOdometryObservation(OdometryObservation observation)
     {
         updateLatestOdometryTimestamp(observation.timestamp());
@@ -141,11 +124,9 @@ public class PoseEstimator {
         SwerveModulePosition[] currentPositions =
             observation.swervePositions().toArray(new SwerveModulePosition[0]);
 
-        // Calculate incremental motion using swerve kinematics
         Twist2d twist = kinematics.toTwist2d(lastModulePositions, currentPositions);
         lastModulePositions = currentPositions;
 
-        // Update odometry pose with incremental motion
         odometryPose = odometryPose.exp(twist);
 
         observation.gyroAngle.ifPresent(
@@ -179,8 +160,7 @@ public class PoseEstimator {
                         .toTranslation2d()
                         .rotateBy(fieldRelativeRobotHeading.get());
 
-        Optional<Pose2d> tagPose2d =
-            fieldLayout.getTagPose(observation.id()).map(Pose3d::toPose2d);
+        Optional<Pose2d> tagPose2d = fieldLayout.getTagPose(observation.id()).map(Pose3d::toPose2d);
         if (tagPose2d.isEmpty())
             return Optional.empty();
 
@@ -207,11 +187,6 @@ public class PoseEstimator {
             new TrigPoseRecord(p, observation.distance(), timestamp)));
     }
 
-    /**
-     * Integrates a complete vision observation containing multiple tags into the pose estimator.
-     *
-     * @param observation VisionObservation from PhotonVision or custom vision system
-     */
     public void addVisionObservation(VisionObservation observation)
     {
         observation.tagObservations()
@@ -219,7 +194,7 @@ public class PoseEstimator {
                 observation.camera(), observation.timestamp(), tagObservation));
 
         int tagCount = observation.tagObservations().size();
-        if (tagCount == 0 || (tagCount == 1 && observation.ambiguity() > 0.3)) {
+        if (tagCount == 0 || (tagCount == 1 && observation.ambiguity() > ambiguityThreshold)) {
             estimatedPose = swerveEstimator.getEstimatedPosition();
             return;
         }
@@ -244,7 +219,8 @@ public class PoseEstimator {
                 TargetModel.kAprilTag36h11,
                 false,
                 heading,
-                10.0).map(estimate -> GeomUtil.toPose3d(estimate.best));
+                gyroHeadingScaleFactor)
+                .map(estimate -> GeomUtil.toPose3d(estimate.best));
 
         if (optionalEstimate.isEmpty()) {
             estimatedPose = swerveEstimator.getEstimatedPosition();
@@ -252,7 +228,7 @@ public class PoseEstimator {
         }
 
         Pose3d estimate = optionalEstimate.get();
-        if (Math.abs(estimate.getZ()) > 0.75
+        if (Math.abs(estimate.getZ()) > maxZMeters
             || estimate.getX() < 0.0
             || estimate.getX() > fieldLayout.getFieldLength()
             || estimate.getY() < 0.0
@@ -268,8 +244,8 @@ public class PoseEstimator {
 
         double stdDevFactor =
             Math.pow(averageTagDistance, 2.0) / observation.tagObservations().size();
-        double linearStdDev = 0.4 * stdDevFactor;
-        double angularStdDev = 0.4 * stdDevFactor;
+        double linearStdDev = linearStdDevFactor * stdDevFactor;
+        double angularStdDev = angularStdDevFactor * stdDevFactor;
 
         swerveEstimator.addVisionMeasurement(
             optionalEstimate.get().toPose2d(),
@@ -282,15 +258,9 @@ public class PoseEstimator {
     private boolean isTrigStale(Time timestamp)
     {
         Time latestTime = latestOdometryTimestamp.orElse(Seconds.of(Timer.getTimestamp()));
-        return latestTime.minus(timestamp).gte(Seconds.of(0.2));
+        return latestTime.minus(timestamp).gte(Seconds.of(trigStaleTimeSeconds));
     }
 
-    /**
-     * Returns a trig-based pose estimate for a given tag ID if it is recent and available.
-     *
-     * @param tagId ID of the observed tag
-     * @return Optional Pose2d of the robot
-     */
     public Optional<Pose2d> getTrigPose(int tagId)
     {
         if (!trigPoses.containsKey(tagId)) {
@@ -305,4 +275,13 @@ public class PoseEstimator {
         return sample.map(pose2d -> data.pose().plus(new Transform2d(pose2d, odometryPose)));
     }
 
+    // === Records ===
+    public static final record OdometryObservation(
+        Time timestamp,
+        List<SwerveModulePosition> swervePositions,
+        Optional<Rotation2d> gyroAngle) {
+    }
+
+    private static final record TrigPoseRecord(Pose2d pose, Distance distance, Time timestamp) {
+    }
 }
