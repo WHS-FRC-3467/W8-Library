@@ -24,6 +24,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
 import java.util.List;
 import org.littletonrobotics.junction.AutoLog;
 import org.photonvision.targeting.PhotonTrackedTarget;
@@ -46,7 +47,15 @@ public interface VisionIO {
         Angle pitch,
         Angle yaw,
         List<TargetCorner> targetCorners,
+        Transform3d cameraToTarget,
         Distance distance) {
+        public TagObservation(int id, double area, Angle pitch, Angle yaw,
+            List<TargetCorner> targetCorners, Transform3d cameraToTarget)
+        {
+            this(id, area, pitch, yaw, targetCorners, cameraToTarget,
+                Meters.of(cameraToTarget.getTranslation().getNorm()));
+        }
+
         public PhotonTrackedTarget toPhotonTarget()
         {
             return new PhotonTrackedTarget(

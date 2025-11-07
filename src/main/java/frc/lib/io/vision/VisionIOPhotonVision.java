@@ -20,9 +20,7 @@ import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Time;
-import frc.lib.util.GeomUtil;
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +74,7 @@ public class VisionIOPhotonVision implements VisionIO {
                 Degrees.of(target.pitch),
                 Degrees.of(target.yaw),
                 target.detectedCorners,
-                Meters.of(GeomUtil.toPose3d(target.bestCameraToTarget).getTranslation().getNorm()));
+                target.bestCameraToTarget);
 
             observations.add(observation);
         });
@@ -91,14 +89,18 @@ public class VisionIOPhotonVision implements VisionIO {
 
         Time timestamp = Seconds.of(result.getTimestampSeconds());
 
-        var multiTagResult = result.getMultiTagResult().map(multiTag -> {
-            return new VisionObservation(
-                timestamp,
-                cameraProperties,
-                multiTag.estimatedPose.best,
-                multiTag.estimatedPose.ambiguity,
-                tagObservationsFromPipelineResult(result).get());
-        });
+        var optionalTagObservations = tagObservationsFromPipelineResult(result);
+        if (optionalTagObservations.isEmpty()) {
+            return Optional.empty();
+        }
+        List<TagObservation> tagObservations = optionalTagObservations.get();
+
+        var multiTagResult = result.getMultiTagResult().map(multiTag -> new VisionObservation(
+            timestamp,
+            cameraProperties,
+            multiTag.estimatedPose.best,
+            multiTag.estimatedPose.ambiguity,
+            tagObservations));
 
         if (multiTagResult.isPresent()) {
             return Optional.of(multiTagResult.get());
@@ -110,7 +112,7 @@ public class VisionIOPhotonVision implements VisionIO {
             cameraProperties,
             bestTarget.bestCameraToTarget,
             bestTarget.poseAmbiguity,
-            tagObservationsFromPipelineResult(result).get());
+            tagObservations);
 
         return Optional.of(singleTagResult);
     }
