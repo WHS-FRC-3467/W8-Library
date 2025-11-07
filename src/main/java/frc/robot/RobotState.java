@@ -18,8 +18,6 @@ package frc.robot;
 import static edu.wpi.first.units.Units.Seconds;
 import java.util.Optional;
 import org.littletonrobotics.junction.AutoLogOutput;
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -42,15 +40,13 @@ public class RobotState {
     private static final RobotState instance = new RobotState();
 
     private final PoseEstimator poseEstimator = new PoseEstimator(
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark),
+        FieldConstants.aprilTagLayout,
         new SwerveDriveKinematics(Drive.getModuleTranslations()),
         Seconds.of(2));
 
     @Getter
     @AutoLogOutput(key = "Odometry/Robot")
     private Pose2d estimatedPose = Pose2d.kZero;
-    @AutoLogOutput(key = "Odometry/Test")
-    private Pose2d testPose = Pose2d.kZero;
     @Getter
     private Optional<TagObservation> closestTagObservation = Optional.empty();
 
@@ -62,7 +58,6 @@ public class RobotState {
     {
         poseEstimator.addOdometryObservation(observation);
         estimatedPose = poseEstimator.estimatedPose();
-        testPose = poseEstimator.getTrigPose(10).orElse(Pose2d.kZero);
     }
 
     public void addVisionObservation(VisionObservation observation)
@@ -77,7 +72,6 @@ public class RobotState {
 
         poseEstimator.addVisionObservation(observation);
         estimatedPose = poseEstimator.estimatedPose();
-        testPose = poseEstimator.getTrigPose(10).orElse(Pose2d.kZero);
     }
 
     /** Returns the current odometry rotation. */
