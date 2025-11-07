@@ -1,0 +1,164 @@
+/*
+ * Copyright (C) 2025 Windham Windup
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
+ */
+
+package frc.robot.subsystems.vision;
+
+import java.util.Optional;
+import org.photonvision.simulation.VisionSystemSim;
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.numbers.N8;
+import edu.wpi.first.math.util.Units;
+import frc.lib.devices.Vision;
+import frc.lib.io.vision.VisionIO;
+import frc.lib.io.vision.VisionIOPhotonVision;
+import frc.lib.io.vision.VisionIOPhotonVisionSim;
+import frc.robot.Constants;
+import frc.robot.FieldConstants;
+import frc.robot.RobotState;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class VisionConstants {
+    public static final String FRONT_LEFT_NAME = "front_left";
+    public static final String FRONT_RIGHT_NAME = "front_right";
+
+    public static final Transform3d FRONT_LEFT_TRANSFORM =
+        new Transform3d(Units.inchesToMeters(9.287), Units.inchesToMeters(10.9704),
+            Units.inchesToMeters(7.9167),
+            new Rotation3d(0.0, Units.degreesToRadians(-15), Units.degreesToRadians(-30)));
+    public static final Transform3d FRONT_RIGHT_TRANSFORM =
+        new Transform3d(Units.inchesToMeters(9.287), Units.inchesToMeters(-10.9704),
+            Units.inchesToMeters(7.9167),
+            new Rotation3d(0.0, Units.degreesToRadians(-15), Units.degreesToRadians(30)));
+
+    public static final Matrix<N3, N3> FRONT_LEFT_MATRIX =
+        MatBuilder.fill(Nat.N3(), Nat.N3(),
+            2002.948392331919,
+            0.0,
+            783.9099067246102,
+            0.0,
+            1999.0390684862123,
+            662.7694019679813,
+            0.0,
+            0.0,
+            1.0);
+
+    public static final Vector<N8> FRONT_LEFT_DIST_COEFFS = VecBuilder.fill(
+        0.09905119793103302,
+        -0.06388083628565337,
+        3.87402720846368E-5,
+        1.4421218015997156E-4,
+        -0.16329892957216433,
+        -0.004599206903333014,
+        0.0029050841273878885,
+        0.0067195798658376375);
+
+    public static final Matrix<N3, N3> FRONT_RIGHT_MATRIX =
+        MatBuilder.fill(Nat.N3(), Nat.N3(), 2013.7145941329916,
+            0.0,
+            813.5600211516376,
+            0.0,
+            2010.9021854554633,
+            705.7489358922749,
+            0.0,
+            0.0,
+            1.0);
+
+    public static final Vector<N8> FRONT_RIGHT_DIST_COEFFS = VecBuilder.fill(
+        0.10838581263006249,
+        -0.11418498861043114,
+        1.2747353334518889E-4,
+        -5.523828072189691E-4,
+        -0.08722021094520614,
+        -0.004272598848412149,
+        0.0049167243044280235,
+        0.0035452581738189713);
+
+    private static Optional<VisionSystemSim> visionSim;
+
+    private static VisionIO getFrontLeftIOReal()
+    {
+        return new VisionIOPhotonVision(FRONT_LEFT_NAME, FRONT_LEFT_TRANSFORM);
+    }
+
+    private static VisionIO getFrontLeftIOSim()
+    {
+        if (visionSim.isEmpty()) {
+            visionSim = Optional.of(new VisionSystemSim("main"));
+            visionSim.get().addAprilTags(FieldConstants.aprilTagLayout);
+        }
+
+        return new VisionIOPhotonVisionSim(
+            FRONT_LEFT_NAME,
+            FRONT_LEFT_TRANSFORM,
+            visionSim.get(),
+            () -> RobotState.getInstance().getEstimatedPose(),
+            FieldConstants.aprilTagLayout,
+            FRONT_LEFT_MATRIX,
+            FRONT_LEFT_DIST_COEFFS);
+    }
+
+    private static VisionIO getFrontRightIOReal()
+    {
+        return new VisionIOPhotonVision(FRONT_RIGHT_NAME, FRONT_RIGHT_TRANSFORM);
+    }
+
+    private static VisionIO getFrontRightIOSim()
+    {
+        if (visionSim.isEmpty()) {
+            visionSim = Optional.of(new VisionSystemSim("main"));
+            visionSim.get().addAprilTags(FieldConstants.aprilTagLayout);
+        }
+
+        return new VisionIOPhotonVisionSim(
+            FRONT_RIGHT_NAME,
+            FRONT_RIGHT_TRANSFORM,
+            visionSim.get(),
+            () -> RobotState.getInstance().getEstimatedPose(),
+            FieldConstants.aprilTagLayout,
+            FRONT_RIGHT_MATRIX,
+            FRONT_RIGHT_DIST_COEFFS);
+    }
+
+    public static void create()
+    {
+        RobotState robotState = RobotState.getInstance();
+        switch (Constants.currentMode) {
+            case REAL -> {
+                new Vision(FRONT_LEFT_NAME, getFrontLeftIOReal(), robotState::addVisionObservation);
+                new Vision(FRONT_RIGHT_NAME, getFrontRightIOReal(),
+                    robotState::addVisionObservation);
+            }
+            case SIM -> {
+                new Vision(FRONT_LEFT_NAME, getFrontLeftIOSim(), robotState::addVisionObservation);
+                new Vision(FRONT_RIGHT_NAME, getFrontRightIOSim(),
+                    robotState::addVisionObservation);
+            }
+            default -> {
+                new Vision(FRONT_LEFT_NAME, new VisionIO() {}, robotState::addVisionObservation);
+                new Vision(FRONT_RIGHT_NAME, new VisionIO() {},
+                    robotState::addVisionObservation);
+            }
+        }
+    }
+}

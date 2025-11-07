@@ -84,6 +84,7 @@ import frc.robot.subsystems.rotary.RotaryConstants;
 import frc.robot.subsystems.rotary.Rotary.Setpoint;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
+import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
@@ -120,15 +121,12 @@ public class RobotContainer {
     private final Rotary rotary;
     private final ObjectDetector objectDetector;
 
-    private final Optional<VisionSystemSim> visionSim;
-    private final Vision vision;
-
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
 
     // Dashboard inputs
-    // private final LoggedDashboardChooser<AutoCommand> autoChooser;
-    // private final LoggedDashboardChooser<Boolean> conditionalChooser;
+    private final LoggedDashboardChooser<AutoCommand> autoChooser;
+    private final LoggedDashboardChooser<Boolean> conditionalChooser;
     public static Field2d autoPreviewField = new Field2d();
 
     /**
@@ -145,73 +143,29 @@ public class RobotContainer {
         rotary = RotaryConstants.get();
         servo1 = Servo1Constants.get();
         objectDetector = ObjectDetectorConstants.get();
+        VisionConstants.create();
 
-        visionSim = switch (Constants.currentMode) {
-            case REAL -> Optional.empty();
-            case SIM -> {
-                var sim = new VisionSystemSim("main");
-                sim.addAprilTags(
-                    AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark));
-                yield Optional.of(sim);
-            }
-            case REPLAY -> Optional.empty();
-        };
-
-        vision = switch (Constants.currentMode) {
-            case REAL -> new Vision("camera_1", new VisionIOPhotonVision("camera_1",
-                new Transform3d(Units.inchesToMeters(9.287), Units.inchesToMeters(10.9704),
-                    Units.inchesToMeters(7.9167),
-                    new Rotation3d(0.0, Units.degreesToRadians(-15),
-                        Units.degreesToRadians(-30)))),
-                observation -> RobotState.getInstance().addVisionObservation(observation));
-            case SIM -> new Vision("camera_1",
-                new VisionIOPhotonVisionSim("camera_1",
-                    new Transform3d(Units.inchesToMeters(9.287), Units.inchesToMeters(10.9704),
-                        Units.inchesToMeters(7.9167),
-                        new Rotation3d(0.0, Units.degreesToRadians(-15),
-                            Units.degreesToRadians(-30))),
-                    visionSim.get(),
-                    () -> RobotState.getInstance().getEstimatedPose(),
-                    AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark),
-                    MatBuilder.fill(Nat.N3(), Nat.N3(),
-                        2002.948392331919, 0.0, 783.9099067246102,
-                        0.0, 1999.0390684862123, 662.7694019679813,
-                        0.0, 0.0, 1.0),
-                    VecBuilder.fill(
-                        0.09905119793103302,
-                        -0.06388083628565337,
-                        3.87402720846368E-5,
-                        1.4421218015997156E-4,
-                        -0.16329892957216433,
-                        -0.004599206903333014,
-                        0.0029050841273878885,
-                        0.0067195798658376375)),
-                observation -> RobotState.getInstance().addVisionObservation(observation));
-            case REPLAY -> new Vision("camera_1", new VisionIO() {},
-                observation -> RobotState.getInstance().addVisionObservation(observation));
-        };
-
-        // conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
-        // conditionalChooser.addOption("True", true);
-        // conditionalChooser.addOption("False", false);
+        conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
+        conditionalChooser.addOption("True", true);
+        conditionalChooser.addOption("False", false);
 
         // Set up auto routines
-        // autoChooser = new LoggedDashboardChooser<>("Auto Choices");
-        // SmartDashboard.putData("Auto Preview", autoPreviewField);
+        autoChooser = new LoggedDashboardChooser<>("Auto Choices");
+        SmartDashboard.putData("Auto Preview", autoPreviewField);
 
-        // autoChooser.addDefaultOption("None", new NoneAuto());
-        // autoChooser.addOption("ExampleAuto", new ExampleAuto(drive));
-        // autoChooser.addOption("BranchingAuto",
-        // new BranchingAuto(drive, () -> conditionalChooser.get()));
+        autoChooser.addDefaultOption("None", new NoneAuto());
+        autoChooser.addOption("ExampleAuto", new ExampleAuto(drive));
+        autoChooser.addOption("BranchingAuto",
+            new BranchingAuto(drive, () -> conditionalChooser.get()));
 
-        // autoChooser.onChange(auto -> {
-        // autoPreviewField.getObject("path").setPoses(auto.getAllPathPoses());
-        // });
+        autoChooser.onChange(auto -> {
+            autoPreviewField.getObject("path").setPoses(auto.getAllPathPoses());
+        });
 
-        // autoChooser.addOption("Drive Wheel Radius Characterization",
-        // new WheelCharacterizationAuto(drive));
+        autoChooser.addOption("Drive Wheel Radius Characterization",
+            new WheelCharacterizationAuto(drive));
 
-        // autoChooser.addOption("Wheel Slip Characterization", new WheelSlipAuto(drive));
+        autoChooser.addOption("Wheel Slip Characterization", new WheelSlipAuto(drive));
 
         // Configure the button bindings
         configureButtonBindings();
