@@ -19,9 +19,8 @@ import edu.wpi.first.units.measure.Distance;
  * have a blue alliance origin.
  */
 public class FieldConstants {
-
     public static final AprilTagFieldLayout aprilTagLayout =
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
+        AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
     public static final Distance FIELDLENGTH = Meters.of(aprilTagLayout.getFieldLength());
     public static final Distance FIELDWIDTH = Meters.of(aprilTagLayout.getFieldWidth());
