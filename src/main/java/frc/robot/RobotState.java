@@ -26,12 +26,10 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.wpilibj.Timer;
 import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.io.vision.VisionIO.VisionObservation;
 import frc.lib.posestimator.PoseEstimator;
-import frc.lib.posestimator.PoseEstimator.OdometryObservation;
-import frc.lib.util.Timestamped;
+import frc.lib.posestimator.SwerveOdometer.OdometryObservation;
 import frc.robot.subsystems.drive.Drive;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -63,7 +61,7 @@ public class RobotState {
     public void addOdometryObservation(OdometryObservation observation)
     {
         poseEstimator.addOdometryObservation(observation);
-        estimatedPose = poseEstimator.getEstimatedPose();
+        estimatedPose = poseEstimator.estimatedPose();
         testPose = poseEstimator.getTrigPose(10).orElse(Pose2d.kZero);
     }
 
@@ -78,7 +76,7 @@ public class RobotState {
         }).findFirst();
 
         poseEstimator.addVisionObservation(observation);
-        estimatedPose = poseEstimator.getEstimatedPose();
+        estimatedPose = poseEstimator.estimatedPose();
         testPose = poseEstimator.getTrigPose(10).orElse(Pose2d.kZero);
     }
 
@@ -86,11 +84,6 @@ public class RobotState {
     public Rotation2d getRotation()
     {
         return estimatedPose.getRotation();
-    }
-
-    public Timestamped<Rotation2d> getTimestampedHeading()
-    {
-        return new Timestamped<Rotation2d>(Seconds.of(Timer.getTimestamp()), getRotation());
     }
 
     public ChassisSpeeds getFieldRelativeVelocity()
