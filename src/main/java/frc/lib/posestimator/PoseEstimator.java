@@ -301,4 +301,29 @@ public class PoseEstimator {
         return sample.map(pose2d -> data.pose()
             .plus(new Transform2d(pose2d, odometer.getOdometryPose())));
     }
+
+    /**
+     * Resets the pose estimator to a known field-relative pose.
+     *
+     * <p>
+     * This method should be called when the robot's absolute position on the field is known — for
+     * example, at the start of autonomous or after a vision-based correction. It reinitializes both
+     * the odometry integrator and the estimator’s internal pose state to the specified pose.
+     *
+     * <p>
+     * Specifically, this method:
+     * <ul>
+     * <li>Resets the internal {@link SwerveOdometer} to the given pose.</li>
+     * <li>Resets the internal {@link SwerveDrivePoseEstimator} to the given pose.</li>
+     * <li>Updates the estimator’s current {@code estimatedPose} to match.</li>
+     * </ul>
+     *
+     * @param pose the known {@link Pose2d} representing the robot’s field-relative position
+     */
+    public void resetPose(Pose2d pose)
+    {
+        odometer.resetPose(pose);
+        swerveEstimator.resetPose(pose);
+        estimatedPose = pose;
+    }
 }

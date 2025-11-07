@@ -26,6 +26,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.RobotController;
 import lombok.Getter;
 
 /**
@@ -79,6 +80,14 @@ public class SwerveOdometer {
     /** The swerve drive kinematics used to compute motion deltas. */
     private final SwerveDriveKinematics kinematics;
 
+    /** Stores recent odometry poses for interpolation purposes. */
+    @Getter
+    private final TimeInterpolatableBuffer<Pose2d> odometryBuffer;
+
+    /** The timestamp of the most recent odometry observation. */
+    @Getter
+    private Optional<Time> latestOdometryTimestamp = Optional.empty();
+
     /** Tracks last known module positions for computing motion deltas. */
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[] {
             new SwerveModulePosition(),
@@ -87,13 +96,8 @@ public class SwerveOdometer {
             new SwerveModulePosition()
     };
 
-    /** Stores recent odometry poses for interpolation purposes. */
-    @Getter
-    private final TimeInterpolatableBuffer<Pose2d> odometryBuffer;
-
-    /** The timestamp of the most recent odometry observation. */
-    @Getter
-    private Optional<Time> latestOdometryTimestamp = Optional.empty();
+    /** The offset from the gyro's 0 at boot and the last reset frame of rotation */
+    private Rotation2d gyroOffset = Rotation2d.kZero;
 
     /** The most recent odometry-based robot pose. */
     @Getter
@@ -158,9 +162,39 @@ public class SwerveOdometer {
 
         // If gyro angle is available, correct heading drift
         observation.gyroAngle().ifPresent(
-            angle -> odometryPose = new Pose2d(odometryPose.getTranslation(), angle));
+            angle -> odometryPose =
+                new Pose2d(odometryPose.getTranslation(), angle.plus(gyroOffset)));
 
         // Store pose for later interpolation (e.g., vision sync)
         odometryBuffer.addSample(timestampSeconds, odometryPose);
+    }
+
+    /**
+     * Resets the internal odometry state to a known pose.
+     *
+     * <p>
+     * This method should be called when the robot's absolute position on the field is known, such
+     * as after autonomous initialization or when a vision-based correction is applied. It updates
+     * the internal odometry pose, timestamp, and gyro offset to align with the provided
+     * {@link Pose2d}.
+     *
+     * <p>
+     * Specifically, this method:
+     * <ul>
+     * <li>Updates the latest odometry timestamp to the current robot controller time.</li>
+     * <li>Recalculates the gyro offset so that the heading reported by the gyro aligns with the
+     * provided pose’s rotation.</li>
+     * <li>Sets the internal odometry pose estimate to the given pose.</li>
+     * <li>Clears the odometry buffer to remove outdated interpolated poses.</li>
+     * </ul>
+     *
+     * @param pose the new field-relative {@link Pose2d} representing the robot's known position
+     */
+    public void resetPose(Pose2d pose)
+    {
+        latestOdometryTimestamp = Optional.of(RobotController.getMeasureTime());
+        gyroOffset = pose.getRotation().minus(odometryPose.getRotation().minus(gyroOffset));
+        odometryPose = pose;
+        odometryBuffer.clear();
     }
 }

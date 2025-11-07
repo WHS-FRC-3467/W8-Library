@@ -120,6 +120,7 @@ public class RobotState {
 
     public void resetPose(Pose2d pose)
     {
-        this.estimatedPose = pose;
+        poseEstimator.resetPose(pose);
+        estimatedPose = poseEstimator.estimatedPose();
     }
 }
