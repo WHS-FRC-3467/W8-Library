@@ -37,26 +37,8 @@ import org.photonvision.targeting.PhotonPipelineResult;
 
 /** IO implementation for real PhotonVision hardware. */
 public class VisionIOPhotonVision implements VisionIO {
-    private static final Matrix<N3, N3> DEFAULT_CAMERA_INSTRINSICS =
-        MatBuilder.fill(Nat.N3(), Nat.N3(),
-            2002.948392331919, 0.0, 783.9099067246102,
-            0.0, 1999.0390684862123, 662.7694019679813,
-            0.0, 0.0, 1.0);
-
-    private static final Vector<N8> DEFAULT_DIST_COEFFS = VecBuilder.fill(
-        0.09905119793103302,
-        -0.06388083628565337,
-        3.87402720846368E-5,
-        1.4421218015997156E-4,
-        -0.16329892957216433,
-        -0.004599206903333014,
-        0.0029050841273878885,
-        0.0067195798658376375);
-
     protected final PhotonCamera camera;
     private final Camera cameraProperties;
-
-    private final Alert failedToFetchInstrinsicsAlert;
 
     /**
      * Creates a new VisionIOPhotonVision.
@@ -64,26 +46,18 @@ public class VisionIOPhotonVision implements VisionIO {
      * @param name The name of the camera,
      * @param robotToCamera The transform from the robot to the camera
      */
-    public VisionIOPhotonVision(String name, Transform3d robotToCamera)
+    public VisionIOPhotonVision(
+        String name,
+        Transform3d robotToCamera,
+        Matrix<N3, N3> cameraIntrinsics,
+        Vector<N8> distCoeffs)
     {
         camera = new PhotonCamera(name);
-        failedToFetchInstrinsicsAlert = new Alert(
-            "FAILED TO FETCH INTRINSICS FOR CAMERA " + name
-                + ". CONTINUING WITH DEFAULT (THRIFTYCAM)",
-            AlertType.kError);
-
-        Matrix<N3, N3> cameraIntrinsics = camera.getCameraMatrix().orElseGet(() -> {
-            failedToFetchInstrinsicsAlert.set(true);
-            return DEFAULT_CAMERA_INSTRINSICS;
-        });
-
-        Matrix<N8, N1> distCoeffs = camera.getDistCoeffs().orElseGet(() -> {
-            failedToFetchInstrinsicsAlert.set(true);
-            return DEFAULT_DIST_COEFFS;
-        });
 
         cameraProperties =
-            new Camera(name, robotToCamera,
+            new Camera(
+                name,
+                robotToCamera,
                 cameraIntrinsics,
                 distCoeffs);
     }

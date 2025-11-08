@@ -49,7 +49,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
         Matrix<N3, N3> cameraIntrinsics,
         Vector<N8> distCoeffs)
     {
-        super(name, robotToCamera);
+        super(name, robotToCamera, cameraIntrinsics, distCoeffs);
         this.poseSupplier = poseSupplier;
 
         this.system = system;
