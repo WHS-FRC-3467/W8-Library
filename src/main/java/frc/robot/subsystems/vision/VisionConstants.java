@@ -98,7 +98,11 @@ public class VisionConstants {
 
     private static VisionIO getFrontLeftIOReal()
     {
-        return new VisionIOPhotonVision(FRONT_LEFT_NAME, FRONT_LEFT_TRANSFORM);
+        return new VisionIOPhotonVision(
+            FRONT_LEFT_NAME,
+            FRONT_LEFT_TRANSFORM,
+            FRONT_LEFT_MATRIX,
+            FRONT_LEFT_DIST_COEFFS);
     }
 
     private static VisionIO getFrontLeftIOSim()
@@ -120,7 +124,11 @@ public class VisionConstants {
 
     private static VisionIO getFrontRightIOReal()
     {
-        return new VisionIOPhotonVision(FRONT_RIGHT_NAME, FRONT_RIGHT_TRANSFORM);
+        return new VisionIOPhotonVision(
+            FRONT_RIGHT_NAME,
+            FRONT_RIGHT_TRANSFORM,
+            FRONT_RIGHT_MATRIX,
+            FRONT_RIGHT_DIST_COEFFS);
     }
 
     private static VisionIO getFrontRightIOSim()
