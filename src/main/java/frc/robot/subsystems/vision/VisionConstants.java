@@ -94,7 +94,7 @@ public class VisionConstants {
         0.0049167243044280235,
         0.0035452581738189713);
 
-    private static Optional<VisionSystemSim> visionSim;
+    private static Optional<VisionSystemSim> visionSim = Optional.empty();
 
     private static VisionIO getFrontLeftIOReal()
     {
