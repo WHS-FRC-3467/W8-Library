@@ -31,6 +31,7 @@ import frc.lib.devices.Vision;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
 import frc.lib.io.vision.VisionIOPhotonVisionSim;
+import frc.lib.io.vision.VisionIO.Camera;
 import frc.robot.Constants;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
@@ -51,6 +52,7 @@ public class VisionConstants {
             Units.inchesToMeters(7.9167),
             new Rotation3d(0.0, Units.degreesToRadians(-15), Units.degreesToRadians(30)));
 
+    // ThriftyCam Calibrations
     public static final Matrix<N3, N3> FRONT_LEFT_MATRIX =
         MatBuilder.fill(Nat.N3(), Nat.N3(),
             2002.948392331919,
@@ -74,7 +76,8 @@ public class VisionConstants {
         0.0067195798658376375);
 
     public static final Matrix<N3, N3> FRONT_RIGHT_MATRIX =
-        MatBuilder.fill(Nat.N3(), Nat.N3(), 2013.7145941329916,
+        MatBuilder.fill(Nat.N3(), Nat.N3(),
+            2013.7145941329916,
             0.0,
             813.5600211516376,
             0.0,
@@ -94,15 +97,34 @@ public class VisionConstants {
         0.0049167243044280235,
         0.0035452581738189713);
 
+    public static final int FRONT_LEFT_RESOLUTION_WIDTH = 1600;
+    public static final int FRONT_LEFT_RESOLUTION_HEIGHT = 1304;
+    public static final int FRONT_RIGHT_RESOLUTION_WIDTH = 1600;
+    public static final int FRONT_RIGHT_RESOLUTION_HEIGHT = 1304;
+
+    public static final Camera FRONT_LEFT =
+        new Camera(
+            FRONT_LEFT_NAME,
+            FRONT_LEFT_TRANSFORM,
+            FRONT_LEFT_MATRIX,
+            FRONT_LEFT_DIST_COEFFS,
+            FRONT_LEFT_RESOLUTION_WIDTH,
+            FRONT_LEFT_RESOLUTION_HEIGHT);
+
+    public static final Camera FRONT_RIGHT =
+        new Camera(
+            FRONT_RIGHT_NAME,
+            FRONT_RIGHT_TRANSFORM,
+            FRONT_RIGHT_MATRIX,
+            FRONT_RIGHT_DIST_COEFFS,
+            FRONT_RIGHT_RESOLUTION_WIDTH,
+            FRONT_RIGHT_RESOLUTION_HEIGHT);
+
     private static Optional<VisionSystemSim> visionSim = Optional.empty();
 
     private static VisionIO getFrontLeftIOReal()
     {
-        return new VisionIOPhotonVision(
-            FRONT_LEFT_NAME,
-            FRONT_LEFT_TRANSFORM,
-            FRONT_LEFT_MATRIX,
-            FRONT_LEFT_DIST_COEFFS);
+        return new VisionIOPhotonVision(FRONT_LEFT);
     }
 
     private static VisionIO getFrontLeftIOSim()
@@ -113,22 +135,16 @@ public class VisionConstants {
         }
 
         return new VisionIOPhotonVisionSim(
-            FRONT_LEFT_NAME,
-            FRONT_LEFT_TRANSFORM,
+            FRONT_LEFT,
             visionSim.get(),
             () -> RobotState.getInstance().getEstimatedPose(),
-            FieldConstants.aprilTagLayout,
-            FRONT_LEFT_MATRIX,
-            FRONT_LEFT_DIST_COEFFS);
+            FieldConstants.aprilTagLayout);
     }
 
     private static VisionIO getFrontRightIOReal()
     {
         return new VisionIOPhotonVision(
-            FRONT_RIGHT_NAME,
-            FRONT_RIGHT_TRANSFORM,
-            FRONT_RIGHT_MATRIX,
-            FRONT_RIGHT_DIST_COEFFS);
+            FRONT_RIGHT);
     }
 
     private static VisionIO getFrontRightIOSim()
@@ -139,13 +155,10 @@ public class VisionConstants {
         }
 
         return new VisionIOPhotonVisionSim(
-            FRONT_RIGHT_NAME,
-            FRONT_RIGHT_TRANSFORM,
+            FRONT_RIGHT,
             visionSim.get(),
             () -> RobotState.getInstance().getEstimatedPose(),
-            FieldConstants.aprilTagLayout,
-            FRONT_RIGHT_MATRIX,
-            FRONT_RIGHT_DIST_COEFFS);
+            FieldConstants.aprilTagLayout);
     }
 
     public static void create()

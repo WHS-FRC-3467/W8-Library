@@ -15,11 +15,6 @@
 
 package frc.lib.io.vision;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.numbers.N8;
 import edu.wpi.first.units.measure.Time;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Seconds;
@@ -31,8 +26,8 @@ import org.photonvision.targeting.PhotonPipelineResult;
 
 /** IO implementation for real PhotonVision hardware. */
 public class VisionIOPhotonVision implements VisionIO {
-    protected final PhotonCamera camera;
-    private final Camera cameraProperties;
+    protected final PhotonCamera photonCamera;
+    private final Camera camera;
 
     /**
      * Creates a new VisionIOPhotonVision.
@@ -41,19 +36,10 @@ public class VisionIOPhotonVision implements VisionIO {
      * @param robotToCamera The transform from the robot to the camera
      */
     public VisionIOPhotonVision(
-        String name,
-        Transform3d robotToCamera,
-        Matrix<N3, N3> cameraIntrinsics,
-        Vector<N8> distCoeffs)
+        Camera camera)
     {
-        camera = new PhotonCamera(name);
-
-        cameraProperties =
-            new Camera(
-                name,
-                robotToCamera,
-                cameraIntrinsics,
-                distCoeffs);
+        this.camera = camera;
+        this.photonCamera = new PhotonCamera(camera.name());
     }
 
     private Optional<List<TagObservation>> tagObservationsFromPipelineResult(
@@ -93,7 +79,7 @@ public class VisionIOPhotonVision implements VisionIO {
 
         var multiTagResult = result.getMultiTagResult().map(multiTag -> new VisionObservation(
             timestamp,
-            cameraProperties,
+            camera,
             multiTag.estimatedPose.best,
             multiTag.estimatedPose.ambiguity,
             tagObservations));
@@ -105,7 +91,7 @@ public class VisionIOPhotonVision implements VisionIO {
         var bestTarget = result.getBestTarget();
         var singleTagResult = new VisionObservation(
             timestamp,
-            cameraProperties,
+            camera,
             bestTarget.bestCameraToTarget,
             bestTarget.poseAmbiguity,
             tagObservations);
@@ -116,18 +102,20 @@ public class VisionIOPhotonVision implements VisionIO {
     @Override
     public void updateInputs(VisionIOInputs inputs)
     {
-        inputs.connected = camera.isConnected();
+        inputs.connected = photonCamera.isConnected();
 
-        List<VisionObservation> poseObservations = new ArrayList<>();
-        camera.getAllUnreadResults().forEach(r -> {
-            var observation = poseObservationFromPipelineResult(r);
+        if (!inputs.connected) {
+            return;
+        }
 
-            if (observation.isEmpty()) {
-                return;
-            }
-            poseObservations.add(observation.get());
-        });
-
-        inputs.poseObservations = poseObservations.toArray(new VisionObservation[0]);
+        inputs.poseObservations = photonCamera.getAllUnreadResults().stream()
+            // For each result, attempt to get a VisionObservation
+            .map(this::poseObservationFromPipelineResult)
+            // Remove failed attempts
+            .filter(Optional::isPresent)
+            // All values are present, so we can safelt unwrap the remaining observations
+            .map(Optional::get)
+            // Convert the stream into an array
+            .toArray(l -> new VisionObservation[l]);
     }
 }

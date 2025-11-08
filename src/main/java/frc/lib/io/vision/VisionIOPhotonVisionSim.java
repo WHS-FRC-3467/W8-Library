@@ -16,12 +16,7 @@
 package frc.lib.io.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.numbers.N8;
 import java.util.function.Supplier;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
@@ -41,27 +36,24 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
      * @param poseSupplier Supplier for the robot pose to use in simulation.
      */
     public VisionIOPhotonVisionSim(
-        String name,
-        Transform3d robotToCamera,
+        Camera camera,
         VisionSystemSim system,
         Supplier<Pose2d> poseSupplier,
-        AprilTagFieldLayout fieldLayout,
-        Matrix<N3, N3> cameraIntrinsics,
-        Vector<N8> distCoeffs)
+        AprilTagFieldLayout fieldLayout)
     {
-        super(name, robotToCamera, cameraIntrinsics, distCoeffs);
+        super(camera);
         this.poseSupplier = poseSupplier;
 
         this.system = system;
 
-        // Add sim camera
-        var cameraProperties = new SimCameraProperties();
-        cameraProperties.setCalibration(1600, 1304,
-            cameraIntrinsics,
-            distCoeffs);
-        cameraProperties.setFPS(60);
-        cameraSim = new PhotonCameraSim(camera, cameraProperties, fieldLayout);
-        this.system.addCamera(cameraSim, robotToCamera);
+        var simCameraProperties = new SimCameraProperties();
+        simCameraProperties.setCalibration(
+            camera.resolutionWidth(),
+            camera.resultionHeight(),
+            camera.cameraMatrix(),
+            camera.distCoeffs());
+        cameraSim = new PhotonCameraSim(super.photonCamera, simCameraProperties, fieldLayout);
+        this.system.addCamera(cameraSim, camera.robotToCamera());
     }
 
     @Override

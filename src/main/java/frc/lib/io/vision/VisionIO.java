@@ -37,8 +37,13 @@ public interface VisionIO {
         public VisionObservation[] poseObservations = null;
     }
 
-    public record Camera(String name, Transform3d robotToCamera, Matrix<N3, N3> cameraMatrix,
-        Matrix<N8, N1> distCoeffs) {
+    public record Camera(
+        String name,
+        Transform3d robotToCamera,
+        Matrix<N3, N3> cameraMatrix,
+        Matrix<N8, N1> distCoeffs,
+        int resolutionWidth,
+        int resultionHeight) {
     }
 
     public static record TagObservation(
