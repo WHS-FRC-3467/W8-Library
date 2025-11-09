@@ -25,24 +25,37 @@ import java.util.Optional;
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
 
-/** IO implementation for real PhotonVision hardware. */
+/**
+ * Implementation of {@link VisionIO} for a real PhotonVision camera.
+ *
+ * <p>
+ * This class interfaces with a {@link PhotonCamera} running PhotonVision software to acquire vision
+ * data such as fiducial tag detections and estimated poses. It converts raw pipeline results into
+ * structured {@link VisionObservation} and {@link TagObservation} objects used by higher-level
+ * vision processing systems.
+ */
 public class VisionIOPhotonVision implements VisionIO {
     protected final PhotonCamera photonCamera;
     private final Camera camera;
 
     /**
-     * Creates a new VisionIOPhotonVision.
+     * Creates a new PhotonVision IO implementation for real hardware.
      *
-     * @param name The name of the camera,
-     * @param robotToCamera The transform from the robot to the camera
+     * @param camera The {@link Camera} configuration object describing this vision device.
      */
-    public VisionIOPhotonVision(
-        Camera camera)
+    public VisionIOPhotonVision(Camera camera)
     {
         this.camera = camera;
         this.photonCamera = new PhotonCamera(camera.name());
     }
 
+    /**
+     * Converts a PhotonVision pipeline result into a list of {@link TagObservation}s.
+     *
+     * @param result The {@link PhotonPipelineResult} containing detected fiducial targets.
+     * @return An {@link Optional} containing a list of {@link TagObservation}s if targets exist, or
+     *         {@link Optional#empty()} if no targets were detected.
+     */
     private Optional<List<TagObservation>> tagObservationsFromPipelineResult(
         PhotonPipelineResult result)
     {
@@ -59,12 +72,22 @@ public class VisionIOPhotonVision implements VisionIO {
                 target.detectedCorners,
                 target.bestCameraToTarget,
                 target.poseAmbiguity);
-
             observations.add(observation);
         });
         return Optional.of(observations);
     }
 
+    /**
+     * Extracts a {@link VisionObservation} from a {@link PhotonPipelineResult}.
+     *
+     * <p>
+     * If a multi-tag pose estimation is available, it will be used; otherwise, the observation will
+     * contain only the individual tag detections.
+     *
+     * @param result The pipeline result from the PhotonVision camera.
+     * @return An {@link Optional} containing a valid {@link VisionObservation}, or empty if no
+     *         targets were detected.
+     */
     private Optional<VisionObservation> poseObservationFromPipelineResult(
         PhotonPipelineResult result)
     {
@@ -72,7 +95,6 @@ public class VisionIOPhotonVision implements VisionIO {
             return Optional.empty();
 
         Time timestamp = Seconds.of(result.getTimestampSeconds());
-
         var optionalTagObservations = tagObservationsFromPipelineResult(result);
         if (optionalTagObservations.isEmpty()) {
             return Optional.empty();
@@ -98,6 +120,15 @@ public class VisionIOPhotonVision implements VisionIO {
         return Optional.of(singleTagResult);
     }
 
+    /**
+     * Updates the {@link VisionIOInputs} structure with the latest data from PhotonVision.
+     *
+     * <p>
+     * This includes connection status, all unread pipeline results, and any successfully derived
+     * {@link VisionObservation}s.
+     *
+     * @param inputs The input data structure to populate with current vision data.
+     */
     @Override
     public void updateInputs(VisionIOInputs inputs)
     {
@@ -108,13 +139,13 @@ public class VisionIOPhotonVision implements VisionIO {
         }
 
         inputs.poseObservations = photonCamera.getAllUnreadResults().stream()
-            // For each result, attempt to get a VisionObservation
+            // Convert each unread result to an optional VisionObservation
             .map(this::poseObservationFromPipelineResult)
-            // Remove failed attempts
+            // Remove failed conversions
             .filter(Optional::isPresent)
-            // All values are present, so we can safelt unwrap the remaining observations
+            // Unwrap valid observations
             .map(Optional::get)
-            // Convert the stream into an array
-            .toArray(l -> new VisionObservation[l]);
+            // Collect into an array
+            .toArray(VisionObservation[]::new);
     }
 }

@@ -22,18 +22,29 @@ import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 
-/** IO implementation for physics sim using PhotonVision simulator. */
+/**
+ * Simulated implementation of {@link VisionIOPhotonVision} using the PhotonVision simulation
+ * framework.
+ *
+ * <p>
+ * This class connects a {@link PhotonCameraSim} to a {@link VisionSystemSim} to simulate the
+ * behavior of a real PhotonVision camera in a physics-based environment. It allows the robot code
+ * to receive realistic vision data based on the robot's simulated pose and the field's AprilTag
+ * layout.
+ */
 public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     private final Supplier<Pose2d> poseSupplier;
     private final PhotonCameraSim cameraSim;
-
     private final VisionSystemSim system;
 
     /**
-     * Creates a new VisionIOPhotonVisionSim.
+     * Constructs a new simulated PhotonVision IO implementation.
      *
-     * @param name The name of the camera.
-     * @param poseSupplier Supplier for the robot pose to use in simulation.
+     * @param camera The virtual {@link Camera} configuration.
+     * @param system The {@link VisionSystemSim} managing simulated vision sources.
+     * @param poseSupplier A {@link Supplier} that provides the robot's current {@link Pose2d} in
+     *        simulation.
+     * @param fieldLayout The {@link AprilTagFieldLayout} describing all AprilTags in the field.
      */
     public VisionIOPhotonVisionSim(
         Camera camera,
@@ -43,7 +54,6 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     {
         super(camera);
         this.poseSupplier = poseSupplier;
-
         this.system = system;
 
         var simCameraProperties = new SimCameraProperties();
@@ -52,10 +62,21 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
             camera.resultionHeight(),
             camera.cameraMatrix(),
             camera.distCoeffs());
+
         cameraSim = new PhotonCameraSim(super.photonCamera, simCameraProperties, fieldLayout);
         this.system.addCamera(cameraSim, camera.robotToCamera());
     }
 
+    /**
+     * Updates the input data from the simulated PhotonVision system.
+     *
+     * <p>
+     * This method updates the vision simulation with the current robot pose and calls the
+     * superclass to populate the {@link VisionIOInputs} with simulated camera observations and pose
+     * estimates.
+     *
+     * @param inputs The structure to store the latest simulated vision data.
+     */
     @Override
     public void updateInputs(VisionIOInputs inputs)
     {
