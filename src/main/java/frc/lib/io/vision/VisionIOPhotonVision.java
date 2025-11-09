@@ -16,6 +16,7 @@
 package frc.lib.io.vision;
 
 import edu.wpi.first.units.measure.Time;
+import frc.lib.util.GeomUtil;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Seconds;
 import java.util.ArrayList;
@@ -56,7 +57,8 @@ public class VisionIOPhotonVision implements VisionIO {
                 Degrees.of(target.pitch),
                 Degrees.of(target.yaw),
                 target.detectedCorners,
-                target.bestCameraToTarget);
+                target.bestCameraToTarget,
+                target.poseAmbiguity);
 
             observations.add(observation);
         });
@@ -80,20 +82,17 @@ public class VisionIOPhotonVision implements VisionIO {
         var multiTagResult = result.getMultiTagResult().map(multiTag -> new VisionObservation(
             timestamp,
             camera,
-            multiTag.estimatedPose.best,
-            multiTag.estimatedPose.ambiguity,
+            Optional.of(GeomUtil.toPose3d(multiTag.estimatedPose.best)),
             tagObservations));
 
         if (multiTagResult.isPresent()) {
             return Optional.of(multiTagResult.get());
         }
 
-        var bestTarget = result.getBestTarget();
         var singleTagResult = new VisionObservation(
             timestamp,
             camera,
-            bestTarget.bestCameraToTarget,
-            bestTarget.poseAmbiguity,
+            Optional.empty(),
             tagObservations);
 
         return Optional.of(singleTagResult);

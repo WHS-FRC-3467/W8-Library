@@ -176,13 +176,64 @@ public class VisionProcessor {
     }
 
     /**
+     * Generates an initial seed pose estimate for the constrained PnP solver using the available
+     * vision data.
+     *
+     * <p>
+     * This method attempts to derive a reasonable starting pose for PnP optimization based on the
+     * detected tags and their known field locations. If a multi-tag estimate is available from the
+     * vision system, it is used directly as the seed. Otherwise, a single-tag-based geometric
+     * estimate is computed using the tag’s known field pose, the camera-to-tag transform, and the
+     * camera’s extrinsics.
+     *
+     * <p>
+     * Providing a good seed improves the convergence and accuracy of the constrained PnP solver,
+     * especially in multi-tag scenarios or when tags are at oblique viewing angles.
+     *
+     * @param observation The {@link VisionObservation} containing detected tags and camera data.
+     * @return An {@link Optional} containing the estimated robot pose seed in field coordinates, or
+     *         empty if insufficient data is available or the tag pose is unknown.
+     */
+    private Optional<Pose3d> getConstrainedSolvePnPSeedFromVisionObservation(
+        VisionObservation observation)
+    {
+        Transform3d cameraToRobot = observation.camera().robotToCamera().inverse();
+
+        if (observation.multiTagCameraPose().isPresent()) {
+            Pose3d robotPose = observation.multiTagCameraPose().get().plus(cameraToRobot);
+            return Optional.of(robotPose);
+        }
+
+        if (observation.tagObservations().isEmpty()) {
+            return Optional.empty();
+        }
+        TagObservation bestTagObservation = observation.tagObservations().get(0);
+
+        if (bestTagObservation.ambiguity() > ambiguityThreshold) {
+            return Optional.empty();
+        }
+
+        int tagID = bestTagObservation.id();
+        var optionalTagPose = fieldLayout.getTagPose(tagID);
+        if (optionalTagPose.isEmpty()) {
+            return Optional.empty();
+        }
+        Pose3d tagPose = optionalTagPose.get();
+
+        Transform3d targetToCamera = bestTagObservation.cameraToTarget().inverse();
+        Pose3d robotPose = tagPose.plus(targetToCamera).plus(cameraToRobot);
+
+        return Optional.of(robotPose);
+    }
+
+    /**
      * Processes a complete set of vision tag detections and computes a 3D pose estimate if valid.
      *
      * <p>
      * This method performs several key steps:
      * <ol>
      * <li>Generates single-tag triangulated poses for all detections.</li>
-     * <li>Rejects observations with excessive ambiguity or invalid data.</li>
+     * <li>Rejects observations with invalid data.</li>
      * <li>Uses PhotonVision’s constrained PnP solver to estimate the robot’s full 3D pose.</li>
      * <li>Applies filtering and field boundary checks to reject impossible results.</li>
      * <li>Computes uncertainty values based on distance and tag count.</li>
@@ -205,16 +256,21 @@ public class VisionProcessor {
             add2DVisionObservation(camera, observation.timestamp(), tagObservation, heading);
         }
 
-        // Ignore invalid or ambiguous single-tag observations
-        if (tagCount == 0 || (tagCount == 1 && observation.ambiguity() > ambiguityThreshold)) {
+        // Ignore invalid observations
+        if (tagCount == 0) {
             return Optional.empty();
         }
 
         // Solve for robot pose using constrained PnP
         var photonTargets = tags.stream().map(TagObservation::toPhotonTarget).toList();
         var robotToCamera = camera.robotToCamera();
-        var bestCameraToTargetPose = GeomUtil.toPose3d(
-            observation.bestCameraToTarget().plus(robotToCamera.inverse()));
+
+        // Attempt to extract seed pose from the observation
+        var optionalSeed = getConstrainedSolvePnPSeedFromVisionObservation(observation);
+        if (optionalSeed.isEmpty()) {
+            return Optional.empty();
+        }
+        Pose3d seed = optionalSeed.get();
 
         Optional<Pose3d> optionalEstimate =
             VisionEstimation.estimateRobotPoseConstrainedSolvepnp(
@@ -222,7 +278,7 @@ public class VisionProcessor {
                 camera.distCoeffs(),
                 photonTargets,
                 robotToCamera,
-                bestCameraToTargetPose,
+                seed,
                 fieldLayout,
                 TargetModel.kAprilTag36h11,
                 false,

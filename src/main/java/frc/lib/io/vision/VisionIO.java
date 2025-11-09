@@ -16,6 +16,7 @@
 package frc.lib.io.vision;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -26,6 +27,7 @@ import edu.wpi.first.units.measure.Time;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import java.util.List;
+import java.util.Optional;
 import org.littletonrobotics.junction.AutoLog;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import org.photonvision.targeting.TargetCorner;
@@ -53,11 +55,25 @@ public interface VisionIO {
         Angle yaw,
         List<TargetCorner> targetCorners,
         Transform3d cameraToTarget,
+        double ambiguity,
         Distance distance) {
-        public TagObservation(int id, double area, Angle pitch, Angle yaw,
-            List<TargetCorner> targetCorners, Transform3d cameraToTarget)
+        public TagObservation(
+            int id,
+            double area,
+            Angle pitch,
+            Angle yaw,
+            List<TargetCorner> targetCorners,
+            Transform3d cameraToTarget,
+            double ambiguity)
         {
-            this(id, area, pitch, yaw, targetCorners, cameraToTarget,
+            this(
+                id,
+                area,
+                pitch,
+                yaw,
+                targetCorners,
+                cameraToTarget,
+                ambiguity,
                 Meters.of(cameraToTarget.getTranslation().getNorm()));
         }
 
@@ -83,8 +99,7 @@ public interface VisionIO {
     public static record VisionObservation(
         Time timestamp,
         Camera camera,
-        Transform3d bestCameraToTarget,
-        double ambiguity,
+        Optional<Pose3d> multiTagCameraPose,
         List<TagObservation> tagObservations) {
     }
 
