@@ -46,8 +46,7 @@ public class RotaryVisualizer {
 
     private final RotaryMechCharacteristics constants;
 
-    public RotaryVisualizer(String name, RotaryMechCharacteristics constants)
-    {
+    public RotaryVisualizer(String name, RotaryMechCharacteristics constants) {
         this.name = name;
         this.constants = constants;
         mechanism = new LoggedMechanism2d(3.0, 3.0, new Color8Bit(Color.kBlack));

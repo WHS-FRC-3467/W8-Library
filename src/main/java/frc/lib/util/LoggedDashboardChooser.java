@@ -44,8 +44,7 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
      * @param key The key for the chooser, published to "/SmartDashboard/{key}" for NT or
      *        "/DashboardInputs/{key}" when logged.
      */
-    public LoggedDashboardChooser(String key)
-    {
+    public LoggedDashboardChooser(String key) {
         this.key = key;
         SmartDashboard.putData(key, sendableChooser);
         periodic();
@@ -61,8 +60,7 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
      *        "/DashboardInputs/{key}" when logged.
      */
     @SuppressWarnings("unchecked")
-    public LoggedDashboardChooser(String key, SendableChooser<V> chooser)
-    {
+    public LoggedDashboardChooser(String key, SendableChooser<V> chooser) {
         this(key);
 
         // Get options map

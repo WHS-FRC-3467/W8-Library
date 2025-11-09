@@ -57,8 +57,7 @@ public class ModuleIOSim implements ModuleIO {
     private double turnAppliedVolts = 0.0;
 
     public ModuleIOSim(
-        SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants)
-    {
+        SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         // Create drive and turn sim models
         driveSim = new DCMotorSim(
             LinearSystemId.createDCMotorSystem(

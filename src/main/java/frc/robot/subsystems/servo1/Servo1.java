@@ -48,8 +48,7 @@ public class Servo1 extends SubsystemBase {
 
     private final Servo servo;
 
-    public Servo1(ServoIO io)
-    {
+    public Servo1(ServoIO io) {
         servo = new Servo(io);
     }
 

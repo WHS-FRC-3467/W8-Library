@@ -39,8 +39,7 @@ public class Rotary extends SubsystemBase {
     private final RobotState robotstate;
 
 
-    public Rotary(RotaryMechanism io)
-    {
+    public Rotary(RotaryMechanism io) {
         this.io = io;
         this.robotstate = RobotState.getInstance();
         setSetpoint(RotaryConstants.DEFAULT_SETPOINT).ignoringDisable(true).schedule();

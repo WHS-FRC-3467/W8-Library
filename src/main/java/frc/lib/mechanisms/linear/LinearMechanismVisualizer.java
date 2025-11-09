@@ -46,8 +46,7 @@ public class LinearMechanismVisualizer {
 
     private final LinearMechCharacteristics characteristics;
 
-    public LinearMechanismVisualizer(String name, LinearMechCharacteristics characteristics)
-    {
+    public LinearMechanismVisualizer(String name, LinearMechCharacteristics characteristics) {
         this.name = name;
         this.characteristics = characteristics;
         mechanism = new LoggedMechanism2d(3.0, 3.0, new Color8Bit(Color.kBlack));

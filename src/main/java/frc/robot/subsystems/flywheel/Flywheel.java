@@ -17,8 +17,7 @@ import frc.lib.util.LoggerHelper;
 public class Flywheel extends SubsystemBase { // Don't extend if contained in superstructure
     private final FlywheelMechanism io;
 
-    public Flywheel(FlywheelMechanism io)
-    {
+    public Flywheel(FlywheelMechanism io) {
         this.io = io;
     }
 

@@ -55,8 +55,7 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
     private Time lastTime = Seconds.zero();
 
     public FlywheelMechanismSim(MotorIOSim io, DCMotor characteristics,
-        MomentOfInertia momentOfInertia, AngularVelocity tolerance)
-    {
+        MomentOfInertia momentOfInertia, AngularVelocity tolerance) {
         if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
             throw new IllegalArgumentException(
                 "momentOfInertia must be greater than zero!");

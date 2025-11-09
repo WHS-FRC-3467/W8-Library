@@ -31,8 +31,7 @@ public class Lights {
      *
      * @param io the IO to interact with.
      */
-    public Lights(LightsIO io)
-    {
+    public Lights(LightsIO io) {
         this.io = io;
     }
 

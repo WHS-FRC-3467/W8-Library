@@ -32,8 +32,7 @@ public class AbsoluteEncoder {
      *
      * @param io the IO to interact with.
      */
-    public AbsoluteEncoder(AbsoluteEncoderIO io)
-    {
+    public AbsoluteEncoder(AbsoluteEncoderIO io) {
         this.io = io;
     }
 

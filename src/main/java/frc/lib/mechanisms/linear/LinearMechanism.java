@@ -43,8 +43,7 @@ public abstract class LinearMechanism implements Mechanism {
 
     private final LinearMechanismVisualizer visualizer;
 
-    public LinearMechanism(String name, LinearMechCharacteristics characteristics)
-    {
+    public LinearMechanism(String name, LinearMechCharacteristics characteristics) {
         visualizer = new LinearMechanismVisualizer(name, characteristics);
         converter = characteristics.converter();
     }

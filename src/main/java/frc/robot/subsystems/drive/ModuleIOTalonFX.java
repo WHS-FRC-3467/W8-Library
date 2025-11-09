@@ -97,8 +97,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     CANUpdateThread updateThread = new CANUpdateThread();
 
     public ModuleIOTalonFX(
-        SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants)
-    {
+        SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         this.constants = constants;
         driveTalon =
             new TalonFX(constants.DriveMotorId, DriveConstants.drivetrainConstants.CANBusName);

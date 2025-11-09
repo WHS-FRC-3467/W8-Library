@@ -36,8 +36,7 @@ public class FlywheelMechanismReal implements FlywheelMechanism {
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
 
 
-    public FlywheelMechanismReal(MotorIO io)
-    {
+    public FlywheelMechanismReal(MotorIO io) {
         this.io = io;
     }
 

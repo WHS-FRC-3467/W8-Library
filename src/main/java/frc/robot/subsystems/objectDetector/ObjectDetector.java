@@ -32,8 +32,7 @@ public class ObjectDetector extends SubsystemBase {
 
     // Pass in any object detection IO implementation (e.g. PhotonVision) that implements
     // objectDetectionIO interface [real or sim]
-    public ObjectDetector(ObjectDetectionIO io)
-    {
+    public ObjectDetector(ObjectDetectionIO io) {
         objectDetection = new ObjectDetection(io);
     }
 

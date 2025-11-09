@@ -49,8 +49,7 @@ public class RotaryMechanismSim extends RotaryMechanism {
     public RotaryMechanismSim(MotorIOSim io, DCMotor dcMotor,
         MomentOfInertia momentOfInertia, Boolean useGravity,
         RotaryMechCharacteristics characteristics,
-        Optional<AbsoluteEncoderIOSim> absoluteEncoderSim)
-    {
+        Optional<AbsoluteEncoderIOSim> absoluteEncoderSim) {
         super(io.getName(), characteristics);
 
         if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))

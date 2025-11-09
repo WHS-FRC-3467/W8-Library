@@ -46,8 +46,7 @@ public class Robot extends LoggedRobot {
     private Command autonomousCommand;
     private RobotContainer robotContainer;
 
-    public Robot()
-    {
+    public Robot() {
         CanBridge.runTCP(); // Used for configuring LaserCANs via Grapplehook
 
         // Record metadata

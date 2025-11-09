@@ -42,8 +42,7 @@ public abstract class AlignToPoseBase extends Command {
         AlignMode mode,
         DoubleSupplier joystickInput,
         LoggedTuneableProfiledPID linearController,
-        LoggedTuneableProfiledPID angularController)
-    {
+        LoggedTuneableProfiledPID angularController) {
         this.drive = drive;
         this.targetPose = targetPose;
         this.mode = mode;

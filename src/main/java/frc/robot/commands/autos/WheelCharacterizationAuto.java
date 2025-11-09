@@ -12,8 +12,7 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 
 public class WheelCharacterizationAuto extends AutoCommand {
-    public WheelCharacterizationAuto(Drive drive)
-    {
+    public WheelCharacterizationAuto(Drive drive) {
         addCommands(DriveCommands.wheelRadiusCharacterization(drive));
     }
 

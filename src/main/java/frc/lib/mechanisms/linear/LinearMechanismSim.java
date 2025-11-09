@@ -49,8 +49,7 @@ public class LinearMechanismSim extends LinearMechanism {
     private Time lastTime = Seconds.zero();
 
     public LinearMechanismSim(MotorIOSim io, DCMotor characteristics, Mass mass,
-        LinearMechCharacteristics constraints, Boolean useGravity)
-    {
+        LinearMechCharacteristics constraints, Boolean useGravity) {
         super(io.getName(), constraints);
 
         this.io = io;

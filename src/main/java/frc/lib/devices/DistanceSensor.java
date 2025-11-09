@@ -33,8 +33,7 @@ public class DistanceSensor {
      *
      * @param io the IO to interact with.
      */
-    public DistanceSensor(DistanceSensorIO io)
-    {
+    public DistanceSensor(DistanceSensorIO io) {
         this.io = io;
     }
 

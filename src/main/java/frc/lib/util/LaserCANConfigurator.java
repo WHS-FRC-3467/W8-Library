@@ -30,8 +30,7 @@ public class LaserCANConfigurator implements AutoCloseable {
 
     private final LaserCan laserCAN;
 
-    public LaserCANConfigurator(int can_id)
-    {
+    public LaserCANConfigurator(int can_id) {
         laserCAN = new LaserCan(can_id);
     }
 

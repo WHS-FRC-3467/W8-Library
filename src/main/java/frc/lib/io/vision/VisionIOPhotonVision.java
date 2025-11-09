@@ -43,8 +43,7 @@ public class VisionIOPhotonVision implements VisionIO {
      *
      * @param camera The {@link Camera} configuration object describing this vision device.
      */
-    public VisionIOPhotonVision(Camera camera)
-    {
+    public VisionIOPhotonVision(Camera camera) {
         this.camera = camera;
         this.photonCamera = new PhotonCamera(camera.name());
     }

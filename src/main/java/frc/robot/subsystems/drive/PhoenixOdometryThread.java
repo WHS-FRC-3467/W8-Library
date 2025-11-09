@@ -58,8 +58,7 @@ public class PhoenixOdometryThread extends Thread {
         return instance;
     }
 
-    private PhoenixOdometryThread()
-    {
+    private PhoenixOdometryThread() {
         setName("PhoenixOdometryThread");
         setDaemon(true);
     }

@@ -31,8 +31,7 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
 
     public ObjectDetectionIOSim(String cameraName, Transform3d cameraTransform,
         Supplier<Pose2d> robotPoseSupplier,
-        String targetName, Supplier<VisionTargetSim[]> visionTargetSupplier)
-    {
+        String targetName, Supplier<VisionTargetSim[]> visionTargetSupplier) {
         super(cameraName);
         this.targetName = targetName;
         // Initialize simulated object detection camera

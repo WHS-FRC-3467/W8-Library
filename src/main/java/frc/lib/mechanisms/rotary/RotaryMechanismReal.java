@@ -30,8 +30,7 @@ public class RotaryMechanismReal extends RotaryMechanism {
     private final Optional<AbsoluteEncoderIO> absoluteEncoder;
 
     public RotaryMechanismReal(MotorIO io,
-        RotaryMechCharacteristics characteristics, Optional<AbsoluteEncoderIO> absoluteEncoder)
-    {
+        RotaryMechCharacteristics characteristics, Optional<AbsoluteEncoderIO> absoluteEncoder) {
         super(io.getName(), characteristics);
         this.io = io;
         this.absoluteEncoder = absoluteEncoder;

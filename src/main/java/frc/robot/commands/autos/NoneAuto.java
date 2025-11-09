@@ -22,8 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class NoneAuto extends AutoCommand {
-    public NoneAuto()
-    {
+    public NoneAuto() {
         addCommands(Commands.none());
     }
 

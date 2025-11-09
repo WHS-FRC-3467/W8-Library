@@ -168,8 +168,7 @@ public class PoseEstimator {
      *        interpolation
      */
     public PoseEstimator(AprilTagFieldLayout fieldLayout, SwerveDriveKinematics kinematics,
-        Time headingBufferSize)
-    {
+        Time headingBufferSize) {
         odometer = new SwerveOdometer(kinematics, headingBufferSize);
         visionProcessor =
             new VisionProcessor(
@@ -195,8 +194,7 @@ public class PoseEstimator {
      * @param fieldLayout the AprilTag field layout defining tag positions
      * @param kinematics the robot's swerve drive kinematics model
      */
-    public PoseEstimator(AprilTagFieldLayout fieldLayout, SwerveDriveKinematics kinematics)
-    {
+    public PoseEstimator(AprilTagFieldLayout fieldLayout, SwerveDriveKinematics kinematics) {
         this(fieldLayout, kinematics, Seconds.of(DEFAULT_HEADING_BUFFER_SIZE_SECONDS));
     }
 

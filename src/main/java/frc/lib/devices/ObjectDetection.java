@@ -34,8 +34,7 @@ public class ObjectDetection {
      * Interface as a data type allows ObjectDetection to accept various implementations of
      * ObjectDetectionIO (e.g. ObjectDetectionIOPhotonVision or ObjectDetectionIOLimelight).
      */
-    public ObjectDetection(ObjectDetectionIO io)
-    {
+    public ObjectDetection(ObjectDetectionIO io) {
         this.io = io;
     }
 

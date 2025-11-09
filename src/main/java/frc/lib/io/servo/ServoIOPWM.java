@@ -36,8 +36,7 @@ public class ServoIOPWM implements ServoIO {
     private double minAngle;
     private double maxAngle;
 
-    public ServoIOPWM(Device.PWM id, String name, Angle minAngle, Angle maxAngle)
-    {
+    public ServoIOPWM(Device.PWM id, String name, Angle minAngle, Angle maxAngle) {
         this.name = name;
         servo = new Servo(id.id());
         this.minAngle = minAngle.in(Degrees);

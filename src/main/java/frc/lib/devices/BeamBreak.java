@@ -31,8 +31,7 @@ public class BeamBreak {
      *
      * @param io the IO to interact with.
      */
-    public BeamBreak(BeamBreakIO io)
-    {
+    public BeamBreak(BeamBreakIO io) {
         this.io = io;
     }
 

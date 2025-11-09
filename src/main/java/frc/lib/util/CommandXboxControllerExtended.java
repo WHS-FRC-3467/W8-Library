@@ -28,8 +28,7 @@ public class CommandXboxControllerExtended extends CommandXboxController {
     private GenericHID hid;
     private double deadband = 0.0;
 
-    public CommandXboxControllerExtended(int port)
-    {
+    public CommandXboxControllerExtended(int port) {
         super(port);
         hid = this.getHID();
     }

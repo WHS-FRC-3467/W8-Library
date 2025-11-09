@@ -54,8 +54,7 @@ public class BeamBreakIOLaserCAN implements BeamBreakIO {
      */
     public BeamBreakIOLaserCAN(Device.CAN id, String name, Distance triggerDistance,
         RangingMode rangingMode,
-        RegionOfInterest regionOfInterest, TimingBudget timingBudget)
-    {
+        RegionOfInterest regionOfInterest, TimingBudget timingBudget) {
         this.name = name;
         this.triggerDistance = triggerDistance;
 

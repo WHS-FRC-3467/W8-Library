@@ -36,8 +36,7 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
     public AbsoluteEncoderIOCANCoder(
         Device.CAN id,
         String name,
-        CANcoderConfiguration configuration)
-    {
+        CANcoderConfiguration configuration) {
         this.name = name;
         CANCoder = new CANcoder(id.id(), id.bus());
 

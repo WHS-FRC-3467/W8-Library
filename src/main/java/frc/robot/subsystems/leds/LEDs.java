@@ -24,8 +24,7 @@ import frc.lib.util.LoggerHelper;
 public class LEDs extends SubsystemBase {
     private final Lights lights;
 
-    public LEDs(LightsIO io)
-    {
+    public LEDs(LightsIO io) {
         lights = new Lights(io);
     }
 

@@ -32,8 +32,7 @@ public class LoggedTunableBoolean implements BooleanSupplier {
      *
      * @param dashboardKey Key on dashboard
      */
-    public LoggedTunableBoolean(String dashboardKey)
-    {
+    public LoggedTunableBoolean(String dashboardKey) {
         this.key = tableKey + "/" + dashboardKey;
     }
 
@@ -43,8 +42,7 @@ public class LoggedTunableBoolean implements BooleanSupplier {
      * @param dashboardKey Key on dashboard
      * @param defaultValue Default value
      */
-    public LoggedTunableBoolean(String dashboardKey, boolean defaultValue)
-    {
+    public LoggedTunableBoolean(String dashboardKey, boolean defaultValue) {
         this(dashboardKey);
         initDefault(defaultValue);
     }

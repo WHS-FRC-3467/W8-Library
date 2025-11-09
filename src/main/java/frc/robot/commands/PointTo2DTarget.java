@@ -21,8 +21,7 @@ public class PointTo2DTarget extends Command {
     private TagObservation targetTag;
     private boolean isFinished = false;
 
-    public PointTo2DTarget(Drive drive)
-    {
+    public PointTo2DTarget(Drive drive) {
         addRequirements(drive);
         this.drive = drive;
     }

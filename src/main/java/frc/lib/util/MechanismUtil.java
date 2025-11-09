@@ -20,8 +20,7 @@ public class MechanismUtil {
     public static class DistanceAngleConverter {
         private final Distance radius;
 
-        public DistanceAngleConverter(Distance radius)
-        {
+        public DistanceAngleConverter(Distance radius) {
             this.radius = radius;
         }
 

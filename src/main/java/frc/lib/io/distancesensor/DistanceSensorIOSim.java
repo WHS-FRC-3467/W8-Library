@@ -35,8 +35,7 @@ public class DistanceSensorIOSim implements DistanceSensorIO {
      *
      * @param name A human-readable name for the sensor instance.
      */
-    public DistanceSensorIOSim(String name)
-    {
+    public DistanceSensorIOSim(String name) {
         this.name = name;
         tunableDistance = new LoggedTunableNumber(name + "/Sim Measurement (Inches)", 0.0);
     }

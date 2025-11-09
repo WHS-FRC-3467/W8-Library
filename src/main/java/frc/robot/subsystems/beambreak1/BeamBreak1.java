@@ -26,8 +26,7 @@ public class BeamBreak1 extends SubsystemBase {
 
     public final Trigger broken;
 
-    public BeamBreak1(BeamBreakIO io)
-    {
+    public BeamBreak1(BeamBreakIO io) {
         beamBreak = new BeamBreak(io);
 
         broken = new Trigger(beamBreak::isBroken);

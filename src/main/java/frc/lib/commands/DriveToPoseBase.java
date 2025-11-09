@@ -44,8 +44,7 @@ public abstract class DriveToPoseBase extends Command {
         LoggedTuneableProfiledPID linearController,
         LoggedTuneableProfiledPID angularController,
         LoggedTunableNumber maxLinearSpeed,
-        LoggedTunableNumber maxAngularSpeed)
-    {
+        LoggedTunableNumber maxAngularSpeed) {
         this.drive = drive;
         this.targetPose = targetPose;
         this.linearController = linearController;

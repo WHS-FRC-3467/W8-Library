@@ -33,8 +33,7 @@ public class BeamBreakIODIO implements BeamBreakIO {
      * @param id The CANDevice identifying the bus and device ID for this sensor.
      * @param name A human readable name for this sensor
      */
-    public BeamBreakIODIO(Device.DIO id, String name)
-    {
+    public BeamBreakIODIO(Device.DIO id, String name) {
         this.name = name;
 
         dio = new DigitalInput(id.id());

@@ -30,8 +30,7 @@ public class Vision extends SubsystemBase {
 
     private final Consumer<VisionObservation> visionConsumer;
 
-    public Vision(String name, VisionIO io, Consumer<VisionObservation> visionConsumer)
-    {
+    public Vision(String name, VisionIO io, Consumer<VisionObservation> visionConsumer) {
         this.name = name;
         this.io = io;
         this.visionConsumer = visionConsumer;

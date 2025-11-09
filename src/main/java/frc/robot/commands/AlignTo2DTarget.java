@@ -24,8 +24,7 @@ public class AlignTo2DTarget extends Command {
     private TagObservation targetTag;
     private boolean isFinished = false;
 
-    public AlignTo2DTarget(Drive drive, DoubleSupplier ySupplier)
-    {
+    public AlignTo2DTarget(Drive drive, DoubleSupplier ySupplier) {
         addRequirements(drive);
         this.drive = drive;
     }

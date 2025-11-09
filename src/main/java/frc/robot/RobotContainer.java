@@ -132,8 +132,7 @@ public class RobotContainer {
     /**
      * The container for the robot. Contains subsystems, IO devices, and commands.
      */
-    public RobotContainer()
-    {
+    public RobotContainer() {
         drive = DriveConstants.get();
         laserCAN1 = LaserCAN1Constants.get();
         flywheel = FlywheelConstants.get();

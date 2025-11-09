@@ -24,8 +24,7 @@ public class LaserCAN1 extends SubsystemBase {
     public final Trigger inside =
         new Trigger(() -> betweenDistance(Millimeters.of(5), Millimeters.of(10)));
 
-    public LaserCAN1(DistanceSensorIO io)
-    {
+    public LaserCAN1(DistanceSensorIO io) {
         distanceSensor = new DistanceSensor(io);
         robotState = RobotState.getInstance();
     }

@@ -71,8 +71,7 @@ public class OnTheFlyPathCommand extends Command {
     public OnTheFlyPathCommand(Drive drive, Supplier<Pose2d> currentPose,
         List<Pose2d> waypointPoses, Pose2d targetPose,
         PathConstraints constraints, LinearVelocity goalEndVelocity, boolean shouldMirrorPath,
-        Distance tolerance, Angle rotTolerance)
-    {
+        Distance tolerance, Angle rotTolerance) {
         addRequirements(drive);
         this.currentPose = currentPose;
         this.waypointPoses = waypointPoses;

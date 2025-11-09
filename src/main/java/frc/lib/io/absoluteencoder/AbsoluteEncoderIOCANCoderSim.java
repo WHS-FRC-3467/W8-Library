@@ -27,8 +27,7 @@ public class AbsoluteEncoderIOCANCoderSim extends AbsoluteEncoderIOCANCoder
 
     private final CANcoderSimState simState;
 
-    public AbsoluteEncoderIOCANCoderSim(CAN id, String name, CANcoderConfiguration configuration)
-    {
+    public AbsoluteEncoderIOCANCoderSim(CAN id, String name, CANcoderConfiguration configuration) {
         super(id, name, configuration);
         simState = CANCoder.getSimState();
     }

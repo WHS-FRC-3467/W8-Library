@@ -34,8 +34,7 @@ public class LightsIOSim implements LightsIO {
      *
      * @param name A human-readable name for this sensor instance.
      */
-    public LightsIOSim(String name)
-    {
+    public LightsIOSim(String name) {
         this.name = name;
     }
 

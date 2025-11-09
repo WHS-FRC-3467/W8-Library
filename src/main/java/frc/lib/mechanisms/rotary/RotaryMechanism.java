@@ -37,8 +37,7 @@ public abstract class RotaryMechanism implements Mechanism {
 
     private final RotaryVisualizer visualizer;
 
-    public RotaryMechanism(String name, RotaryMechCharacteristics characteristics)
-    {
+    public RotaryMechanism(String name, RotaryMechCharacteristics characteristics) {
         visualizer = new RotaryVisualizer(name, characteristics);
     }
 

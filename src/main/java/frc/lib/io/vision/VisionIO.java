@@ -122,8 +122,7 @@ public interface VisionIO {
             Angle yaw,
             List<TargetCorner> targetCorners,
             Transform3d cameraToTarget,
-            double ambiguity)
-        {
+            double ambiguity) {
             this(
                 id,
                 area,

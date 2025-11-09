@@ -254,8 +254,7 @@ public class DriveConstants {
          */
         public TunerSwerveDrivetrain(
             SwerveDrivetrainConstants drivetrainConstants,
-            SwerveModuleConstants<?, ?, ?>... modules)
-        {
+            SwerveModuleConstants<?, ?, ?>... modules) {
             super(TalonFX::new, TalonFX::new, CANcoder::new, drivetrainConstants, modules);
         }
 
@@ -275,8 +274,7 @@ public class DriveConstants {
         public TunerSwerveDrivetrain(
             SwerveDrivetrainConstants drivetrainConstants,
             double odometryUpdateFrequency,
-            SwerveModuleConstants<?, ?, ?>... modules)
-        {
+            SwerveModuleConstants<?, ?, ?>... modules) {
             super(
                 TalonFX::new,
                 TalonFX::new,
@@ -308,8 +306,7 @@ public class DriveConstants {
             double odometryUpdateFrequency,
             Matrix<N3, N1> odometryStandardDeviation,
             Matrix<N3, N1> visionStandardDeviation,
-            SwerveModuleConstants<?, ?, ?>... modules)
-        {
+            SwerveModuleConstants<?, ?, ?>... modules) {
             super(
                 TalonFX::new,
                 TalonFX::new,

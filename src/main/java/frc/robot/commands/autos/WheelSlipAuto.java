@@ -20,8 +20,7 @@ import frc.robot.subsystems.drive.Drive;
 public class WheelSlipAuto extends AutoCommand {
     private final RobotState robotState = RobotState.getInstance();
 
-    public WheelSlipAuto(Drive drive)
-    {
+    public WheelSlipAuto(Drive drive) {
         addCommands(Commands.sequence(
             Commands.run(() -> drive.runCharacterization(0.0)).withTimeout(2),
             rampUntilVelocity(drive, 0.2, RotationsPerSecond.of(1))));

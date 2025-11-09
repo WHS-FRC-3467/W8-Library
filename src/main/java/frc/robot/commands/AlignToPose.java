@@ -20,8 +20,7 @@ public class AlignToPose extends AlignToPoseBase {
         new LoggedTuneableProfiledPID("DriveToPose/AngularController", 3.0, 0, 0, 0, 0);
 
     public AlignToPose(Drive drive, Supplier<Pose2d> targetPose, AlignMode mode,
-        DoubleSupplier joystickInput)
-    {
+        DoubleSupplier joystickInput) {
         super(drive,
             targetPose,
             mode,

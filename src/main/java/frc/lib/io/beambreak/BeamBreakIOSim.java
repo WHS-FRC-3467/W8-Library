@@ -31,8 +31,7 @@ public class BeamBreakIOSim implements BeamBreakIO {
      *
      * @param name A human readable name for this sensor
      */
-    public BeamBreakIOSim(String name)
-    {
+    public BeamBreakIOSim(String name) {
         this.name = name;
 
         this.button = new LoggedTunableBoolean(name, false);

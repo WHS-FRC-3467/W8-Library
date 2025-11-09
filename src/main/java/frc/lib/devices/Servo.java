@@ -24,8 +24,7 @@ public class Servo {
     /**
      * Constructs a Servo.
      */
-    public Servo(ServoIO io)
-    {
+    public Servo(ServoIO io) {
         this.io = io;
     }
 

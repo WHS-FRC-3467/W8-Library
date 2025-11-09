@@ -91,8 +91,7 @@ public class MotorIOTalonFX implements MotorIO {
      * @param followerData Configuration data for the follower(s)
      */
     public MotorIOTalonFX(String name, TalonFXConfiguration config, Device.CAN main,
-        TalonFXFollower... followerData)
-    {
+        TalonFXFollower... followerData) {
         this.name = name;
 
         motor = new TalonFX(main.id(), main.bus());

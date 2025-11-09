@@ -40,8 +40,7 @@ public class Module {
     public Module(
         ModuleIO io,
         int index,
-        SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants)
-    {
+        SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         this.io = io;
         this.index = index;
         this.constants = constants;

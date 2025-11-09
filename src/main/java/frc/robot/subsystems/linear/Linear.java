@@ -54,8 +54,7 @@ public class Linear extends SubsystemBase {
 
     private final RobotState robotstate = RobotState.getInstance();
 
-    public Linear(LinearMechanism io)
-    {
+    public Linear(LinearMechanism io) {
         this.io = io;
         homedTrigger =
             new Trigger(() -> homeDebouncer.calculate(io.getSupplyCurrent().gte(Amps.of(10))));

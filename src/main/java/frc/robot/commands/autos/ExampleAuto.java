@@ -34,8 +34,7 @@ public class ExampleAuto extends AutoCommand {
     PathPlannerPath path1 = null;
     PathPlannerPath path2 = null;
 
-    public ExampleAuto(Drive drive)
-    {
+    public ExampleAuto(Drive drive) {
         try {
             path1 = PathPlannerPath.fromPathFile("path1");
             path2 = PathPlannerPath.fromPathFile("path2");

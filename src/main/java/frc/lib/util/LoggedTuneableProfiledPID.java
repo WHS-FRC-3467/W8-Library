@@ -17,14 +17,12 @@ public class LoggedTuneableProfiledPID extends ProfiledPIDController {
     private LoggedTunableNumber maxAcceleration;
 
     public LoggedTuneableProfiledPID(String name, double kP, double kI,
-        double kD, double maxV, double maxA)
-    {
+        double kD, double maxV, double maxA) {
         this(name, kP, kI, kD, maxV, maxA, .02);
     }
 
     public LoggedTuneableProfiledPID(String name, double p, double i,
-        double d, double maxVelocity, double maxAcceleration, double period)
-    {
+        double d, double maxVelocity, double maxAcceleration, double period) {
         super(p, i, d, new TrapezoidProfile.Constraints(maxVelocity, maxAcceleration), period);
 
         // Tunable numbers for PID and motion gain constants

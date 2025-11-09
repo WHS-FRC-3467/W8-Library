@@ -34,8 +34,7 @@ public class LinearMechanismReal extends LinearMechanism {
     private final MotorIO io;
 
     public LinearMechanismReal(MotorIO io,
-        LinearMechCharacteristics characteristics)
-    {
+        LinearMechCharacteristics characteristics) {
         super(io.getName(), characteristics);
 
         this.io = io;

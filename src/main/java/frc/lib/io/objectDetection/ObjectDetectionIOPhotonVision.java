@@ -36,8 +36,7 @@ public class ObjectDetectionIOPhotonVision implements ObjectDetectionIO {
      *
      * @param cameraName The name of the camera
      */
-    public ObjectDetectionIOPhotonVision(String cameraName)
-    {
+    public ObjectDetectionIOPhotonVision(String cameraName) {
         // CameraName is the name of the NetworkTable that PhotonVision is broadcasting information
         // over.
         // The name of the NetworkTable should be the same as the camera’s nickname (from the

@@ -36,8 +36,7 @@ public class BranchingAuto extends AutoCommand {
     PathPlannerPath path3 = null;
     PathPlannerPath path4 = null;
 
-    public BranchingAuto(Drive drive, BooleanSupplier condition)
-    {
+    public BranchingAuto(Drive drive, BooleanSupplier condition) {
         try {
             path1 = PathPlannerPath.fromPathFile("path1");
             path3 = PathPlannerPath.fromPathFile("path3");
