@@ -115,7 +115,6 @@ public interface VisionIO {
         Transform3d cameraToTarget,
         double ambiguity,
         Distance distance) {
-
         public TagObservation(
             int id,
             double area,
