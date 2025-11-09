@@ -120,8 +120,7 @@ public class SwerveOdometer {
      *
      * @param timestamp the new odometry timestamp to consider
      */
-    private void updateLatestOdometryTimestamp(Time timestamp)
-    {
+    private void updateLatestOdometryTimestamp(Time timestamp) {
         if (latestOdometryTimestamp.isEmpty() || timestamp.gt(latestOdometryTimestamp.get())) {
             latestOdometryTimestamp = Optional.of(timestamp);
         }
@@ -144,8 +143,7 @@ public class SwerveOdometer {
      * @param observation an {@link OdometryObservation} containing module positions, timestamp, and
      *        an optional gyro angle
      */
-    public void addOdometryObservation(OdometryObservation observation)
-    {
+    public void addOdometryObservation(OdometryObservation observation) {
         // Update latest timestamp if newer
         updateLatestOdometryTimestamp(observation.timestamp());
 
@@ -190,8 +188,7 @@ public class SwerveOdometer {
      *
      * @param pose the new field-relative {@link Pose2d} representing the robot's known position
      */
-    public void resetPose(Pose2d pose)
-    {
+    public void resetPose(Pose2d pose) {
         latestOdometryTimestamp = Optional.of(RobotController.getMeasureTime());
         gyroOffset = pose.getRotation().minus(odometryPose.getRotation().minus(gyroOffset));
         odometryPose = pose;

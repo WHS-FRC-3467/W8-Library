@@ -101,8 +101,7 @@ public class RotaryVisualizer {
         root.append(goal);
     }
 
-    private void update()
-    {
+    private void update() {
         switch (constants.axis()) {
             case ROLL:
                 currentPose = offset.rotateBy(
@@ -128,15 +127,13 @@ public class RotaryVisualizer {
         Logger.recordOutput(name + "Pose3d", currentPose);
     }
 
-    public void setCurrentAngle(Angle angle)
-    {
+    public void setCurrentAngle(Angle angle) {
         measured.setAngle(Rotation2d.fromRadians(angle.in(Radians)));
 
         update();
     }
 
-    public void setTrajectoryAngle(Optional<Angle> angle)
-    {
+    public void setTrajectoryAngle(Optional<Angle> angle) {
         if (angle.isEmpty()) {
             trajectory.setLength(0.0);
         }
@@ -149,8 +146,7 @@ public class RotaryVisualizer {
         update();
     }
 
-    public void setGoalAngle(Optional<Angle> angle)
-    {
+    public void setGoalAngle(Optional<Angle> angle) {
         if (angle.isEmpty()) {
             goal.setLength(0.0);
         }
@@ -163,8 +159,7 @@ public class RotaryVisualizer {
         update();
     }
 
-    public Supplier<Pose3d> getPoseSupplier()
-    {
+    public Supplier<Pose3d> getPoseSupplier() {
         return () -> currentPose;
     }
 }

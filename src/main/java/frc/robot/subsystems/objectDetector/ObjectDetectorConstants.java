@@ -13,7 +13,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.Timer;
-import frc.lib.io.objectDetection.*;
+import frc.lib.io.objectdetection.*;
 import frc.robot.Constants;
 import frc.robot.RobotState;
 
@@ -49,7 +49,7 @@ public class ObjectDetectorConstants {
                 new TargetModel(algaeHeightMeters)),
             new VisionTargetSim(new Pose3d(7, 6, algaeHeightMeters / 2, new Rotation3d()),
                 new TargetModel(algaeHeightMeters)),
-            new VisionTargetSim((new Pose3d(12, 7, algaeHeightMeters / 2, new Rotation3d())),
+            new VisionTargetSim(new Pose3d(12, 7, algaeHeightMeters / 2, new Rotation3d()),
                 new TargetModel(algaeHeightMeters)),
             null,
     };
@@ -60,19 +60,18 @@ public class ObjectDetectorConstants {
                     new TargetModel(algaeHeightMeters)),
                 new VisionTargetSim(new Pose3d(7, 6, algaeHeightMeters / 2, new Rotation3d()),
                     new TargetModel(algaeHeightMeters)),
-                new VisionTargetSim((new Pose3d(12, 7, algaeHeightMeters / 2, new Rotation3d())),
+                new VisionTargetSim(new Pose3d(12, 7, algaeHeightMeters / 2, new Rotation3d()),
                     new TargetModel(algaeHeightMeters)),
                 new VisionTargetSim(
-                    (new Pose3d(16, 3.5 * Math.sin(0.25 * Math.PI * Timer.getFPGATimestamp()) + 4.1,
-                        algaeHeightMeters / 2, new Rotation3d())),
+                    new Pose3d(16, 3.5 * Math.sin(0.25 * Math.PI * Timer.getFPGATimestamp()) + 4.1,
+                        algaeHeightMeters / 2, new Rotation3d()),
                     new TargetModel(algaeHeightMeters)),
         };
     // 2026 Targets
     // ...
 
     // Robot runtime mode for use in roboRIO & AKit
-    public static ObjectDetector get()
-    {
+    public static ObjectDetector get() {
         RobotState robotState = RobotState.getInstance();
         switch (Constants.currentMode) {
             case REAL:

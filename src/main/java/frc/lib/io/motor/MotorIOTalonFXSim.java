@@ -57,44 +57,37 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
     }
 
     @Override
-    public void setPosition(Angle position)
-    {
+    public void setPosition(Angle position) {
         simState.setRawRotorPosition(position.times(rotorToSensorRatio * sensorToMechanismRatio));
     }
 
     @Override
-    public void setRotorVelocity(AngularVelocity velocity)
-    {
+    public void setRotorVelocity(AngularVelocity velocity) {
         simState.setRotorVelocity(velocity);
     }
 
     @Override
-    public void setRotorAcceleration(AngularAcceleration acceleration)
-    {
+    public void setRotorAcceleration(AngularAcceleration acceleration) {
         simState.setRotorAcceleration(acceleration);
     }
 
     @Override
-    public double getRotorToSensorRatio()
-    {
+    public double getRotorToSensorRatio() {
         return rotorToSensorRatio;
     }
 
     @Override
-    public double getSensorToMechanismRatio()
-    {
+    public double getSensorToMechanismRatio() {
         return sensorToMechanismRatio;
     }
 
     @Override
-    public void setEncoderPosition(Angle position)
-    {
+    public void setEncoderPosition(Angle position) {
         super.setEncoderPosition(position.times(rotorToSensorRatio * sensorToMechanismRatio));
     }
 
     @Override
-    public void updateInputs(MotorInputs inputs)
-    {
+    public void updateInputs(MotorInputs inputs) {
         inputs.connected = BaseStatusSignal.refreshAll(
             super.position,
             super.velocity,
@@ -154,8 +147,7 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         super.motor.close();
     }
 }

@@ -51,8 +51,7 @@ public class LightsIOCandle implements LightsIO {
     }
 
     @Override
-    public void setAnimation(ControlRequest request)
-    {
+    public void setAnimation(ControlRequest request) {
         candle.setControl(request);
     }
 

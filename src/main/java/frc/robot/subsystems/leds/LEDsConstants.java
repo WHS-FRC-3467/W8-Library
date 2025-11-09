@@ -55,23 +55,19 @@ public class LEDsConstants {
             .withStripType(StripTypeValue.RGB)
             .withLossOfSignalBehavior(LossOfSignalBehaviorValue.DisableLEDs));
 
-    public static final LightsIOCandle getLightsIOReal()
-    {
+    public static final LightsIOCandle getLightsIOReal() {
         return new LightsIOCandle(NAME, Ports.lights, CANDLE_CONFIG);
     }
 
-    public static final LightsIOSim getLightsIOSim()
-    {
+    public static final LightsIOSim getLightsIOSim() {
         return new LightsIOSim(NAME);
     }
 
-    public static final LightsIO getLightsIOReplay()
-    {
+    public static final LightsIO getLightsIOReplay() {
         return new LightsIO() {};
     }
 
-    public static LEDs get()
-    {
+    public static LEDs get() {
         switch (Constants.currentMode) {
             case REAL:
                 return new LEDs(new LightsIOCandle(NAME, Ports.lights, CANDLE_CONFIG));

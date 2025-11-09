@@ -32,44 +32,38 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 public interface Mechanism {
 
     /** Call this method periodically */
-    public default void periodic()
-    {}
+    public default void periodic() {}
 
     /**
      * Sets the mechanism to coast mode.
      */
-    public default void runCoast()
-    {}
+    public default void runCoast() {}
 
     /**
      * Sets the mechanism to brake mode.
      */
-    public default void runBrake()
-    {}
+    public default void runBrake() {}
 
     /**
      * Runs the mechanism using direct voltage control.
      *
      * @param voltage Desired voltage output.
      */
-    public default void runVoltage(Voltage voltage)
-    {}
+    public default void runVoltage(Voltage voltage) {}
 
     /**
      * Runs the mechanism with a specified current output.
      *
      * @param current Desired torque-producing current.
      */
-    public default void runCurrent(Current current)
-    {}
+    public default void runCurrent(Current current) {}
 
     /**
      * Runs the mechanism using duty cycle (percentage of available voltage).
      *
      * @param dutyCycle Fractional output between 0 and 1.
      */
-    public default void runDutyCycle(double dutyCycle)
-    {}
+    public default void runDutyCycle(double dutyCycle) {}
 
     /**
      * Runs the mechanism to a specific position.
@@ -82,8 +76,7 @@ public interface Mechanism {
      */
     public default void runPosition(Angle position, AngularVelocity cruiseVelocity,
         AngularAcceleration acceleration,
-        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
-    {}
+        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot) {}
 
     /**
      * Runs the mechanism at a target velocity.
@@ -93,19 +86,16 @@ public interface Mechanism {
      * @param slot PID slot index.
      */
     public default void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
-        PIDSlot slot)
-    {}
+        PIDSlot slot) {}
 
     /**
      * Sets the position of the motor's internal encoder
      * 
      * @param position Desired position to set encoder to
      */
-    public default void setEncoderPosition(Angle position)
-    {}
+    public default void setEncoderPosition(Angle position) {}
 
-    public default Current getSupplyCurrent()
-    {
+    public default Current getSupplyCurrent() {
         return Amps.of(0.0);
     }
 
@@ -114,31 +104,26 @@ public interface Mechanism {
      * 
      * @return Angle of the motor or fused encoder
      */
-    public default Angle getPosition()
-    {
+    public default Angle getPosition() {
         return Radians.of(0.0);
     }
 
-    public default Current getTorqueCurrent()
-    {
+    public default Current getTorqueCurrent() {
         return Amps.of(0);
     }
 
-    public default AngularVelocity getVelocity()
-    {
+    public default AngularVelocity getVelocity() {
         return RadiansPerSecond.of(0.0);
     }
 
-    public default void close()
-    {}
+    public default void close() {}
 
     /**
      * Supplier for the Pose3d of the mechanism
      * 
      * @return Supplier for the Pose3d
      */
-    public default Supplier<Pose3d> getPoseSupplier()
-    {
+    public default Supplier<Pose3d> getPoseSupplier() {
         return () -> Pose3d.kZero;
     }
 }

@@ -78,8 +78,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
      * @param inputs The structure to store the latest simulated vision data.
      */
     @Override
-    public void updateInputs(VisionIOInputs inputs)
-    {
+    public void updateInputs(VisionIOInputs inputs) {
         system.update(poseSupplier.get());
         super.updateInputs(inputs);
     }

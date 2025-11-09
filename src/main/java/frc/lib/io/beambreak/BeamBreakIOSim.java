@@ -39,8 +39,7 @@ public class BeamBreakIOSim implements BeamBreakIO {
     }
 
     @Override
-    public void updateInputs(BeamBreakInputs inputs)
-    {
+    public void updateInputs(BeamBreakInputs inputs) {
         inputs.isBroken = button.getAsBoolean();
     }
 }

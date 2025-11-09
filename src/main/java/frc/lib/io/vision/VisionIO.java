@@ -141,8 +141,7 @@ public interface VisionIO {
          *
          * @return a new {@code PhotonTrackedTarget} representing this tag observation
          */
-        public PhotonTrackedTarget toPhotonTarget()
-        {
+        public PhotonTrackedTarget toPhotonTarget() {
             return new PhotonTrackedTarget(
                 pitch.in(Degrees),
                 yaw.in(Degrees),
@@ -188,6 +187,5 @@ public interface VisionIO {
         List<TagObservation> tagObservations) {
     }
 
-    public default void updateInputs(VisionIOInputs inputs)
-    {}
+    public default void updateInputs(VisionIOInputs inputs) {}
 }

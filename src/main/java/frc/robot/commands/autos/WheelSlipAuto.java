@@ -28,20 +28,17 @@ public class WheelSlipAuto extends AutoCommand {
     }
 
     @Override
-    public List<Pose2d> getAllPathPoses()
-    {
+    public List<Pose2d> getAllPathPoses() {
         return Collections.emptyList();
     }
 
     @Override
-    public Pose2d getStartingPose()
-    {
+    public Pose2d getStartingPose() {
         return robotState.getEstimatedPose();
     }
 
     private static Command rampUntilVelocity(Drive drive, double rampRate,
-        AngularVelocity speedLimit)
-    {
+        AngularVelocity speedLimit) {
         Timer timer = new Timer();
 
         return Commands.sequence(

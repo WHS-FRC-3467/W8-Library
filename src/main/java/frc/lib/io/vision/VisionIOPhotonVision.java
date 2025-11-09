@@ -57,8 +57,7 @@ public class VisionIOPhotonVision implements VisionIO {
      *         {@link Optional#empty()} if no targets were detected.
      */
     private Optional<List<TagObservation>> tagObservationsFromPipelineResult(
-        PhotonPipelineResult result)
-    {
+        PhotonPipelineResult result) {
         if (!result.hasTargets())
             return Optional.empty();
 
@@ -89,8 +88,7 @@ public class VisionIOPhotonVision implements VisionIO {
      *         targets were detected.
      */
     private Optional<VisionObservation> poseObservationFromPipelineResult(
-        PhotonPipelineResult result)
-    {
+        PhotonPipelineResult result) {
         if (!result.hasTargets())
             return Optional.empty();
 
@@ -130,8 +128,7 @@ public class VisionIOPhotonVision implements VisionIO {
      * @param inputs The input data structure to populate with current vision data.
      */
     @Override
-    public void updateInputs(VisionIOInputs inputs)
-    {
+    public void updateInputs(VisionIOInputs inputs) {
         inputs.connected = photonCamera.isConnected();
 
         if (!inputs.connected) {

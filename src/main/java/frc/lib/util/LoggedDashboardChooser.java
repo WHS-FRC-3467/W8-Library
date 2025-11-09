@@ -28,14 +28,12 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
     private final LoggableInputs inputs =
         new LoggableInputs() {
             @Override
-            public void toLog(LogTable table)
-            {
+            public void toLog(LogTable table) {
                 table.put(key, selectedValue);
             }
 
             @Override
-            public void fromLog(LogTable table)
-            {
+            public void fromLog(LogTable table) {
                 selectedValue = table.get(key, selectedValue);
             }
         };
@@ -104,15 +102,13 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
     }
 
     /** Adds a new option to the chooser. */
-    public void addOption(String key, V value)
-    {
+    public void addOption(String key, V value) {
         sendableChooser.addOption(key, key);
         options.put(key, value);
     }
 
     /** Adds a new option to the chooser and sets it to the default. */
-    public void addDefaultOption(String key, V value)
-    {
+    public void addDefaultOption(String key, V value) {
         sendableChooser.setDefaultOption(key, key);
         options.put(key, value);
     }
@@ -121,8 +117,7 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
      * Returns the selected option. If there is none selected, it will return the default. If there
      * is none selected and no default, then it will return {@code null}.
      */
-    public V get()
-    {
+    public V get() {
         return options.get(selectedValue);
     }
 
@@ -130,14 +125,12 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
      * Returns the internal sendable chooser object, for use when setting up dashboard layouts. Do
      * not read data from the sendable chooser directly.
      */
-    public SendableChooser<String> getSendableChooser()
-    {
+    public SendableChooser<String> getSendableChooser() {
         return sendableChooser;
     }
 
     @Override
-    public void periodic()
-    {
+    public void periodic() {
         if (!Logger.hasReplaySource()) {
             selectedValue = sendableChooser.getSelected();
         }
@@ -149,8 +142,7 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
         lastSelected = selectedValue;
     }
 
-    public void onChange(Consumer<V> listener)
-    {
+    public void onChange(Consumer<V> listener) {
         this.listener = listener;
     }
 }

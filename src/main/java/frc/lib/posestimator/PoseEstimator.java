@@ -81,8 +81,7 @@ public class PoseEstimator {
      *
      * @param ambiguityThreshold the maximum acceptable tag pose ambiguity
      */
-    public void ambiguityThreshold(double ambiguityThreshold)
-    {
+    public void ambiguityThreshold(double ambiguityThreshold) {
         visionProcessor.ambiguityThreshold(ambiguityThreshold);
     }
 
@@ -95,8 +94,7 @@ public class PoseEstimator {
      *
      * @param maxZMeters the maximum allowable Z height (in meters)
      */
-    public void maxZMeters(double maxZMeters)
-    {
+    public void maxZMeters(double maxZMeters) {
         visionProcessor.maxZMeters(maxZMeters);
     }
 
@@ -109,8 +107,7 @@ public class PoseEstimator {
      *
      * @param linearStdDevFactor the scaling factor applied to linear standard deviation
      */
-    public void linearStdDevFactor(double linearStdDevFactor)
-    {
+    public void linearStdDevFactor(double linearStdDevFactor) {
         visionProcessor.linearStdDevFactor(linearStdDevFactor);
     }
 
@@ -124,8 +121,7 @@ public class PoseEstimator {
      *
      * @param angularStdDevFactor the scaling factor applied to angular standard deviation
      */
-    public void angularStdDevFactor(double angularStdDevFactor)
-    {
+    public void angularStdDevFactor(double angularStdDevFactor) {
         visionProcessor.angularStdDevFactor(angularStdDevFactor);
     }
 
@@ -138,8 +134,7 @@ public class PoseEstimator {
      *
      * @param gyroHeadingScaleFactor the heading weighting factor for the vision solver
      */
-    public void gyroHeadingScaleFactor(double gyroHeadingScaleFactor)
-    {
+    public void gyroHeadingScaleFactor(double gyroHeadingScaleFactor) {
         visionProcessor.gyroHeadingScaleFactor(gyroHeadingScaleFactor);
     }
 
@@ -215,8 +210,7 @@ public class PoseEstimator {
      * @param observation the odometry observation containing timestamp, swerve module states, and
      *        an optional gyro heading
      */
-    public void addOdometryObservation(OdometryObservation observation)
-    {
+    public void addOdometryObservation(OdometryObservation observation) {
         odometer.addOdometryObservation(observation);
         swerveEstimator.updateWithTime(trigStaleTimeSeconds,
             odometer.getOdometryPose().getRotation(),
@@ -236,8 +230,7 @@ public class PoseEstimator {
      * @param observation the vision observation containing tag detections, timestamp, and camera
      *        metadata
      */
-    public void addVisionObservation(VisionObservation observation)
-    {
+    public void addVisionObservation(VisionObservation observation) {
         double timestampSeconds = observation.timestamp().in(Seconds);
 
         var optionalSample = swerveEstimator.sampleAt(timestampSeconds);
@@ -265,8 +258,7 @@ public class PoseEstimator {
     }
 
     /** Check if triangulated pose is too old to be valid */
-    private boolean isTrigStale(Time timestamp)
-    {
+    private boolean isTrigStale(Time timestamp) {
         Time latestTime = odometer.getLatestOdometryTimestamp()
             .orElse(Seconds.of(Timer.getTimestamp()));
         return latestTime.minus(timestamp).gte(Seconds.of(trigStaleTimeSeconds));
@@ -285,8 +277,7 @@ public class PoseEstimator {
      * @return an {@link Optional} {@link Pose2d} containing the pose if valid and recent; otherwise
      *         empty
      */
-    public Optional<Pose2d> getTrigPose(int tagId)
-    {
+    public Optional<Pose2d> getTrigPose(int tagId) {
         var optionalData = visionProcessor.getTrigPose(tagId);
         if (optionalData.isEmpty()) {
             return Optional.empty();
@@ -320,8 +311,7 @@ public class PoseEstimator {
      *
      * @param pose the known {@link Pose2d} representing the robot’s field-relative position
      */
-    public void resetPose(Pose2d pose)
-    {
+    public void resetPose(Pose2d pose) {
         odometer.resetPose(pose);
         swerveEstimator.resetPose(pose);
         estimatedPose = pose;

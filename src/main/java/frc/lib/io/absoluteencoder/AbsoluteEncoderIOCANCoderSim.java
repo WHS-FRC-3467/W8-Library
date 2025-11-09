@@ -34,21 +34,18 @@ public class AbsoluteEncoderIOCANCoderSim extends AbsoluteEncoderIOCANCoder
     }
 
     @Override
-    public void updateInputs(AbsoluteEncoderInputs inputs)
-    {
+    public void updateInputs(AbsoluteEncoderInputs inputs) {
         simState.setSupplyVoltage(RobotController.getBatteryVoltage());
         super.updateInputs(inputs);
     }
 
     @Override
-    public void setAngle(Angle angle)
-    {
+    public void setAngle(Angle angle) {
         simState.setRawPosition(angle);
     }
 
     @Override
-    public void setAngularVelocity(AngularVelocity velocity)
-    {
+    public void setAngularVelocity(AngularVelocity velocity) {
         simState.setVelocity(velocity);
     }
 }

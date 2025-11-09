@@ -30,21 +30,18 @@ public class LEDs extends SubsystemBase {
     }
 
     @Override
-    public void periodic()
-    {
+    public void periodic() {
         LoggerHelper.recordCurrentCommand(LEDsConstants.NAME, this);
     }
 
-    public Command runDisabledAnimation()
-    {
+    public Command runDisabledAnimation() {
         return this.startEnd(
             () -> lights.setAnimations(LEDsConstants.disabledAnimation),
             () -> lights.setAnimations(LEDsConstants.offAnimation))
             .withName("Disabled Animation");
     }
 
-    public Command runAutoAnimation()
-    {
+    public Command runAutoAnimation() {
         return this.startEnd(
             () -> lights.setAnimations(LEDsConstants.autoAnimation),
             () -> lights.setAnimations(LEDsConstants.offAnimation))

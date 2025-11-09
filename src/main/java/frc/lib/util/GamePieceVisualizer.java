@@ -32,14 +32,12 @@ public class GamePieceVisualizer {
 
     }
 
-    public void setPose(Pose3d pose)
-    {
+    public void setPose(Pose3d pose) {
         this.gamePiecePose = pose;
         Logger.recordOutput(name + " Visualizer", this.gamePiecePose);
     }
 
-    public void hide()
-    {
+    public void hide() {
         this.gamePiecePose = new Pose3d();
         Logger.recordOutput(name + " Visualizer", this.gamePiecePose);
     }

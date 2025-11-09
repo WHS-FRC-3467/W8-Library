@@ -46,8 +46,7 @@ public class FlywheelConstants {
         .withKI(0.0)
         .withKD(0.0);
 
-    public static TalonFXConfiguration getFXConfig()
-    {
+    public static TalonFXConfiguration getFXConfig() {
         TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.SupplyCurrentLimitEnable = Robot.isReal();
@@ -77,8 +76,7 @@ public class FlywheelConstants {
         return config;
     }
 
-    public static Flywheel get()
-    {
+    public static Flywheel get() {
         switch (Constants.currentMode) {
             case REAL:
                 return new Flywheel(new FlywheelMechanismReal(

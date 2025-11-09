@@ -19,9 +19,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 
 public interface AbsoluteEncoderIOSim extends AbsoluteEncoderIO {
-    public default void setAngle(Angle angle)
-    {}
+    public default void setAngle(Angle angle) {}
 
-    public default void setAngularVelocity(AngularVelocity velocity)
-    {}
+    public default void setAngularVelocity(AngularVelocity velocity) {}
 }

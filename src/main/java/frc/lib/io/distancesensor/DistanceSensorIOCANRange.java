@@ -58,8 +58,7 @@ public class DistanceSensorIOCANRange implements DistanceSensorIO {
     }
 
     @Override
-    public void updateInputs(DistanceSensorInputs inputs)
-    {
+    public void updateInputs(DistanceSensorInputs inputs) {
         inputs.connected = BaseStatusSignal.refreshAll(ambientSignal, distance).isOK();
 
         if (!inputs.connected) {

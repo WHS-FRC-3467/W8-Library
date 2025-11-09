@@ -37,8 +37,7 @@ public class BeamBreak {
     }
 
     /** Call this method periodically */
-    public void periodic()
-    {
+    public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
     }
@@ -48,8 +47,7 @@ public class BeamBreak {
      * 
      * @return Whether the beam is broken
      */
-    public boolean isBroken()
-    {
+    public boolean isBroken() {
         return inputs.isBroken;
     }
 

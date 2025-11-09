@@ -54,14 +54,12 @@ public class RobotState {
     @Setter
     private ChassisSpeeds velocity = new ChassisSpeeds();
 
-    public void addOdometryObservation(OdometryObservation observation)
-    {
+    public void addOdometryObservation(OdometryObservation observation) {
         poseEstimator.addOdometryObservation(observation);
         estimatedPose = poseEstimator.estimatedPose();
     }
 
-    public void addVisionObservation(VisionObservation observation)
-    {
+    public void addVisionObservation(VisionObservation observation) {
         closestTagObservation = observation.tagObservations().stream().sorted((t1, t2) -> {
             if (t2.distance().lt(t1.distance()))
                 return -1;
@@ -75,13 +73,11 @@ public class RobotState {
     }
 
     /** Returns the current odometry rotation. */
-    public Rotation2d getRotation()
-    {
+    public Rotation2d getRotation() {
         return estimatedPose.getRotation();
     }
 
-    public ChassisSpeeds getFieldRelativeVelocity()
-    {
+    public ChassisSpeeds getFieldRelativeVelocity() {
         return ChassisSpeeds.fromFieldRelativeSpeeds(
             velocity.vxMetersPerSecond,
             velocity.vyMetersPerSecond,
@@ -102,8 +98,7 @@ public class RobotState {
      * match the mechanical kinematics of the robot.
      */
 
-    public void publishMechanismPoses()
-    {
+    public void publishMechanismPoses() {
         Logger.recordOutput("Odometry/LinearPose", linearPose);
         Logger.recordOutput("Odometry/RotaryPose", new Pose3d(
             getRotaryPose().getX(),
@@ -112,8 +107,7 @@ public class RobotState {
             getRotaryPose().getRotation()));
     }
 
-    public void resetPose(Pose2d pose)
-    {
+    public void resetPose(Pose2d pose) {
         poseEstimator.resetPose(pose);
         estimatedPose = poseEstimator.estimatedPose();
     }

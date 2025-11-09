@@ -34,8 +34,7 @@ public class CANUpdateThread {
      * @param action The status-returning operation to retry.
      */
     @SuppressWarnings("FutureReturnValueIgnored")
-    public void CTRECheckErrorAndRetry(Supplier<StatusCode> action)
-    {
+    public void CTRECheckErrorAndRetry(Supplier<StatusCode> action) {
         threadPoolExecutor.submit(() -> {
             for (int i = 0; i < 5; i++) {
                 StatusCode result = action.get();
@@ -47,8 +46,7 @@ public class CANUpdateThread {
     }
 
     @SuppressWarnings("FutureReturnValueIgnored")
-    public void LaserCANCheckErrorAndRetry(Supplier<ConfigurationStatus> action)
-    {
+    public void LaserCANCheckErrorAndRetry(Supplier<ConfigurationStatus> action) {
         threadPoolExecutor.submit(() -> {
             for (int i = 0; i < 5; i++) {
                 ConfigurationStatus result = action.get();

@@ -35,24 +35,20 @@ public class LaserCAN1Constants {
             Radians.of(0.0),
             Radians.of(0.0)));
 
-    public static DistanceSensorIOLaserCAN getReal()
-    {
+    public static DistanceSensorIOLaserCAN getReal() {
         return new DistanceSensorIOLaserCAN(Ports.laserCAN1, NAME, RANGING_MODE, ROI,
             TIMING_BUDGET);
     }
 
-    public static DistanceSensorIOSim getSim()
-    {
+    public static DistanceSensorIOSim getSim() {
         return new DistanceSensorIOSim(NAME);
     }
 
-    public static DistanceSensorIO getReplay()
-    {
+    public static DistanceSensorIO getReplay() {
         return new DistanceSensorIO() {};
     }
 
-    public static LaserCAN1 get()
-    {
+    public static LaserCAN1 get() {
         switch (Constants.currentMode) {
             case REAL:
                 return new LaserCAN1(

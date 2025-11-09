@@ -36,8 +36,7 @@ public class LoggedTuneableProfiledPID extends ProfiledPIDController {
         this.maxAcceleration = new LoggedTunableNumber(name + "/maxAcceleration", maxAcceleration);
     }
 
-    public void updatePID()
-    {
+    public void updatePID() {
         // If changed, update controller constants from Tuneable Numbers
         if (p.hasChanged(hashCode())
             || i.hasChanged(hashCode())

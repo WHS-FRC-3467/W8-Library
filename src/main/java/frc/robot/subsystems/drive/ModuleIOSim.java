@@ -74,8 +74,7 @@ public class ModuleIOSim implements ModuleIO {
     }
 
     @Override
-    public void updateInputs(ModuleIOInputs inputs)
-    {
+    public void updateInputs(ModuleIOInputs inputs) {
         // Run closed-loop control
         if (driveClosedLoop) {
             driveAppliedVolts =
@@ -119,30 +118,26 @@ public class ModuleIOSim implements ModuleIO {
     }
 
     @Override
-    public void setDriveOpenLoop(double output)
-    {
+    public void setDriveOpenLoop(double output) {
         driveClosedLoop = false;
         driveAppliedVolts = output;
     }
 
     @Override
-    public void setTurnOpenLoop(double output)
-    {
+    public void setTurnOpenLoop(double output) {
         turnClosedLoop = false;
         turnAppliedVolts = output;
     }
 
     @Override
-    public void setDriveVelocity(double velocityRadPerSec)
-    {
+    public void setDriveVelocity(double velocityRadPerSec) {
         driveClosedLoop = true;
         driveFFVolts = DRIVE_KS * Math.signum(velocityRadPerSec) + DRIVE_KV * velocityRadPerSec;
         driveController.setSetpoint(velocityRadPerSec);
     }
 
     @Override
-    public void setTurnPosition(Rotation2d rotation)
-    {
+    public void setTurnPosition(Rotation2d rotation) {
         turnClosedLoop = true;
         turnController.setSetpoint(rotation.getRadians());
     }

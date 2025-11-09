@@ -40,8 +40,7 @@ public class CommandXboxControllerExtended extends CommandXboxController {
      * @param deadband The percent deadband to apply
      * @return this
      */
-    public CommandXboxControllerExtended withDeadband(double deadband)
-    {
+    public CommandXboxControllerExtended withDeadband(double deadband) {
         this.deadband = deadband;
         return this;
     }
@@ -53,8 +52,7 @@ public class CommandXboxControllerExtended extends CommandXboxController {
      * @param intensity Percentage for rumble intensity
      * @return Command to rumble the controller
      */
-    public Command rumble(RumbleType side, double intensity)
-    {
+    public Command rumble(RumbleType side, double intensity) {
         return Commands.startEnd(() -> hid.setRumble(side, intensity),
             () -> hid.setRumble(side, 0.0));
     }
@@ -67,34 +65,29 @@ public class CommandXboxControllerExtended extends CommandXboxController {
      * @param time Length of time to rumble
      * @return Command to rumble the controller
      */
-    public Command rumbleForTime(RumbleType side, double intensity, Time time)
-    {
+    public Command rumbleForTime(RumbleType side, double intensity, Time time) {
         return Commands.runOnce(() -> hid.setRumble(side, intensity))
             .andThen(Commands.waitSeconds(time.in(Seconds)))
             .andThen(() -> hid.setRumble(side, 0.0));
     }
 
     @Override
-    public double getLeftX()
-    {
+    public double getLeftX() {
         return MathUtil.applyDeadband(super.getLeftX(), deadband);
     }
 
     @Override
-    public double getLeftY()
-    {
+    public double getLeftY() {
         return MathUtil.applyDeadband(super.getLeftY(), deadband);
     }
 
     @Override
-    public double getRightX()
-    {
+    public double getRightX() {
         return MathUtil.applyDeadband(super.getRightX(), deadband);
     }
 
     @Override
-    public double getRightY()
-    {
+    public double getRightY() {
         return MathUtil.applyDeadband(super.getRightY(), deadband);
     }
 }

@@ -122,13 +122,11 @@ public class VisionConstants {
 
     private static Optional<VisionSystemSim> visionSim = Optional.empty();
 
-    private static VisionIO getFrontLeftIOReal()
-    {
+    private static VisionIO getFrontLeftIOReal() {
         return new VisionIOPhotonVision(FRONT_LEFT);
     }
 
-    private static VisionIO getFrontLeftIOSim()
-    {
+    private static VisionIO getFrontLeftIOSim() {
         if (visionSim.isEmpty()) {
             visionSim = Optional.of(new VisionSystemSim("main"));
             visionSim.get().addAprilTags(FieldConstants.aprilTagLayout);
@@ -141,14 +139,12 @@ public class VisionConstants {
             FieldConstants.aprilTagLayout);
     }
 
-    private static VisionIO getFrontRightIOReal()
-    {
+    private static VisionIO getFrontRightIOReal() {
         return new VisionIOPhotonVision(
             FRONT_RIGHT);
     }
 
-    private static VisionIO getFrontRightIOSim()
-    {
+    private static VisionIO getFrontRightIOSim() {
         if (visionSim.isEmpty()) {
             visionSim = Optional.of(new VisionSystemSim("main"));
             visionSim.get().addAprilTags(FieldConstants.aprilTagLayout);
@@ -161,8 +157,7 @@ public class VisionConstants {
             FieldConstants.aprilTagLayout);
     }
 
-    public static void create()
-    {
+    public static void create() {
         RobotState robotState = RobotState.getInstance();
         switch (Constants.currentMode) {
             case REAL -> {

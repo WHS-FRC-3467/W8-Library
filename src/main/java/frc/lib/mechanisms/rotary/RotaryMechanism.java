@@ -42,8 +42,7 @@ public abstract class RotaryMechanism implements Mechanism {
         visualizer = new RotaryVisualizer(name, characteristics);
     }
 
-    private Optional<Angle> getTrajectoryAngle()
-    {
+    private Optional<Angle> getTrajectoryAngle() {
         if (inputs.controlType != ControlType.POSITION || inputs.positionError == null) {
             return Optional.empty();
         }
@@ -51,8 +50,7 @@ public abstract class RotaryMechanism implements Mechanism {
         return Optional.of(inputs.activeTrajectoryPosition);
     }
 
-    private Optional<Angle> getGoalAngle()
-    {
+    private Optional<Angle> getGoalAngle() {
         if (inputs.controlType != ControlType.POSITION || inputs.positionError == null) {
             return Optional.empty();
         }
@@ -61,8 +59,7 @@ public abstract class RotaryMechanism implements Mechanism {
     }
 
     // Checks if mechanism is near a goal position within a specified tolerance
-    public boolean nearGoal(Angle goalAngle, Angle tolerance)
-    {
+    public boolean nearGoal(Angle goalAngle, Angle tolerance) {
         return MathUtil.isNear(
             getPosition().in(BaseUnits.AngleUnit),
             goalAngle.in(BaseUnits.AngleUnit),
@@ -70,16 +67,14 @@ public abstract class RotaryMechanism implements Mechanism {
     }
 
     @Override
-    public void periodic()
-    {
+    public void periodic() {
         visualizer.setCurrentAngle(inputs.position);
         visualizer.setTrajectoryAngle(getTrajectoryAngle());
         visualizer.setGoalAngle(getGoalAngle());
     }
 
     @Override
-    public Supplier<Pose3d> getPoseSupplier()
-    {
+    public Supplier<Pose3d> getPoseSupplier() {
         return visualizer.getPoseSupplier();
     }
 }

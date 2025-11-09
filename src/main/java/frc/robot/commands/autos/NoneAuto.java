@@ -28,14 +28,12 @@ public class NoneAuto extends AutoCommand {
     }
 
     @Override
-    public List<Pose2d> getAllPathPoses()
-    {
+    public List<Pose2d> getAllPathPoses() {
         return Collections.emptyList();
     }
 
     @Override
-    public Pose2d getStartingPose()
-    {
+    public Pose2d getStartingPose() {
         return new Pose2d();
     }
 }

@@ -29,8 +29,7 @@ public class RotaryTest implements AutoCloseable {
     Rotary rotary;
 
     @BeforeEach // this method will run before each test
-    void setup()
-    {
+    void setup() {
         assert HAL.initialize(500, 0); // initialize the HAL, crash if failed
 
         rotary = RotaryConstants.get();
@@ -45,14 +44,12 @@ public class RotaryTest implements AutoCloseable {
 
     @SuppressWarnings("PMD.SignatureDeclareThrowsException")
     @AfterEach // this method will run after each test
-    void shutdown() throws Exception
-    {
+    void shutdown() throws Exception {
         close();
     }
 
     @Test
-    void goToGoal()
-    {
+    void goToGoal() {
         TestUtil.runTest(rotary.setSetpoint(Rotary.Setpoint.RAISED), 3, rotary);
         try {
             // Check to see if Rotary subsystem is within tolerance of RAISED setpoint.
@@ -63,8 +60,7 @@ public class RotaryTest implements AutoCloseable {
     }
 
     @Test // marks this method as a test
-    void goToGoalWithWait()
-    {
+    void goToGoalWithWait() {
         TestUtil.runTest(rotary.setGoalCommandWithWait(Rotary.Setpoint.STOW), 3, rotary);
         try {
             // Check position to check if the subsystem is actually in tolerance of STOW setpoint.
@@ -75,8 +71,7 @@ public class RotaryTest implements AutoCloseable {
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         rotary.close();
     }
 }

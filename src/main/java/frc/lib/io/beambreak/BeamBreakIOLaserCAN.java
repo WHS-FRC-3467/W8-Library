@@ -77,8 +77,7 @@ public class BeamBreakIOLaserCAN implements BeamBreakIO {
     }
 
     @Override
-    public void updateInputs(BeamBreakInputs inputs)
-    {
+    public void updateInputs(BeamBreakInputs inputs) {
         Measurement measure = laserCAN.getMeasurement();
 
         if (measure == null) {

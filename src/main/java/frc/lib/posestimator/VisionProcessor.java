@@ -116,8 +116,7 @@ public class VisionProcessor {
      * @return An {@link Optional} containing the estimated robot pose, or empty if invalid.
      */
     private Optional<Pose2d> solveTrigPosition(Camera camera, TagObservation observation,
-        Rotation2d heading)
-    {
+        Rotation2d heading) {
         // Convert camera extrinsics to 2D pose for transform use
         Pose2d cameraPose2d = GeomUtil.toPose3d(camera.robotToCamera()).toPose2d();
 
@@ -168,8 +167,7 @@ public class VisionProcessor {
      * @param heading The robot’s current heading at the observation time.
      */
     private void add2DVisionObservation(Camera camera, Time timestamp,
-        TagObservation observation, Rotation2d heading)
-    {
+        TagObservation observation, Rotation2d heading) {
         Optional<Pose2d> pose = solveTrigPosition(camera, observation, heading);
         pose.ifPresent(p -> trigPoses.put(observation.id(),
             new TrigPoseRecord(p, observation.distance(), timestamp)));
@@ -195,8 +193,7 @@ public class VisionProcessor {
      *         empty if insufficient data is available or the tag pose is unknown.
      */
     private Optional<Pose3d> getConstrainedSolvePnPSeedFromVisionObservation(
-        VisionObservation observation)
-    {
+        VisionObservation observation) {
         Transform3d cameraToRobot = observation.camera().robotToCamera().inverse();
 
         if (observation.multiTagCameraPose().isPresent()) {
@@ -245,8 +242,7 @@ public class VisionProcessor {
      *         associated uncertainty, or empty if the observation is invalid or unreliable.
      */
     public Optional<PNPPoseRecord> addVisionObservation(VisionObservation observation,
-        Rotation2d heading)
-    {
+        Rotation2d heading) {
         var tags = observation.tagObservations();
         Camera camera = observation.camera();
         int tagCount = tags.size();
@@ -327,8 +323,7 @@ public class VisionProcessor {
      * @return an {@link Optional} {@link TrigPoseRecord} containing the pose if valid; otherwise
      *         empty
      */
-    public Optional<TrigPoseRecord> getTrigPose(int tagId)
-    {
+    public Optional<TrigPoseRecord> getTrigPose(int tagId) {
         return Optional.ofNullable(trigPoses.get(tagId));
     }
 }

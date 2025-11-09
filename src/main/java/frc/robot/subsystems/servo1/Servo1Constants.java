@@ -31,8 +31,7 @@ public class Servo1Constants {
     // Change as necessary
     public final static Angle MAXIMUM_ANGLE = Degrees.of(180.0);
 
-    public static Servo1 get()
-    {
+    public static Servo1 get() {
         switch (Constants.currentMode) {
             case REAL:
                 return new Servo1(new ServoIOPWM(Ports.servo1, NAME, MINIMUM_ANGLE, MAXIMUM_ANGLE));

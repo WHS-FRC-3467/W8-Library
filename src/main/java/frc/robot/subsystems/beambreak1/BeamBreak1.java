@@ -34,8 +34,7 @@ public class BeamBreak1 extends SubsystemBase {
     }
 
     @Override
-    public void periodic()
-    {
+    public void periodic() {
         beamBreak.periodic();
     }
 }

@@ -71,8 +71,7 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
     }
 
     @Override
-    public void periodic()
-    {
+    public void periodic() {
         Time currentTime = RobotController.getMeasureTime();
         double deltaTime = currentTime.minus(lastTime).in(Seconds);
 
@@ -106,65 +105,55 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
     }
 
     @Override
-    public void runCoast()
-    {
+    public void runCoast() {
         io.runCoast();
     }
 
     @Override
-    public void runBrake()
-    {
+    public void runBrake() {
         io.runBrake();
     }
 
     @Override
-    public void runVoltage(Voltage voltage)
-    {
+    public void runVoltage(Voltage voltage) {
         io.runVoltage(voltage);
     }
 
     @Override
-    public void runCurrent(Current current)
-    {
+    public void runCurrent(Current current) {
         io.runCurrent(current);
     }
 
     @Override
-    public void runDutyCycle(double dutyCycle)
-    {
+    public void runDutyCycle(double dutyCycle) {
         io.runDutyCycle(dutyCycle);
     }
 
     @Override
     public void runPosition(Angle position, AngularVelocity cruiseVelocity,
         AngularAcceleration acceleration,
-        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
-    {
+        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot) {
         io.runPosition(position, cruiseVelocity, acceleration, maxJerk, slot);
     }
 
     @Override
     public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
-        PIDSlot slot)
-    {
+        PIDSlot slot) {
         io.runVelocity(velocity, acceleration, slot);
     }
 
     @Override
-    public Current getTorqueCurrent()
-    {
+    public Current getTorqueCurrent() {
         return inputs.torqueCurrent;
     }
 
     @Override
-    public AngularVelocity getVelocity()
-    {
+    public AngularVelocity getVelocity() {
         return inputs.velocity;
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         io.close();
     }
 }

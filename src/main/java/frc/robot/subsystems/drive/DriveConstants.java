@@ -322,8 +322,7 @@ public class DriveConstants {
         }
     }
 
-    public static Drive get()
-    {
+    public static Drive get() {
         switch (Constants.currentMode) {
             case REAL:
                 return new Drive(

@@ -114,8 +114,7 @@ public class LinearMechanismVisualizer {
         goal.append(goalArm);
     }
 
-    private void update()
-    {
+    private void update() {
         switch (characteristics.axis()) {
             case X:
                 currentPose = offset.plus(new Transform3d(measured.getLength(), 0, 0,
@@ -139,15 +138,13 @@ public class LinearMechanismVisualizer {
         Logger.recordOutput(name + "Pose3d", currentPose);
     }
 
-    public void setMeasuredDistance(Distance distance)
-    {
+    public void setMeasuredDistance(Distance distance) {
         measured.setLength(distance.in(Meters));
 
         update();
     }
 
-    public void setTrajectoryDistance(Optional<Distance> distance)
-    {
+    public void setTrajectoryDistance(Optional<Distance> distance) {
         if (distance.isEmpty()) {
             trajectoryArm.setLength(0.0);
         }
@@ -160,8 +157,7 @@ public class LinearMechanismVisualizer {
         update();
     }
 
-    public void setGoalDistance(Optional<Distance> distance)
-    {
+    public void setGoalDistance(Optional<Distance> distance) {
         if (distance.isEmpty()) {
             goalArm.setLength(0.0);
         }
@@ -174,8 +170,7 @@ public class LinearMechanismVisualizer {
         update();
     }
 
-    public Supplier<Pose3d> getPoseSupplier()
-    {
+    public Supplier<Pose3d> getPoseSupplier() {
         return () -> currentPose;
     }
 }

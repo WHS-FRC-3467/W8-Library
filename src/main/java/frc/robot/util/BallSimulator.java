@@ -46,8 +46,7 @@ public class BallSimulator {
                 -Math.toRadians(45), 0 // 45 degree launch angle
             ));
 
-    public static void launch(LinearVelocity velocity)
-    {
+    public static void launch(LinearVelocity velocity) {
         RobotState robotState = RobotState.getInstance();
 
         objectTrajectory.clear();
@@ -66,8 +65,7 @@ public class BallSimulator {
 
     }
 
-    public static void update()
-    {
+    public static void update() {
         // Update position
         currentPose = new Pose3d(
             currentPose.getTranslation().plus(objectVelocity.times(dT)),
@@ -98,8 +96,7 @@ public class BallSimulator {
 
     }
 
-    public static Translation3d addDrag(Translation3d velocity)
-    {
+    public static Translation3d addDrag(Translation3d velocity) {
         double speed = velocity.getNorm();
         double fDrag =
             0.5 * DRAG_COEFFICIENT * CROSSECTION_AREA * AIR_DENSITY * Math.pow(speed, 2);

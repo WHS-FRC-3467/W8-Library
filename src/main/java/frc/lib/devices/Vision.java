@@ -38,8 +38,7 @@ public class Vision extends SubsystemBase {
     }
 
     @Override
-    public void periodic()
-    {
+    public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs(name, inputs);
 

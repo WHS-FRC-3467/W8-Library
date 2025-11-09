@@ -46,14 +46,12 @@ public class DistanceSensorIOSim implements DistanceSensorIO {
      *
      * @param distance The new distance readout
      */
-    public void setDistance(Distance distance)
-    {
+    public void setDistance(Distance distance) {
         this.distance = distance;
     }
 
     @Override
-    public void updateInputs(DistanceSensorInputs inputs)
-    {
+    public void updateInputs(DistanceSensorInputs inputs) {
         inputs.ambientSignal = 0.0;
         inputs.connected = true;
         if (tunableDistance.hasChanged(hashCode())) {

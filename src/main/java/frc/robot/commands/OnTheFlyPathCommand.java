@@ -88,8 +88,7 @@ public class OnTheFlyPathCommand extends Command {
     }
 
     @Override
-    public void initialize()
-    {
+    public void initialize() {
         if (shouldMirrorPath) {
             double FIELD_WIDTH = Units.inchesToMeters(317); // Should be in a FieldConstants.java
                                                             // file
@@ -154,8 +153,7 @@ public class OnTheFlyPathCommand extends Command {
     }
 
     @Override
-    public void execute()
-    {
+    public void execute() {
         command.execute();
 
         pathGenerationTrajectory.setRobotPose(currentPose.get());
@@ -169,8 +167,7 @@ public class OnTheFlyPathCommand extends Command {
     }
 
     @Override
-    public boolean isFinished()
-    {
+    public boolean isFinished() {
         // Is the magnitude of the difference between the current pose and the target pose (last
         // pose of the path) less than the tolerance?
         // Check rotation as well
@@ -182,8 +179,7 @@ public class OnTheFlyPathCommand extends Command {
     }
 
     @Override
-    public void end(boolean interrupted)
-    {
+    public void end(boolean interrupted) {
         command.end(interrupted);
 
         // Clear the on-the-fly path poses from the Field2d widget

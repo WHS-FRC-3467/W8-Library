@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.lib.io.objectDetection;
+package frc.lib.io.objectdetection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,6 @@ import edu.wpi.first.math.geometry.Transform3d;
 
 /** An object detection sim class that utilizes the PhotonVision implementation for tests. */
 public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
-    protected final String cameraName;
     private final VisionSystemSim visionSim;
     private final PhotonCamera cam;
     private final PhotonCameraSim camSim;
@@ -28,15 +27,14 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
     private VisionTargetSim[] visionTargets;
     private Set<VisionTargetSim> targetSet;
     private List<VisionTargetSim> targetList;
-    private final String target_name;
+    private final String targetName;
 
     public ObjectDetectionIOSim(String cameraName, Transform3d cameraTransform,
         Supplier<Pose2d> robotPoseSupplier,
-        String target_name, Supplier<VisionTargetSim[]> visionTargetSupplier)
+        String targetName, Supplier<VisionTargetSim[]> visionTargetSupplier)
     {
         super(cameraName);
-        this.cameraName = cameraName;
-        this.target_name = target_name;
+        this.targetName = targetName;
         // Initialize simulated object detection camera
         cam = new PhotonCamera(cameraName);
         camSim = new PhotonCameraSim(cam, new SimCameraProperties());
@@ -52,7 +50,7 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
         // Current vision targets
         visionTargets = visionTargetSupplier.get();
         // Add current vision targets to the sim field
-        visionSim.addVisionTargets(target_name, visionTargets);
+        visionSim.addVisionTargets(targetName, visionTargets);
         // Retrieve the vision targets on the sim field in a set and then convert it to a list for
         // easy indexing
         targetSet = visionSim.getVisionTargets();
@@ -65,13 +63,12 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
 
     // Update the robot's pose in the sim and use the super's implementation to update inputs
     @Override
-    public void updateInputs(ObjectDetectionIOInputs inputs)
-    {
+    public void updateInputs(ObjectDetectionIOInputs inputs) {
         // Update robot & target poses
         visionSim.update(robotPoseSupplier.get());
         visionSim.clearVisionTargets();
         visionTargets = visionTargetSupplier.get();
-        visionSim.addVisionTargets(target_name, visionTargets);
+        visionSim.addVisionTargets(targetName, visionTargets);
         // Log updated target poses for AScope
         targetSet = visionSim.getVisionTargets();
         targetList = new ArrayList<>(targetSet);
@@ -82,8 +79,7 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
     }
 
     @Override
-    public String getCamera()
-    {
+    public String getCamera() {
         return cameraName;
     }
 }

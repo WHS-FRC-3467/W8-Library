@@ -77,8 +77,7 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
     }
 
     @Override
-    public void updateInputs(DistanceSensorInputs inputs)
-    {
+    public void updateInputs(DistanceSensorInputs inputs) {
         Measurement measure = laserCAN.getMeasurement();
 
         if (measure == null) {
