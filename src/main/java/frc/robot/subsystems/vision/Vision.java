@@ -16,6 +16,7 @@
 package frc.robot.subsystems.vision;
 
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Seconds;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.Matrix;
@@ -27,11 +28,13 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.vision.VisionIOInputsAutoLogged;
 import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.util.Timestamped;
+import frc.robot.RobotState;
 import lombok.Getter;
 import frc.lib.io.vision.VisionIO;
 
@@ -125,7 +128,9 @@ public class Vision extends SubsystemBase {
                     || observation.pose().getX() < 0.0
                     || observation.pose().getX() > aprilTagLayout.getFieldLength()
                     || observation.pose().getY() < 0.0
-                    || observation.pose().getY() > aprilTagLayout.getFieldWidth();
+                    || observation.pose().getY() > aprilTagLayout.getFieldWidth()
+                    || Math
+                        .abs(RobotState.getInstance().getVelocity().omegaRadiansPerSecond) > 90.0;
 
                 // Add pose to log
                 robotPoses.add(observation.pose());
@@ -133,6 +138,10 @@ public class Vision extends SubsystemBase {
                     robotPosesRejected.add(observation.pose());
                 } else {
                     robotPosesAccepted.add(observation.pose());
+                    Logger.recordOutput("Vision/Accepted Pose Timestamp", observation.timestamp());
+                    Logger.recordOutput("Vision/Current Timestamp", Timer.getFPGATimestamp());
+                    Logger.recordOutput("Vision/Timestamp Diff (millis)",
+                        (Timer.getFPGATimestamp() - observation.timestamp().in(Seconds)) * 1000.0);
                 }
 
                 // Skip if rejected
@@ -153,10 +162,11 @@ public class Vision extends SubsystemBase {
                 }
 
                 // Send vision observation
+                // TODO: UNCOMMENT TO UPDATE DRIVE ODOM
                 consumer.accept(
                     observation.pose().toPose2d(),
                     observation.timestamp(),
-                    VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
+                    VecBuilder.fill(linearStdDev, linearStdDev, 1e5));
             }
 
             for (var tagObservation : inputs[cameraIndex].allTargets) {

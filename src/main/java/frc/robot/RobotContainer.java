@@ -244,8 +244,9 @@ public class RobotContainer {
         LoggedTuneableProfiledPID linearController =
             new LoggedTuneableProfiledPID("DriveToPose/LinearController", 3.0, 0, 0.1, 0, 3.0);
 
+        LoggedTunableNumber xPos = new LoggedTunableNumber("DriveToPose/X Position", 5);
         SmartDashboard.putData("DriveToPose Command",
-            new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
+            new DriveToPose(drive, () -> new Pose2d(xPos.get(), 5, Rotation2d.fromDegrees(90)))
                 .withTolerance(Inches.of(3), Degrees.of(5)));
 
         // controller.x()
