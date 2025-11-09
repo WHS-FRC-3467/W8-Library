@@ -64,14 +64,14 @@ public class VisionIOPhotonVision implements VisionIO {
         List<TagObservation> tagObservations = new ArrayList<>();
         Set<Integer> tagIDs = new HashSet<>();
 
-        poseEstimator.addHeadingData(Timer.getFPGATimestamp(), timestampedHeading.get());
+
         for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
             if (!result.hasTargets()) {
                 continue;
             }
 
             allTargets.addAll(result.getTargets());
-
+            poseEstimator.addHeadingData(Timer.getFPGATimestamp(), timestampedHeading.get());
             Optional<EstimatedRobotPose> optionalEstimate = poseEstimator.update(result);
             if (optionalEstimate.isEmpty()) {
                 continue;
