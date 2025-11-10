@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.io.objectdetection;
+package frc.lib.io.objectDetection;
 
 import java.util.List;
 import org.littletonrobotics.junction.AutoLog;
