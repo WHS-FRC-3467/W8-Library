@@ -15,6 +15,7 @@
 
 package frc.lib.io.vision;
 
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.units.measure.Time;
 import frc.lib.util.GeomUtil;
 import static edu.wpi.first.units.Units.Degrees;
@@ -101,8 +102,9 @@ public class VisionIOPhotonVision implements VisionIO {
         var multiTagResult = result.getMultiTagResult().map(multiTag -> new VisionObservation(
             timestamp,
             camera,
-            Optional.of(GeomUtil.toPose3d(multiTag.estimatedPose.best)),
-            tagObservations));
+            true,
+            GeomUtil.toPose3d(multiTag.estimatedPose.best),
+            tagObservations.toArray(TagObservation[]::new)));
 
         if (multiTagResult.isPresent()) {
             return Optional.of(multiTagResult.get());
@@ -111,8 +113,9 @@ public class VisionIOPhotonVision implements VisionIO {
         var singleTagResult = new VisionObservation(
             timestamp,
             camera,
-            Optional.empty(),
-            tagObservations);
+            false,
+            Pose3d.kZero,
+            tagObservations.toArray(TagObservation[]::new));
 
         return Optional.of(singleTagResult);
     }

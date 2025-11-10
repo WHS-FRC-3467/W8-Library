@@ -16,6 +16,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Seconds;
+import java.util.List;
 import java.util.Optional;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -63,7 +64,7 @@ public class RobotState {
     }
 
     public void addVisionObservation(VisionObservation observation) {
-        closestTagObservation = observation.tagObservations().stream().sorted((t1, t2) -> {
+        closestTagObservation = List.of(observation.tagObservations()).stream().sorted((t1, t2) -> {
             if (t2.distance().lt(t1.distance()))
                 return -1;
             if (t2.distance().gt(t1.distance()))
