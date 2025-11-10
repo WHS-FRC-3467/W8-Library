@@ -266,10 +266,10 @@ public class PoseEstimator {
      * Retrieves a triangulation-based pose estimate for a specific AprilTag.
      *
      * <p>
-     * This uses trigonometry from a single-tag observation and the robot’s historical odometry to
-     * compute the estimated robot pose at the time of observation. This is often more accurate than
-     * the global pose in close proximity high-ambiguity situations. The result is only returned if
-     * it is recent enough.
+     * This interpolates a pose obtained with trigonometry from a single-tag observation using the
+     * robot’s historical odometry to find estimate a robot pose when this method is called. This is
+     * often more accurate than the global pose in close proximity high-ambiguity situations. The
+     * result is only returned if it is recent enough.
      *
      * @param tagId the AprilTag ID
      * @return an {@link Optional} {@link Pose2d} containing the pose if valid and recent; otherwise
@@ -298,14 +298,6 @@ public class PoseEstimator {
      * This method should be called when the robot's absolute position on the field is known — for
      * example, at the start of autonomous or after a vision-based correction. It reinitializes both
      * the odometry integrator and the estimator’s internal pose state to the specified pose.
-     *
-     * <p>
-     * Specifically, this method:
-     * <ul>
-     * <li>Resets the internal {@link SwerveOdometer} to the given pose.</li>
-     * <li>Resets the internal {@link SwerveDrivePoseEstimator} to the given pose.</li>
-     * <li>Updates the estimator’s current {@code estimatedPose} to match.</li>
-     * </ul>
      *
      * @param pose the known {@link Pose2d} representing the robot’s field-relative position
      */

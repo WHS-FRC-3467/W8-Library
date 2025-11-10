@@ -23,7 +23,6 @@ import java.util.Optional;
 import org.photonvision.estimation.TargetModel;
 import org.photonvision.estimation.VisionEstimation;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
@@ -42,10 +41,9 @@ import lombok.experimental.Accessors;
  * <p>
  * This class handles both:
  * <ul>
- * <li><b>2D triangulation</b> — computing single-tag trigonometric estimates using measured
- * distance, yaw, and pitch.</li>
- * <li><b>3D PnP solving</b> — computing global robot pose using multi-tag constrained PnP solutions
- * via {@link VisionEstimation}.</li>
+ * <li>2D triangulation — computing single-tag trigonometric estimates using measured distance, yaw,
+ * and pitch.
+ * <li>3D PnP solving — computing global robot pose using multi-tag constrained PnP solutions.
  * </ul>
  *
  * <p>
@@ -53,10 +51,6 @@ import lombok.experimental.Accessors;
  * count, ambiguity, distance, and field boundaries. The resulting pose estimates are stored or
  * returned as {@link TrigPoseRecord} or {@link PNPPoseRecord}, each containing pose data and
  * uncertainty metrics for later fusion with odometry.
- *
- * <p>
- * This class does not directly modify a {@link SwerveDrivePoseEstimator} or fused pose; it serves
- * as a dedicated vision processing component for use within a higher-level estimator.
  */
 @AllArgsConstructor
 @Accessors(fluent = true)
@@ -103,12 +97,6 @@ public class VisionProcessor {
 
     /**
      * Computes a robot pose from a single AprilTag observation using trigonometric relationships.
-     *
-     * <p>
-     * This method estimates the robot’s position in the field by combining the tag’s known
-     * location, the measured distance, yaw, and pitch from the camera, and the robot’s current
-     * heading. This approach avoids PnP solving and is useful for close-range or single-tag
-     * detections where ambiguity is low.
      *
      * @param camera The camera model containing intrinsic and extrinsic parameters.
      * @param observation The detected AprilTag observation.
@@ -178,13 +166,6 @@ public class VisionProcessor {
      * vision data.
      *
      * <p>
-     * This method attempts to derive a reasonable starting pose for PnP optimization based on the
-     * detected tags and their known field locations. If a multi-tag estimate is available from the
-     * vision system, it is used directly as the seed. Otherwise, a single-tag-based geometric
-     * estimate is computed using the tag’s known field pose, the camera-to-tag transform, and the
-     * camera’s extrinsics.
-     *
-     * <p>
      * Providing a good seed improves the convergence and accuracy of the constrained PnP solver,
      * especially in multi-tag scenarios or when tags are at oblique viewing angles.
      *
@@ -196,8 +177,9 @@ public class VisionProcessor {
         VisionObservation observation) {
         Transform3d cameraToRobot = observation.camera().robotToCamera().inverse();
 
-        if (observation.multiTagCameraPose().isPresent()) {
-            Pose3d robotPose = observation.multiTagCameraPose().get().plus(cameraToRobot);
+        var optionalMultiTagCameraPose = observation.multiTagCameraPose();
+        if (optionalMultiTagCameraPose.isPresent()) {
+            Pose3d robotPose = optionalMultiTagCameraPose.get().plus(cameraToRobot);
             return Optional.of(robotPose);
         }
 
@@ -225,16 +207,6 @@ public class VisionProcessor {
 
     /**
      * Processes a complete set of vision tag detections and computes a 3D pose estimate if valid.
-     *
-     * <p>
-     * This method performs several key steps:
-     * <ol>
-     * <li>Generates single-tag triangulated poses for all detections.</li>
-     * <li>Rejects observations with invalid data.</li>
-     * <li>Uses PhotonVision’s constrained PnP solver to estimate the robot’s full 3D pose.</li>
-     * <li>Applies filtering and field boundary checks to reject impossible results.</li>
-     * <li>Computes uncertainty values based on distance and tag count.</li>
-     * </ol>
      *
      * @param observation The {@link VisionObservation} containing all AprilTag detections.
      * @param heading The robot’s field-relative heading at the observation time.

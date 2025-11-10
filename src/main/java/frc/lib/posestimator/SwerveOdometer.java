@@ -39,26 +39,10 @@ import lombok.Getter;
  * estimate, and maintains a time-buffered history of poses for interpolation. It is intended to be
  * used by a higher-level {@link PoseEstimator} that fuses odometry with vision or other sensors. Do
  * not use this class on it's own, use {@link SwerveDriveOdometry}.
- *
- * <p>
- * Responsibilities:
- * <ul>
- * <li>Track last known module positions for twist calculation.</li>
- * <li>Compute incremental robot motion and update the odometry pose.</li>
- * <li>Maintain a timestamped buffer of recent poses for temporal interpolation.</li>
- * </ul>
  */
 public class SwerveOdometer {
     /**
      * Represents a single odometry observation from the swerve drive.
-     *
-     * <p>
-     * This record encapsulates the information required to update the robot's odometry:
-     * <ul>
-     * <li>{@code timestamp} — the time at which the observation was made</li>
-     * <li>{@code swervePositions} — the positions of all swerve modules at this time</li>
-     * <li>{@code gyroAngle} — an optional gyro heading to correct orientation drift</li>
-     * </ul>
      *
      * <p>
      * Instances of this record are intended to be passed to
@@ -174,16 +158,6 @@ public class SwerveOdometer {
      * as after autonomous initialization or when a vision-based correction is applied. It updates
      * the internal odometry pose, timestamp, and gyro offset to align with the provided
      * {@link Pose2d}.
-     *
-     * <p>
-     * Specifically, this method:
-     * <ul>
-     * <li>Updates the latest odometry timestamp to the current robot controller time.</li>
-     * <li>Recalculates the gyro offset so that the heading reported by the gyro aligns with the
-     * provided pose’s rotation.</li>
-     * <li>Sets the internal odometry pose estimate to the given pose.</li>
-     * <li>Clears the odometry buffer to remove outdated interpolated poses.</li>
-     * </ul>
      *
      * @param pose the new field-relative {@link Pose2d} representing the robot's known position
      */
