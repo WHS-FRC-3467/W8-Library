@@ -91,11 +91,12 @@ public class SwerveOdometer {
      * Constructs a new {@code OdometryPoseIntegrator}.
      *
      * @param kinematics the swerve drive kinematics for computing motion deltas
-     * @param headingBufferSize the duration for which odometry poses are buffered for interpolation
+     * @param odometryBufferSize the duration for which odometry poses are buffered for
+     *        interpolation
      */
-    public SwerveOdometer(SwerveDriveKinematics kinematics, Time headingBufferSize) {
+    public SwerveOdometer(SwerveDriveKinematics kinematics, Time odometryBufferSize) {
         this.kinematics = kinematics;
-        odometryBuffer = TimeInterpolatableBuffer.createBuffer(headingBufferSize.in(Seconds));
+        odometryBuffer = TimeInterpolatableBuffer.createBuffer(odometryBufferSize.in(Seconds));
     }
 
     /**

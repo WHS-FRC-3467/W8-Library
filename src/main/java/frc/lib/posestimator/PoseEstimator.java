@@ -20,18 +20,21 @@ import static edu.wpi.first.units.Units.Seconds;
 import java.util.Optional;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Timer;
 
 import frc.lib.io.vision.VisionIO.VisionObservation;
 import frc.lib.posestimator.SwerveOdometer.OdometryObservation;
+import frc.lib.posestimator.VisionProcessor.PNPPoseRecord;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -59,17 +62,18 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class PoseEstimator {
 
-    private static final double DEFAULT_HEADING_BUFFER_SIZE_SECONDS = 2;
+    private static final double DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS = 2;
     private static final double DEFAULT_AMBIGUITY_THRESHOLD = 0.3;
     private static final double DEFAULT_MAX_Z_METERS = 0.75;
-    private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
-    private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
+    private static final double DEFAULT_VISION_LINEAR_STDDEV_FACTOR = 0.4;
+    private static final double DEFAULT_VISION_ANGULAR_STDDEV_FACTOR = 0.4;
+    private static final double DEFAULT_ODOMETRY_LINEAR_STDDEV = 0.01;
+    private static final double DEFAULT_ODOMETRY_ANGULAR_STDDEV = 0.01;
     private static final double DEFAULT_TRIG_STALE_TIME_SECONDS = 0.2;
     private static final double DEFAULT_GYRO_HEADING_SCALE_FACTOR = 10.0;
 
     private final SwerveOdometer odometer;
     private final VisionProcessor visionProcessor;
-    private final SwerveDrivePoseEstimator swerveEstimator;
 
     /**
      * Sets the maximum acceptable pose ambiguity value for single-tag vision observations.
@@ -151,6 +155,22 @@ public class PoseEstimator {
     private double trigStaleTimeSeconds = DEFAULT_TRIG_STALE_TIME_SECONDS;
 
     /**
+     * Sets the linear standard deviation (noise) of odometry
+     *
+     * @param linearOdometryStdDev The linear standard deviation
+     */
+    @Setter
+    private double linearOdometryStdDev = DEFAULT_ODOMETRY_LINEAR_STDDEV;
+
+    /**
+     * Sets the angular standard deviation (noise) of odometry
+     *
+     * @param angularOdometryStdDev The angular standard deviation
+     */
+    @Setter
+    private double angularOdometryStdDev = DEFAULT_ODOMETRY_ANGULAR_STDDEV;
+
+    /**
      * Returns the current fused estimated pose of the robot.
      *
      * <p>
@@ -164,28 +184,22 @@ public class PoseEstimator {
      *
      * @param fieldLayout the AprilTag field layout defining tag positions
      * @param kinematics the robot's swerve drive kinematics model
-     * @param headingBufferSize the maximum duration of stored odometry samples used for
+     * @param odometryBufferSize the maximum duration of stored odometry samples used for
      *        interpolation
      */
-    public PoseEstimator(AprilTagFieldLayout fieldLayout, SwerveDriveKinematics kinematics,
-        Time headingBufferSize) {
-        odometer = new SwerveOdometer(kinematics, headingBufferSize);
+    public PoseEstimator(
+        AprilTagFieldLayout fieldLayout,
+        SwerveDriveKinematics kinematics,
+        Time odometryBufferSize) {
+        odometer = new SwerveOdometer(kinematics, odometryBufferSize);
         visionProcessor =
             new VisionProcessor(
                 fieldLayout,
                 DEFAULT_AMBIGUITY_THRESHOLD,
                 DEFAULT_MAX_Z_METERS,
                 DEFAULT_GYRO_HEADING_SCALE_FACTOR,
-                DEFAULT_LINEAR_STDDEV_FACTOR,
-                DEFAULT_ANGULAR_STDDEV_FACTOR);
-
-        swerveEstimator = new SwerveDrivePoseEstimator(
-            kinematics, Rotation2d.kZero, new SwerveModulePosition[] {
-                    new SwerveModulePosition(),
-                    new SwerveModulePosition(),
-                    new SwerveModulePosition(),
-                    new SwerveModulePosition()
-            }, Pose2d.kZero);
+                DEFAULT_VISION_LINEAR_STDDEV_FACTOR,
+                DEFAULT_VISION_ANGULAR_STDDEV_FACTOR);
     }
 
     /**
@@ -195,7 +209,7 @@ public class PoseEstimator {
      * @param kinematics the robot's swerve drive kinematics model
      */
     public PoseEstimator(AprilTagFieldLayout fieldLayout, SwerveDriveKinematics kinematics) {
-        this(fieldLayout, kinematics, Seconds.of(DEFAULT_HEADING_BUFFER_SIZE_SECONDS));
+        this(fieldLayout, kinematics, Seconds.of(DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS));
     }
 
     /**
@@ -209,12 +223,36 @@ public class PoseEstimator {
      *        an optional gyro heading
      */
     public void addOdometryObservation(OdometryObservation observation) {
+        Pose2d lastOdometryPose = odometer.getOdometryPose();
         odometer.addOdometryObservation(observation);
-        swerveEstimator.updateWithTime(trigStaleTimeSeconds,
-            odometer.getOdometryPose().getRotation(),
-            observation.swervePositions().toArray(new SwerveModulePosition[0]));
+        Pose2d newOdometryPose = odometer.getOdometryPose();
 
-        estimatedPose = swerveEstimator.getEstimatedPosition();
+        Twist2d twist = lastOdometryPose.log(newOdometryPose);
+
+        estimatedPose = estimatedPose.exp(twist);
+    }
+
+    /**
+     * Attempts to get the tranform between the pose of the robot at the specified timestamp and
+     * now.
+     * 
+     * <p>
+     * This method will fail if the odometer's buffer does not contain enough measurements to
+     * interpolate.
+     * 
+     * @param time The timestamp to get the transform from
+     * @return The optional transform from {@code time} to now
+     */
+    private Optional<Transform2d> getPoseDelta(Time time) {
+        var optionalOdometryPoseAtTime = odometer.getOdometryBuffer().getSample(time.in(Seconds));
+        if (optionalOdometryPoseAtTime.isEmpty()) {
+            return Optional.empty();
+        }
+        Pose2d odometryPoseAtTime = optionalOdometryPoseAtTime.get();
+
+        Transform2d thenToNow = odometryPoseAtTime.minus(odometer.getOdometryPose());
+
+        return Optional.of(thenToNow);
     }
 
     /**
@@ -229,30 +267,69 @@ public class PoseEstimator {
      *        metadata
      */
     public void addVisionObservation(VisionObservation observation) {
-        double timestampSeconds = observation.timestamp().in(Seconds);
-
-        var optionalSample = swerveEstimator.sampleAt(timestampSeconds);
-        if (optionalSample.isEmpty()) {
+        // Attempt to get heading. Fails if the odometer has not recorded
+        // a measurement near this timestamp
+        var optionalPoseDelta = getPoseDelta(observation.timestamp());
+        if (optionalPoseDelta.isEmpty()) {
             return;
         }
-        Pose2d sample = optionalSample.get();
+        Transform2d poseDelta = optionalPoseDelta.get();
 
-        var optionalPoseRecord =
-            visionProcessor.addVisionObservation(observation, sample.getRotation());
-        if (optionalPoseRecord.isEmpty()) {
+        Pose2d oldPose = estimatedPose.plus(poseDelta.inverse());
+        var optionalGlobalPoseRecord =
+            visionProcessor.processVisionObservation(observation, oldPose.getRotation());
+        if (optionalGlobalPoseRecord.isEmpty()) {
             return;
         }
-        var poseRecord = optionalPoseRecord.get();
+        PNPPoseRecord newVisionPose = optionalGlobalPoseRecord.get();
 
-        swerveEstimator.addVisionMeasurement(
-            poseRecord.pose().toPose2d(),
-            timestampSeconds,
+        // Solve Kalman gain matrix given observation standard deviations
+        // Copied from:
+        // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/edu/wpi/first/math/estimator/PoseEstimator.java#L93-L109
+        double[] visionStdDevs = {
+                newVisionPose.linearStdDev(), // X axis
+                newVisionPose.linearStdDev(), // Y axis
+                newVisionPose.angularStdDev()}; // Rotation
+
+        double[] odometryStdDevs = {
+                linearOdometryStdDev, // X axis
+                linearOdometryStdDev, // Y axis
+                angularOdometryStdDev // Rotation
+        };
+
+        Matrix<N3, N3> visionKalmanGain = new Matrix<>(Nat.N3(), Nat.N3());
+        for (int row = 0; row < 3; ++row) {
+            double odometryStdDev = odometryStdDevs[row];
+            if (odometryStdDev == 0.0) {
+                visionKalmanGain.set(row, row, 0.0);
+            } else {
+                visionKalmanGain.set(row, row, odometryStdDev
+                    / (odometryStdDev + Math.sqrt(odometryStdDev * visionStdDevs[row])));
+            }
+        }
+
+        // Transform between our best estimated pose at the time the frame was captured to where the
+        // camera is saying we should be, unscaled (without any Kalman gain applied)
+        // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/edu/wpi/first/math/estimator/PoseEstimator.java#L276-L292
+        Transform2d unscaledVisionCorrection =
+            new Transform2d(oldPose, newVisionPose.pose().toPose2d());
+
+        // Scale the vision correction by the Kalman gain
+        var scaledVisionCorrectionVector = visionKalmanGain.times(
             VecBuilder.fill(
-                poseRecord.linearStdDev(),
-                poseRecord.linearStdDev(),
-                poseRecord.angularStdDev()));
+                unscaledVisionCorrection.getX(),
+                unscaledVisionCorrection.getY(),
+                unscaledVisionCorrection.getRotation().getRadians()));
 
-        estimatedPose = swerveEstimator.getEstimatedPosition();
+        // Convert to Transform2d
+        Transform2d scaledVisionCorrection = new Transform2d(
+            scaledVisionCorrectionVector.get(0, 0),
+            scaledVisionCorrectionVector.get(1, 0),
+            Rotation2d.fromRadians(scaledVisionCorrectionVector.get(2, 0)));
+
+        estimatedPose = oldPose
+            .transformBy(scaledVisionCorrection) // Adjust by the correction
+            .transformBy(poseDelta); // Bring back to present time (latency comp)
     }
 
     /** Check if triangulated pose is too old to be valid */
@@ -303,7 +380,6 @@ public class PoseEstimator {
      */
     public void resetPose(Pose2d pose) {
         odometer.resetPose(pose);
-        swerveEstimator.resetPose(pose);
         estimatedPose = pose;
     }
 }

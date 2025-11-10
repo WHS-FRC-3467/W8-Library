@@ -47,6 +47,8 @@ public class RobotState {
     @Getter
     @AutoLogOutput(key = "Odometry/Robot")
     private Pose2d estimatedPose = Pose2d.kZero;
+    @AutoLogOutput(key = "Odometry/Test")
+    private Pose2d testPose = Pose2d.kZero;
     @Getter
     private Optional<TagObservation> closestTagObservation = Optional.empty();
 
@@ -57,6 +59,7 @@ public class RobotState {
     public void addOdometryObservation(OdometryObservation observation) {
         poseEstimator.addOdometryObservation(observation);
         estimatedPose = poseEstimator.estimatedPose();
+        testPose = poseEstimator.getTrigPose(10).orElse(Pose2d.kZero);
     }
 
     public void addVisionObservation(VisionObservation observation) {

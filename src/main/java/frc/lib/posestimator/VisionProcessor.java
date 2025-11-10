@@ -213,7 +213,7 @@ public class VisionProcessor {
      * @return An {@link Optional} containing a {@link PNPPoseRecord} with the estimated pose and
      *         associated uncertainty, or empty if the observation is invalid or unreliable.
      */
-    public Optional<PNPPoseRecord> addVisionObservation(VisionObservation observation,
+    public Optional<PNPPoseRecord> processVisionObservation(VisionObservation observation,
         Rotation2d heading) {
         var tags = observation.tagObservations();
         Camera camera = observation.camera();
