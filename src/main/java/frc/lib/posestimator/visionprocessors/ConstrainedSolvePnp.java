@@ -16,7 +16,6 @@
 package frc.lib.posestimator.visionprocessors;
 
 import static edu.wpi.first.units.Units.Meters;
-import java.util.List;
 import java.util.Optional;
 import org.photonvision.estimation.TargetModel;
 import org.photonvision.estimation.VisionEstimation;
@@ -103,15 +102,16 @@ public class ConstrainedSolvePnp implements VisionProcessor {
         VisionObservation observation) {
         Transform3d cameraToRobot = observation.camera().robotToCamera().inverse();
 
-        if (observation.multiTagCameraPoseIsPresent()) {
-            Pose3d robotPose = observation.multiTagCameraPose().plus(cameraToRobot);
+        var optionalMultiTagCameraPose = observation.multiTagCameraPose();
+        if (optionalMultiTagCameraPose.isPresent()) {
+            Pose3d robotPose = optionalMultiTagCameraPose.get().plus(cameraToRobot);
             return Optional.of(robotPose);
         }
 
-        if (observation.tagObservations().length == 0) {
+        if (observation.tagObservations().isEmpty()) {
             return Optional.empty();
         }
-        TagObservation bestTagObservation = observation.tagObservations()[0];
+        TagObservation bestTagObservation = observation.tagObservations().get(0);
 
         if (bestTagObservation.ambiguity() > ambiguityThreshold) {
             return Optional.empty();
@@ -141,7 +141,7 @@ public class ConstrainedSolvePnp implements VisionProcessor {
     @Override
     public Optional<PoseRecord> processVisionObservation(VisionObservation observation,
         Rotation2d heading) {
-        var tags = List.of(observation.tagObservations());
+        var tags = observation.tagObservations();
         Camera camera = observation.camera();
         int tagCount = tags.size();
 

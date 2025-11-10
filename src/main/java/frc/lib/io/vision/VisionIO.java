@@ -27,6 +27,7 @@ import edu.wpi.first.units.measure.Time;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import java.util.List;
+import java.util.Optional;
 import org.littletonrobotics.junction.AutoLog;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import org.photonvision.targeting.TargetCorner;
@@ -129,16 +130,14 @@ public interface VisionIO {
      *
      * @param timestamp the capture time of the observation
      * @param camera the camera that generated this observation
-     * @param multiTagCameraPoseIsPresent Whether or not the multitag pose is present
-     * @param multiTagCameraPose nullable estimated pose of the camera using multiple tags
+     * @param multiTagCameraPose optional estimated pose of the camera using multiple tags
      * @param tagObservations the list of detected tags in this frame
      */
     public static record VisionObservation(
         Time timestamp,
         Camera camera,
-        boolean multiTagCameraPoseIsPresent,
-        Pose3d multiTagCameraPose,
-        TagObservation[] tagObservations) {
+        Optional<Pose3d> multiTagCameraPose,
+        List<TagObservation> tagObservations) {
     }
 
     public default void updateInputs(VisionIOInputs inputs) {}
