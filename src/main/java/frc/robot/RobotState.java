@@ -59,7 +59,7 @@ public class RobotState {
 
     public void addOdometryObservation(OdometryObservation observation) {
         poseEstimator.addOdometryObservation(observation);
-        // estimatedPose = poseEstimator.estimatedPose();
+        estimatedPose = poseEstimator.estimatedPose();
     }
 
     public void addVisionObservation(VisionObservation observation) {
@@ -72,7 +72,7 @@ public class RobotState {
         }).findFirst();
 
         poseEstimator.addVisionObservation(observation);
-        // estimatedPose = poseEstimator.estimatedPose();
+        estimatedPose = poseEstimator.estimatedPose();
     }
 
     /** Returns the current odometry rotation. */
