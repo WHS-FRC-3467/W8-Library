@@ -19,22 +19,21 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.Optional;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.Timer;
 
 import frc.lib.io.vision.VisionIO.VisionObservation;
+import frc.lib.posestimator.PoseEstimator.VisionProcessor.PoseRecord;
 import frc.lib.posestimator.SwerveOdometer.OdometryObservation;
-import frc.lib.posestimator.VisionProcessor.PNPPoseRecord;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -61,98 +60,25 @@ import lombok.experimental.Accessors;
  */
 @Accessors(fluent = true)
 public class PoseEstimator {
+    public static interface VisionProcessor {
+        /** Stores a 3D PnP pose estimate along with computed uncertainty metrics. */
+        public static final record PoseRecord(
+            Pose3d pose,
+            double linearStdDev,
+            double angularStdDev) {
+        }
+
+        Optional<PoseRecord> processVisionObservation(
+            VisionObservation observation,
+            Rotation2d heading);
+    }
 
     private static final double DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS = 2;
-    private static final double DEFAULT_AMBIGUITY_THRESHOLD = 0.3;
-    private static final double DEFAULT_MAX_Z_METERS = 0.75;
-    private static final double DEFAULT_VISION_LINEAR_STDDEV_FACTOR = 0.4;
-    private static final double DEFAULT_VISION_ANGULAR_STDDEV_FACTOR = 0.4;
     private static final double DEFAULT_ODOMETRY_LINEAR_STDDEV = 0.01;
     private static final double DEFAULT_ODOMETRY_ANGULAR_STDDEV = 0.01;
-    private static final double DEFAULT_TRIG_STALE_TIME_SECONDS = 0.2;
-    private static final double DEFAULT_GYRO_HEADING_SCALE_FACTOR = 10.0;
 
     private final SwerveOdometer odometer;
     private final VisionProcessor visionProcessor;
-
-    /**
-     * Sets the maximum acceptable pose ambiguity value for single-tag vision observations.
-     *
-     * <p>
-     * Vision updates with ambiguity values above this threshold are rejected to prevent unstable
-     * pose corrections. Ambiguity is a dimensionless value in the range [0, 1], where lower values
-     * indicate higher confidence.
-     *
-     * @param ambiguityThreshold the maximum acceptable tag pose ambiguity
-     */
-    public void ambiguityThreshold(double ambiguityThreshold) {
-        visionProcessor.ambiguityThreshold(ambiguityThreshold);
-    }
-
-    /**
-     * Sets the maximum allowed Z-height (in meters) from a vision-estimated pose.
-     *
-     * <p>
-     * Vision estimates with a Z position above this value are discarded to avoid accepting
-     * physically invalid poses (e.g., the robot floating above the field).
-     *
-     * @param maxZMeters the maximum allowable Z height (in meters)
-     */
-    public void maxZMeters(double maxZMeters) {
-        visionProcessor.maxZMeters(maxZMeters);
-    }
-
-    /**
-     * Sets the linear standard deviation scaling factor for vision measurements.
-     *
-     * <p>
-     * This factor determines how much positional uncertainty to assign to a vision update based on
-     * target distance. Higher values make the estimator trust odometry more and vision less.
-     *
-     * @param linearStdDevFactor the scaling factor applied to linear standard deviation
-     */
-    public void linearStdDevFactor(double linearStdDevFactor) {
-        visionProcessor.linearStdDevFactor(linearStdDevFactor);
-    }
-
-    /**
-     * Sets the angular standard deviation scaling factor for vision measurements.
-     *
-     * <p>
-     * This factor determines how much rotational uncertainty to assign to a vision update based on
-     * target distance. Higher values reduce the weight of vision-based heading corrections. This is
-     * recommended to be much higher than {@link linearStdDevFactor}.
-     *
-     * @param angularStdDevFactor the scaling factor applied to angular standard deviation
-     */
-    public void angularStdDevFactor(double angularStdDevFactor) {
-        visionProcessor.angularStdDevFactor(angularStdDevFactor);
-    }
-
-    /**
-     * Sets the scale factor applied to gyro heading during constrained PnP vision pose solving.
-     *
-     * <p>
-     * A higher value increases the influence of the current gyro heading in the constrained solver,
-     * biasing the result toward the robot’s estimated orientation.
-     *
-     * @param gyroHeadingScaleFactor the heading weighting factor for the vision solver
-     */
-    public void gyroHeadingScaleFactor(double gyroHeadingScaleFactor) {
-        visionProcessor.gyroHeadingScaleFactor(gyroHeadingScaleFactor);
-    }
-
-    /**
-     * Sets the maximum age (in seconds) before a triangulated tag-based pose is considered stale.
-     *
-     * <p>
-     * Triangulation poses older than this value are ignored when retrieved via
-     * {@link #getTrigPose(int)}.
-     *
-     * @param trigStaleTimeSeconds the maximum allowed time difference (in seconds)
-     */
-    @Setter
-    private double trigStaleTimeSeconds = DEFAULT_TRIG_STALE_TIME_SECONDS;
 
     /**
      * Sets the linear standard deviation (noise) of odometry
@@ -181,35 +107,28 @@ public class PoseEstimator {
 
     /**
      * Constructs a new {@code PoseEstimator}.
-     *
-     * @param fieldLayout the AprilTag field layout defining tag positions
-     * @param kinematics the robot's swerve drive kinematics model
-     * @param odometryBufferSize the maximum duration of stored odometry samples used for
+     * 
+     * @param visionProcessor The {@code VisionProcessor} to use
+     * @param kinematics The robot's swerve drive kinematics model
+     * @param odometryBufferSize The maximum duration of stored odometry samples used for
      *        interpolation
      */
     public PoseEstimator(
-        AprilTagFieldLayout fieldLayout,
+        VisionProcessor visionProcessor,
         SwerveDriveKinematics kinematics,
         Time odometryBufferSize) {
+        this.visionProcessor = visionProcessor;
         odometer = new SwerveOdometer(kinematics, odometryBufferSize);
-        visionProcessor =
-            new VisionProcessor(
-                fieldLayout,
-                DEFAULT_AMBIGUITY_THRESHOLD,
-                DEFAULT_MAX_Z_METERS,
-                DEFAULT_GYRO_HEADING_SCALE_FACTOR,
-                DEFAULT_VISION_LINEAR_STDDEV_FACTOR,
-                DEFAULT_VISION_ANGULAR_STDDEV_FACTOR);
     }
 
     /**
      * Constructs a new {@code PoseEstimator} using a default heading buffer size.
      *
-     * @param fieldLayout the AprilTag field layout defining tag positions
+     * @param visionProcessor The {@code VisionProcessor} to use
      * @param kinematics the robot's swerve drive kinematics model
      */
-    public PoseEstimator(AprilTagFieldLayout fieldLayout, SwerveDriveKinematics kinematics) {
-        this(fieldLayout, kinematics, Seconds.of(DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS));
+    public PoseEstimator(VisionProcessor visionProcessor, SwerveDriveKinematics kinematics) {
+        this(visionProcessor, kinematics, Seconds.of(DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS));
     }
 
     /**
@@ -281,7 +200,7 @@ public class PoseEstimator {
         if (optionalGlobalPoseRecord.isEmpty()) {
             return;
         }
-        PNPPoseRecord newVisionPose = optionalGlobalPoseRecord.get();
+        PoseRecord newVisionPose = optionalGlobalPoseRecord.get();
 
         // Solve Kalman gain matrix given observation standard deviations
         // Copied from:
@@ -330,42 +249,6 @@ public class PoseEstimator {
         estimatedPose = oldPose
             .transformBy(scaledVisionCorrection) // Adjust by the correction
             .transformBy(poseDelta); // Bring back to present time (latency comp)
-    }
-
-    /** Check if triangulated pose is too old to be valid */
-    private boolean isTrigStale(Time timestamp) {
-        Time latestTime = odometer.getLatestOdometryTimestamp()
-            .orElse(Seconds.of(Timer.getTimestamp()));
-        return latestTime.minus(timestamp).gte(Seconds.of(trigStaleTimeSeconds));
-    }
-
-    /**
-     * Retrieves a triangulation-based pose estimate for a specific AprilTag.
-     *
-     * <p>
-     * This interpolates a pose obtained with trigonometry from a single-tag observation using the
-     * robot’s historical odometry to find estimate a robot pose when this method is called. This is
-     * often more accurate than the global pose in close proximity high-ambiguity situations. The
-     * result is only returned if it is recent enough.
-     *
-     * @param tagId the AprilTag ID
-     * @return an {@link Optional} {@link Pose2d} containing the pose if valid and recent; otherwise
-     *         empty
-     */
-    public Optional<Pose2d> getTrigPose(int tagId) {
-        var optionalData = visionProcessor.getTrigPose(tagId);
-        if (optionalData.isEmpty()) {
-            return Optional.empty();
-        }
-        var data = optionalData.get();
-
-        if (isTrigStale(data.timestamp())) {
-            return Optional.empty();
-        }
-
-        var sample = odometer.getOdometryBuffer().getSample(data.timestamp().in(Seconds));
-        return sample.map(pose2d -> data.pose()
-            .plus(new Transform2d(pose2d, odometer.getOdometryPose())));
     }
 
     /**
