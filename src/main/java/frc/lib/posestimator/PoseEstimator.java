@@ -61,7 +61,7 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class PoseEstimator {
     public static interface VisionProcessor {
-        /** Stores a 3D PnP pose estimate along with computed uncertainty metrics. */
+        /** Stores a vision pose estimate along with computed uncertainty metrics. */
         public static final record PoseRecord(
             Pose3d pose,
             double linearStdDev,
