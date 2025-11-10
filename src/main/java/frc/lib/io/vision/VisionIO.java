@@ -15,7 +15,9 @@
 
 package frc.lib.io.vision;
 
+import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
@@ -26,18 +28,130 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Seconds;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.LogTable;
+import org.littletonrobotics.junction.inputs.LoggableInputs;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import org.photonvision.targeting.TargetCorner;
 
 public interface VisionIO {
-    @AutoLog
-    public static class VisionIOInputs {
+    public class VisionIOInputs implements LoggableInputs {
         public boolean connected = false;
-        public VisionObservation[] poseObservations = null;
+        public VisionIO.VisionObservation[] poseObservations = new VisionIO.VisionObservation[0];
+
+        @Override
+        public void toLog(LogTable table) {
+            table.put("Connected", connected);
+            table.put("ObservationCount", poseObservations.length);
+
+            for (int i = 0; i < poseObservations.length; i++) {
+                var obs = poseObservations[i];
+                var prefix = "Observations/" + i + "/";
+
+                table.put(prefix + "Timestamp", obs.timestamp.in(Seconds));
+
+                // Camera info
+                var cam = obs.camera();
+                var camPrefix = prefix + "Camera/";
+                table.put(camPrefix + "Name", cam.name());
+                table.put(camPrefix + "ResWidth", cam.resolutionWidth());
+                table.put(camPrefix + "ResHeight", cam.resultionHeight());
+                table.put(camPrefix + "RobotToCamera", cam.robotToCamera());
+
+                // Intrinsics
+                table.put(camPrefix + "CameraMatrix", cam.cameraMatrix().getData());
+                table.put(camPrefix + "DistCoeffs", cam.distCoeffs().getData());
+
+                // Optional multi-tag pose
+                if (obs.multiTagCameraPose().isPresent()) {
+                    table.put(prefix + "HasMultiPose", true);
+                    table.put(prefix + "MultiPose", obs.multiTagCameraPose().get());
+                } else {
+                    table.put(prefix + "HasMultiPose", false);
+                }
+
+                // Tag observations
+                var tags = obs.tagObservations();
+                table.put(prefix + "TagCount", tags.size());
+                for (int j = 0; j < tags.size(); j++) {
+                    var tag = tags.get(j);
+                    var tagPrefix = prefix + "Tags/" + j + "/";
+
+                    table.put(tagPrefix + "ID", tag.id());
+                    table.put(tagPrefix + "Area", tag.area());
+                    table.put(tagPrefix + "PitchDeg", tag.pitch().in(Degrees));
+                    table.put(tagPrefix + "YawDeg", tag.yaw().in(Degrees));
+                    table.put(tagPrefix + "Ambiguity", tag.ambiguity());
+                    table.put(tagPrefix + "Distance", tag.distance().in(Meters));
+                    table.put(tagPrefix + "CameraToTarget", tag.cameraToTarget());
+                }
+            }
+        }
+
+        @Override
+        public void fromLog(LogTable table) {
+            connected = table.get("Connected", false);
+            int obsCount = table.get("ObservationCount", 0);
+            poseObservations = new VisionIO.VisionObservation[obsCount];
+
+            for (int i = 0; i < obsCount; i++) {
+                var prefix = "Observations/" + i + "/";
+
+                Time timestamp = Seconds.of(table.get(prefix + "Timestamp", 0.0));
+
+                // Camera reconstruction
+                var camPrefix = prefix + "Camera/";
+                String name = table.get(camPrefix + "Name", "");
+                int width = table.get(camPrefix + "ResWidth", 0);
+                int height = table.get(camPrefix + "ResHeight", 0);
+                Transform3d robotToCamera =
+                    table.get(camPrefix + "RobotToCamera", new Transform3d());
+
+                double[][] camMatrixData = table.get(camPrefix + "CameraMatrix", new double[3][3]);
+                double[][] distCoeffsData = table.get(camPrefix + "DistCoeffs", new double[8][1]);
+
+                Matrix<N3, N3> camMatrix = MatBuilder.fill(Nat.N3(), Nat.N3(),
+                    Arrays.stream(camMatrixData).flatMapToDouble(Arrays::stream).toArray());
+                Matrix<N8, N1> distCoeffs = MatBuilder.fill(Nat.N8(), Nat.N1(),
+                    Arrays.stream(distCoeffsData).flatMapToDouble(Arrays::stream).toArray());
+
+                VisionIO.Camera camera =
+                    new VisionIO.Camera(name, robotToCamera, camMatrix, distCoeffs, width, height);
+
+                // Optional multi-tag pose
+                boolean hasMultiPose = table.get(prefix + "HasMultiPose", false);
+                Optional<Pose3d> multiPose = hasMultiPose
+                    ? Optional.of(table.get(prefix + "MultiPose", new Pose3d()))
+                    : Optional.empty();
+
+                // Tag observations
+                int tagCount = table.get(prefix + "TagCount", 0);
+                List<VisionIO.TagObservation> tags = new ArrayList<>();
+                for (int j = 0; j < tagCount; j++) {
+                    var tagPrefix = prefix + "Tags/" + j + "/";
+                    int id = table.get(tagPrefix + "ID", -1);
+                    double area = table.get(tagPrefix + "Area", 0.0);
+                    Angle pitch = Degrees.of(table.get(tagPrefix + "PitchDeg", 0.0));
+                    Angle yaw = Degrees.of(table.get(tagPrefix + "YawDeg", 0.0));
+                    double ambiguity = table.get(tagPrefix + "Ambiguity", 0.0);
+                    Distance distance = Meters.of(table.get(tagPrefix + "Distance", 0.0));
+                    Transform3d camToTarget =
+                        table.get(tagPrefix + "CameraToTarget", new Transform3d());
+
+                    tags.add(new VisionIO.TagObservation(
+                        id, area, pitch, yaw, List.of(), camToTarget, ambiguity, distance));
+                }
+
+                poseObservations[i] =
+                    new VisionIO.VisionObservation(timestamp, camera, multiPose, tags);
+            }
+        }
     }
+
 
     /**
      * Represents a single vision camera and its calibration data.

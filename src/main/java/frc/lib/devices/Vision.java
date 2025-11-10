@@ -20,13 +20,13 @@ import java.util.function.Consumer;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.vision.VisionIO;
-import frc.lib.io.vision.VisionIOInputsAutoLogged;
+import frc.lib.io.vision.VisionIO.VisionIOInputs;
 import frc.lib.io.vision.VisionIO.VisionObservation;
 
 public class Vision extends SubsystemBase {
     private final String name;
     private final VisionIO io;
-    private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
+    private final VisionIOInputs inputs = new VisionIOInputs();
 
     private final Consumer<VisionObservation> visionConsumer;
 
