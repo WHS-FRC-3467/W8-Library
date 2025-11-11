@@ -59,7 +59,7 @@ public interface VisionIO {
                 var camPrefix = prefix + "Camera/";
                 table.put(camPrefix + "Name", cam.name());
                 table.put(camPrefix + "ResWidth", cam.resolutionWidth());
-                table.put(camPrefix + "ResHeight", cam.resultionHeight());
+                table.put(camPrefix + "ResHeight", cam.resolutionHeight());
                 table.put(camPrefix + "RobotToCamera", cam.robotToCamera());
 
                 // Intrinsics
@@ -88,6 +88,16 @@ public interface VisionIO {
                     table.put(tagPrefix + "Ambiguity", tag.ambiguity());
                     table.put(tagPrefix + "Distance", tag.distance().in(Meters));
                     table.put(tagPrefix + "CameraToTarget", tag.cameraToTarget());
+
+                    var corners = tag.targetCorners();
+                    table.put(tagPrefix + "CornerCount", corners.size());
+                    for (int k = 0; k < corners.size(); k++) {
+                        var corner = corners.get(k);
+                        var cornerPrefix = tagPrefix + "Corners/" + k + "/";
+
+                        table.put(cornerPrefix + "x", corner.x);
+                        table.put(cornerPrefix + "y", corner.y);
+                    }
                 }
             }
         }
@@ -124,9 +134,8 @@ public interface VisionIO {
 
                 // Optional multi-tag pose
                 boolean hasMultiPose = table.get(prefix + "HasMultiPose", false);
-                Optional<Pose3d> multiPose = hasMultiPose
-                    ? Optional.of(table.get(prefix + "MultiPose", new Pose3d()))
-                    : Optional.empty();
+                Optional<Pose3d> multiPose = Optional.ofNullable(
+                    hasMultiPose ? table.get(prefix + "MultiPose", new Pose3d()) : null);
 
                 // Tag observations
                 int tagCount = table.get(prefix + "TagCount", 0);
@@ -142,8 +151,19 @@ public interface VisionIO {
                     Transform3d camToTarget =
                         table.get(tagPrefix + "CameraToTarget", new Transform3d());
 
+                    int cornerCount = table.get(tagPrefix + "CornerCount", 0);
+                    List<TargetCorner> corners = new ArrayList<>();
+                    for (int k = 0; k < cornerCount; k++) {
+                        var cornerPrefix = tagPrefix + "Corners/" + k + "/";
+
+                        double x = table.get(cornerPrefix + "x", 0.0);
+                        double y = table.get(cornerPrefix + "y", 0.0);
+
+                        corners.add(new TargetCorner(x, y));
+                    }
+
                     tags.add(new VisionIO.TagObservation(
-                        id, area, pitch, yaw, List.of(), camToTarget, ambiguity, distance));
+                        id, area, pitch, yaw, corners, camToTarget, ambiguity, distance));
                 }
 
                 poseObservations[i] =
@@ -161,7 +181,7 @@ public interface VisionIO {
      * @param cameraMatrix The intrinsic camera matrix (3×3)
      * @param distCoeffs The distortion coefficients (8×1)
      * @param resolutionWidth The image width in pixels
-     * @param resultionHeight The image height in pixels
+     * @param resolutionHeight The image height in pixels
      */
     public record Camera(
         String name,
@@ -169,7 +189,7 @@ public interface VisionIO {
         Matrix<N3, N3> cameraMatrix,
         Matrix<N8, N1> distCoeffs,
         int resolutionWidth,
-        int resultionHeight) {
+        int resolutionHeight) {
     }
 
     /**
