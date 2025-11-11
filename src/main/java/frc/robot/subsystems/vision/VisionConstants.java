@@ -161,19 +161,25 @@ public class VisionConstants {
         RobotState robotState = RobotState.getInstance();
         switch (Constants.currentMode) {
             case REAL -> {
-                new Vision(FRONT_LEFT_NAME, getFrontLeftIOReal(), robotState::addVisionObservation);
-                new Vision(FRONT_RIGHT_NAME, getFrontRightIOReal(),
+                var camera1 = new Vision(FRONT_LEFT_NAME, getFrontLeftIOReal(),
                     robotState::addVisionObservation);
+                var camera2 = new Vision(FRONT_RIGHT_NAME, getFrontRightIOReal(),
+                    robotState::addVisionObservation);
+                new VisionSubsystem(camera1, camera2);
             }
             case SIM -> {
-                new Vision(FRONT_LEFT_NAME, getFrontLeftIOSim(), robotState::addVisionObservation);
-                new Vision(FRONT_RIGHT_NAME, getFrontRightIOSim(),
+                var camera1 = new Vision(FRONT_LEFT_NAME, getFrontLeftIOSim(),
                     robotState::addVisionObservation);
+                var camera2 = new Vision(FRONT_RIGHT_NAME, getFrontRightIOSim(),
+                    robotState::addVisionObservation);
+                new VisionSubsystem(camera1, camera2);
             }
             default -> {
-                new Vision(FRONT_LEFT_NAME, new VisionIO() {}, robotState::addVisionObservation);
-                new Vision(FRONT_RIGHT_NAME, new VisionIO() {},
+                var camera1 = new Vision(FRONT_LEFT_NAME, new VisionIO() {},
                     robotState::addVisionObservation);
+                var camera2 = new Vision(FRONT_RIGHT_NAME, new VisionIO() {},
+                    robotState::addVisionObservation);
+                new VisionSubsystem(camera1, camera2);
             }
         }
     }

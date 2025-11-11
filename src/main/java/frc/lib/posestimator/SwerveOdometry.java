@@ -40,13 +40,13 @@ import lombok.Getter;
  * used by a higher-level {@link PoseEstimator} that fuses odometry with vision or other sensors. Do
  * not use this class on it's own, use {@link SwerveDriveOdometry}.
  */
-public class SwerveOdometer {
+public class SwerveOdometry {
     /**
      * Represents a single odometry observation from the swerve drive.
      *
      * <p>
      * Instances of this record are intended to be passed to
-     * {@link SwerveOdometer#addOdometryObservation(OdometryObservation)} or
+     * {@link SwerveOdometry#addOdometryObservation(OdometryObservation)} or
      * {@link PoseEstimator#addOdometryObservation(OdometryObservation)} to update the odometry
      * estimate and store the pose in the time-buffer for interpolation with vision or other
      * sensors.
@@ -94,7 +94,7 @@ public class SwerveOdometer {
      * @param odometryBufferSize the duration for which odometry poses are buffered for
      *        interpolation
      */
-    public SwerveOdometer(SwerveDriveKinematics kinematics, Time odometryBufferSize) {
+    public SwerveOdometry(SwerveDriveKinematics kinematics, Time odometryBufferSize) {
         this.kinematics = kinematics;
         odometryBuffer = TimeInterpolatableBuffer.createBuffer(odometryBufferSize.in(Seconds));
     }

@@ -27,7 +27,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.io.vision.VisionIO.VisionObservation;
 import frc.lib.posestimator.PoseEstimator;
-import frc.lib.posestimator.SwerveOdometer.OdometryObservation;
+import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.lib.posestimator.visionprocessors.ConstrainedSolvePnp;
 import frc.robot.subsystems.drive.Drive;
 import lombok.AccessLevel;

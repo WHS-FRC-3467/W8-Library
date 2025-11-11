@@ -33,7 +33,7 @@ import edu.wpi.first.units.measure.Time;
 
 import frc.lib.io.vision.VisionIO.VisionObservation;
 import frc.lib.posestimator.PoseEstimator.VisionProcessor.PoseRecord;
-import frc.lib.posestimator.SwerveOdometer.OdometryObservation;
+import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -77,7 +77,7 @@ public class PoseEstimator {
     private static final double DEFAULT_ODOMETRY_LINEAR_STDDEV = 0.01;
     private static final double DEFAULT_ODOMETRY_ANGULAR_STDDEV = 0.01;
 
-    private final SwerveOdometer odometer;
+    private final SwerveOdometry odometer;
     private final VisionProcessor visionProcessor;
 
     /**
@@ -118,7 +118,7 @@ public class PoseEstimator {
         SwerveDriveKinematics kinematics,
         Time odometryBufferSize) {
         this.visionProcessor = visionProcessor;
-        odometer = new SwerveOdometer(kinematics, odometryBufferSize);
+        odometer = new SwerveOdometry(kinematics, odometryBufferSize);
     }
 
     /**
