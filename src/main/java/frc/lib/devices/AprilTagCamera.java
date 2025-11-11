@@ -22,14 +22,14 @@ import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIO.VisionIOInputs;
 import frc.lib.io.vision.VisionIO.VisionObservation;
 
-public class Vision {
+public class AprilTagCamera {
     private final String name;
     private final VisionIO io;
     private final VisionIOInputs inputs = new VisionIOInputs();
 
     private final Consumer<VisionObservation> visionConsumer;
 
-    public Vision(String name, VisionIO io, Consumer<VisionObservation> visionConsumer) {
+    public AprilTagCamera(String name, VisionIO io, Consumer<VisionObservation> visionConsumer) {
         this.name = name;
         this.io = io;
         this.visionConsumer = visionConsumer;

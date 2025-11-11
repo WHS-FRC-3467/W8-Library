@@ -40,14 +40,14 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     /**
      * Constructs a new simulated PhotonVision IO implementation.
      *
-     * @param camera The virtual {@link Camera} configuration.
+     * @param camera The virtual {@link CameraProperties} configuration.
      * @param system The {@link VisionSystemSim} managing simulated vision sources.
      * @param poseSupplier A {@link Supplier} that provides the robot's current {@link Pose2d} in
      *        simulation.
      * @param fieldLayout The {@link AprilTagFieldLayout} describing all AprilTags in the field.
      */
     public VisionIOPhotonVisionSim(
-        Camera camera,
+        CameraProperties camera,
         VisionSystemSim system,
         Supplier<Pose2d> poseSupplier,
         AprilTagFieldLayout fieldLayout) {

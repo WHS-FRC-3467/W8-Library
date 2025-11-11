@@ -16,13 +16,13 @@
 package frc.robot.subsystems.vision;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.devices.Vision;
+import frc.lib.devices.AprilTagCamera;
 
 public class VisionSubsystem extends SubsystemBase {
-    private Vision camera1;
-    private Vision camera2;
+    private AprilTagCamera camera1;
+    private AprilTagCamera camera2;
 
-    public VisionSubsystem(Vision camera1, Vision camera2) {
+    public VisionSubsystem(AprilTagCamera camera1, AprilTagCamera camera2) {
         this.camera1 = camera1;
         this.camera2 = camera2;
     }

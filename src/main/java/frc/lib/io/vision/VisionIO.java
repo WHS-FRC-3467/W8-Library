@@ -129,8 +129,9 @@ public interface VisionIO {
                 Matrix<N8, N1> distCoeffs = MatBuilder.fill(Nat.N8(), Nat.N1(),
                     Arrays.stream(distCoeffsData).flatMapToDouble(Arrays::stream).toArray());
 
-                VisionIO.Camera camera =
-                    new VisionIO.Camera(name, robotToCamera, camMatrix, distCoeffs, width, height);
+                VisionIO.CameraProperties camera =
+                    new VisionIO.CameraProperties(name, robotToCamera, camMatrix, distCoeffs, width,
+                        height);
 
                 // Optional multi-tag pose
                 boolean hasMultiPose = table.get(prefix + "HasMultiPose", false);
@@ -183,7 +184,7 @@ public interface VisionIO {
      * @param resolutionWidth The image width in pixels
      * @param resolutionHeight The image height in pixels
      */
-    public record Camera(
+    public record CameraProperties(
         String name,
         Transform3d robotToCamera,
         Matrix<N3, N3> cameraMatrix,
@@ -269,7 +270,7 @@ public interface VisionIO {
      */
     public static record VisionObservation(
         Time timestamp,
-        Camera camera,
+        CameraProperties camera,
         Optional<Pose3d> multiTagCameraPose,
         List<TagObservation> tagObservations) {
     }

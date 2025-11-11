@@ -36,14 +36,15 @@ import org.photonvision.targeting.PhotonPipelineResult;
  */
 public class VisionIOPhotonVision implements VisionIO {
     protected final PhotonCamera photonCamera;
-    private final Camera camera;
+    private final CameraProperties camera;
 
     /**
      * Creates a new PhotonVision IO implementation for real hardware.
      *
-     * @param camera The {@link Camera} configuration object describing this vision device.
+     * @param camera The {@link CameraProperties} configuration object describing this vision
+     *        device.
      */
-    public VisionIOPhotonVision(Camera camera) {
+    public VisionIOPhotonVision(CameraProperties camera) {
         this.camera = camera;
         this.photonCamera = new PhotonCamera(camera.name());
     }
