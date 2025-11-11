@@ -6,12 +6,8 @@ package frc.lib.posestimator.visionprocessors;
 
 import static edu.wpi.first.units.Units.Meters;
 import java.util.Optional;
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import frc.lib.io.vision.VisionIO.CameraProperties;
-import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.io.vision.VisionIO.VisionObservation;
 import frc.lib.posestimator.PoseEstimator.VisionProcessor;
 import lombok.Getter;
@@ -21,7 +17,6 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class MultiTagOnCoproc implements VisionProcessor {
 
-    private final AprilTagFieldLayout fieldLayout;
 
     private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
     private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
@@ -36,9 +31,7 @@ public class MultiTagOnCoproc implements VisionProcessor {
     @Setter
     private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
 
-    public MultiTagOnCoproc(AprilTagFieldLayout fieldLayout) {
-        this.fieldLayout = fieldLayout;
-    }
+    public MultiTagOnCoproc() {}
 
     @Override
     public Optional<PoseRecord> processVisionObservation(VisionObservation observation,
@@ -68,6 +61,4 @@ public class MultiTagOnCoproc implements VisionProcessor {
                 linearStdDev,
                 angularStdDev));
     }
-
-
 }
