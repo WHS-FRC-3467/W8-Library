@@ -11,12 +11,13 @@ import edu.wpi.first.math.geometry.Transform3d;
 import frc.lib.io.vision.VisionIO.VisionObservation;
 import frc.lib.posestimator.PoseEstimator.VisionProcessor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+@NoArgsConstructor
 @Accessors(fluent = true)
 public class MultiTagOnCoproc implements VisionProcessor {
-
 
     private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
     private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
@@ -31,8 +32,6 @@ public class MultiTagOnCoproc implements VisionProcessor {
     @Setter
     private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
 
-    public MultiTagOnCoproc() {}
-
     @Override
     public Optional<PoseRecord> processVisionObservation(VisionObservation observation,
         Rotation2d heading) {
@@ -41,6 +40,7 @@ public class MultiTagOnCoproc implements VisionProcessor {
         int tagCount = tags.size();
         Transform3d cameraToRobot = observation.camera().robotToCamera().inverse();
         var optionalMultiTagCameraPose = observation.multiTagCameraPose();
+
         // Ignore invalid observations
         if (observation.tagObservations().isEmpty() || optionalMultiTagCameraPose.isEmpty()) {
             return Optional.empty();
