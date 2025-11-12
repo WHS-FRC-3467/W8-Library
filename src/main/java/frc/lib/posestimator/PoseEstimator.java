@@ -23,7 +23,6 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Twist2d;
@@ -32,8 +31,9 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
 
 import frc.lib.io.vision.VisionIO.VisionObservation;
-import frc.lib.posestimator.PoseEstimator.VisionProcessor.PoseRecord;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
+import frc.lib.posestimator.visionprocessors.VisionProcessor;
+import frc.lib.posestimator.visionprocessors.VisionProcessor.PoseRecord;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -60,19 +60,6 @@ import lombok.experimental.Accessors;
  */
 @Accessors(fluent = true)
 public class PoseEstimator {
-    public static interface VisionProcessor {
-        /** Stores a vision pose estimate along with computed uncertainty metrics. */
-        public static final record PoseRecord(
-            Pose3d pose,
-            double linearStdDev,
-            double angularStdDev) {
-        }
-
-        Optional<PoseRecord> processVisionObservation(
-            VisionObservation observation,
-            Rotation2d heading);
-    }
-
     private static final double DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS = 2;
 
     private final SwerveOdometry odometer;

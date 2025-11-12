@@ -30,7 +30,6 @@ import edu.wpi.first.math.geometry.Translation3d;
 import frc.lib.io.vision.VisionIO.CameraProperties;
 import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.io.vision.VisionIO.VisionObservation;
-import frc.lib.posestimator.PoseEstimator.VisionProcessor;
 import frc.lib.util.GeomUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

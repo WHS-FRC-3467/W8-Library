@@ -20,7 +20,6 @@ import java.util.Optional;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.lib.io.vision.VisionIO.VisionObservation;
-import frc.lib.posestimator.PoseEstimator.VisionProcessor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;

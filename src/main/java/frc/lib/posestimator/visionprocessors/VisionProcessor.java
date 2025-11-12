@@ -1,0 +1,34 @@
+/*
+ * Copyright (C) 2025 Windham Windup
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
+ */
+
+package frc.lib.posestimator.visionprocessors;
+
+import java.util.Optional;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import frc.lib.io.vision.VisionIO.VisionObservation;
+
+public interface VisionProcessor {
+    /** Stores a vision pose estimate along with computed uncertainty metrics. */
+    public static final record PoseRecord(
+        Pose3d pose,
+        double linearStdDev,
+        double angularStdDev) {
+    }
+
+    Optional<PoseRecord> processVisionObservation(
+        VisionObservation observation,
+        Rotation2d heading);
+}
