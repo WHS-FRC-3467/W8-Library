@@ -95,7 +95,8 @@ public class LowestAmbiguity implements VisionProcessor {
         Pose3d robotPose = targetPose.plus(targetToCamera).plus(cameraToRobot);
 
         double distanceFromCamera = targetToCamera.getTranslation().getNorm();
-        double stdDevFactor = Math.pow(distanceFromCamera, 2.0) / tagCount;
+        double stdDevFactor =
+            (Math.pow(distanceFromCamera, 2.0) / tagCount) * observation.camera().stdDevFactor();
         double linearStdDev = linearStdDevFactor * stdDevFactor;
         double angularStdDev = angularStdDevFactor * stdDevFactor;
 

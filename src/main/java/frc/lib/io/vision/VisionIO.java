@@ -62,6 +62,7 @@ public interface VisionIO {
                 table.put(camPrefix + "ResWidth", cam.resolutionWidth());
                 table.put(camPrefix + "ResHeight", cam.resolutionHeight());
                 table.put(camPrefix + "RobotToCamera", cam.robotToCamera());
+                table.put(camPrefix + "StdDevFactor", cam.stdDevFactor());
 
                 // Intrinsics
                 table.put(camPrefix + "CameraMatrix", cam.cameraMatrix().getData());
@@ -121,6 +122,7 @@ public interface VisionIO {
                 int height = table.get(camPrefix + "ResHeight", 0);
                 Transform3d robotToCamera =
                     table.get(camPrefix + "RobotToCamera", new Transform3d());
+                double stdDevFactor = table.get(camPrefix + "StdDevFactor", 1.0);
 
                 double[][] camMatrixData = table.get(camPrefix + "CameraMatrix", new double[3][3]);
                 double[][] distCoeffsData = table.get(camPrefix + "DistCoeffs", new double[8][1]);
@@ -132,7 +134,7 @@ public interface VisionIO {
 
                 VisionIO.CameraProperties camera =
                     new VisionIO.CameraProperties(name, robotToCamera, camMatrix, distCoeffs, width,
-                        height);
+                        height, stdDevFactor);
 
                 // Optional multi-tag pose
                 boolean hasMultiPose = table.get(prefix + "HasMultiPose", false);
@@ -184,6 +186,8 @@ public interface VisionIO {
      * @param distCoeffs The distortion coefficients (8×1)
      * @param resolutionWidth The image width in pixels
      * @param resolutionHeight The image height in pixels
+     * @param stdDevFactor A trust scaling factor for this camera; higher values indicate less
+     *        reliable measurements (greater uncertainty)
      */
     public record CameraProperties(
         String name,
@@ -191,7 +195,8 @@ public interface VisionIO {
         Matrix<N3, N3> cameraMatrix,
         Matrix<N8, N1> distCoeffs,
         int resolutionWidth,
-        int resolutionHeight) {
+        int resolutionHeight,
+        double stdDevFactor) {
     }
 
     /**

@@ -180,7 +180,7 @@ public class ConstrainedSolvePnp implements VisionProcessor {
             .mapToDouble(tag -> tag.distance().in(Meters))
             .average().orElse(0.0);
 
-        double stdDevFactor = Math.pow(avgDistance, 2.0) / tagCount;
+        double stdDevFactor = (Math.pow(avgDistance, 2.0) / tagCount) * camera.stdDevFactor();
         double linearStdDev = linearStdDevFactor * stdDevFactor;
         double angularStdDev = angularStdDevFactor * stdDevFactor;
 

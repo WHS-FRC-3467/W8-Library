@@ -152,7 +152,8 @@ public class TrigSolve implements VisionProcessor {
 
         TagObservation wantedObservation = optionalWantedObservation.get();
 
-        double stdDevFactor = Math.pow(wantedObservation.distance().in(Meters), 2);
+        double stdDevFactor = Math.pow(wantedObservation.distance().in(Meters), 2)
+            * observation.camera().stdDevFactor();
         double linearStdDev = linearStdDevFactor * stdDevFactor;
 
         // This processor assumes supplied heading is perfect
