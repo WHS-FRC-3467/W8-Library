@@ -16,7 +16,6 @@
 package frc.lib.posestimator;
 
 import static edu.wpi.first.units.Units.Seconds;
-import java.util.List;
 import java.util.Optional;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -56,7 +55,7 @@ public class SwerveOdometry {
      */
     public static final record OdometryObservation(
         Time timestamp,
-        List<SwerveModulePosition> swervePositions,
+        SwerveModulePosition[] swervePositions,
         Optional<Rotation2d> gyroAngle) {
     }
 
@@ -114,8 +113,7 @@ public class SwerveOdometry {
     public void addOdometryObservation(OdometryObservation observation) {
 
         double timestampSeconds = observation.timestamp().in(Seconds);
-        SwerveModulePosition[] currentPositions =
-            observation.swervePositions().toArray(new SwerveModulePosition[0]);
+        SwerveModulePosition[] currentPositions = observation.swervePositions();
 
         // Compute robot motion (twist) since last update
         Twist2d twist = kinematics.toTwist2d(lastModulePositions, currentPositions);

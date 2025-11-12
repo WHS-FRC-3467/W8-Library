@@ -196,7 +196,7 @@ public class Drive extends SubsystemBase {
             }
 
             RobotState.getInstance().addOdometryObservation(
-                new OdometryObservation(Seconds.of(sampleTimestamps[i]), List.of(modulePositions),
+                new OdometryObservation(Seconds.of(sampleTimestamps[i]), modulePositions,
                     gyroAngle));
         }
 
