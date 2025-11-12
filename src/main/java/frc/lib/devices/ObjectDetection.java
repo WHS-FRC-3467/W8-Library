@@ -5,9 +5,8 @@
 package frc.lib.devices;
 
 import org.littletonrobotics.junction.Logger;
-import java.util.ArrayList;
-import frc.lib.io.objectdetection.ObjectDetectionIOInputsAutoLogged;
 import frc.lib.io.objectdetection.ObjectDetectionIO;
+import frc.lib.io.objectdetection.ObjectDetectionIOInputsAutoLogged;
 import frc.lib.io.objectdetection.ObjectDetectionIO.TargetObservation;
 import java.util.Arrays;
 import java.util.List;
