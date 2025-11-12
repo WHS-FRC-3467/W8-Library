@@ -26,7 +26,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.RobotController;
 import lombok.Getter;
 
 /**
@@ -68,10 +67,6 @@ public class SwerveOdometry {
     @Getter
     private final TimeInterpolatableBuffer<Pose2d> odometryBuffer;
 
-    /** The timestamp of the most recent odometry observation. */
-    @Getter
-    private Optional<Time> latestOdometryTimestamp = Optional.empty();
-
     /** Tracks last known module positions for computing motion deltas. */
     private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[] {
             new SwerveModulePosition(),
@@ -100,17 +95,6 @@ public class SwerveOdometry {
     }
 
     /**
-     * Updates the stored timestamp if the provided timestamp is newer than the current one.
-     *
-     * @param timestamp the new odometry timestamp to consider
-     */
-    private void updateLatestOdometryTimestamp(Time timestamp) {
-        if (latestOdometryTimestamp.isEmpty() || timestamp.gt(latestOdometryTimestamp.get())) {
-            latestOdometryTimestamp = Optional.of(timestamp);
-        }
-    }
-
-    /**
      * Adds an odometry observation to the integrator.
      *
      * <p>
@@ -128,8 +112,6 @@ public class SwerveOdometry {
      *        an optional gyro angle
      */
     public void addOdometryObservation(OdometryObservation observation) {
-        // Update latest timestamp if newer
-        updateLatestOdometryTimestamp(observation.timestamp());
 
         double timestampSeconds = observation.timestamp().in(Seconds);
         SwerveModulePosition[] currentPositions =
@@ -163,7 +145,6 @@ public class SwerveOdometry {
      * @param pose the new field-relative {@link Pose2d} representing the robot's known position
      */
     public void resetPose(Pose2d pose) {
-        latestOdometryTimestamp = Optional.of(RobotController.getMeasureTime());
         gyroOffset = pose.getRotation().minus(odometryPose.getRotation().minus(gyroOffset));
         odometryPose = pose;
         odometryBuffer.clear();

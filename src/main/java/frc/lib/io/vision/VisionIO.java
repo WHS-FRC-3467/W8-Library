@@ -28,6 +28,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Time;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Seconds;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,8 +84,8 @@ public interface VisionIO {
 
                     table.put(tagPrefix + "ID", tag.id());
                     table.put(tagPrefix + "Area", tag.area());
-                    table.put(tagPrefix + "PitchDeg", tag.pitch().in(Degrees));
-                    table.put(tagPrefix + "YawDeg", tag.yaw().in(Degrees));
+                    table.put(tagPrefix + "PitchRad", tag.pitch().in(Radians));
+                    table.put(tagPrefix + "YawRad", tag.yaw().in(Radians));
                     table.put(tagPrefix + "Ambiguity", tag.ambiguity());
                     table.put(tagPrefix + "Distance", tag.distance().in(Meters));
                     table.put(tagPrefix + "CameraToTarget", tag.cameraToTarget());
@@ -145,8 +146,8 @@ public interface VisionIO {
                     var tagPrefix = prefix + "Tags/" + j + "/";
                     int id = table.get(tagPrefix + "ID", -1);
                     double area = table.get(tagPrefix + "Area", 0.0);
-                    Angle pitch = Degrees.of(table.get(tagPrefix + "PitchDeg", 0.0));
-                    Angle yaw = Degrees.of(table.get(tagPrefix + "YawDeg", 0.0));
+                    Angle pitch = Radians.of(table.get(tagPrefix + "PitchRad", 0.0));
+                    Angle yaw = Radians.of(table.get(tagPrefix + "YawRad", 0.0));
                     double ambiguity = table.get(tagPrefix + "Ambiguity", 0.0);
                     Distance distance = Meters.of(table.get(tagPrefix + "Distance", 0.0));
                     Transform3d camToTarget =
