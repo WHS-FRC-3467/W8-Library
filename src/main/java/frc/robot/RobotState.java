@@ -28,7 +28,8 @@ import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.io.vision.VisionIO.VisionObservation;
 import frc.lib.posestimator.PoseEstimator;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
-import frc.lib.posestimator.visionprocessors.ConstrainedSolvePnp;
+import frc.lib.posestimator.visionprocessors.LowestAmbiguity;
+import frc.lib.posestimator.visionprocessors.MultiTagOnCoproc;
 import frc.robot.subsystems.drive.Drive;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -40,8 +41,10 @@ public class RobotState {
     @Getter(lazy = true)
     private static final RobotState instance = new RobotState();
 
-    private final ConstrainedSolvePnp visionProcessor =
-        new ConstrainedSolvePnp(FieldConstants.aprilTagLayout);
+    private final LowestAmbiguity fallbackVisionProcessor =
+        new LowestAmbiguity(FieldConstants.aprilTagLayout);
+    private final MultiTagOnCoproc visionProcessor =
+        new MultiTagOnCoproc(Optional.of(fallbackVisionProcessor));
     private final PoseEstimator poseEstimator = new PoseEstimator(
         visionProcessor,
         FieldConstants.aprilTagLayout,
