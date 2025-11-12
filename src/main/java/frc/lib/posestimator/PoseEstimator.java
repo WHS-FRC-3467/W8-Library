@@ -18,7 +18,7 @@ package frc.lib.posestimator;
 import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.Optional;
-
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
@@ -76,9 +76,11 @@ public class PoseEstimator {
     private static final double DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS = 2;
     private static final double DEFAULT_ODOMETRY_LINEAR_STDDEV = 0.01;
     private static final double DEFAULT_ODOMETRY_ANGULAR_STDDEV = 0.01;
+    private static final double DEFAULT_MAX_Z_METERS = 0.75;
 
     private final SwerveOdometry odometer;
     private final VisionProcessor visionProcessor;
+    private final AprilTagFieldLayout fieldLayout;
 
     /**
      * Sets the linear standard deviation (noise) of odometry
@@ -96,6 +98,10 @@ public class PoseEstimator {
     @Setter
     private double angularOdometryStdDev = DEFAULT_ODOMETRY_ANGULAR_STDDEV;
 
+    /** Maximum acceptable height (in meters) of a pose estimate’s Z coordinate. */
+    @Setter
+    private double maxZMeters = DEFAULT_MAX_Z_METERS;
+
     /**
      * Returns the current fused estimated pose of the robot.
      *
@@ -109,26 +115,37 @@ public class PoseEstimator {
      * Constructs a new {@code PoseEstimator}.
      * 
      * @param visionProcessor The {@code VisionProcessor} to use
+     * @param fieldLayout The location of the AprilTags on the field
      * @param kinematics The robot's swerve drive kinematics model
      * @param odometryBufferSize The maximum duration of stored odometry samples used for
      *        interpolation
      */
     public PoseEstimator(
         VisionProcessor visionProcessor,
+        AprilTagFieldLayout fieldLayout,
         SwerveDriveKinematics kinematics,
         Time odometryBufferSize) {
         this.visionProcessor = visionProcessor;
         odometer = new SwerveOdometry(kinematics, odometryBufferSize);
+        this.fieldLayout = fieldLayout;
     }
 
     /**
      * Constructs a new {@code PoseEstimator} using a default heading buffer size.
      *
      * @param visionProcessor The {@code VisionProcessor} to use
+     * @param fieldLayout The location of the AprilTags on the field
      * @param kinematics the robot's swerve drive kinematics model
      */
-    public PoseEstimator(VisionProcessor visionProcessor, SwerveDriveKinematics kinematics) {
-        this(visionProcessor, kinematics, Seconds.of(DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS));
+    public PoseEstimator(
+        VisionProcessor visionProcessor,
+        AprilTagFieldLayout fieldLayout,
+        SwerveDriveKinematics kinematics) {
+        this(
+            visionProcessor,
+            fieldLayout,
+            kinematics,
+            Seconds.of(DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS));
     }
 
     /**
@@ -201,6 +218,17 @@ public class PoseEstimator {
             return;
         }
         PoseRecord newVisionPose = optionalGlobalPoseRecord.get();
+
+        // Reject poses that exceed field boundaries or height constraints
+        double x = newVisionPose.pose().getX();
+        double y = newVisionPose.pose().getY();
+        double z = Math.abs(newVisionPose.pose().getZ());
+        double fieldLength = fieldLayout.getFieldLength();
+        double fieldWidth = fieldLayout.getFieldWidth();
+
+        if (z > maxZMeters || x < 0.0 || x > fieldLength || y < 0.0 || y > fieldWidth) {
+            return;
+        }
 
         // Solve Kalman gain matrix given observation standard deviations
         // Copied from:

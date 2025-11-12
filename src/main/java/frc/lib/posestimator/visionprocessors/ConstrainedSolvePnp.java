@@ -44,7 +44,6 @@ import lombok.experimental.Accessors;
 public class ConstrainedSolvePnp implements VisionProcessor {
 
     private static final double DEFAULT_AMBIGUITY_THRESHOLD = 0.3;
-    private static final double DEFAULT_MAX_Z_METERS = 0.75;
     private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
     private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
     private static final double DEFAULT_GYRO_HEADING_SCALE_FACTOR = 10.0;
@@ -55,11 +54,6 @@ public class ConstrainedSolvePnp implements VisionProcessor {
     @Getter
     @Setter
     private double ambiguityThreshold = DEFAULT_AMBIGUITY_THRESHOLD;
-
-    /** Maximum acceptable height (in meters) of a pose estimate’s Z coordinate. */
-    @Getter
-    @Setter
-    private double maxZMeters = DEFAULT_MAX_Z_METERS;
 
     /** Weighting factor applied to gyro heading in the constrained PnP solver. */
     @Getter
@@ -180,17 +174,6 @@ public class ConstrainedSolvePnp implements VisionProcessor {
         }
 
         Pose3d estimate = optionalEstimate.get();
-
-        // Reject poses that exceed field boundaries or height constraints
-        double x = estimate.getX();
-        double y = estimate.getY();
-        double z = Math.abs(estimate.getZ());
-        double fieldLength = fieldLayout.getFieldLength();
-        double fieldWidth = fieldLayout.getFieldWidth();
-
-        if (z > maxZMeters || x < 0.0 || x > fieldLength || y < 0.0 || y > fieldWidth) {
-            return Optional.empty();
-        }
 
         // Compute distance-based uncertainty scaling
         double avgDistance = tags.stream()

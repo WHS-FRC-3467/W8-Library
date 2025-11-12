@@ -44,6 +44,7 @@ public class RobotState {
         new ConstrainedSolvePnp(FieldConstants.aprilTagLayout);
     private final PoseEstimator poseEstimator = new PoseEstimator(
         visionProcessor,
+        FieldConstants.aprilTagLayout,
         new SwerveDriveKinematics(Drive.getModuleTranslations()),
         Seconds.of(2));
 
