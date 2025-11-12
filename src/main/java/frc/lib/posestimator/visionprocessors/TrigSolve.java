@@ -37,19 +37,34 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+/**
+ * A {@link VisionProcessor} implementation that estimates the robot's pose by solving trigonometric
+ * relationships between a camera, a known AprilTag field layout, and a single observed tag.
+ *
+ * <p>
+ * This class specifically targets one AprilTag at a time, to be used for more accurate alignment at
+ * close distances. This is typically best used by interpolating with a {@link VisionProcessor} that
+ * is more accurate at far distances, such as {@link ConstrainedSolvePnp}.
+ */
 @RequiredArgsConstructor
 @Accessors(fluent = true)
 public class TrigSolve implements VisionProcessor {
 
+    /** Default scaling factor for linear standard deviation (distance-based uncertainty). */
     private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
+
+    /** The field layout containing AprilTag locations. */
+    private final AprilTagFieldLayout fieldLayout;
 
     /** Scaling factor for linear standard deviation (distance-based uncertainty). */
     @Getter
     @Setter
     private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
 
-    private final AprilTagFieldLayout fieldLayout;
-
+    /**
+     * The AprilTag ID that {@link #processVisionObservation(VisionObservation, Rotation2d)} uses
+     * for pose estimation.
+     */
     @Getter
     @Setter
     private int followedAprilTag = 0;
@@ -66,6 +81,7 @@ public class TrigSolve implements VisionProcessor {
         CameraProperties camera,
         TagObservation observation,
         Rotation2d heading) {
+
         // Convert camera extrinsics to 2D pose for transform use
         Pose2d cameraPose2d = GeomUtil.toPose3d(camera.robotToCamera()).toPose2d();
 
@@ -103,10 +119,20 @@ public class TrigSolve implements VisionProcessor {
         return Optional.of(robotPose);
     }
 
+    /**
+     * Processes a {@link VisionObservation} and produces an estimated robot pose based on a single
+     * AprilTag observation corresponding to the configured {@link #followedAprilTag()}.
+     *
+     * @param observation The vision observation containing detected tags and camera info.
+     * @param heading The robot’s current field-relative heading.
+     * @return An {@link Optional} {@link PoseRecord} with the estimated field-relative robot pose,
+     *         or empty if the tag was not found or computation failed.
+     */
     @Override
     public Optional<PoseRecord> processVisionObservation(
         VisionObservation observation,
         Rotation2d heading) {
+
         var tagObservations = observation.tagObservations();
 
         // Nothing to go off of
