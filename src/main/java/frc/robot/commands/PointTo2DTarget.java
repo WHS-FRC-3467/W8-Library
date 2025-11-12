@@ -8,7 +8,6 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.vision.Vision;
 
@@ -16,7 +15,6 @@ public class PointTo2DTarget extends Command {
     private final Drive drive;
     private final Vision vision;
     private final PIDController rotationController = new PIDController(1, 0, 0);
-    private TagObservation targetTag;
     private boolean isFinished = false;
 
     public PointTo2DTarget(Drive drive, Vision vision)
@@ -30,15 +28,15 @@ public class PointTo2DTarget extends Command {
     @Override
     public void initialize()
     {
-        if (vision.getClosestTagObservation().isPresent()) {
-            this.targetTag = vision.getClosestTagObservation().get();
-            rotationController.reset();
-            rotationController.setSetpoint(0);
+        // if (vision.getClosestTagObservation().isPresent()) {
+        // this.targetTag = vision.getClosestTagObservation().get();
+        // rotationController.reset();
+        // rotationController.setSetpoint(0);
 
-            Logger.recordOutput("AlignCommand/Rotation Setpoint", rotationController.getSetpoint());
-        } else {
-            this.cancel();
-        }
+        // Logger.recordOutput("AlignCommand/Rotation Setpoint", rotationController.getSetpoint());
+        // } else {
+        // this.cancel();
+        // }
 
     }
 
@@ -46,21 +44,21 @@ public class PointTo2DTarget extends Command {
     @Override
     public void execute()
     {
-        if (vision.getClosestTagObservation().isPresent()) {
-            this.targetTag = vision.getClosestTagObservation().get();
-            double rotationOutput =
-                rotationController.calculate(targetTag.yaw());
+        // if (vision.getClosestTagObservation().isPresent()) {
+        // this.targetTag = vision.getClosestTagObservation().get();
+        // double rotationOutput =
+        // rotationController.calculate(targetTag.yaw());
 
-            Logger.recordOutput("AlignCommand/Rotation Output", rotationOutput);
-            drive.runVelocity(
-                ChassisSpeeds.fromFieldRelativeSpeeds(
-                    0.0,
-                    0.0,
-                    rotationOutput,
-                    drive.getPose().getRotation()));
-        } else {
-            this.cancel();
-        }
+        // Logger.recordOutput("AlignCommand/Rotation Output", rotationOutput);
+        // drive.runVelocity(
+        // ChassisSpeeds.fromFieldRelativeSpeeds(
+        // 0.0,
+        // 0.0,
+        // rotationOutput,
+        // drive.getPose().getRotation()));
+        // } else {
+        // this.cancel();
+        // }
 
     }
 

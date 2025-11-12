@@ -27,8 +27,9 @@ public interface VisionIO {
     public static class VisionIOInputs {
         public boolean connected = false;
         public PoseObservation[] poseObservations = new PoseObservation[0];
-        public TagObservation[] allTargets = new TagObservation[0];
+
         public int[] tagIds = new int[0];
+        public int[] allowedTrigTags = new int[0];
     }
 
     /** Represents a robot pose sample used for pose estimation. */
@@ -37,17 +38,16 @@ public interface VisionIO {
         Pose3d pose,
         double ambiguity,
         int tagCount,
-        Distance averageTagDistance) {
-    }
-
-    public static record TagObservation(
-        int id,
-        double ptich,
-        double yaw,
-        double area) {
+        Distance averageTagDistance,
+        boolean usedTrigEstimator,
+        int trigTagId,
+        String strategyUsed) {
     }
 
     public default void updateInputs(VisionIOInputs inputs,
         Timestamped<Rotation2d> timestampedHeading)
+    {}
+
+    public default void setAllowedTrigTags(int[] trigTags)
     {}
 }

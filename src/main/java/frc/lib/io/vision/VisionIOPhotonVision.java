@@ -23,14 +23,13 @@ import frc.lib.util.Timestamped;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import org.apache.commons.lang3.ArrayUtils;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
+import org.photonvision.PhotonPoseEstimator.ConstrainedSolvepnpParams;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
@@ -38,7 +37,13 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 /** IO implementation for real PhotonVision hardware. */
 public class VisionIOPhotonVision implements VisionIO {
     protected final PhotonCamera camera;
-    protected final PhotonPoseEstimator poseEstimator;
+    protected final PhotonPoseEstimator globalPoseEstimator;
+    protected final PhotonPoseEstimator trigPoseEstimator;
+
+    private int[] allowedTrigTags = new int[0];
+
+    private final ConstrainedSolvepnpParams constrainedParams =
+        new ConstrainedSolvepnpParams(true, 10.0);
 
     /**
      * Creates a new VisionIOPhotonVision.
@@ -46,11 +51,17 @@ public class VisionIOPhotonVision implements VisionIO {
      * @param name The configured name of the camera.
      * @param robotToCamera The 3D position of the camera relative to the robot.
      */
-    public VisionIOPhotonVision(String name, Transform3d robotToCamera,
-        AprilTagFieldLayout fieldLayout, PoseStrategy strategy)
+    public VisionIOPhotonVision(
+        String name,
+        Transform3d robotToCamera,
+        AprilTagFieldLayout fieldLayout,
+        PoseStrategy globalStrategy,
+        PoseStrategy globalFallbackStrategy,
+        PoseStrategy trigStrategy)
     {
         camera = new PhotonCamera(name);
-        poseEstimator = new PhotonPoseEstimator(fieldLayout, strategy, robotToCamera);
+        globalPoseEstimator = new PhotonPoseEstimator(fieldLayout, globalStrategy, robotToCamera);
+        trigPoseEstimator = new PhotonPoseEstimator(fieldLayout, trigStrategy, robotToCamera);
     }
 
     @Override
@@ -60,11 +71,15 @@ public class VisionIOPhotonVision implements VisionIO {
 
         List<PoseObservation> estimates = new ArrayList<>();
         List<PhotonTrackedTarget> allTargets = new ArrayList<>();
-        List<TagObservation> tagObservations = new ArrayList<>();
-        Set<Integer> tagIDs = new HashSet<>();
 
-        poseEstimator.addHeadingData(timestampedHeading.timestamp().in(Seconds),
+        globalPoseEstimator.addHeadingData(
+            timestampedHeading.timestamp().in(Seconds),
             timestampedHeading.get());
+
+        trigPoseEstimator.addHeadingData(
+            timestampedHeading.timestamp().in(Seconds),
+            timestampedHeading.get());
+
         for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
             if (!result.hasTargets()) {
                 continue;
@@ -72,45 +87,112 @@ public class VisionIOPhotonVision implements VisionIO {
 
             allTargets.addAll(result.getTargets());
 
-            Optional<EstimatedRobotPose> optionalEstimate = poseEstimator.update(result);
-            if (optionalEstimate.isEmpty()) {
+            Optional<EstimatedRobotPose> optionalGlobalEstimate = globalPoseEstimator.update(
+                result,
+                camera.getCameraMatrix(),
+                camera.getDistCoeffs(),
+                Optional.of(constrainedParams));
+
+            List<PhotonTrackedTarget> singleTargetList = new ArrayList<>();
+            for (PhotonTrackedTarget target : allTargets) {
+                if (ArrayUtils.contains(allowedTrigTags, target.getFiducialId())) {
+
+                    singleTargetList.clear();
+                    singleTargetList.add(target);
+
+                    Optional<EstimatedRobotPose> optionalTrigEstimate = trigPoseEstimator.update(
+                        new PhotonPipelineResult(
+                            result.metadata.sequenceID,
+                            result.metadata.captureTimestampMicros,
+                            result.metadata.publishTimestampMicros,
+                            result.metadata.timeSinceLastPong,
+                            singleTargetList),
+                        camera.getCameraMatrix(),
+                        camera.getDistCoeffs(),
+                        Optional.of(constrainedParams));
+
+                    if (optionalTrigEstimate.isEmpty()) {
+                        continue;
+                    }
+
+                    EstimatedRobotPose trigEstimate = optionalTrigEstimate.get();
+                    estimates.add(
+                        new PoseObservation(
+                            Seconds.of(trigEstimate.timestampSeconds),
+                            trigEstimate.estimatedPose,
+                            target.poseAmbiguity,
+                            1,
+                            Meters.of(target.bestCameraToTarget.getTranslation().getNorm()),
+                            true,
+                            target.getFiducialId(),
+                            trigEstimate.strategy.toString()));
+                }
+            }
+
+
+            if (optionalGlobalEstimate.isEmpty()) {
                 continue;
             }
 
-            EstimatedRobotPose estimate = optionalEstimate.get();
+            EstimatedRobotPose globalEstimate = optionalGlobalEstimate.get();
 
-            int tagCount = estimate.targetsUsed.size();
-
-            Distance totalDistance = Meters.zero();
-            double totalAmbiguity = 0.0;
-            for (PhotonTrackedTarget target : estimate.targetsUsed) {
-                totalDistance = totalDistance
-                    .plus(Meters.of(target.bestCameraToTarget.getTranslation().getNorm()));
-                totalAmbiguity += target.poseAmbiguity;
-                tagIDs.add(target.fiducialId);
-            }
-
-            Distance averageDistance = totalDistance.div(tagCount);
-            double averageAmbiguity = totalAmbiguity / tagCount;
             estimates.add(
                 new PoseObservation(
-                    Seconds.of(estimate.timestampSeconds),
-                    estimate.estimatedPose,
-                    averageAmbiguity,
-                    tagCount,
-                    averageDistance));
+                    Seconds.of(globalEstimate.timestampSeconds),
+                    globalEstimate.estimatedPose,
+                    getAvgAmbiguity(globalEstimate.targetsUsed),
+                    globalEstimate.targetsUsed.size(),
+                    getAvgDistance(globalEstimate.targetsUsed),
+                    false,
+                    0,
+                    globalEstimate.strategy.toString()));
         }
 
         inputs.poseObservations = estimates.toArray(new PoseObservation[0]);
-        inputs.tagIds = ArrayUtils.toPrimitive(tagIDs.toArray(new Integer[0]));
+        inputs.tagIds = allTargets.stream()
+            .mapToInt(PhotonTrackedTarget::getFiducialId)
+            .distinct()
+            .toArray();
 
-        for (PhotonTrackedTarget target : allTargets) {
-            tagObservations.add(new TagObservation(
-                target.fiducialId,
-                target.getPitch(),
-                target.getYaw(),
-                target.getArea()));
-        }
-        inputs.allTargets = tagObservations.toArray(new TagObservation[0]);
     }
+
+    // Calculates the average distance of a list of targets.
+    private Distance getAvgDistance(List<PhotonTrackedTarget> targets)
+    {
+        if (targets.size() == 0) {
+            return Meters.zero();
+        }
+
+        Distance totalDistance = Meters.zero();
+        for (PhotonTrackedTarget target : targets) {
+            totalDistance = totalDistance
+                .plus(Meters.of(target.bestCameraToTarget.getTranslation().getNorm()));
+        }
+
+        return totalDistance.div(targets.size());
+    }
+
+    // Calculates the average ambiguity of a list of targets.
+    private double getAvgAmbiguity(List<PhotonTrackedTarget> targets)
+    {
+        if (targets.size() == 0) {
+            return 0.0;
+        }
+
+        double totalAmbiguity = 0.0;
+        for (PhotonTrackedTarget target : targets) {
+            totalAmbiguity += target.poseAmbiguity;
+        }
+
+        return totalAmbiguity / targets.size();
+    }
+
+    // Sets the allowed tags for the trig pose estimator.
+    @Override
+    public void setAllowedTrigTags(int[] trigTags)
+    {
+        allowedTrigTags = trigTags;
+    }
+
+
 }
