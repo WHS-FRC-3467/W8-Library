@@ -88,6 +88,7 @@ public class PoseEstimator {
      * @param linearOdometryStdDev The linear standard deviation
      */
     @Setter
+    @Getter
     private double linearOdometryStdDev = DEFAULT_ODOMETRY_LINEAR_STDDEV;
 
     /**
@@ -96,10 +97,12 @@ public class PoseEstimator {
      * @param angularOdometryStdDev The angular standard deviation
      */
     @Setter
+    @Getter
     private double angularOdometryStdDev = DEFAULT_ODOMETRY_ANGULAR_STDDEV;
 
     /** Maximum acceptable height (in meters) of a pose estimate’s Z coordinate. */
     @Setter
+    @Getter
     private double maxZMeters = DEFAULT_MAX_Z_METERS;
 
     /**

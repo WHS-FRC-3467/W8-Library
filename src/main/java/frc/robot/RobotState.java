@@ -51,6 +51,7 @@ public class RobotState {
     @Getter
     @AutoLogOutput(key = "Odometry/Robot")
     private Pose2d estimatedPose = Pose2d.kZero;
+
     @Getter
     private Optional<TagObservation> closestTagObservation = Optional.empty();
 
