@@ -16,7 +16,7 @@
 package frc.robot.subsystems.objectDetector;
 
 import frc.lib.devices.ObjectDetection;
-import frc.lib.io.objectDetection.ObjectDetectionIO;
+import frc.lib.io.objectdetection.ObjectDetectionIO;
 import frc.robot.subsystems.drive.Drive;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Translation2d;
