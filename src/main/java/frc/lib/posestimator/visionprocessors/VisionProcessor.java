@@ -16,10 +16,19 @@
 package frc.lib.posestimator.visionprocessors;
 
 import java.util.Optional;
+import edu.wpi.first.math.estimator.PoseEstimator;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.lib.io.vision.VisionIO.VisionObservation;
 
+/**
+ * A processing interface for converting raw vision observations into global robot pose estimates.
+ *
+ * <p>
+ * Implementations of {@code VisionProcessor} interpret vision data and return an estimated
+ * {@link Pose3d} of the robot along with confidence metrics. These estimates are used by
+ * higher-level pose estimators such as {@link PoseEstimator} to fuse vision data with odometry.
+ */
 public interface VisionProcessor {
     /** Stores a vision pose estimate along with computed uncertainty metrics. */
     public static final record PoseRecord(
