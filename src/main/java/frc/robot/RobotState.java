@@ -17,7 +17,6 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Seconds;
 import java.util.Optional;
-import java.util.function.Predicate;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -44,6 +43,9 @@ public class RobotState {
     private static final double FIELD_LENGTH = FieldConstants.aprilTagLayout.getFieldLength();
     private static final double FIELD_WIDTH = FieldConstants.aprilTagLayout.getFieldLength();
 
+    private static final double LINEAR_ODOMETRY_STD_DEV = 0.01;
+    private static final double ANGULAR_ODOMETRY_STD_DEV = 0.01;
+
     @Getter(lazy = true)
     private static final RobotState instance = new RobotState();
 
@@ -64,7 +66,9 @@ public class RobotState {
     private final PoseEstimator poseEstimator = new PoseEstimator(
         visionProcessor,
         new SwerveDriveKinematics(Drive.getModuleTranslations()),
-        Seconds.of(2))
+        Seconds.of(2),
+        LINEAR_ODOMETRY_STD_DEV,
+        ANGULAR_ODOMETRY_STD_DEV)
             .visionPoseFilter(Optional.of(RobotState::postFilter));
 
     @Getter

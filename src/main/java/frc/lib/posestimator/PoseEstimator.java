@@ -74,29 +74,15 @@ public class PoseEstimator {
     }
 
     private static final double DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS = 2;
-    private static final double DEFAULT_ODOMETRY_LINEAR_STDDEV = 0.01;
-    private static final double DEFAULT_ODOMETRY_ANGULAR_STDDEV = 0.01;
 
     private final SwerveOdometry odometer;
     private final VisionProcessor visionProcessor;
 
-    /**
-     * Sets the linear standard deviation (noise) of odometry
-     *
-     * @param linearOdometryStdDev The linear standard deviation
-     */
-    @Setter
-    @Getter
-    private double linearOdometryStdDev = DEFAULT_ODOMETRY_LINEAR_STDDEV;
+    /** Precomputed square of the linear standard deviation (noise) of odometry */
+    private double linearOdometryStdDevSquared;
 
-    /**
-     * Sets the angular standard deviation (noise) of odometry
-     *
-     * @param angularOdometryStdDev The angular standard deviation
-     */
-    @Setter
-    @Getter
-    private double angularOdometryStdDev = DEFAULT_ODOMETRY_ANGULAR_STDDEV;
+    /** Precomputed square of the angular standard deviation (noise) of odometry */
+    private double angularOdometryStdDevSquared;
 
     /**
      * Sets a filter predicate that determines whether a vision-based pose observation should be
@@ -134,12 +120,18 @@ public class PoseEstimator {
      * @param kinematics The robot's swerve drive kinematics model
      * @param odometryBufferSize The maximum duration of stored odometry samples used for
      *        interpolation
+     * @param linearOdometryStdDev The linear standard deviation (noise) of odometry
+     * @param angularOdometryStdDev The angular standard deviation (noise) of odometry
      */
     public PoseEstimator(
         VisionProcessor visionProcessor,
         SwerveDriveKinematics kinematics,
-        Time odometryBufferSize) {
+        Time odometryBufferSize,
+        double linearOdometryStdDev,
+        double angularOdometryStdDev) {
         this.visionProcessor = visionProcessor;
+        this.linearOdometryStdDevSquared = Math.pow(linearOdometryStdDev, 2);
+        this.angularOdometryStdDevSquared = Math.pow(angularOdometryStdDev, 2);
         odometer = new SwerveOdometry(kinematics, odometryBufferSize);
     }
 
@@ -148,14 +140,20 @@ public class PoseEstimator {
      *
      * @param visionProcessor The {@code VisionProcessor} to use
      * @param kinematics the robot's swerve drive kinematics model
+     * @param linearOdometryStdDev The linear standard deviation (noise) of odometry
+     * @param angularOdometryStdDev The angular standard deviation (noise) of odometry
      */
     public PoseEstimator(
         VisionProcessor visionProcessor,
-        SwerveDriveKinematics kinematics) {
+        SwerveDriveKinematics kinematics,
+        double linearOdometryStdDev,
+        double angularOdometryStdDev) {
         this(
             visionProcessor,
             kinematics,
-            Seconds.of(DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS));
+            Seconds.of(DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS),
+            linearOdometryStdDev,
+            angularOdometryStdDev);
     }
 
     /**
@@ -243,9 +241,9 @@ public class PoseEstimator {
                 Math.pow(newVisionPose.angularStdDev(), 2)}; // Rotation
 
         double[] odometryStdDevs = {
-                Math.pow(linearOdometryStdDev, 2), // X axis
-                Math.pow(linearOdometryStdDev, 2), // Y axis
-                Math.pow(angularOdometryStdDev, 2) // Rotation
+                linearOdometryStdDevSquared, // X axis
+                linearOdometryStdDevSquared, // Y axis
+                angularOdometryStdDevSquared // Rotation
         };
 
         Matrix<N3, N3> visionKalmanGain = new Matrix<>(Nat.N3(), Nat.N3());
