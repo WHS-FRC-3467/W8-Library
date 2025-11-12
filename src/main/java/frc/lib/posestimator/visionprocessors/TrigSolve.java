@@ -156,7 +156,7 @@ public class TrigSolve implements VisionProcessor {
         double linearStdDev = linearStdDevFactor * stdDevFactor;
 
         // This processor assumes supplied heading is perfect
-        double angularStdDev = 1e6;
+        double angularStdDev = Double.POSITIVE_INFINITY;
 
         var a = solveTrigPosition(observation.camera(), wantedObservation, heading)
             .map(p -> new PoseRecord(new Pose3d(p), linearStdDev, angularStdDev));
