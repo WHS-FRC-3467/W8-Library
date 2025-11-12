@@ -102,6 +102,9 @@ public class VisionConstants {
     public static final int FRONT_RIGHT_RESOLUTION_WIDTH = 1600;
     public static final int FRONT_RIGHT_RESOLUTION_HEIGHT = 1304;
 
+    public static final double FRONT_LEFT_STDDEV_FACTOR = 1.0;
+    public static final double FRONT_RIGHT_STDDEV_FACTOR = 1.0;
+
     public static final CameraProperties FRONT_LEFT =
         new CameraProperties(
             FRONT_LEFT_NAME,
@@ -109,7 +112,8 @@ public class VisionConstants {
             FRONT_LEFT_MATRIX,
             FRONT_LEFT_DIST_COEFFS,
             FRONT_LEFT_RESOLUTION_WIDTH,
-            FRONT_LEFT_RESOLUTION_HEIGHT);
+            FRONT_LEFT_RESOLUTION_HEIGHT,
+            FRONT_LEFT_STDDEV_FACTOR);
 
     public static final CameraProperties FRONT_RIGHT =
         new CameraProperties(
@@ -118,7 +122,8 @@ public class VisionConstants {
             FRONT_RIGHT_MATRIX,
             FRONT_RIGHT_DIST_COEFFS,
             FRONT_RIGHT_RESOLUTION_WIDTH,
-            FRONT_RIGHT_RESOLUTION_HEIGHT);
+            FRONT_RIGHT_RESOLUTION_HEIGHT,
+            FRONT_RIGHT_STDDEV_FACTOR);
 
     private static Optional<VisionSystemSim> visionSim = Optional.empty();
 
