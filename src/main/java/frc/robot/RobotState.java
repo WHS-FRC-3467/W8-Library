@@ -44,28 +44,28 @@ public class RobotState {
     private static final double FIELD_LENGTH = FieldConstants.aprilTagLayout.getFieldLength();
     private static final double FIELD_WIDTH = FieldConstants.aprilTagLayout.getFieldLength();
 
-
     @Getter(lazy = true)
     private static final RobotState instance = new RobotState();
+
+    private static boolean postFilter(PoseRecord poseRecord) {
+        Pose3d pose = poseRecord.pose();
+        double x = pose.getX();
+        double y = pose.getY();
+        double z = pose.getZ();
+
+        return z > MAX_Z_METERS || x < 0.0 || x > FIELD_LENGTH || y < 0.0 || y > FIELD_WIDTH;
+    }
 
     private final LowestAmbiguity fallbackVisionProcessor =
         new LowestAmbiguity(FieldConstants.aprilTagLayout);
     private final MultiTagOnCoproc visionProcessor =
         new MultiTagOnCoproc(Optional.of(fallbackVisionProcessor));
 
-    private final Predicate<PoseRecord> postFilter = r -> {
-        Pose3d pose = r.pose();
-        double x = pose.getX();
-        double y = pose.getY();
-        double z = pose.getZ();
-
-        return z > MAX_Z_METERS || x < 0.0 || x > FIELD_LENGTH || y < 0.0 || y > FIELD_WIDTH;
-    };
     private final PoseEstimator poseEstimator = new PoseEstimator(
         visionProcessor,
         new SwerveDriveKinematics(Drive.getModuleTranslations()),
         Seconds.of(2))
-            .visionPoseFilter(Optional.of(postFilter));
+            .visionPoseFilter(Optional.of(RobotState::postFilter));
 
     @Getter
     @AutoLogOutput(key = "Odometry/Robot")
