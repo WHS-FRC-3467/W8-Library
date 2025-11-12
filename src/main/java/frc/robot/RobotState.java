@@ -17,6 +17,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Seconds;
 import java.util.Optional;
+import java.util.function.Predicate;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -27,6 +28,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.io.vision.VisionIO.VisionObservation;
 import frc.lib.posestimator.PoseEstimator;
+import frc.lib.posestimator.PoseEstimator.VisionProcessor.PoseRecord;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.lib.posestimator.visionprocessors.LowestAmbiguity;
 import frc.lib.posestimator.visionprocessors.MultiTagOnCoproc;
@@ -38,6 +40,11 @@ import lombok.Setter;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RobotState {
+    private static final double MAX_Z_METERS = 0.75;
+    private static final double FIELD_LENGTH = FieldConstants.aprilTagLayout.getFieldLength();
+    private static final double FIELD_WIDTH = FieldConstants.aprilTagLayout.getFieldLength();
+
+
     @Getter(lazy = true)
     private static final RobotState instance = new RobotState();
 
@@ -45,11 +52,20 @@ public class RobotState {
         new LowestAmbiguity(FieldConstants.aprilTagLayout);
     private final MultiTagOnCoproc visionProcessor =
         new MultiTagOnCoproc(Optional.of(fallbackVisionProcessor));
+
+    private final Predicate<PoseRecord> postFilter = r -> {
+        Pose3d pose = r.pose();
+        double x = pose.getX();
+        double y = pose.getY();
+        double z = pose.getZ();
+
+        return z > MAX_Z_METERS || x < 0.0 || x > FIELD_LENGTH || y < 0.0 || y > FIELD_WIDTH;
+    };
     private final PoseEstimator poseEstimator = new PoseEstimator(
         visionProcessor,
-        FieldConstants.aprilTagLayout,
         new SwerveDriveKinematics(Drive.getModuleTranslations()),
-        Seconds.of(2));
+        Seconds.of(2))
+            .visionPoseFilter(Optional.of(postFilter));
 
     @Getter
     @AutoLogOutput(key = "Odometry/Robot")
