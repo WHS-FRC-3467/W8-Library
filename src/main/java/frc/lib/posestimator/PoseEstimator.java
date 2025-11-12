@@ -238,14 +238,14 @@ public class PoseEstimator {
         // Copied from:
         // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/edu/wpi/first/math/estimator/PoseEstimator.java#L93-L109
         double[] visionStdDevs = {
-                newVisionPose.linearStdDev(), // X axis
-                newVisionPose.linearStdDev(), // Y axis
-                newVisionPose.angularStdDev()}; // Rotation
+                Math.pow(newVisionPose.linearStdDev(), 2), // X axis
+                Math.pow(newVisionPose.linearStdDev(), 2), // Y axis
+                Math.pow(newVisionPose.angularStdDev(), 2)}; // Rotation
 
         double[] odometryStdDevs = {
-                linearOdometryStdDev, // X axis
-                linearOdometryStdDev, // Y axis
-                angularOdometryStdDev // Rotation
+                Math.pow(linearOdometryStdDev, 2), // X axis
+                Math.pow(linearOdometryStdDev, 2), // Y axis
+                Math.pow(angularOdometryStdDev, 2) // Rotation
         };
 
         Matrix<N3, N3> visionKalmanGain = new Matrix<>(Nat.N3(), Nat.N3());
