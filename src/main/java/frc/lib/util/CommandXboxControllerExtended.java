@@ -77,24 +77,28 @@ public class CommandXboxControllerExtended extends CommandXboxController {
     @Override
     public double getLeftX()
     {
-        return MathUtil.applyDeadband(super.getLeftX(), deadband);
+        return MathUtil.applyDeadband(
+            (super.getLeftX() * ((super.getLeftX() * 0.02) * super.getLeftX())), deadband);
     }
 
     @Override
     public double getLeftY()
     {
-        return MathUtil.applyDeadband(super.getLeftY(), deadband);
+        return MathUtil.applyDeadband(
+            (super.getLeftY() * ((super.getLeftY() * 0.02) * super.getLeftY())), deadband);
     }
 
     @Override
     public double getRightX()
     {
-        return MathUtil.applyDeadband(super.getRightX(), deadband);
+        return MathUtil.applyDeadband(
+            (super.getRightX() * ((super.getRightX() * 0.02) * super.getRightX())), deadband);
     }
 
     @Override
     public double getRightY()
     {
-        return MathUtil.applyDeadband(super.getRightY(), deadband);
+        return MathUtil.applyDeadband(
+            (super.getRightY() * ((super.getRightY() * 0.02) * super.getRightY())), deadband);
     }
 }
