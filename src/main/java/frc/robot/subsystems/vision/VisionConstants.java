@@ -17,7 +17,6 @@ package frc.robot.subsystems.vision;
 
 import java.util.Arrays;
 import java.util.List;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.VisionSystemSim;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;

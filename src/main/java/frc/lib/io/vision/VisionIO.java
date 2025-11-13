@@ -15,19 +15,35 @@
 
 package frc.lib.io.vision;
 
+import java.util.Optional;
+import org.ejml.simple.SimpleMatrix;
 import org.littletonrobotics.junction.LogTable;
 import org.littletonrobotics.junction.inputs.LoggableInputs;
 import org.photonvision.targeting.PhotonPipelineResult;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.numbers.N8;
 
 public interface VisionIO {
     public class VisionIOInputs implements LoggableInputs {
-        public boolean connected = false;
-        public PhotonPipelineResult[] results = new PhotonPipelineResult[0];
+        protected boolean connected = false;
+        protected Optional<Matrix<N3, N3>> cameraMatrix = Optional.empty();
+        protected Optional<Matrix<N8, N1>> distCoeffs = Optional.empty();
+        protected PhotonPipelineResult[] results = new PhotonPipelineResult[0];
 
         @Override
         public void toLog(LogTable table)
         {
             table.put("Connected", connected);
+            table.put("CameraMatrixIsPresent", cameraMatrix.isPresent());
+            if (cameraMatrix.isPresent()) {
+                table.put("CameraMatrixData", cameraMatrix.get().getData());
+            }
+            table.put("DistCoeffsIsPresent", distCoeffs.isPresent());
+            if (distCoeffs.isPresent()) {
+                table.put("DistCoeffsData", distCoeffs.get().getData());
+            }
             table.put("ResultsCount", results.length);
             for (int i = 0; i < results.length; i++) {
                 table.put("Results/" + i, results[i]);
@@ -38,6 +54,23 @@ public interface VisionIO {
         public void fromLog(LogTable table)
         {
             connected = table.get("Connected", false);
+
+            cameraMatrix =
+                table.get("CameraMatrixIsPresent", false)
+                    ? Optional.of(
+                        new Matrix<N3, N3>(
+                            new SimpleMatrix(3, 3, true,
+                                table.get("CameraMatrixData", new double[9]))))
+                    : Optional.empty();
+
+            distCoeffs =
+                table.get("DistCoeffsIsPresent", false)
+                    ? Optional.of(
+                        new Matrix<N8, N1>(
+                            new SimpleMatrix(8, 1, true,
+                                table.get("DistCoeffsData", new double[8]))))
+                    : Optional.empty();
+
             int count = table.get("ResultsCount", 0);
             results = new PhotonPipelineResult[count];
             for (int i = 0; i < count; i++) {

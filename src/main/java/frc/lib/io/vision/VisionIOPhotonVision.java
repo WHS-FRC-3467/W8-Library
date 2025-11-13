@@ -36,6 +36,15 @@ public class VisionIOPhotonVision implements VisionIO {
     public void updateInputs(VisionIOInputs inputs)
     {
         inputs.connected = camera.isConnected();
+        final var cameraMatrix = camera.getCameraMatrix();
+        if (inputs.cameraMatrix.isEmpty() && cameraMatrix.isPresent()) {
+            inputs.cameraMatrix = cameraMatrix;
+        }
+        final var distCoeffs = camera.getDistCoeffs();
+        if (inputs.distCoeffs.isEmpty() && distCoeffs.isPresent()) {
+            inputs.distCoeffs = distCoeffs;
+        }
+
         inputs.results = camera.getAllUnreadResults().toArray(new PhotonPipelineResult[0]);
     }
 }
