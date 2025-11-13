@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.subsystems.objectDetector;
+package frc.robot.subsystems.objectdetector;
 
 import frc.lib.devices.ObjectDetection;
 import frc.lib.io.objectdetection.ObjectDetectionIO;
