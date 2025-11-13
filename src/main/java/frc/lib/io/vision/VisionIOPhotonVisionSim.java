@@ -62,9 +62,9 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     }
 
     @Override
-    public void updateInputs(VisionIOInputs inputs, Timestamped<Rotation2d> timestampedHeading)
+    public void updateInputs(VisionIOInputs inputs)
     {
         system.update(poseSupplier.get());
-        super.updateInputs(inputs, timestampedHeading);
+        super.updateInputs(inputs);
     }
 }

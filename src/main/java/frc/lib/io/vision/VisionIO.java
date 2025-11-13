@@ -15,39 +15,38 @@
 
 package frc.lib.io.vision;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.Time;
-import frc.lib.util.Timestamped;
-import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.LogTable;
+import org.littletonrobotics.junction.inputs.LoggableInputs;
+import org.photonvision.targeting.PhotonPipelineResult;
 
 public interface VisionIO {
-    @AutoLog
-    public static class VisionIOInputs {
+    public class VisionIOInputs implements LoggableInputs {
         public boolean connected = false;
-        public PoseObservation[] poseObservations = new PoseObservation[0];
+        public PhotonPipelineResult[] results = new PhotonPipelineResult[0];
 
-        public int[] tagIds = new int[0];
-        public int[] allowedTrigTags = new int[0];
+        @Override
+        public void toLog(LogTable table)
+        {
+            table.put("Connected", connected);
+            table.put("ResultsCount", results.length);
+            for (int i = 0; i < results.length; i++) {
+                table.put("Results/" + i, results[i]);
+            }
+        }
+
+        @Override
+        public void fromLog(LogTable table)
+        {
+            connected = table.get("Connected", false);
+            int count = table.get("ResultsCount", 0);
+            results = new PhotonPipelineResult[count];
+            for (int i = 0; i < count; i++) {
+                results[i] = table.get("Results/" + i, new PhotonPipelineResult());
+            }
+        }
+
     }
 
-    /** Represents a robot pose sample used for pose estimation. */
-    public static record PoseObservation(
-        Time timestamp,
-        Pose3d pose,
-        double ambiguity,
-        int tagCount,
-        Distance averageTagDistance,
-        boolean usedTrigEstimator,
-        int trigTagId,
-        String strategyUsed) {
-    }
-
-    public default void updateInputs(VisionIOInputs inputs,
-        Timestamped<Rotation2d> timestampedHeading)
-    {}
-
-    public default void setAllowedTrigTags(int[] trigTags)
+    public default void updateInputs(VisionIOInputs inputs)
     {}
 }
