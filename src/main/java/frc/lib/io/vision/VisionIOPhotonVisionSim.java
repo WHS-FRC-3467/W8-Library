@@ -44,13 +44,9 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
         String name,
         Transform3d robotToCamera,
         AprilTagFieldLayout fieldLayout,
-        PoseStrategy globalStrategy,
-        PoseStrategy globalFallbackStrategy,
-        PoseStrategy trigStrategy,
         VisionSystemSim system)
     {
-        super(name, robotToCamera, fieldLayout, globalStrategy, globalFallbackStrategy,
-            trigStrategy);
+        super(name);
         this.poseSupplier = poseSupplier;
 
         this.system = system;

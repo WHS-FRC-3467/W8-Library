@@ -82,12 +82,7 @@ public class VisionConstants {
                     drive::addVisionMeasurement,
                     () -> drive.getTimestampedHeading(),
                     new VisionIOPhotonVision(
-                        VisionConstants.camera0Name,
-                        VisionConstants.robotToCamera0,
-                        VisionConstants.aprilTagLayout,
-                        PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-                        PoseStrategy.LOWEST_AMBIGUITY,
-                        PoseStrategy.LOWEST_AMBIGUITY));
+                        VisionConstants.camera0Name));
             case SIM:
                 return new Vision(
                     drive::addVisionMeasurement,
@@ -97,9 +92,6 @@ public class VisionConstants {
                         VisionConstants.camera0Name,
                         VisionConstants.robotToCamera0,
                         VisionConstants.aprilTagLayout,
-                        PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-                        PoseStrategy.LOWEST_AMBIGUITY,
-                        PoseStrategy.LOWEST_AMBIGUITY,
                         getSystemSim()));
             case REPLAY:
                 return new Vision(
