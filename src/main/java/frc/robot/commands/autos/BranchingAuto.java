@@ -36,7 +36,8 @@ public class BranchingAuto extends AutoCommand {
     PathPlannerPath path3 = null;
     PathPlannerPath path4 = null;
 
-    public BranchingAuto(Drive drive, BooleanSupplier condition) {
+    public BranchingAuto(Drive drive, BooleanSupplier condition)
+    {
         try {
             path1 = PathPlannerPath.fromPathFile("path1");
             path3 = PathPlannerPath.fromPathFile("path3");
@@ -65,14 +66,16 @@ public class BranchingAuto extends AutoCommand {
     }
 
     @Override
-    public List<Pose2d> getAllPathPoses() {
+    public List<Pose2d> getAllPathPoses()
+    {
         return Stream.of(path1.getPathPoses(), path3.getPathPoses(), path4.getPathPoses())
             .flatMap(Collection::stream)
             .collect(Collectors.toList());
     }
 
     @Override
-    public Pose2d getStartingPose() {
+    public Pose2d getStartingPose()
+    {
         return path1.getStartingHolonomicPose().get();
     }
 }

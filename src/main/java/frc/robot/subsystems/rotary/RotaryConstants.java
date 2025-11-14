@@ -82,7 +82,8 @@ public class RotaryConstants {
         .withKI(0.0)
         .withKD(5.0);
 
-    public static TalonFXConfiguration getFXConfig() {
+    public static TalonFXConfiguration getFXConfig()
+    {
         TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.SupplyCurrentLimitEnable = false;
@@ -116,7 +117,8 @@ public class RotaryConstants {
         return config;
     }
 
-    public static CANcoderConfiguration getCANcoderConfig(boolean sim) {
+    public static CANcoderConfiguration getCANcoderConfig(boolean sim)
+    {
         CANcoderConfiguration config = new CANcoderConfiguration();
 
         config.MagnetSensor.MagnetOffset = sim ? 0.0 : ENCODER_OFFSET.in(Rotations);
@@ -124,7 +126,8 @@ public class RotaryConstants {
         return config;
     }
 
-    public static Rotary get() {
+    public static Rotary get()
+    {
         switch (Constants.currentMode) {
             case REAL:
                 return new Rotary(new RotaryMechanismReal(

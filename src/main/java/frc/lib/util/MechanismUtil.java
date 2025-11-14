@@ -20,7 +20,8 @@ public class MechanismUtil {
     public static class DistanceAngleConverter {
         private final Distance radius;
 
-        public DistanceAngleConverter(Distance radius) {
+        public DistanceAngleConverter(Distance radius)
+        {
             this.radius = radius;
         }
 
@@ -31,7 +32,8 @@ public class MechanismUtil {
          * @param distance Distance to convert to angle.
          * @return Angle distance is equivalent to.
          */
-        public Angle toAngle(Distance distance) {
+        public Angle toAngle(Distance distance)
+        {
             return Radians.of(distance.in(BaseUnits.DistanceUnit) / radius.baseUnitMagnitude());
         }
 
@@ -42,7 +44,8 @@ public class MechanismUtil {
          * @param angle to convert to distance.
          * @return Distance agle is equivalent to.
          */
-        public Distance toDistance(Angle angle) {
+        public Distance toDistance(Angle angle)
+        {
             return BaseUnits.DistanceUnit.of(angle.in(Radians) * radius.baseUnitMagnitude());
         }
 
@@ -53,7 +56,8 @@ public class MechanismUtil {
          * @param unit The distance unit to convert.
          * @return The distance represented as an AngleUnit
          */
-        public AngleUnit getDistanceUnitAsAngleUnit(DistanceUnit unit) {
+        public AngleUnit getDistanceUnitAsAngleUnit(DistanceUnit unit)
+        {
             return Units.derive(BaseUnits.AngleUnit)
                 .aggregate(toAngle(unit.one()).baseUnitMagnitude())
                 .named(unit.name())
@@ -68,7 +72,8 @@ public class MechanismUtil {
          * @param unit The angle unit to convert.
          * @return The distance represented as a DistanceUnit
          */
-        public DistanceUnit getAngleUnitAsDistanceUnit(AngleUnit unit) {
+        public DistanceUnit getAngleUnitAsDistanceUnit(AngleUnit unit)
+        {
             return Units.derive(BaseUnits.DistanceUnit)
                 .splitInto(toDistance(unit.one()).baseUnitMagnitude())
                 .named(unit.name())
@@ -76,7 +81,8 @@ public class MechanismUtil {
                 .make();
         }
 
-        public Distance getDrumRadius() {
+        public Distance getDrumRadius()
+        {
             return radius;
         }
     }

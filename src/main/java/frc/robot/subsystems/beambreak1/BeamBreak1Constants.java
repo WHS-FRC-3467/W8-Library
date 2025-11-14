@@ -37,7 +37,8 @@ public class BeamBreak1Constants {
 
     // }
 
-    public static BeamBreak1 get() {
+    public static BeamBreak1 get()
+    {
         switch (Constants.currentMode) {
             case REAL:
                 return new BeamBreak1(new BeamBreakIODIO(Ports.diobeambreak, NAME));

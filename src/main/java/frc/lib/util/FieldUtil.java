@@ -21,22 +21,26 @@ public class FieldUtil {
      * 
      * @return True if the robot is on the red alliance, false if on the blue alliance.
      */
-    public static boolean shouldFlip() {
+    public static boolean shouldFlip()
+    {
         return DriverStation.getAlliance().isPresent()
             && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
     }
 
-    public static Pose2d handleAllianceFlip(Pose2d blue_pose) {
+    public static Pose2d handleAllianceFlip(Pose2d blue_pose)
+    {
         return shouldFlip() ? blue_pose.rotateAround(fieldCenter, Rotation2d.k180deg)
             : blue_pose;
     }
 
-    public static Translation2d handleAllianceFlip(Translation2d blue_translation) {
+    public static Translation2d handleAllianceFlip(Translation2d blue_translation)
+    {
         return shouldFlip() ? blue_translation.rotateAround(fieldCenter,
             Rotation2d.k180deg) : blue_translation;
     }
 
-    public static Rotation2d handleAllianceFlip(Rotation2d blue_rotation) {
+    public static Rotation2d handleAllianceFlip(Rotation2d blue_rotation)
+    {
         return shouldFlip() ? blue_rotation.plus(Rotation2d.k180deg) : blue_rotation;
     }
 
@@ -47,7 +51,8 @@ public class FieldUtil {
      * @param margin The distance inset from the boundaries.
      * @return True if the pose is within the field boundaries, false otherwise.
      */
-    public static boolean isPoseInField(Translation2d translation, Distance margin) {
+    public static boolean isPoseInField(Translation2d translation, Distance margin)
+    {
         return translation.getX() >= margin.in(Meters)
             && translation.getX() <= FieldConstants.FIELDLENGTH.in(Meters) - margin.in(Meters)
             && translation.getY() >= margin.in(Meters)

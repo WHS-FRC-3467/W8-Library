@@ -19,6 +19,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 
 /** An object detection sim class that utilizes the PhotonVision implementation for tests. */
 public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
+    protected final String cameraName;
     private final VisionSystemSim visionSim;
     private final PhotonCamera cam;
     private final PhotonCameraSim camSim;
@@ -27,13 +28,15 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
     private VisionTargetSim[] visionTargets;
     private Set<VisionTargetSim> targetSet;
     private List<VisionTargetSim> targetList;
-    private final String targetName;
+    private final String target_name;
 
     public ObjectDetectionIOSim(String cameraName, Transform3d cameraTransform,
         Supplier<Pose2d> robotPoseSupplier,
-        String targetName, Supplier<VisionTargetSim[]> visionTargetSupplier) {
+        String target_name, Supplier<VisionTargetSim[]> visionTargetSupplier)
+    {
         super(cameraName);
-        this.targetName = targetName;
+        this.cameraName = cameraName;
+        this.target_name = target_name;
         // Initialize simulated object detection camera
         cam = new PhotonCamera(cameraName);
         camSim = new PhotonCameraSim(cam, new SimCameraProperties());
@@ -49,7 +52,7 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
         // Current vision targets
         visionTargets = visionTargetSupplier.get();
         // Add current vision targets to the sim field
-        visionSim.addVisionTargets(targetName, visionTargets);
+        visionSim.addVisionTargets(target_name, visionTargets);
         // Retrieve the vision targets on the sim field in a set and then convert it to a list for
         // easy indexing
         targetSet = visionSim.getVisionTargets();
@@ -62,12 +65,13 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
 
     // Update the robot's pose in the sim and use the super's implementation to update inputs
     @Override
-    public void updateInputs(ObjectDetectionIOInputs inputs) {
+    public void updateInputs(ObjectDetectionIOInputs inputs)
+    {
         // Update robot & target poses
         visionSim.update(robotPoseSupplier.get());
         visionSim.clearVisionTargets();
         visionTargets = visionTargetSupplier.get();
-        visionSim.addVisionTargets(targetName, visionTargets);
+        visionSim.addVisionTargets(target_name, visionTargets);
         // Log updated target poses for AScope
         targetSet = visionSim.getVisionTargets();
         targetList = new ArrayList<>(targetSet);
@@ -78,7 +82,8 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
     }
 
     @Override
-    public String getCamera() {
+    public String getCamera()
+    {
         return cameraName;
     }
 }

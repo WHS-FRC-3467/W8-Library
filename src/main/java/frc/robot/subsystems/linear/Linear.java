@@ -47,50 +47,58 @@ public class Linear extends SubsystemBase {
 
         private final Distance setpoint;
 
-        public Angle getAngle() {
+        public Angle getAngle()
+        {
             return LinearConstants.CONVERTER.toAngle(setpoint);
         }
     }
 
     private final RobotState robotstate = RobotState.getInstance();
 
-    public Linear(LinearMechanism io) {
+    public Linear(LinearMechanism io)
+    {
         this.io = io;
         homedTrigger =
             new Trigger(() -> homeDebouncer.calculate(io.getSupplyCurrent().gte(Amps.of(10))));
     }
 
     @Override
-    public void periodic() {
+    public void periodic()
+    {
         LoggerHelper.recordCurrentCommand(LinearConstants.NAME, this);
         io.periodic();
         robotstate.setLinearPose(io.getPoseSupplier().get());
     }
 
-    public Command setGoal(Setpoint setpoint) {
+    public Command setGoal(Setpoint setpoint)
+    {
         return this
             .runOnce(() -> io.runPosition(setpoint.getAngle(), LinearConstants.CRUISE_VELOCITY,
                 LinearConstants.ACCELERATION, LinearConstants.JERK, PIDSlot.SLOT_0))
             .withName("Go To " + setpoint.toString() + " Setpoint");
     }
 
-    public boolean nearGoal(Distance goalPosition) {
+    public boolean nearGoal(Distance goalPosition)
+    {
         return io.nearGoal(goalPosition, LinearConstants.TOLERANCE);
     }
 
-    public Command waitUntilGoalCommand(Distance position) {
+    public Command waitUntilGoalCommand(Distance position)
+    {
         return Commands.waitUntil(() -> {
             return nearGoal(position);
         });
     }
 
-    public Command setGoalCommandWithWait(Setpoint setpoint) {
+    public Command setGoalCommandWithWait(Setpoint setpoint)
+    {
         return waitUntilGoalCommand(setpoint.getSetpoint())
             .deadlineFor(setGoal(setpoint))
             .withName("Go To " + setpoint.toString() + " Setpoint with wait");
     }
 
-    public Command homeCommand() {
+    public Command homeCommand()
+    {
         return Commands.sequence(
             runOnce(() -> io.runVoltage(Volts.of(-2))),
             Commands.waitUntil(homedTrigger),
@@ -99,16 +107,19 @@ public class Linear extends SubsystemBase {
             .withName("Homing");
     }
 
-    public AngularVelocity getVelocity() {
+    public AngularVelocity getVelocity()
+    {
         return io.getVelocity();
     }
 
-    public LinearVelocity getLinearVelocity() {
+    public LinearVelocity getLinearVelocity()
+    {
         return LinearConstants.CONVERTER.toDistance(io.getVelocity().times(Seconds.of(1)))
             .div(Seconds.of(1));
     }
 
-    public void close() {
+    public void close()
+    {
         io.close();
     }
 }

@@ -32,12 +32,14 @@ public class AbsoluteEncoder {
      *
      * @param io the IO to interact with.
      */
-    public AbsoluteEncoder(AbsoluteEncoderIO io) {
+    public AbsoluteEncoder(AbsoluteEncoderIO io)
+    {
         this.io = io;
     }
 
     /** Call this method periodically */
-    public void periodic() {
+    public void periodic()
+    {
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
     }
@@ -47,7 +49,8 @@ public class AbsoluteEncoder {
      * 
      * @return Whether the sensor is connected
      */
-    public boolean isConnected() {
+    public boolean isConnected()
+    {
         return inputs.connected;
     }
 
@@ -56,7 +59,8 @@ public class AbsoluteEncoder {
      * 
      * @return The distance read by the sensor
      */
-    public Angle getAngle() {
+    public Angle getAngle()
+    {
         return inputs.angle;
     }
 }

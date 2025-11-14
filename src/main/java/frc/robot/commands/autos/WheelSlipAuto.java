@@ -20,24 +20,28 @@ import frc.robot.subsystems.drive.Drive;
 public class WheelSlipAuto extends AutoCommand {
     private final RobotState robotState = RobotState.getInstance();
 
-    public WheelSlipAuto(Drive drive) {
+    public WheelSlipAuto(Drive drive)
+    {
         addCommands(Commands.sequence(
             Commands.run(() -> drive.runCharacterization(0.0)).withTimeout(2),
             rampUntilVelocity(drive, 0.2, RotationsPerSecond.of(1))));
     }
 
     @Override
-    public List<Pose2d> getAllPathPoses() {
+    public List<Pose2d> getAllPathPoses()
+    {
         return Collections.emptyList();
     }
 
     @Override
-    public Pose2d getStartingPose() {
+    public Pose2d getStartingPose()
+    {
         return robotState.getEstimatedPose();
     }
 
     private static Command rampUntilVelocity(Drive drive, double rampRate,
-        AngularVelocity speedLimit) {
+        AngularVelocity speedLimit)
+    {
         Timer timer = new Timer();
 
         return Commands.sequence(

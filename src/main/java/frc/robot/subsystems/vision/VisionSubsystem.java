@@ -22,13 +22,15 @@ public class VisionSubsystem extends SubsystemBase {
     private AprilTagCamera camera1;
     private AprilTagCamera camera2;
 
-    public VisionSubsystem(AprilTagCamera camera1, AprilTagCamera camera2) {
+    public VisionSubsystem(AprilTagCamera camera1, AprilTagCamera camera2)
+    {
         this.camera1 = camera1;
         this.camera2 = camera2;
     }
 
     @Override
-    public void periodic() {
+    public void periodic()
+    {
         camera1.periodic();
         camera2.periodic();
     }

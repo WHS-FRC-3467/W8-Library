@@ -127,11 +127,13 @@ public class VisionConstants {
 
     private static Optional<VisionSystemSim> visionSim = Optional.empty();
 
-    private static VisionIOPhotonVision getFrontLeftIOReal() {
+    private static VisionIOPhotonVision getFrontLeftIOReal()
+    {
         return new VisionIOPhotonVision(FRONT_LEFT);
     }
 
-    private static VisionIOPhotonVisionSim getFrontLeftIOSim() {
+    private static VisionIOPhotonVisionSim getFrontLeftIOSim()
+    {
         if (visionSim.isEmpty()) {
             visionSim = Optional.of(new VisionSystemSim("main"));
             visionSim.get().addAprilTags(FieldConstants.aprilTagLayout);
@@ -144,12 +146,14 @@ public class VisionConstants {
             FieldConstants.aprilTagLayout);
     }
 
-    private static VisionIOPhotonVision getFrontRightIOReal() {
+    private static VisionIOPhotonVision getFrontRightIOReal()
+    {
         return new VisionIOPhotonVision(
             FRONT_RIGHT);
     }
 
-    private static VisionIOPhotonVisionSim getFrontRightIOSim() {
+    private static VisionIOPhotonVisionSim getFrontRightIOSim()
+    {
         if (visionSim.isEmpty()) {
             visionSim = Optional.of(new VisionSystemSim("main"));
             visionSim.get().addAprilTags(FieldConstants.aprilTagLayout);
@@ -162,7 +166,8 @@ public class VisionConstants {
             FieldConstants.aprilTagLayout);
     }
 
-    public static void create() {
+    public static void create()
+    {
         switch (Constants.currentMode) {
             case REAL -> {
                 var camera1 = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOReal(),
@@ -178,7 +183,7 @@ public class VisionConstants {
                     RobotState.getInstance()::addVisionObservation);
                 new VisionSubsystem(camera1, camera2);
             }
-            default -> {
+            case REPLAY -> {
                 var camera1 = new AprilTagCamera(FRONT_LEFT, new VisionIO() {},
                     RobotState.getInstance()::addVisionObservation);
                 var camera2 = new AprilTagCamera(FRONT_RIGHT, new VisionIO() {},

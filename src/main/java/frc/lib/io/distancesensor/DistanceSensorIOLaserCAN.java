@@ -53,7 +53,8 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
      * @param timingBudget The timing budget setting that controls measurement speed/accuracy.
      */
     public DistanceSensorIOLaserCAN(Device.CAN id, String name, RangingMode rangingMode,
-        RegionOfInterest regionOfInterest, TimingBudget timingBudget) {
+        RegionOfInterest regionOfInterest, TimingBudget timingBudget)
+    {
         this.name = name;
 
         laserCANOnWrongBusAlert =
@@ -76,7 +77,8 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
     }
 
     @Override
-    public void updateInputs(DistanceSensorInputs inputs) {
+    public void updateInputs(DistanceSensorInputs inputs)
+    {
         Measurement measure = laserCAN.getMeasurement();
 
         if (measure == null) {

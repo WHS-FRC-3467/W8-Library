@@ -36,7 +36,8 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
     public AbsoluteEncoderIOCANCoder(
         Device.CAN id,
         String name,
-        CANcoderConfiguration configuration) {
+        CANcoderConfiguration configuration)
+    {
         this.name = name;
         CANCoder = new CANcoder(id.id(), id.bus());
 
@@ -48,7 +49,8 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
     }
 
     @Override
-    public void updateInputs(AbsoluteEncoderInputs inputs) {
+    public void updateInputs(AbsoluteEncoderInputs inputs)
+    {
         inputs.connected = BaseStatusSignal.refreshAll(angle).isOK();
 
         inputs.angle = angle.getValue();

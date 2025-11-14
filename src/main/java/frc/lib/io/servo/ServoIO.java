@@ -24,7 +24,8 @@ public interface ServoIO {
      * 
      * @return The name of the servo
      */
-    public default String getName() {
+    public default String getName()
+    {
         return "";
     }
 
@@ -32,9 +33,11 @@ public interface ServoIO {
      * Runs the servo to position using an {@link Angle} value. The value should not exceed the
      * lower and upper limits of the servo.
      */
-    public default void setAngle(Angle position) {}
+    public default void setAngle(Angle position)
+    {}
 
     /* Disables output until told to run to a position again. */
-    public default void stop() {}
+    public default void stop()
+    {}
 
 }

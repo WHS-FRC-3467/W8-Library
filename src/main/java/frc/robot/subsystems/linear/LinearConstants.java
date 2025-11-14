@@ -64,7 +64,8 @@ public class LinearConstants {
         .withKI(0.0)
         .withKD(0.0);
 
-    public static TalonFXConfiguration getFXConfig() {
+    public static TalonFXConfiguration getFXConfig()
+    {
         TalonFXConfiguration config = new TalonFXConfiguration();
 
         config.CurrentLimits.SupplyCurrentLimitEnable = Robot.isReal();
@@ -99,7 +100,8 @@ public class LinearConstants {
         return config;
     }
 
-    public static Linear get() {
+    public static Linear get()
+    {
         switch (Constants.currentMode) {
             case REAL:
                 return new Linear(new LinearMechanismReal(

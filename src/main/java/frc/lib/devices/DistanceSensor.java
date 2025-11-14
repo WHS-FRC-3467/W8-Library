@@ -33,12 +33,14 @@ public class DistanceSensor {
      *
      * @param io the IO to interact with.
      */
-    public DistanceSensor(DistanceSensorIO io) {
+    public DistanceSensor(DistanceSensorIO io)
+    {
         this.io = io;
     }
 
     /** Call this method periodically */
-    public void periodic() {
+    public void periodic()
+    {
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
     }
@@ -48,7 +50,8 @@ public class DistanceSensor {
      * 
      * @return Whether the sensor is connected
      */
-    public boolean isConnected() {
+    public boolean isConnected()
+    {
         return inputs.connected;
     }
 
@@ -57,7 +60,8 @@ public class DistanceSensor {
      * 
      * @return The distance read by the sensor
      */
-    public Optional<Distance> getDistance() {
+    public Optional<Distance> getDistance()
+    {
         return Optional.ofNullable(inputs.distance);
     }
 
@@ -66,7 +70,8 @@ public class DistanceSensor {
      * 
      * @return The ambient light read by the sensor
      */
-    public double getAmbientSignal() {
+    public double getAmbientSignal()
+    {
         return inputs.ambientSignal;
     }
 

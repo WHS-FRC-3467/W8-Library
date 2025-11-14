@@ -22,12 +22,14 @@ import frc.lib.devices.AprilTagCamera.CameraProperties;
 public class VisionIOPhotonVision implements VisionIO {
     protected final PhotonCamera photonCamera;
 
-    public VisionIOPhotonVision(CameraProperties cameraProperties) {
+    public VisionIOPhotonVision(CameraProperties cameraProperties)
+    {
         this.photonCamera = new PhotonCamera(cameraProperties.name());
     }
 
     @Override
-    public void updateInputs(VisionIOInputs inputs) {
+    public void updateInputs(VisionIOInputs inputs)
+    {
         inputs.connected = photonCamera.isConnected();
 
         if (!inputs.connected) {

@@ -36,7 +36,8 @@ public class ObjectDetectionIOPhotonVision implements ObjectDetectionIO {
      *
      * @param cameraName The name of the camera
      */
-    public ObjectDetectionIOPhotonVision(String cameraName) {
+    public ObjectDetectionIOPhotonVision(String cameraName)
+    {
         // CameraName is the name of the NetworkTable that PhotonVision is broadcasting information
         // over.
         // The name of the NetworkTable should be the same as the camera’s nickname (from the
@@ -48,7 +49,8 @@ public class ObjectDetectionIOPhotonVision implements ObjectDetectionIO {
     }
 
     @Override
-    public void updateInputs(ObjectDetectionIOInputs inputs) {
+    public void updateInputs(ObjectDetectionIOInputs inputs)
+    {
         /* Verify PhotonVision hardware is connected. */
         inputs.connected = camera.isConnected();
         if (!inputs.connected) {
@@ -69,21 +71,21 @@ public class ObjectDetectionIOPhotonVision implements ObjectDetectionIO {
         }
         // Most recent set of targets.
         List<PhotonTrackedTarget> currentTargets = result.get(0).getTargets();
-        int targetSize = currentTargets.size();
+        int TargetSize = currentTargets.size();
         // Clear last timestamp's observations to prevent accumulation (by re-creating
         // array, similar to .clear()).
-        inputs.latestTargetObservations = new TargetObservation[targetSize];
+        inputs.latestTargetObservations = new TargetObservation[TargetSize];
         // Add all detected targets within most recent pipeline result to
         // inputs.LatestTargetObservation.
-        for (int i = 0; i < targetSize; i++) {
-            var corner1 = List.of(currentTargets.get(i).getMinAreaRectCorners().get(0).x,
-                currentTargets.get(i).getMinAreaRectCorners().get(0).y);
-            var corner2 = List.of(currentTargets.get(i).getMinAreaRectCorners().get(1).x,
-                currentTargets.get(i).getMinAreaRectCorners().get(1).y);
-            var corner3 = List.of(currentTargets.get(i).getMinAreaRectCorners().get(2).x,
-                currentTargets.get(i).getMinAreaRectCorners().get(2).y);
-            var corner4 = List.of(currentTargets.get(i).getMinAreaRectCorners().get(3).x,
-                currentTargets.get(i).getMinAreaRectCorners().get(3).y);
+        for (int i = 0; i < TargetSize; i++) {
+            double[] corner1 = {currentTargets.get(i).getMinAreaRectCorners().get(0).x,
+                    currentTargets.get(i).getMinAreaRectCorners().get(0).y};
+            double[] corner2 = {currentTargets.get(i).getMinAreaRectCorners().get(1).x,
+                    currentTargets.get(i).getMinAreaRectCorners().get(1).y};
+            double[] corner3 = {currentTargets.get(i).getMinAreaRectCorners().get(2).x,
+                    currentTargets.get(i).getMinAreaRectCorners().get(2).y};
+            double[] corner4 = {currentTargets.get(i).getMinAreaRectCorners().get(3).x,
+                    currentTargets.get(i).getMinAreaRectCorners().get(3).y};
             inputs.latestTargetObservations[i] = new TargetObservation(
                 currentTargets.get(i).getDetectedObjectClassID(),
                 currentTargets.get(i).getDetectedObjectConfidence(),
@@ -96,11 +98,11 @@ public class ObjectDetectionIOPhotonVision implements ObjectDetectionIO {
                 corner3,
                 corner4); // Corners: origin top-left, x positive right, y positive down.
         }
-
     }
 
     @Override
-    public String getCamera() {
+    public String getCamera()
+    {
         return cameraName;
     }
 }

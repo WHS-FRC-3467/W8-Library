@@ -39,21 +39,24 @@ public class Rotary extends SubsystemBase {
     private final RobotState robotstate;
 
 
-    public Rotary(RotaryMechanism io) {
+    public Rotary(RotaryMechanism io)
+    {
         this.io = io;
         this.robotstate = RobotState.getInstance();
         setSetpoint(RotaryConstants.DEFAULT_SETPOINT).ignoringDisable(true).schedule();
     }
 
     @Override
-    public void periodic() {
+    public void periodic()
+    {
         LoggerHelper.recordCurrentCommand(RotaryConstants.NAME, this);
         io.periodic();
         robotstate.setRotaryPose(io.getPoseSupplier().get());
 
     }
 
-    public Command setSetpoint(Setpoint setpoint) {
+    public Command setSetpoint(Setpoint setpoint)
+    {
         return this.runOnce(
             () -> io.runPosition(setpoint.getSetpoint(), RotaryConstants.CRUISE_VELOCITY,
                 RotaryConstants.ACCELERATION, RotaryConstants.JERK,
@@ -61,27 +64,32 @@ public class Rotary extends SubsystemBase {
             .withName("Go To " + setpoint.toString() + " Setpoint");
     };
 
-    public boolean nearGoal(Angle targetPosition) {
+    public boolean nearGoal(Angle targetPosition)
+    {
         return io.nearGoal(targetPosition, RotaryConstants.TOLERANCE);
     }
 
-    public Command waitUntilGoalCommand(Angle position) {
+    public Command waitUntilGoalCommand(Angle position)
+    {
         return Commands.waitUntil(() -> {
             return nearGoal(position);
         });
     }
 
-    public Command setGoalCommandWithWait(Setpoint setpoint) {
+    public Command setGoalCommandWithWait(Setpoint setpoint)
+    {
         return waitUntilGoalCommand(setpoint.getSetpoint())
             .deadlineFor(setSetpoint(setpoint))
             .withName("Go To " + setpoint.toString() + " Setpoint with wait");
     }
 
-    public AngularVelocity getVelocity() {
+    public AngularVelocity getVelocity()
+    {
         return io.getVelocity();
     }
 
-    public void close() {
+    public void close()
+    {
         io.close();
     }
 }

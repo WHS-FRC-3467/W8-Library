@@ -47,14 +47,16 @@ public class AprilTagCamera {
     public AprilTagCamera(
         CameraProperties properties,
         VisionIO io,
-        BiConsumer<PhotonPipelineResult, CameraProperties> visionConsumer) {
+        BiConsumer<PhotonPipelineResult, CameraProperties> visionConsumer)
+    {
         this.properties = properties;
         this.io = io;
         this.visionConsumer = visionConsumer;
         inputs = new VisionIOInputs(properties.cameraMatrix(), properties.distCoeffs());
     }
 
-    public void periodic() {
+    public void periodic()
+    {
         io.updateInputs(inputs);
         Logger.processInputs(properties.name(), inputs);
 

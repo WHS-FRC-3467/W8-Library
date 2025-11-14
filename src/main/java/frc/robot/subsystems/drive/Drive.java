@@ -104,7 +104,8 @@ public class Drive extends SubsystemBase {
         ModuleIO flModuleIO,
         ModuleIO frModuleIO,
         ModuleIO blModuleIO,
-        ModuleIO brModuleIO) {
+        ModuleIO brModuleIO)
+    {
         this.gyroIO = gyroIO;
         modules[0] = new Module(flModuleIO, 0, DriveConstants.FrontLeft);
         modules[1] = new Module(frModuleIO, 1, DriveConstants.FrontRight);
@@ -155,7 +156,8 @@ public class Drive extends SubsystemBase {
 
     @Override
     @SuppressWarnings("LockNotBeforeTry")
-    public void periodic() {
+    public void periodic()
+    {
         LoggerHelper.recordCurrentCommand("Drive", this);
         odometryLock.lock(); // Prevents odometry updates while reading data
         gyroIO.updateInputs(gyroInputs);
@@ -211,7 +213,8 @@ public class Drive extends SubsystemBase {
      *
      * @param speeds Speeds in meters/sec
      */
-    public void runVelocity(ChassisSpeeds speeds) {
+    public void runVelocity(ChassisSpeeds speeds)
+    {
         // Calculate module setpoints
         ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
         SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(discreteSpeeds);
@@ -231,14 +234,16 @@ public class Drive extends SubsystemBase {
     }
 
     /** Runs the drive in a straight line with the specified drive output. */
-    public void runCharacterization(double output) {
+    public void runCharacterization(double output)
+    {
         for (int i = 0; i < 4; i++) {
             modules[i].runCharacterization(output);
         }
     }
 
     /** Stops the drive. */
-    public void stop() {
+    public void stop()
+    {
         runVelocity(new ChassisSpeeds());
     }
 
@@ -246,7 +251,8 @@ public class Drive extends SubsystemBase {
      * Stops the drive and turns the modules to an X arrangement to resist movement. The modules
      * will return to their normal orientations the next time a nonzero velocity is requested.
      */
-    public void stopWithX() {
+    public void stopWithX()
+    {
         Rotation2d[] headings = new Rotation2d[4];
         for (int i = 0; i < 4; i++) {
             headings[i] = getModuleTranslations()[i].getAngle();
@@ -256,7 +262,8 @@ public class Drive extends SubsystemBase {
     }
 
     /** Returns a command to run a quasistatic test in the specified direction. */
-    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+    public Command sysIdQuasistatic(SysIdRoutine.Direction direction)
+    {
         return run(() -> runCharacterization(0.0))
             .withTimeout(1.0)
             .andThen(sysId.quasistatic(direction))
@@ -264,7 +271,8 @@ public class Drive extends SubsystemBase {
     }
 
     /** Returns a command to run a dynamic test in the specified direction. */
-    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+    public Command sysIdDynamic(SysIdRoutine.Direction direction)
+    {
         return run(() -> runCharacterization(0.0)).withTimeout(1.0)
             .andThen(sysId.dynamic(direction))
             .withName("SysId Dynamic " + direction.toString());
@@ -274,7 +282,8 @@ public class Drive extends SubsystemBase {
      * Returns the module states (turn angles and drive velocities) for all of the modules.
      */
     @AutoLogOutput(key = "SwerveStates/Measured")
-    private SwerveModuleState[] getModuleStates() {
+    private SwerveModuleState[] getModuleStates()
+    {
         SwerveModuleState[] states = new SwerveModuleState[4];
         for (int i = 0; i < 4; i++) {
             states[i] = modules[i].getState();
@@ -285,7 +294,8 @@ public class Drive extends SubsystemBase {
     /**
      * Returns the module positions (turn angles and drive positions) for all of the modules.
      */
-    protected SwerveModulePosition[] getModulePositions() {
+    protected SwerveModulePosition[] getModulePositions()
+    {
         SwerveModulePosition[] states = new SwerveModulePosition[4];
         for (int i = 0; i < 4; i++) {
             states[i] = modules[i].getPosition();
@@ -295,12 +305,14 @@ public class Drive extends SubsystemBase {
 
     /** Returns the measured chassis speeds of the robot. */
     @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
-    public ChassisSpeeds getChassisSpeeds() {
+    public ChassisSpeeds getChassisSpeeds()
+    {
         return kinematics.toChassisSpeeds(getModuleStates());
     }
 
     /** Returns the position of each module in radians. */
-    public double[] getWheelRadiusCharacterizationPositions() {
+    public double[] getWheelRadiusCharacterizationPositions()
+    {
         double[] values = new double[4];
         for (int i = 0; i < 4; i++) {
             values[i] = modules[i].getWheelRadiusCharacterizationPosition();
@@ -311,7 +323,8 @@ public class Drive extends SubsystemBase {
     /**
      * Returns the average velocity of the modules in rotations/sec (Phoenix native units).
      */
-    public double getFFCharacterizationVelocity() {
+    public double getFFCharacterizationVelocity()
+    {
         double output = 0.0;
         for (int i = 0; i < 4; i++) {
             output += modules[i].getFFCharacterizationVelocity() / 4.0;
@@ -320,17 +333,20 @@ public class Drive extends SubsystemBase {
     }
 
     /** Returns the maximum linear speed in meters per sec. */
-    public double getMaxLinearSpeedMetersPerSec() {
+    public double getMaxLinearSpeedMetersPerSec()
+    {
         return DriveConstants.kSpeedAt12Volts.in(MetersPerSecond);
     }
 
     /** Returns the maximum angular speed in radians per sec. */
-    public double getMaxAngularSpeedRadPerSec() {
+    public double getMaxAngularSpeedRadPerSec()
+    {
         return getMaxLinearSpeedMetersPerSec() / DRIVE_BASE_RADIUS;
     }
 
     /** Returns an array of module translations. */
-    public static Translation2d[] getModuleTranslations() {
+    public static Translation2d[] getModuleTranslations()
+    {
         return new Translation2d[] {
                 new Translation2d(DriveConstants.FrontLeft.LocationX,
                     DriveConstants.FrontLeft.LocationY),

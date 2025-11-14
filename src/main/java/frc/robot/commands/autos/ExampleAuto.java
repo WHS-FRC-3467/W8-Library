@@ -34,7 +34,8 @@ public class ExampleAuto extends AutoCommand {
     PathPlannerPath path1 = null;
     PathPlannerPath path2 = null;
 
-    public ExampleAuto(Drive drive) {
+    public ExampleAuto(Drive drive)
+    {
         try {
             path1 = PathPlannerPath.fromPathFile("path1");
             path2 = PathPlannerPath.fromPathFile("path2");
@@ -59,14 +60,16 @@ public class ExampleAuto extends AutoCommand {
     }
 
     @Override
-    public List<Pose2d> getAllPathPoses() {
+    public List<Pose2d> getAllPathPoses()
+    {
         return Stream.of(path1.getPathPoses(), path2.getPathPoses())
             .flatMap(Collection::stream)
             .collect(Collectors.toList());
     }
 
     @Override
-    public Pose2d getStartingPose() {
+    public Pose2d getStartingPose()
+    {
         return path1.getStartingHolonomicPose().get();
     }
 }

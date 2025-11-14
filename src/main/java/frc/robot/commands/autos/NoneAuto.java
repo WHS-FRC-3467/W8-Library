@@ -22,17 +22,20 @@ import java.util.Collections;
 import java.util.List;
 
 public class NoneAuto extends AutoCommand {
-    public NoneAuto() {
+    public NoneAuto()
+    {
         addCommands(Commands.none());
     }
 
     @Override
-    public List<Pose2d> getAllPathPoses() {
+    public List<Pose2d> getAllPathPoses()
+    {
         return Collections.emptyList();
     }
 
     @Override
-    public Pose2d getStartingPose() {
+    public Pose2d getStartingPose()
+    {
         return new Pose2d();
     }
 }

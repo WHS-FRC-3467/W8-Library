@@ -60,7 +60,8 @@ public class PoseEstimator {
         SwerveDriveKinematics kinematics,
         Time odometryBufferSize,
         double linearOdometryStdDev,
-        double angularOdometryStdDev) {
+        double angularOdometryStdDev)
+    {
         this.visionProcessor = visionProcessor;
         this.linearOdometryStdDevSquared = Math.pow(linearOdometryStdDev, 2);
         this.angularOdometryStdDevSquared = Math.pow(angularOdometryStdDev, 2);
@@ -71,7 +72,8 @@ public class PoseEstimator {
         VisionProcessor visionProcessor,
         SwerveDriveKinematics kinematics,
         double linearOdometryStdDev,
-        double angularOdometryStdDev) {
+        double angularOdometryStdDev)
+    {
         this(
             visionProcessor,
             kinematics,
@@ -80,7 +82,8 @@ public class PoseEstimator {
             angularOdometryStdDev);
     }
 
-    public void addOdometryObservation(OdometryObservation observation) {
+    public void addOdometryObservation(OdometryObservation observation)
+    {
         Pose2d lastOdometryPose = odometer.getOdometryPose();
         odometer.addOdometryObservation(observation);
         Pose2d newOdometryPose = odometer.getOdometryPose();
@@ -90,7 +93,8 @@ public class PoseEstimator {
         estimatedPose = estimatedPose.exp(twist);
     }
 
-    private Optional<Transform2d> getPoseDelta(double timestampSeconds) {
+    private Optional<Transform2d> getPoseDelta(double timestampSeconds)
+    {
         var optionalOdometryPoseAtTime = odometer.getOdometryBuffer().getSample(timestampSeconds);
         if (optionalOdometryPoseAtTime.isEmpty()) {
             return Optional.empty();
@@ -102,7 +106,8 @@ public class PoseEstimator {
         return Optional.of(thenToNow);
     }
 
-    public void addVisionObservation(PhotonPipelineResult result, CameraProperties camera) {
+    public void addVisionObservation(PhotonPipelineResult result, CameraProperties camera)
+    {
         // Attempt to get heading. Fails if the odometer has not recorded
         // a measurement near this timestamp
         var optionalPoseDelta = getPoseDelta(result.getTimestampSeconds());
@@ -183,7 +188,8 @@ public class PoseEstimator {
      *
      * @param pose the known {@link Pose2d} representing the robot’s field-relative position
      */
-    public void resetPose(Pose2d pose) {
+    public void resetPose(Pose2d pose)
+    {
         odometer.resetPose(pose);
         estimatedPose = pose;
     }

@@ -59,7 +59,8 @@ public class MultiTagOnCoproc implements VisionProcessor {
     public Optional<PoseRecord> processVisionObservation(
         PhotonPipelineResult result,
         CameraProperties camera,
-        Rotation2d heading) {
+        Rotation2d heading)
+    {
         if (result.getMultiTagResult().isEmpty()) {
             if (fallbackProcessor.isEmpty()) {
                 return Optional.empty();

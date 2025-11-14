@@ -55,9 +55,11 @@ public class DriveCommands {
     private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
     private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
-    private DriveCommands() {}
+    private DriveCommands()
+    {}
 
-    private static Translation2d getLinearVelocityFromJoysticks(double x, double y) {
+    private static Translation2d getLinearVelocityFromJoysticks(double x, double y)
+    {
         double linearMagnitude = Math.pow(Math.hypot(x, y), 2);
         Rotation2d linearDirection = new Rotation2d(Math.atan2(y, x));
 
@@ -74,7 +76,8 @@ public class DriveCommands {
         Drive drive,
         DoubleSupplier xSupplier,
         DoubleSupplier ySupplier,
-        DoubleSupplier omegaSupplier) {
+        DoubleSupplier omegaSupplier)
+    {
         RobotState robotState = RobotState.getInstance();
         return Commands.run(
             () -> {
@@ -117,7 +120,8 @@ public class DriveCommands {
         Drive drive,
         DoubleSupplier xSupplier,
         DoubleSupplier ySupplier,
-        Supplier<Rotation2d> rotationSupplier) {
+        Supplier<Rotation2d> rotationSupplier)
+    {
         RobotState robotState = RobotState.getInstance();
 
         // Create PID controller
@@ -170,7 +174,8 @@ public class DriveCommands {
      * <p>
      * This command should only be used in voltage control mode.
      */
-    public static Command feedforwardCharacterization(Drive drive) {
+    public static Command feedforwardCharacterization(Drive drive)
+    {
         List<Double> velocitySamples = new ArrayList<>();
         List<Double> voltageSamples = new ArrayList<>();
         Timer timer = new Timer();
@@ -231,7 +236,8 @@ public class DriveCommands {
     }
 
     /** Measures the robot's wheel radius by spinning in a circle. */
-    public static Command wheelRadiusCharacterization(Drive drive) {
+    public static Command wheelRadiusCharacterization(Drive drive)
+    {
         RobotState robotState = RobotState.getInstance();
 
         SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
@@ -321,7 +327,8 @@ public class DriveCommands {
      *        rotation.
      */
     public static Command pathFindToPose(Supplier<Pose2d> currentPose, Pose2d targetPose,
-        PathConstraints constraints, LinearVelocity goalEndVelocity, Distance tolerance) {
+        PathConstraints constraints, LinearVelocity goalEndVelocity, Distance tolerance)
+    {
 
         // Since AutoBuilder is configured, we can use it to build pathfinding commands
         return AutoBuilder.pathfindToPose(

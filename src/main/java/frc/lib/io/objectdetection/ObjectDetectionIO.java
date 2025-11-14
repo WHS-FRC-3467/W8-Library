@@ -15,7 +15,6 @@
 
 package frc.lib.io.objectdetection;
 
-import java.util.List;
 import org.littletonrobotics.junction.AutoLog;
 
 /**
@@ -53,19 +52,20 @@ public interface ObjectDetectionIO {
         /** Skew of detected object. */
         double skew,
         /** X-coord & Y-coord of bounding box corner 1. */
-        List<Double> cornerOne,
+        double[] cornerOne,
         /** X-coord & Y-coord of bounding box corner 2. */
-        List<Double> cornerTwo,
+        double[] cornerTwo,
         /** X-coord & Y-coord of bounding box corner 3. */
-        List<Double> cornerThree,
+        double[] cornerThree,
         /** X-coord & Y-coord of bounding box corner 4. */
-        List<Double> cornerFour) {
+        double[] cornerFour) {
     }
 
     /*
      * Name of the camera capturing optical data.
      */
-    public default String getCamera() {
+    public default String getCamera()
+    {
         return "";
     }
 
@@ -73,5 +73,6 @@ public interface ObjectDetectionIO {
      * Updates the provided ObjectDetectionIOInputs object using the latest camera readings. If the
      * camera is not connected, the ObjectDetectionIOInput fields remain empty.
      */
-    public default void updateInputs(ObjectDetectionIOInputs inputs) {}
+    public default void updateInputs(ObjectDetectionIOInputs inputs)
+    {}
 }

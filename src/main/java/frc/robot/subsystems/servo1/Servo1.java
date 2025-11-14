@@ -48,16 +48,19 @@ public class Servo1 extends SubsystemBase {
 
     private final Servo servo;
 
-    public Servo1(ServoIO io) {
+    public Servo1(ServoIO io)
+    {
         servo = new Servo(io);
     }
 
     @Override
-    public void periodic() {
+    public void periodic()
+    {
         Logger.recordOutput(Servo1Constants.NAME + "/Setpoint", setpoint.toString());
     }
 
-    public Command setGoal(Setpoint setpoint) {
+    public Command setGoal(Setpoint setpoint)
+    {
         return this.runOnce(() -> {
             switch (setpoint) {
                 case IDLE -> servo.stop();

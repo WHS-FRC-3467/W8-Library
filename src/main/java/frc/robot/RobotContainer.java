@@ -131,7 +131,8 @@ public class RobotContainer {
     /**
      * The container for the robot. Contains subsystems, IO devices, and commands.
      */
-    public RobotContainer() {
+    public RobotContainer()
+    {
         drive = DriveConstants.get();
         laserCAN1 = LaserCAN1Constants.get();
         flywheel = FlywheelConstants.get();
@@ -178,7 +179,8 @@ public class RobotContainer {
      * ({@link edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a
      * {@link edu.wpi.first.wpilibj2.command.button.JoystickButton}.
      */
-    private void configureButtonBindings() {
+    private void configureButtonBindings()
+    {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(
             DriveCommands.joystickDrive(
@@ -268,13 +270,15 @@ public class RobotContainer {
      *
      * @return the command to run in autonomous
      */
-    public Command getAutonomousCommand() {
+    public Command getAutonomousCommand()
+    {
         // return autoChooser.get();
         return Commands.none();
     }
 
     /** This function is called periodically by Robot.java when disabled. */
-    public void checkStartPose() {
+    public void checkStartPose()
+    {
 
         /* Starting pose checker for auto */
         autoPreviewField.setRobotPose(robotState.getEstimatedPose());

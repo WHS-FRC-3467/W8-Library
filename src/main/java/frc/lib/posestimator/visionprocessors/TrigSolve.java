@@ -50,7 +50,8 @@ public class TrigSolve implements VisionProcessor {
     private Optional<Pose2d> solveTrigPosition(
         CameraProperties camera,
         PhotonTrackedTarget target,
-        Rotation2d heading) {
+        Rotation2d heading)
+    {
 
         Translation2d camToTagTranslation =
             new Translation3d(
@@ -86,7 +87,8 @@ public class TrigSolve implements VisionProcessor {
     public Optional<PoseRecord> processVisionObservation(
         PhotonPipelineResult observation,
         CameraProperties camera,
-        Rotation2d heading) {
+        Rotation2d heading)
+    {
 
         var tagObservations = observation.getTargets();
 

@@ -17,39 +17,47 @@ import frc.lib.util.LoggerHelper;
 public class Flywheel extends SubsystemBase { // Don't extend if contained in superstructure
     private final FlywheelMechanism io;
 
-    public Flywheel(FlywheelMechanism io) {
+    public Flywheel(FlywheelMechanism io)
+    {
         this.io = io;
     }
 
     @Override
-    public void periodic() {
+    public void periodic()
+    {
         LoggerHelper.recordCurrentCommand(FlywheelConstants.NAME, this);
         io.periodic();
     }
 
-    public Command shoot() {
+    public Command shoot()
+    {
         return this.runOnce(() -> io.runVelocity(FlywheelConstants.MAX_VELOCITY,
             FlywheelConstants.MAX_ACCELERATION, PIDSlot.SLOT_0)).withName("Shoot");
     }
 
-    public Command stop() {
+    public Command stop()
+    {
         return this.runOnce(() -> io.runCoast()).withName("Stop");
     }
 
     // For unit testing
-    protected Command shootAmps() {
+    protected Command shootAmps()
+    {
         return this.runOnce(() -> io.runCurrent(Amps.of(30))).withName("Shoot Amps");
     }
 
-    public Current getTorqueCurrent() {
+    public Current getTorqueCurrent()
+    {
         return io.getTorqueCurrent();
     }
 
-    public AngularVelocity getVelocity() {
+    public AngularVelocity getVelocity()
+    {
         return io.getVelocity();
     }
 
-    public void close() {
+    public void close()
+    {
         io.close();
     }
 }

@@ -32,13 +32,15 @@ public interface VisionIO {
         public Matrix<N3, N3> cameraMatrix = null;
         public Matrix<N8, N1> distCoeffs = null;
 
-        public VisionIOInputs(Matrix<N3, N3> cameraMatrix, Matrix<N8, N1> distCoeffs) {
+        public VisionIOInputs(Matrix<N3, N3> cameraMatrix, Matrix<N8, N1> distCoeffs)
+        {
             this.cameraMatrix = cameraMatrix;
             this.distCoeffs = distCoeffs;
         }
 
         @Override
-        public void toLog(LogTable table) {
+        public void toLog(LogTable table)
+        {
             if (!hasLoggedIntrinsics) {
                 table.put("CameraMatrix", cameraMatrix);
                 table.put("DistCoeffs", distCoeffs);
@@ -58,7 +60,8 @@ public interface VisionIO {
         }
 
         @Override
-        public void fromLog(LogTable table) {
+        public void fromLog(LogTable table)
+        {
             if (!hasLoggedIntrinsics) {
                 cameraMatrix = table.get("CameraMatrix", (Matrix<N3, N3>) null);
                 distCoeffs = table.get("DistCoeffs", (Matrix<N8, N1>) null);
@@ -79,5 +82,6 @@ public interface VisionIO {
         }
     }
 
-    public default void updateInputs(VisionIOInputs inputs) {}
+    public default void updateInputs(VisionIOInputs inputs)
+    {}
 }

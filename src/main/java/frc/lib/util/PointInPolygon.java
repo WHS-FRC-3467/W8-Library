@@ -22,7 +22,8 @@ import java.util.List;
 
 public class PointInPolygon {
     // Checking if a point is inside a polygon
-    public static boolean pointInPolygon(Translation2d point, List<Translation2d> polygon) {
+    public static boolean pointInPolygon(Translation2d point, List<Translation2d> polygon)
+    {
         Path2D path = new Path2D.Double();
 
         // Move to the first point in the polygon

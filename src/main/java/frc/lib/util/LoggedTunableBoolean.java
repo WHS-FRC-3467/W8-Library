@@ -32,7 +32,8 @@ public class LoggedTunableBoolean implements BooleanSupplier {
      *
      * @param dashboardKey Key on dashboard
      */
-    public LoggedTunableBoolean(String dashboardKey) {
+    public LoggedTunableBoolean(String dashboardKey)
+    {
         this.key = tableKey + "/" + dashboardKey;
     }
 
@@ -42,7 +43,8 @@ public class LoggedTunableBoolean implements BooleanSupplier {
      * @param dashboardKey Key on dashboard
      * @param defaultValue Default value
      */
-    public LoggedTunableBoolean(String dashboardKey, boolean defaultValue) {
+    public LoggedTunableBoolean(String dashboardKey, boolean defaultValue)
+    {
         this(dashboardKey);
         initDefault(defaultValue);
     }
@@ -52,7 +54,8 @@ public class LoggedTunableBoolean implements BooleanSupplier {
      *
      * @param defaultValue The default value
      */
-    public void initDefault(boolean defaultValue) {
+    public void initDefault(boolean defaultValue)
+    {
         if (!hasDefault) {
             hasDefault = true;
             this.defaultValue = defaultValue;
@@ -67,7 +70,8 @@ public class LoggedTunableBoolean implements BooleanSupplier {
      *
      * @return The current value if in tuning mode, false otherwise.
      */
-    public boolean get() {
+    public boolean get()
+    {
         if (!hasDefault) {
             return false;
         } else {
@@ -83,7 +87,8 @@ public class LoggedTunableBoolean implements BooleanSupplier {
      * @return True if the boolean has changed since the last time this method was called, false
      *         otherwise.
      */
-    public boolean hasChanged(int id) {
+    public boolean hasChanged(int id)
+    {
         boolean currentValue = get();
         Boolean lastValue = lastHasChangedValues.get(id);
         if (lastValue == null || currentValue != lastValue) {
@@ -104,7 +109,8 @@ public class LoggedTunableBoolean implements BooleanSupplier {
      * @param tunableBooleans All tunable booleans to check
      */
     public static void ifChanged(
-        int id, Consumer<boolean[]> action, LoggedTunableBoolean... tunableBooleans) {
+        int id, Consumer<boolean[]> action, LoggedTunableBoolean... tunableBooleans)
+    {
         if (Arrays.stream(tunableBooleans)
             .anyMatch(tunableBoolean -> tunableBoolean.hasChanged(id))) {
             Boolean[] array =
@@ -119,12 +125,14 @@ public class LoggedTunableBoolean implements BooleanSupplier {
     }
 
     /** Runs action if any of the tunableBooleans have changed */
-    public static void ifChanged(int id, Runnable action, LoggedTunableBoolean... tunableBooleans) {
+    public static void ifChanged(int id, Runnable action, LoggedTunableBoolean... tunableBooleans)
+    {
         ifChanged(id, values -> action.run(), tunableBooleans);
     }
 
     @Override
-    public boolean getAsBoolean() {
+    public boolean getAsBoolean()
+    {
         return get();
     }
 }

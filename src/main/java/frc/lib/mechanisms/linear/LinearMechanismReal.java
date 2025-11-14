@@ -34,14 +34,16 @@ public class LinearMechanismReal extends LinearMechanism {
     private final MotorIO io;
 
     public LinearMechanismReal(MotorIO io,
-        LinearMechCharacteristics characteristics) {
+        LinearMechCharacteristics characteristics)
+    {
         super(io.getName(), characteristics);
 
         this.io = io;
     }
 
     @Override
-    public void periodic() {
+    public void periodic()
+    {
         super.periodic();
 
         io.updateInputs(inputs);
@@ -49,61 +51,72 @@ public class LinearMechanismReal extends LinearMechanism {
     }
 
     @Override
-    public void runCoast() {
+    public void runCoast()
+    {
         io.runCoast();
     }
 
     @Override
-    public void runBrake() {
+    public void runBrake()
+    {
         io.runBrake();
     }
 
     @Override
-    public void runVoltage(Voltage voltage) {
+    public void runVoltage(Voltage voltage)
+    {
         io.runVoltage(voltage);
     }
 
     @Override
-    public void runCurrent(Current current) {
+    public void runCurrent(Current current)
+    {
         io.runCurrent(current);
     }
 
     @Override
-    public void runDutyCycle(double dutyCycle) {
+    public void runDutyCycle(double dutyCycle)
+    {
         io.runDutyCycle(dutyCycle);
     }
 
     @Override
     public void runPosition(Angle position, AngularVelocity cruiseVelocity,
         AngularAcceleration acceleration,
-        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot) {
+        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
+    {
         io.runPosition(position, cruiseVelocity, acceleration, maxJerk, slot);
     }
 
     @Override
     public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
-        PIDSlot slot) {
+        PIDSlot slot)
+    {
         io.runVelocity(velocity, acceleration, slot);
     }
 
     // TODO: Verify operation works correctly on real TalonFX
     @Override
-    public void setEncoderPosition(Angle position) {
+    public void setEncoderPosition(Angle position)
+    {
         io.setEncoderPosition(position);
     }
 
     @Override
-    public Current getSupplyCurrent() {
+    public Current getSupplyCurrent()
+    {
         return inputs.supplyCurrent;
     }
 
     @Override
-    public Angle getPosition() {
+    public Angle getPosition()
+    {
         return inputs.position;
     }
 
     @Override
-    public AngularVelocity getVelocity() {
+    public AngularVelocity getVelocity()
+    {
         return inputs.velocity;
     }
 }

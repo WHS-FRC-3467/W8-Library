@@ -51,7 +51,8 @@ public class RobotState {
     @Getter(lazy = true)
     private static final RobotState instance = new RobotState();
 
-    private static boolean postFilter(PoseRecord poseRecord) {
+    private static boolean postFilter(PoseRecord poseRecord)
+    {
         Pose3d pose = poseRecord.pose();
         double x = pose.getX();
         double y = pose.getY();
@@ -87,12 +88,14 @@ public class RobotState {
     @Setter
     private ChassisSpeeds velocity = new ChassisSpeeds();
 
-    public void addOdometryObservation(OdometryObservation observation) {
+    public void addOdometryObservation(OdometryObservation observation)
+    {
         poseEstimator.addOdometryObservation(observation);
         estimatedPose = poseEstimator.estimatedPose();
     }
 
-    public void addVisionObservation(PhotonPipelineResult observation, CameraProperties camera) {
+    public void addVisionObservation(PhotonPipelineResult observation, CameraProperties camera)
+    {
         closestTagObservation = observation.getTargets().stream().sorted((t1, t2) -> {
             double t1Distance = t1.getBestCameraToTarget().getTranslation().getNorm();
             double t2Distance = t2.getBestCameraToTarget().getTranslation().getNorm();
@@ -107,11 +110,13 @@ public class RobotState {
     }
 
     /** Returns the current odometry rotation. */
-    public Rotation2d getRotation() {
+    public Rotation2d getRotation()
+    {
         return estimatedPose.getRotation();
     }
 
-    public ChassisSpeeds getFieldRelativeVelocity() {
+    public ChassisSpeeds getFieldRelativeVelocity()
+    {
         return ChassisSpeeds.fromFieldRelativeSpeeds(
             velocity.vxMetersPerSecond,
             velocity.vyMetersPerSecond,
@@ -132,7 +137,8 @@ public class RobotState {
      * match the mechanical kinematics of the robot.
      */
 
-    public void publishMechanismPoses() {
+    public void publishMechanismPoses()
+    {
         Logger.recordOutput("Odometry/LinearPose", linearPose);
         Logger.recordOutput("Odometry/RotaryPose", new Pose3d(
             getRotaryPose().getX(),
@@ -141,7 +147,9 @@ public class RobotState {
             getRotaryPose().getRotation()));
     }
 
-    public void resetPose(Pose2d pose) {
+    public void resetPose(Pose2d pose)
+    {
+
         poseEstimator.resetPose(pose);
         estimatedPose = poseEstimator.estimatedPose();
     }

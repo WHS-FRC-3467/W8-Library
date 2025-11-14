@@ -64,7 +64,8 @@ public class ConstrainedSolvePnp implements VisionProcessor {
     @Setter
     private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
 
-    public ConstrainedSolvePnp(VisionProcessor seedProvider, AprilTagFieldLayout fieldLayout) {
+    public ConstrainedSolvePnp(VisionProcessor seedProvider, AprilTagFieldLayout fieldLayout)
+    {
         this.seedProvider = seedProvider;
         this.fieldLayout = fieldLayout;
     }
@@ -74,7 +75,8 @@ public class ConstrainedSolvePnp implements VisionProcessor {
     public Optional<PoseRecord> processVisionObservation(
         PhotonPipelineResult result,
         CameraProperties camera,
-        Rotation2d heading) {
+        Rotation2d heading)
+    {
         var targets = result.getTargets();
         int tagCount = targets.size();
 

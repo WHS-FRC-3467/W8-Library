@@ -31,12 +31,14 @@ public class BeamBreak {
      *
      * @param io the IO to interact with.
      */
-    public BeamBreak(BeamBreakIO io) {
+    public BeamBreak(BeamBreakIO io)
+    {
         this.io = io;
     }
 
     /** Call this method periodically */
-    public void periodic() {
+    public void periodic()
+    {
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
     }
@@ -46,7 +48,8 @@ public class BeamBreak {
      * 
      * @return Whether the beam is broken
      */
-    public boolean isBroken() {
+    public boolean isBroken()
+    {
         return inputs.isBroken;
     }
 

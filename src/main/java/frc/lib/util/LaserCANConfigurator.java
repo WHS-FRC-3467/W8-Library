@@ -30,15 +30,18 @@ public class LaserCANConfigurator implements AutoCloseable {
 
     private final LaserCan laserCAN;
 
-    public LaserCANConfigurator(int can_id) {
+    public LaserCANConfigurator(int can_id)
+    {
         laserCAN = new LaserCan(can_id);
     }
 
-    public Measurement getMeasurement() {
+    public Measurement getMeasurement()
+    {
         return laserCAN.getMeasurement();
     }
 
-    public ConfigurationStatus setRangingMode(RangingMode mode) {
+    public ConfigurationStatus setRangingMode(RangingMode mode)
+    {
         try {
             laserCAN.setRangingMode(mode);
             return ConfigurationStatus.SUCCESS;
@@ -47,7 +50,8 @@ public class LaserCANConfigurator implements AutoCloseable {
         }
     }
 
-    public ConfigurationStatus setTimingBudget(TimingBudget budget) {
+    public ConfigurationStatus setTimingBudget(TimingBudget budget)
+    {
         try {
             laserCAN.setTimingBudget(budget);
             return ConfigurationStatus.SUCCESS;
@@ -56,7 +60,8 @@ public class LaserCANConfigurator implements AutoCloseable {
         }
     }
 
-    public ConfigurationStatus setRegionOfInterest(RegionOfInterest roi) {
+    public ConfigurationStatus setRegionOfInterest(RegionOfInterest roi)
+    {
         try {
             laserCAN.setRegionOfInterest(roi);
             return ConfigurationStatus.SUCCESS;
@@ -66,7 +71,8 @@ public class LaserCANConfigurator implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws Exception
+    {
         laserCAN.close();
     }
 }

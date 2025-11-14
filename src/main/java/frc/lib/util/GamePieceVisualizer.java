@@ -24,19 +24,22 @@ public class GamePieceVisualizer {
      * @param name Name of instance
      * @param pose3d Pose3d of instance
      */
-    public GamePieceVisualizer(String name, Pose3d pose3d) {
+    public GamePieceVisualizer(String name, Pose3d pose3d)
+    {
         this.name = name;
         this.gamePiecePose = pose3d;
         Logger.recordOutput(name + " Visualizer", this.gamePiecePose);
 
     }
 
-    public void setPose(Pose3d pose) {
+    public void setPose(Pose3d pose)
+    {
         this.gamePiecePose = pose;
         Logger.recordOutput(name + " Visualizer", this.gamePiecePose);
     }
 
-    public void hide() {
+    public void hide()
+    {
         this.gamePiecePose = new Pose3d();
         Logger.recordOutput(name + " Visualizer", this.gamePiecePose);
     }

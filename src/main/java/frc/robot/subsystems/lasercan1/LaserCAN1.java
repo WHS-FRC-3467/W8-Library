@@ -24,13 +24,15 @@ public class LaserCAN1 extends SubsystemBase {
     public final Trigger inside =
         new Trigger(() -> betweenDistance(Millimeters.of(5), Millimeters.of(10)));
 
-    public LaserCAN1(DistanceSensorIO io) {
+    public LaserCAN1(DistanceSensorIO io)
+    {
         distanceSensor = new DistanceSensor(io);
         robotState = RobotState.getInstance();
     }
 
     @Override
-    public void periodic() {
+    public void periodic()
+    {
         distanceSensor.periodic();
         Logger.recordOutput(LaserCAN1Constants.NAME + "Sensor Reading Pose",
             new Pose3d(robotState.getEstimatedPose())
@@ -42,7 +44,8 @@ public class LaserCAN1 extends SubsystemBase {
                         new Rotation3d()))));
     }
 
-    public Distance getDistance() {
+    public Distance getDistance()
+    {
         if (distanceSensor.getDistance().isEmpty()) {
             return Inches.of(-1.0);
         } else {
@@ -50,7 +53,8 @@ public class LaserCAN1 extends SubsystemBase {
         }
     }
 
-    public boolean betweenDistance(Distance min, Distance max) {
+    public boolean betweenDistance(Distance min, Distance max)
+    {
         if (distanceSensor.getDistance().isEmpty()) {
             return false;
         }

@@ -30,7 +30,8 @@ public class LinearTest implements AutoCloseable {
     Linear linear;
 
     @BeforeEach // this method will run before each test
-    void setup() {
+    void setup()
+    {
         assert HAL.initialize(500, 0); // initialize the HAL, crash if failed
 
         linear = LinearConstants.get();
@@ -45,12 +46,14 @@ public class LinearTest implements AutoCloseable {
 
     @SuppressWarnings("PMD.SignatureDeclareThrowsException")
     @AfterEach // this method will run after each test
-    void shutdown() throws Exception {
+    void shutdown() throws Exception
+    {
         close();
     }
 
     @Test // marks this method as a test
-    void home() {
+    void home()
+    {
         TestUtil.runTest(linear.homeCommand(), 0.1, linear);
         try {
             // Check position to check if it is homed, and within tolerance of STOW setpoint.
@@ -61,7 +64,8 @@ public class LinearTest implements AutoCloseable {
     }
 
     @Test
-    void goToGoal() {
+    void goToGoal()
+    {
         TestUtil.runTest(linear.setGoal(Linear.Setpoint.RAISED), 2, linear);
         try {
             // Check to see if linear subsystem is within tolerance of RAISED setpoint.
@@ -72,7 +76,8 @@ public class LinearTest implements AutoCloseable {
     }
 
     @Override
-    public void close() {
+    public void close()
+    {
         linear.close();
     }
 }

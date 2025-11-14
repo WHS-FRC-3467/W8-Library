@@ -43,12 +43,14 @@ public abstract class LinearMechanism implements Mechanism {
 
     private final LinearMechanismVisualizer visualizer;
 
-    public LinearMechanism(String name, LinearMechCharacteristics characteristics) {
+    public LinearMechanism(String name, LinearMechCharacteristics characteristics)
+    {
         visualizer = new LinearMechanismVisualizer(name, characteristics);
         converter = characteristics.converter();
     }
 
-    private Optional<Distance> getTrajectoryDistance() {
+    private Optional<Distance> getTrajectoryDistance()
+    {
         if (inputs.controlType != ControlType.POSITION || inputs.positionError == null) {
             return Optional.empty();
         }
@@ -56,7 +58,8 @@ public abstract class LinearMechanism implements Mechanism {
         return Optional.of(converter.toDistance(inputs.activeTrajectoryPosition));
     }
 
-    private Optional<Distance> getGoalDistance() {
+    private Optional<Distance> getGoalDistance()
+    {
         if (inputs.controlType != ControlType.POSITION || inputs.positionError == null) {
             return Optional.empty();
         }
@@ -65,7 +68,8 @@ public abstract class LinearMechanism implements Mechanism {
     }
 
     // Checks if mechanism is near a goal position within a specified tolerance
-    public boolean nearGoal(Distance goalPosition, Distance tolerance) {
+    public boolean nearGoal(Distance goalPosition, Distance tolerance)
+    {
         return MathUtil.isNear(
             converter.toDistance(getPosition()).in(BaseUnits.DistanceUnit),
             goalPosition.in(BaseUnits.DistanceUnit),
@@ -73,14 +77,16 @@ public abstract class LinearMechanism implements Mechanism {
     }
 
     @Override
-    public void periodic() {
+    public void periodic()
+    {
         visualizer.setMeasuredDistance(converter.toDistance(inputs.position));
         visualizer.setTrajectoryDistance(getTrajectoryDistance());
         visualizer.setGoalDistance(getGoalDistance());
     }
 
     @Override
-    public Supplier<Pose3d> getPoseSupplier() {
+    public Supplier<Pose3d> getPoseSupplier()
+    {
         return visualizer.getPoseSupplier();
     }
 }

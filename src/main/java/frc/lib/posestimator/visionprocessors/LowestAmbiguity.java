@@ -54,7 +54,8 @@ public class LowestAmbiguity implements VisionProcessor {
     public Optional<PoseRecord> processVisionObservation(
         PhotonPipelineResult observation,
         CameraProperties camera,
-        Rotation2d heading) {
+        Rotation2d heading)
+    {
 
         // Ignore invalid observations
         if (observation.getTargets().isEmpty()) {

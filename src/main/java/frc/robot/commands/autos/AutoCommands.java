@@ -14,7 +14,8 @@ import frc.robot.subsystems.drive.Drive;
 
 public class AutoCommands extends SequentialCommandGroup {
 
-    public static Command resetOdom(Drive drive, PathPlannerPath path) {
+    public static Command resetOdom(Drive drive, PathPlannerPath path)
+    {
         final RobotState robotState = RobotState.getInstance();
         return drive.runOnce(
             () -> {

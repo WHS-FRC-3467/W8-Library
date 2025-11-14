@@ -8,8 +8,8 @@ import org.littletonrobotics.junction.Logger;
 import frc.lib.io.objectdetection.ObjectDetectionIO;
 import frc.lib.io.objectdetection.ObjectDetectionIOInputsAutoLogged;
 import frc.lib.io.objectdetection.ObjectDetectionIO.TargetObservation;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -33,14 +33,16 @@ public class ObjectDetection {
      * Interface as a data type allows ObjectDetection to accept various implementations of
      * ObjectDetectionIO (e.g. ObjectDetectionIOPhotonVision or ObjectDetectionIOLimelight).
      */
-    public ObjectDetection(ObjectDetectionIO io) {
+    public ObjectDetection(ObjectDetectionIO io)
+    {
         this.io = io;
     }
 
     /*
      * Periodically retrive most recent ObjectDetection pipeline results and populate into inputs.
      */
-    public void periodic() {
+    public void periodic()
+    {
         io.updateInputs(inputs);
         Logger.processInputs(io.getCamera(), inputs);
     }
@@ -50,7 +52,8 @@ public class ObjectDetection {
      * inputs. Result is an array of object information (e.g. skew, yaw, objID, etc.) from latest
      * pipeline result. Each index contains information for a single detected object.
      */
-    public TargetObservation[] getTargetObservations() {
+    public TargetObservation[] getTargetObservations()
+    {
         return inputs.latestTargetObservations;
     }
 
@@ -67,7 +70,8 @@ public class ObjectDetection {
      * @return The estimated range to the object in meters.
      */
     public double rangeToTarget_SingleFactorArea(TargetObservation targetObservation,
-        float a, float b, float c, float d) {
+        float a, float b, float c, float d)
+    {
         return (a * Math.pow(targetObservation.objArea(), 3)
             + b * Math.pow(targetObservation.objArea(), 2) + c * targetObservation.objArea() + d);
     }
@@ -88,11 +92,12 @@ public class ObjectDetection {
      * @return The estimated range to the object in meters.
      */
     public double rangeToTarget_FocalLength(TargetObservation targetObservation,
-        double objectPhysicalHeightMeters, double cameraFocalLengthPixels, double cameraCalFactor) {
+        double objectPhysicalHeightMeters, double cameraFocalLengthPixels, double cameraCalFactor)
+    {
         // Return & sort corners to estimate detected object's digital height in pixels.
         double[] objectDigitalCorners_px =
-            {targetObservation.cornerOne().get(2), targetObservation.cornerTwo().get(2),
-                    targetObservation.cornerThree().get(2), targetObservation.cornerFour().get(2)};
+            {targetObservation.cornerOne()[2], targetObservation.cornerTwo()[2],
+                    targetObservation.cornerThree()[2], targetObservation.cornerFour()[2]};
         Arrays.sort(objectDigitalCorners_px);
         // Calculate object's digital height in pixels.
         double objectPhysicalHeightPixels =
@@ -133,7 +138,8 @@ public class ObjectDetection {
      */
     public double rangeToTarget_Pitch(TargetObservation targetObservation,
         Transform3d cameraTransform, double targetHeightMeters, double cameraCalFactor,
-        double cameraOffset) {
+        double cameraOffset)
+    {
         // Empirically-determined tolerance (m)
         // Below which, height differential is too small for algorithm to be reliable.
         double tolerance = 0.175;
@@ -197,7 +203,8 @@ public class ObjectDetection {
      */
     public double headingToTarget_Yaw(TargetObservation targetObservation,
         Transform3d cameraTransform, double targetRangeMeters, double cameraCalFactor,
-        double cameraOffset) {
+        double cameraOffset)
+    {
         // Salient camera transform parameters
         // Camera's range to target (math utilizes camera's range, not robot's).
         double cameraRangeMeters = targetRangeMeters - cameraTransform.getX();
@@ -207,7 +214,7 @@ public class ObjectDetection {
         double cameraYawRadians = cameraTransform.getRotation().getZ();
         // Mathematically verified for target left or right of centerline & camera yawed left or
         // right; no sign correction required.
-        return Math.tan(cameraYawRadians - Math.toRadians(targetObservation.yaw())
+        return ((Math.tan(cameraYawRadians - Math.toRadians(targetObservation.yaw())))
             * cameraRangeMeters * cameraCalFactor + cameraOffset + cameraHeadingDelta);
     }
 
@@ -219,7 +226,8 @@ public class ObjectDetection {
      * @param targetHeadingMeters Robot's heading to the target in meters.
      * @return The estimated 2d distance from the robot to the target in meters.
      */
-    public double distanceToTarget2d(double targetRangeMeters, double targetHeadingMeters) {
+    public double distanceToTarget2d(double targetRangeMeters, double targetHeadingMeters)
+    {
         // Distance from robot to target
         return Math.sqrt((Math.pow(targetRangeMeters, 2) + Math.pow(targetHeadingMeters, 2)));
     }
@@ -239,7 +247,8 @@ public class ObjectDetection {
      * @return A Translation2d of the detected object in field coordinates.
      */
     public Translation2d estimateTargetToField(double targetRangeMeters,
-        double targetHeadingMeters, Pose2d robotPose) {
+        double targetHeadingMeters, Pose2d robotPose)
+    {
         Translation2d fieldToTargetTranslation = robotPose
             .transformBy(new Transform2d(targetRangeMeters, targetHeadingMeters, new Rotation2d()))
             .getTranslation();
@@ -254,15 +263,17 @@ public class ObjectDetection {
      * re-added to the end of the list.
      * 
      * @param N The number of last detections to store in memory.
-     * @param lastNDetections The List of Translation2d objects representing the robot's memory of
-     *        last N detections.
+     * @param lastNDetections The ArrayList of Translation2d objects representing the robot's memory
+     *        of last N detections.
      * @param toleranceMeters The tolerance in meters for determining whether a detection is new or
      *        old.
      * @param targetTranslation The Translation2d of the current target detection to be evaluated.
+     * @return Updated lastNDetections list.
      */
     public void getLastNDetections(int N,
-        List<Translation2d> lastNDetections, double toleranceMeters,
-        Translation2d targetTranslation) {
+        ArrayList<Translation2d> lastNDetections, double toleranceMeters,
+        Translation2d targetTranslation)
+    {
         Translation2d currentTranslation;
         boolean isNewDetection = true;
         double repeatIndex = 0;
@@ -298,7 +309,8 @@ public class ObjectDetection {
     /*
      * Return whether the camera is connected.
      */
-    public boolean isConnected() {
+    public boolean isConnected()
+    {
         return inputs.connected;
     }
 }

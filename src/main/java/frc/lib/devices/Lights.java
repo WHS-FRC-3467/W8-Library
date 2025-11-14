@@ -31,7 +31,8 @@ public class Lights {
      *
      * @param io the IO to interact with.
      */
-    public Lights(LightsIO io) {
+    public Lights(LightsIO io)
+    {
         this.io = io;
     }
 
@@ -40,7 +41,8 @@ public class Lights {
      *
      * @param request {@link ControlRequest}
      */
-    public void setAnimation(ControlRequest request) {
+    public void setAnimation(ControlRequest request)
+    {
         io.setAnimation(request);
     }
 
@@ -49,7 +51,8 @@ public class Lights {
      *
      * @param requests {@link ControlRequest}
      */
-    public void setAnimations(List<ControlRequest> requests) {
+    public void setAnimations(List<ControlRequest> requests)
+    {
         for (ControlRequest request : requests) {
             io.setAnimation(request);
         }
