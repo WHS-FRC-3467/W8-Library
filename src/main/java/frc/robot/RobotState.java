@@ -61,12 +61,10 @@ public class RobotState {
 
     private final TrigSolve fallbackVisionProcessor =
         new TrigSolve(FieldConstants.aprilTagLayout);
-    private final MultiTagOnCoproc seedVisionProcessor =
+    private final MultiTagOnCoproc visionProcessor =
         new MultiTagOnCoproc(
             Optional.of(fallbackVisionProcessor),
             FieldConstants.aprilTagLayout);
-    private final ConstrainedSolvePnp visionProcessor =
-        new ConstrainedSolvePnp(seedVisionProcessor, FieldConstants.aprilTagLayout);
 
     private final PoseEstimator poseEstimator = new PoseEstimator(
         visionProcessor,
