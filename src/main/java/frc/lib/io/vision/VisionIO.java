@@ -27,10 +27,10 @@ import edu.wpi.first.math.numbers.N8;
 
 public interface VisionIO {
     public class VisionIOInputs implements LoggableInputs {
-        protected boolean connected = false;
-        protected Optional<Matrix<N3, N3>> cameraMatrix = Optional.empty();
-        protected Optional<Matrix<N8, N1>> distCoeffs = Optional.empty();
-        protected PhotonPipelineResult[] results = new PhotonPipelineResult[0];
+        public boolean connected = false;
+        public Optional<Matrix<N3, N3>> cameraMatrix = Optional.empty();
+        public Optional<Matrix<N8, N1>> distCoeffs = Optional.empty();
+        public PhotonPipelineResult[] results = new PhotonPipelineResult[0];
 
         @Override
         public void toLog(LogTable table)
