@@ -10,7 +10,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.lib.devices.AprilTagCamera.TagObservation;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.TagObservation;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;

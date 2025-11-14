@@ -17,7 +17,7 @@ package frc.lib.io.vision.photonvision;
 
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
-import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.CameraProperties;
 
 public class VisionIOPhotonVisionReal implements VisionIOPhotonVision {
     protected final PhotonCamera photonCamera;

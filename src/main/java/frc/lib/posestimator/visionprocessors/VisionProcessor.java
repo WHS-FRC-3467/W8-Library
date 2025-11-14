@@ -19,7 +19,7 @@ import java.util.Optional;
 import edu.wpi.first.math.estimator.PoseEstimator;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import frc.lib.devices.AprilTagCamera.VisionObservation;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.TagObservation.VisionObservation;
 
 /**
  * A processing interface for converting raw vision observations into global robot pose estimates.

@@ -25,9 +25,9 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import frc.lib.devices.AprilTagCamera.CameraProperties;
-import frc.lib.devices.AprilTagCamera.TagObservation;
-import frc.lib.devices.AprilTagCamera.VisionObservation;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.CameraProperties;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.TagObservation;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.TagObservation.VisionObservation;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -54,7 +54,6 @@ public class TrigSolve implements VisionProcessor {
         TagObservation target,
         Rotation2d heading)
     {
-
         Translation2d camToTagTranslation =
             new Translation3d(
                 target.cameraToTarget().getTranslation().getNorm(),

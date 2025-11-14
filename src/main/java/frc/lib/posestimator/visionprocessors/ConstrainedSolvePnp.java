@@ -21,8 +21,8 @@ import org.photonvision.estimation.VisionEstimation;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import frc.lib.devices.AprilTagCamera.TagObservation;
-import frc.lib.devices.AprilTagCamera.VisionObservation;
+import frc.lib.devices.apriltagcameras.AprilTagCameraPhotonVision;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.TagObservation.VisionObservation;
 import frc.lib.util.GeomUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -78,7 +78,8 @@ public class ConstrainedSolvePnp implements VisionProcessor {
     {
         var camera = observation.camera();
         var targets =
-            observation.tagObservations().stream().map(TagObservation::toPhotonTarget).toList();
+            observation.tagObservations().stream()
+                .map(AprilTagCameraPhotonVision::tagObservationToPhotonTarget).toList();
         int tagCount = targets.size();
 
         // Ignore invalid observations

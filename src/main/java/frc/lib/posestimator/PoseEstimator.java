@@ -29,7 +29,7 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
-import frc.lib.devices.AprilTagCamera.VisionObservation;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.TagObservation.VisionObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.lib.posestimator.visionprocessors.VisionProcessor;
 import frc.lib.posestimator.visionprocessors.VisionProcessor.PoseRecord;

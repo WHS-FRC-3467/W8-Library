@@ -19,7 +19,7 @@ import static edu.wpi.first.units.Units.Meters;
 import java.util.Optional;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Rotation2d;
-import frc.lib.devices.AprilTagCamera.VisionObservation;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.TagObservation.VisionObservation;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;

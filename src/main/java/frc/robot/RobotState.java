@@ -24,13 +24,13 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import frc.lib.devices.AprilTagCamera.TagObservation;
-import frc.lib.devices.AprilTagCamera.VisionObservation;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.TagObservation;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.TagObservation.VisionObservation;
 import frc.lib.posestimator.PoseEstimator;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.lib.posestimator.visionprocessors.ConstrainedSolvePnp;
-import frc.lib.posestimator.visionprocessors.LowestAmbiguity;
 import frc.lib.posestimator.visionprocessors.MultiTagOnCoproc;
+import frc.lib.posestimator.visionprocessors.TrigSolve;
 import frc.lib.posestimator.visionprocessors.VisionProcessor.PoseRecord;
 import frc.robot.subsystems.drive.Drive;
 import lombok.AccessLevel;
@@ -59,8 +59,8 @@ public class RobotState {
         return z > MAX_Z_METERS || x < 0.0 || x > FIELD_LENGTH || y < 0.0 || y > FIELD_WIDTH;
     }
 
-    private final LowestAmbiguity fallbackVisionProcessor =
-        new LowestAmbiguity(FieldConstants.aprilTagLayout);
+    private final TrigSolve fallbackVisionProcessor =
+        new TrigSolve(FieldConstants.aprilTagLayout);
     private final MultiTagOnCoproc seedVisionProcessor =
         new MultiTagOnCoproc(
             Optional.of(fallbackVisionProcessor),

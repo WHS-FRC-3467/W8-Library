@@ -27,8 +27,8 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
 import edu.wpi.first.math.util.Units;
-import frc.lib.devices.AprilTagCamera;
-import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.apriltagcameras.AprilTagCameraPhotonVision;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.CameraProperties;
 import frc.lib.io.vision.photonvision.VisionIOPhotonVision;
 import frc.lib.io.vision.photonvision.VisionIOPhotonVisionReal;
 import frc.lib.io.vision.photonvision.VisionIOPhotonVisionSim;
@@ -170,24 +170,26 @@ public class VisionConstants {
     {
         switch (Constants.currentMode) {
             case REAL -> {
-                var camera1 = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOReal(),
+                var camera1 = new AprilTagCameraPhotonVision(FRONT_LEFT, getFrontLeftIOReal(),
                     RobotState.getInstance()::addVisionObservation);
-                var camera2 = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOReal(),
+                var camera2 = new AprilTagCameraPhotonVision(FRONT_RIGHT, getFrontRightIOReal(),
                     RobotState.getInstance()::addVisionObservation);
                 new VisionSubsystem(camera1, camera2);
             }
             case SIM -> {
-                var camera1 = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim(),
+                var camera1 = new AprilTagCameraPhotonVision(FRONT_LEFT, getFrontLeftIOSim(),
                     RobotState.getInstance()::addVisionObservation);
-                var camera2 = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim(),
+                var camera2 = new AprilTagCameraPhotonVision(FRONT_RIGHT, getFrontRightIOSim(),
                     RobotState.getInstance()::addVisionObservation);
                 new VisionSubsystem(camera1, camera2);
             }
             case REPLAY -> {
-                var camera1 = new AprilTagCamera(FRONT_LEFT, new VisionIOPhotonVision() {},
-                    RobotState.getInstance()::addVisionObservation);
-                var camera2 = new AprilTagCamera(FRONT_RIGHT, new VisionIOPhotonVision() {},
-                    RobotState.getInstance()::addVisionObservation);
+                var camera1 =
+                    new AprilTagCameraPhotonVision(FRONT_LEFT, new VisionIOPhotonVision() {},
+                        RobotState.getInstance()::addVisionObservation);
+                var camera2 =
+                    new AprilTagCameraPhotonVision(FRONT_RIGHT, new VisionIOPhotonVision() {},
+                        RobotState.getInstance()::addVisionObservation);
                 new VisionSubsystem(camera1, camera2);
             }
         }

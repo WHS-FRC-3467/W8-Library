@@ -17,7 +17,7 @@ package frc.lib.io.vision.photonvision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
-import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.apriltagcameras.AprilTagCamera.CameraProperties;
 import java.util.function.Supplier;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
