@@ -15,9 +15,9 @@
 
 package frc.lib.posestimator.visionprocessors;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 import java.util.Optional;
-import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -26,6 +26,8 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.AprilTagCamera.TagObservation;
+import frc.lib.devices.AprilTagCamera.VisionObservation;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -49,22 +51,22 @@ public class TrigSolve implements VisionProcessor {
 
     private Optional<Pose2d> solveTrigPosition(
         CameraProperties camera,
-        PhotonTrackedTarget target,
+        TagObservation target,
         Rotation2d heading)
     {
 
         Translation2d camToTagTranslation =
             new Translation3d(
-                target.getBestCameraToTarget().getTranslation().getNorm(),
+                target.cameraToTarget().getTranslation().getNorm(),
                 new Rotation3d(
                     0,
-                    -Math.toRadians(target.getPitch()),
-                    -Math.toRadians(target.getYaw())))
+                    -target.pitch().in(Radians),
+                    -target.yaw().in(Radians)))
                         .rotateBy(camera.robotToCamera().getRotation())
                         .toTranslation2d()
                         .rotateBy(heading);
 
-        var tagPoseOpt = fieldLayout.getTagPose(target.getFiducialId());
+        var tagPoseOpt = fieldLayout.getTagPose(target.id());
         if (tagPoseOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -85,12 +87,11 @@ public class TrigSolve implements VisionProcessor {
 
     @Override
     public Optional<PoseRecord> processVisionObservation(
-        PhotonPipelineResult observation,
-        CameraProperties camera,
+        VisionObservation observation,
         Rotation2d heading)
     {
-
-        var tagObservations = observation.getTargets();
+        var camera = observation.camera();
+        var tagObservations = observation.tagObservations();
 
         // Nothing to go off of
         if (tagObservations.isEmpty()) {
@@ -98,26 +99,26 @@ public class TrigSolve implements VisionProcessor {
         }
 
         // The observation that matches the tag ID we're looking for
-        var optionalWantedTarget = tagObservations.stream()
-            .filter(target -> target.fiducialId == followedAprilTag)
+        var optionalWantedObservation = tagObservations.stream()
+            .filter(target -> target.id() == followedAprilTag)
             .findFirst();
 
         // It wasn't found
-        if (optionalWantedTarget.isEmpty()) {
+        if (optionalWantedObservation.isEmpty()) {
             return Optional.empty();
         }
 
-        PhotonTrackedTarget wantedTarget = optionalWantedTarget.get();
+        TagObservation wantedObservation = optionalWantedObservation.get();
 
         double stdDevFactor =
-            Math.pow(wantedTarget.bestCameraToTarget.getTranslation().getNorm(), 2)
+            Math.pow(wantedObservation.distance().in(Meters), 2)
                 * camera.stdDevFactor();
         double linearStdDev = linearStdDevFactor * stdDevFactor;
 
         // This processor assumes supplied heading is perfect
         double angularStdDev = Double.POSITIVE_INFINITY;
 
-        return solveTrigPosition(camera, wantedTarget, heading)
+        return solveTrigPosition(camera, wantedObservation, heading)
             .map(p -> new PoseRecord(new Pose3d(p), linearStdDev, angularStdDev));
     }
 }

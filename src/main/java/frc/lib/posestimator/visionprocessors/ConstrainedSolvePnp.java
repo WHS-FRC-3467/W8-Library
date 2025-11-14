@@ -18,11 +18,11 @@ package frc.lib.posestimator.visionprocessors;
 import java.util.Optional;
 import org.photonvision.estimation.TargetModel;
 import org.photonvision.estimation.VisionEstimation;
-import org.photonvision.targeting.PhotonPipelineResult;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.AprilTagCamera.TagObservation;
+import frc.lib.devices.AprilTagCamera.VisionObservation;
 import frc.lib.util.GeomUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -73,11 +73,12 @@ public class ConstrainedSolvePnp implements VisionProcessor {
 
     @Override
     public Optional<PoseRecord> processVisionObservation(
-        PhotonPipelineResult result,
-        CameraProperties camera,
+        VisionObservation observation,
         Rotation2d heading)
     {
-        var targets = result.getTargets();
+        var camera = observation.camera();
+        var targets =
+            observation.tagObservations().stream().map(TagObservation::toPhotonTarget).toList();
         int tagCount = targets.size();
 
         // Ignore invalid observations
@@ -89,7 +90,7 @@ public class ConstrainedSolvePnp implements VisionProcessor {
         var robotToCamera = camera.robotToCamera();
 
         // Attempt to extract seed pose from the observation
-        var optionalSeed = seedProvider.processVisionObservation(result, camera, heading);
+        var optionalSeed = seedProvider.processVisionObservation(observation, heading);
         if (optionalSeed.isEmpty()) {
             return Optional.empty();
         }

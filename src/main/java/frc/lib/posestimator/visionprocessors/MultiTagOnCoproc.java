@@ -15,12 +15,11 @@
 
 package frc.lib.posestimator.visionprocessors;
 
+import static edu.wpi.first.units.Units.Meters;
 import java.util.Optional;
-import org.photonvision.targeting.PhotonPipelineResult;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.AprilTagCamera.VisionObservation;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -57,33 +56,29 @@ public class MultiTagOnCoproc implements VisionProcessor {
 
     @Override
     public Optional<PoseRecord> processVisionObservation(
-        PhotonPipelineResult result,
-        CameraProperties camera,
+        VisionObservation observation,
         Rotation2d heading)
     {
-        if (result.getMultiTagResult().isEmpty()) {
+        if (observation.multiTagPose().isEmpty()) {
             if (fallbackProcessor.isEmpty()) {
                 return Optional.empty();
             }
 
-            return fallbackProcessor.get().processVisionObservation(result, camera, heading);
+            return fallbackProcessor.get().processVisionObservation(observation, heading);
         }
 
-        var best_tf = result.getMultiTagResult().get().estimatedPose.best;
-        var best =
-            Pose3d.kZero
-                .plus(best_tf) // field-to-camera
-                .relativeTo(fieldLayout.getOrigin())
-                .plus(camera.robotToCamera().inverse()); // field-to-robot
+        var best = observation.multiTagPose().get().relativeTo(fieldLayout.getOrigin()); // field-to-robot
+
+        var tagObservations = observation.tagObservations();
 
         // Compute distance-based uncertainty scaling
-        double avgDistance = result.getTargets().stream()
-            .mapToDouble(target -> target.getBestCameraToTarget().getTranslation().getNorm())
+        double avgDistance = tagObservations.stream()
+            .mapToDouble(target -> target.distance().in(Meters))
             .average().orElse(0.0);
 
         double stdDevFactor =
-            (Math.pow(avgDistance, 2.0) / result.getTargets().size())
-                * camera.stdDevFactor();
+            (Math.pow(avgDistance, 2.0) / tagObservations.size())
+                * observation.camera().stdDevFactor();
         double linearStdDev = linearStdDevFactor * stdDevFactor;
         double angularStdDev = angularStdDevFactor * stdDevFactor;
 

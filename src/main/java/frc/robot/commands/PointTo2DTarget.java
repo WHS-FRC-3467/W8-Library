@@ -4,11 +4,12 @@
 
 package frc.robot.commands;
 
+import static edu.wpi.first.units.Units.Radians;
 import org.littletonrobotics.junction.Logger;
-import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.lib.devices.AprilTagCamera.TagObservation;
 import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 
@@ -17,7 +18,7 @@ public class PointTo2DTarget extends Command {
 
     private final Drive drive;
     private final PIDController rotationController = new PIDController(1, 0, 0);
-    private PhotonTrackedTarget targetTag;
+    private TagObservation targetTag;
     private boolean isFinished = false;
 
     public PointTo2DTarget(Drive drive)
@@ -49,7 +50,7 @@ public class PointTo2DTarget extends Command {
         if (robotState.getClosestTagObservation().isPresent()) {
             this.targetTag = robotState.getClosestTagObservation().get();
             double rotationOutput =
-                rotationController.calculate(Math.toRadians(targetTag.yaw));
+                rotationController.calculate(targetTag.yaw().in(Radians));
 
             Logger.recordOutput("AlignCommand/Rotation Output", rotationOutput);
             drive.runVelocity(

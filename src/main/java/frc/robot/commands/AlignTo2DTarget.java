@@ -4,12 +4,13 @@
 
 package frc.robot.commands;
 
+import static edu.wpi.first.units.Units.Radians;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
-import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.lib.devices.AprilTagCamera.TagObservation;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
@@ -20,7 +21,7 @@ public class AlignTo2DTarget extends Command {
     private final Drive drive;
     private final PIDController strafeController = new PIDController(0.3, 0, 0);
     private final PIDController rotationController = new PIDController(1, 0, 0);
-    private PhotonTrackedTarget targetTag;
+    private TagObservation targetTag;
     private boolean isFinished = false;
 
     public AlignTo2DTarget(Drive drive, DoubleSupplier ySupplier)
@@ -41,7 +42,7 @@ public class AlignTo2DTarget extends Command {
             strafeController.setSetpoint(0);
             rotationController.setSetpoint(
                 FieldConstants.aprilTagLayout
-                    .getTagPose(robotState.getClosestTagObservation().get().fiducialId)
+                    .getTagPose(robotState.getClosestTagObservation().get().id())
                     .get().getRotation().getZ() + Math.PI);
 
             Logger.recordOutput("AlignCommand/Strafe Setpoint", strafeController.getSetpoint());
@@ -58,7 +59,7 @@ public class AlignTo2DTarget extends Command {
     {
         if (robotState.getClosestTagObservation().isPresent()) {
             this.targetTag = robotState.getClosestTagObservation().get();
-            double strafeOutput = strafeController.calculate(Math.toRadians(targetTag.yaw));
+            double strafeOutput = strafeController.calculate(targetTag.yaw().in(Radians));
             double rotationOutput =
                 rotationController
                     .calculate(robotState.getEstimatedPose().getRotation().getRadians());

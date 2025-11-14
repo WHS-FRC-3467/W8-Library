@@ -16,13 +16,13 @@
 package frc.lib.posestimator.visionprocessors;
 
 import java.util.Optional;
-import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.AprilTagCamera.TagObservation;
+import frc.lib.devices.AprilTagCamera.VisionObservation;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -52,25 +52,24 @@ public class LowestAmbiguity implements VisionProcessor {
 
     @Override
     public Optional<PoseRecord> processVisionObservation(
-        PhotonPipelineResult observation,
-        CameraProperties camera,
+        VisionObservation observation,
         Rotation2d heading)
     {
-
         // Ignore invalid observations
-        if (observation.getTargets().isEmpty()) {
+        if (observation.tagObservations().isEmpty()) {
             return Optional.empty();
         }
 
-        PhotonTrackedTarget lowestAmbiguity = observation.getBestTarget();
+        CameraProperties camera = observation.camera();
+        TagObservation lowestAmbiguity = observation.tagObservations().get(0);
 
-        var optionalTargetPose = fieldLayout.getTagPose(lowestAmbiguity.fiducialId);
+        var optionalTargetPose = fieldLayout.getTagPose(lowestAmbiguity.id());
         if (optionalTargetPose.isEmpty()) {
             return Optional.empty();
         }
         Pose3d targetPose = optionalTargetPose.get();
 
-        Transform3d targetToCamera = lowestAmbiguity.bestCameraToTarget.inverse();
+        Transform3d targetToCamera = lowestAmbiguity.cameraToTarget().inverse();
         Transform3d cameraToRobot = camera.robotToCamera().inverse();
         Pose3d robotPose = targetPose.plus(targetToCamera).plus(cameraToRobot);
 

@@ -19,14 +19,13 @@ import static edu.wpi.first.units.Units.Seconds;
 import java.util.Optional;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
-import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.AprilTagCamera.TagObservation;
+import frc.lib.devices.AprilTagCamera.VisionObservation;
 import frc.lib.posestimator.PoseEstimator;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.lib.posestimator.visionprocessors.ConstrainedSolvePnp;
@@ -82,7 +81,7 @@ public class RobotState {
     private Pose2d estimatedPose = Pose2d.kZero;
 
     @Getter
-    private Optional<PhotonTrackedTarget> closestTagObservation = Optional.empty();
+    private Optional<TagObservation> closestTagObservation = Optional.empty();
 
     @Getter
     @Setter
@@ -94,18 +93,16 @@ public class RobotState {
         estimatedPose = poseEstimator.estimatedPose();
     }
 
-    public void addVisionObservation(PhotonPipelineResult observation, CameraProperties camera)
+    public void addVisionObservation(VisionObservation observation)
     {
-        closestTagObservation = observation.getTargets().stream().sorted((t1, t2) -> {
-            double t1Distance = t1.getBestCameraToTarget().getTranslation().getNorm();
-            double t2Distance = t2.getBestCameraToTarget().getTranslation().getNorm();
-            if (t2Distance < t1Distance)
+        closestTagObservation = observation.tagObservations().stream().sorted((t1, t2) -> {
+            if (t2.distance().lt(t1.distance()))
                 return -1;
-            if (t2Distance > t1Distance)
+            if (t2.distance().gt(t1.distance()))
                 return 1;
             return 0;
         }).findFirst();
-        poseEstimator.addVisionObservation(observation, camera);
+        poseEstimator.addVisionObservation(observation);
         estimatedPose = poseEstimator.estimatedPose();
     }
 

@@ -19,7 +19,6 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.Optional;
 import java.util.function.Predicate;
-import org.photonvision.targeting.PhotonPipelineResult;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
@@ -30,7 +29,7 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
-import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.AprilTagCamera.VisionObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.lib.posestimator.visionprocessors.VisionProcessor;
 import frc.lib.posestimator.visionprocessors.VisionProcessor.PoseRecord;
@@ -93,9 +92,10 @@ public class PoseEstimator {
         estimatedPose = estimatedPose.exp(twist);
     }
 
-    private Optional<Transform2d> getPoseDelta(double timestampSeconds)
+    private Optional<Transform2d> getPoseDelta(Time timestamp)
     {
-        var optionalOdometryPoseAtTime = odometer.getOdometryBuffer().getSample(timestampSeconds);
+        var optionalOdometryPoseAtTime =
+            odometer.getOdometryBuffer().getSample(timestamp.in(Seconds));
         if (optionalOdometryPoseAtTime.isEmpty()) {
             return Optional.empty();
         }
@@ -106,11 +106,11 @@ public class PoseEstimator {
         return Optional.of(thenToNow);
     }
 
-    public void addVisionObservation(PhotonPipelineResult result, CameraProperties camera)
+    public void addVisionObservation(VisionObservation observation)
     {
         // Attempt to get heading. Fails if the odometer has not recorded
         // a measurement near this timestamp
-        var optionalPoseDelta = getPoseDelta(result.getTimestampSeconds());
+        var optionalPoseDelta = getPoseDelta(observation.timestamp());
         if (optionalPoseDelta.isEmpty()) {
             return;
         }
@@ -118,7 +118,7 @@ public class PoseEstimator {
 
         Pose2d oldPose = estimatedPose.plus(poseDelta.inverse());
         var optionalGlobalPoseRecord =
-            visionProcessor.processVisionObservation(result, camera, oldPose.getRotation());
+            visionProcessor.processVisionObservation(observation, oldPose.getRotation());
         if (optionalGlobalPoseRecord.isEmpty()) {
             return;
         }
