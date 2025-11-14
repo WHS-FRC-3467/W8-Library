@@ -28,7 +28,6 @@ import frc.lib.devices.apriltagcameras.AprilTagCamera.TagObservation;
 import frc.lib.devices.apriltagcameras.AprilTagCamera.TagObservation.VisionObservation;
 import frc.lib.posestimator.PoseEstimator;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
-import frc.lib.posestimator.visionprocessors.ConstrainedSolvePnp;
 import frc.lib.posestimator.visionprocessors.MultiTagOnCoproc;
 import frc.lib.posestimator.visionprocessors.TrigSolve;
 import frc.lib.posestimator.visionprocessors.VisionProcessor.PoseRecord;
