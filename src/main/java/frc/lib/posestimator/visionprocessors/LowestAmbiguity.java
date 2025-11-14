@@ -36,19 +36,19 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class LowestAmbiguity implements VisionProcessor {
 
-    private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
+    private static final double DEFAULT_LINEAR_STDDEV_BASELINE = 0.04;
 
-    private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
+    private static final double DEFAULT_ANGULAR_STDDEV_BASELINE = 0.06;
 
     private final AprilTagFieldLayout fieldLayout;
 
     @Getter
     @Setter
-    private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
+    private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_BASELINE;
 
     @Getter
     @Setter
-    private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
+    private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_BASELINE;
 
     @Override
     public Optional<PoseRecord> processVisionObservation(

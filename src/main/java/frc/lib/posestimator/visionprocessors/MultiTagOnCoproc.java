@@ -38,9 +38,9 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class MultiTagOnCoproc implements VisionProcessor {
 
-    private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
+    private static final double DEFAULT_LINEAR_STDDEV_BASELINE = 0.025;
 
-    private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
+    private static final double DEFAULT_ANGULAR_STDDEV_BASELINE = 0.04;
 
     private final Optional<VisionProcessor> fallbackProcessor;
 
@@ -48,11 +48,11 @@ public class MultiTagOnCoproc implements VisionProcessor {
 
     @Getter
     @Setter
-    private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
+    private double linearStdDevBaseline = DEFAULT_LINEAR_STDDEV_BASELINE;
 
     @Getter
     @Setter
-    private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
+    private double angularStdDevBaseline = DEFAULT_ANGULAR_STDDEV_BASELINE;
 
     @Override
     public Optional<PoseRecord> processVisionObservation(
@@ -79,8 +79,8 @@ public class MultiTagOnCoproc implements VisionProcessor {
         double stdDevFactor =
             (Math.pow(avgDistance, 2.0) / tagObservations.size())
                 * observation.camera().stdDevFactor();
-        double linearStdDev = linearStdDevFactor * stdDevFactor;
-        double angularStdDev = angularStdDevFactor * stdDevFactor;
+        double linearStdDev = linearStdDevBaseline * stdDevFactor;
+        double angularStdDev = angularStdDevBaseline * stdDevFactor;
 
         return Optional.of(
             new PoseRecord(

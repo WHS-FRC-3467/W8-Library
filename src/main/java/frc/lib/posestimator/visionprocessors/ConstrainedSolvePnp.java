@@ -41,9 +41,9 @@ import lombok.experimental.Accessors;
 public class ConstrainedSolvePnp implements VisionProcessor {
 
     private static final double DEFAULT_AMBIGUITY_THRESHOLD = 0.3;
-    private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
-    private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
-    private static final double DEFAULT_GYRO_HEADING_SCALE_FACTOR = 10.0;
+    private static final double DEFAULT_LINEAR_STDDEV_BASELINE = 0.025;
+    private static final double DEFAULT_ANGULAR_STDDEV_BASELINE = 0.04;
+    private static final double DEFAULT_GYRO_HEADING_SCALE_FACTOR = 5.0;
 
     private final VisionProcessor seedProvider;
     private final AprilTagFieldLayout fieldLayout;
@@ -58,11 +58,11 @@ public class ConstrainedSolvePnp implements VisionProcessor {
 
     @Getter
     @Setter
-    private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
+    private double linearStdDevBaseline = DEFAULT_LINEAR_STDDEV_BASELINE;
 
     @Getter
     @Setter
-    private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
+    private double angularStdDevBaseline = DEFAULT_ANGULAR_STDDEV_BASELINE;
 
     public ConstrainedSolvePnp(VisionProcessor seedProvider, AprilTagFieldLayout fieldLayout)
     {
@@ -123,8 +123,8 @@ public class ConstrainedSolvePnp implements VisionProcessor {
             .average().orElse(0.0);
 
         double stdDevFactor = (Math.pow(avgDistance, 2.0) / tagCount) * camera.stdDevFactor();
-        double linearStdDev = linearStdDevFactor * stdDevFactor;
-        double angularStdDev = angularStdDevFactor * stdDevFactor;
+        double linearStdDev = linearStdDevBaseline * stdDevFactor;
+        double angularStdDev = angularStdDevBaseline * stdDevFactor;
 
         return Optional.of(new PoseRecord(estimate, linearStdDev, angularStdDev));
     }

@@ -37,13 +37,13 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class TrigSolve implements VisionProcessor {
 
-    private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
+    private static final double DEFAULT_LINEAR_STDDEV_BASELINE = 0.25;
 
     private final AprilTagFieldLayout fieldLayout;
 
     @Getter
     @Setter
-    private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
+    private double linearStdDevBaseline = DEFAULT_LINEAR_STDDEV_BASELINE;
 
     @Getter
     @Setter
@@ -112,7 +112,7 @@ public class TrigSolve implements VisionProcessor {
         double stdDevFactor =
             Math.pow(wantedObservation.distance().in(Meters), 2)
                 * camera.stdDevFactor();
-        double linearStdDev = linearStdDevFactor * stdDevFactor;
+        double linearStdDev = linearStdDevBaseline * stdDevFactor;
 
         // This processor assumes supplied heading is perfect
         double angularStdDev = Double.POSITIVE_INFINITY;
