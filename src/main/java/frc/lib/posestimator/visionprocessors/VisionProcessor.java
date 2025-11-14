@@ -16,10 +16,11 @@
 package frc.lib.posestimator.visionprocessors;
 
 import java.util.Optional;
+import org.photonvision.targeting.PhotonPipelineResult;
 import edu.wpi.first.math.estimator.PoseEstimator;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import frc.lib.io.vision.VisionIO.VisionObservation;
+import frc.lib.devices.AprilTagCamera.CameraProperties;
 
 /**
  * A processing interface for converting raw vision observations into global robot pose estimates.
@@ -38,6 +39,7 @@ public interface VisionProcessor {
     }
 
     Optional<PoseRecord> processVisionObservation(
-        VisionObservation observation,
+        PhotonPipelineResult observation,
+        CameraProperties camera,
         Rotation2d heading);
 }

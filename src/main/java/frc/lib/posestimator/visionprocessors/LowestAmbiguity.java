@@ -16,12 +16,13 @@
 package frc.lib.posestimator.visionprocessors;
 
 import java.util.Optional;
+import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import frc.lib.io.vision.VisionIO.TagObservation;
-import frc.lib.io.vision.VisionIO.VisionObservation;
+import frc.lib.devices.AprilTagCamera.CameraProperties;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -35,67 +36,46 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class LowestAmbiguity implements VisionProcessor {
 
-    /** Default scaling factor for linear standard deviation (distance-based uncertainty). */
     private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
 
-    /** Default scaling factor for angular standard deviation (orientation-based uncertainty). */
     private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
 
-    /** The field layout containing AprilTag locations. */
     private final AprilTagFieldLayout fieldLayout;
 
-    /** Scaling factor for linear standard deviation (distance-based uncertainty). */
     @Getter
     @Setter
     private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
 
-    /** Scaling factor for angular standard deviation (orientation-based uncertainty). */
     @Getter
     @Setter
     private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
 
-    /**
-     * Processes a {@link VisionObservation} containing multi-tag pose data from the coprocessor and
-     * produces an estimated robot pose.
-     *
-     * <p>
-     * If the observation does not include any tag detections, this method returns
-     * {@link Optional#empty()}.
-     *
-     * @param observation The current {@link VisionObservation} containing detected tags and an
-     *        optional multi-tag camera pose.
-     * @param heading The robot’s current field-relative heading. (Unused in this implementation.)
-     * @return An {@link Optional} containing a {@link PoseRecord} with the estimated robot pose, or
-     *         empty if no valid observation data was available.
-     */
     @Override
-    public Optional<PoseRecord> processVisionObservation(VisionObservation observation,
+    public Optional<PoseRecord> processVisionObservation(
+        PhotonPipelineResult observation,
+        CameraProperties camera,
         Rotation2d heading) {
 
-        var tags = observation.tagObservations();
-        int tagCount = tags.size();
-
-
         // Ignore invalid observations
-        if (observation.tagObservations().isEmpty()) {
+        if (observation.getTargets().isEmpty()) {
             return Optional.empty();
         }
 
-        TagObservation lowestAmbiguity = observation.tagObservations().get(0);
+        PhotonTrackedTarget lowestAmbiguity = observation.getBestTarget();
 
-        var optionalTargetPose = fieldLayout.getTagPose(lowestAmbiguity.id());
+        var optionalTargetPose = fieldLayout.getTagPose(lowestAmbiguity.fiducialId);
         if (optionalTargetPose.isEmpty()) {
             return Optional.empty();
         }
         Pose3d targetPose = optionalTargetPose.get();
 
-        Transform3d targetToCamera = lowestAmbiguity.cameraToTarget().inverse();
-        Transform3d cameraToRobot = observation.camera().robotToCamera().inverse();
+        Transform3d targetToCamera = lowestAmbiguity.bestCameraToTarget.inverse();
+        Transform3d cameraToRobot = camera.robotToCamera().inverse();
         Pose3d robotPose = targetPose.plus(targetToCamera).plus(cameraToRobot);
 
         double distanceFromCamera = targetToCamera.getTranslation().getNorm();
         double stdDevFactor =
-            (Math.pow(distanceFromCamera, 2.0) / tagCount) * observation.camera().stdDevFactor();
+            Math.pow(distanceFromCamera, 2.0) * camera.stdDevFactor();
         double linearStdDev = linearStdDevFactor * stdDevFactor;
         double angularStdDev = angularStdDevFactor * stdDevFactor;
 

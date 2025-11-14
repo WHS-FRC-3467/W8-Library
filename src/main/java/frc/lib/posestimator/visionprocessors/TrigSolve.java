@@ -15,124 +15,80 @@
 
 package frc.lib.posestimator.visionprocessors;
 
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Radians;
 import java.util.Optional;
-import org.littletonrobotics.junction.Logger;
+import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import frc.lib.io.vision.VisionIO.CameraProperties;
-import frc.lib.io.vision.VisionIO.TagObservation;
-import frc.lib.io.vision.VisionIO.VisionObservation;
-import frc.lib.util.GeomUtil;
+import frc.lib.devices.AprilTagCamera.CameraProperties;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-/**
- * A {@link VisionProcessor} implementation that estimates the robot's pose by solving trigonometric
- * relationships between a camera, a known AprilTag field layout, and a single observed tag.
- *
- * <p>
- * This class specifically targets one AprilTag at a time, to be used for more accurate alignment at
- * close distances. This is typically best used by interpolating with a {@link VisionProcessor} that
- * is more accurate at far distances, such as {@link ConstrainedSolvePnp}.
- */
 @RequiredArgsConstructor
 @Accessors(fluent = true)
 public class TrigSolve implements VisionProcessor {
 
-    /** Default scaling factor for linear standard deviation (distance-based uncertainty). */
     private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
 
-    /** The field layout containing AprilTag locations. */
     private final AprilTagFieldLayout fieldLayout;
 
-    /** Scaling factor for linear standard deviation (distance-based uncertainty). */
     @Getter
     @Setter
     private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
 
-    /**
-     * The AprilTag ID that {@link #processVisionObservation(VisionObservation, Rotation2d)} uses
-     * for pose estimation.
-     */
     @Getter
     @Setter
     private int followedAprilTag = 0;
 
-    /**
-     * Computes a robot pose from a single AprilTag observation using trigonometric relationships.
-     *
-     * @param camera The camera model containing intrinsic and extrinsic parameters.
-     * @param observation The detected AprilTag observation.
-     * @param heading The robot’s current field-relative heading.
-     * @return An {@link Optional} containing the estimated robot pose, or empty if invalid.
-     */
     private Optional<Pose2d> solveTrigPosition(
         CameraProperties camera,
-        TagObservation observation,
+        PhotonTrackedTarget target,
         Rotation2d heading) {
 
-        // Convert camera extrinsics to 2D pose for transform use
-        Pose2d cameraPose2d = GeomUtil.toPose3d(camera.robotToCamera()).toPose2d();
-
-        // Compute the field-relative vector from the camera to the observed tag
         Translation2d camToTagTranslation =
             new Translation3d(
-                observation.distance().in(Meters),
+                target.getBestCameraToTarget().getTranslation().getNorm(),
                 new Rotation3d(
                     0,
-                    -observation.pitch().in(Radians),
-                    -observation.yaw().in(Radians)))
+                    -Math.toRadians(target.getPitch()),
+                    -Math.toRadians(target.getYaw())))
                         .rotateBy(camera.robotToCamera().getRotation())
                         .toTranslation2d()
                         .rotateBy(heading);
 
-        // Retrieve the tag’s known field pose
-        Optional<Pose2d> tagPose2d = fieldLayout.getTagPose(observation.id()).map(Pose3d::toPose2d);
-        if (tagPose2d.isEmpty())
+        var tagPoseOpt = fieldLayout.getTagPose(target.getFiducialId());
+        if (tagPoseOpt.isEmpty()) {
             return Optional.empty();
+        }
+        var tagPose2d = tagPoseOpt.get().toPose2d();
 
-        // Compute where the camera must be on the field
         Translation2d fieldToCameraTranslation =
-            tagPose2d.get().getTranslation().plus(camToTagTranslation.unaryMinus());
+            tagPose2d.getTranslation().plus(camToTagTranslation.unaryMinus());
 
-        // Combine translation and heading to determine the camera’s field-relative pose
-        Pose2d cameraPoseField =
-            new Pose2d(fieldToCameraTranslation, heading.plus(cameraPose2d.getRotation()));
+        Translation2d camToRobotTranslation =
+            camera.robotToCamera().getTranslation().toTranslation2d().unaryMinus()
+                .rotateBy(heading);
 
-        // Transform camera pose into robot pose
-        Pose2d robotPose = cameraPoseField.transformBy(new Transform2d(cameraPose2d, Pose2d.kZero));
-
-        // Replace rotation with odometry heading to minimize drift
-        robotPose = new Pose2d(robotPose.getTranslation(), heading);
+        Pose2d robotPose =
+            new Pose2d(fieldToCameraTranslation.plus(camToRobotTranslation), heading);
 
         return Optional.of(robotPose);
     }
 
-    /**
-     * Processes a {@link VisionObservation} and produces an estimated robot pose based on a single
-     * AprilTag observation corresponding to the configured {@link #followedAprilTag()}.
-     *
-     * @param observation The vision observation containing detected tags and camera info.
-     * @param heading The robot’s current field-relative heading.
-     * @return An {@link Optional} {@link PoseRecord} with the estimated field-relative robot pose,
-     *         or empty if the tag was not found or computation failed.
-     */
     @Override
     public Optional<PoseRecord> processVisionObservation(
-        VisionObservation observation,
+        PhotonPipelineResult observation,
+        CameraProperties camera,
         Rotation2d heading) {
 
-        var tagObservations = observation.tagObservations();
+        var tagObservations = observation.getTargets();
 
         // Nothing to go off of
         if (tagObservations.isEmpty()) {
@@ -140,27 +96,26 @@ public class TrigSolve implements VisionProcessor {
         }
 
         // The observation that matches the tag ID we're looking for
-        var optionalWantedObservation = tagObservations.stream()
-            .filter(obs -> obs.id() == followedAprilTag)
+        var optionalWantedTarget = tagObservations.stream()
+            .filter(target -> target.fiducialId == followedAprilTag)
             .findFirst();
 
         // It wasn't found
-        if (optionalWantedObservation.isEmpty()) {
+        if (optionalWantedTarget.isEmpty()) {
             return Optional.empty();
         }
 
-        TagObservation wantedObservation = optionalWantedObservation.get();
+        PhotonTrackedTarget wantedTarget = optionalWantedTarget.get();
 
-        double stdDevFactor = Math.pow(wantedObservation.distance().in(Meters), 2)
-            * observation.camera().stdDevFactor();
+        double stdDevFactor =
+            Math.pow(wantedTarget.bestCameraToTarget.getTranslation().getNorm(), 2)
+                * camera.stdDevFactor();
         double linearStdDev = linearStdDevFactor * stdDevFactor;
 
         // This processor assumes supplied heading is perfect
         double angularStdDev = Double.POSITIVE_INFINITY;
 
-        var a = solveTrigPosition(observation.camera(), wantedObservation, heading)
+        return solveTrigPosition(camera, wantedTarget, heading)
             .map(p -> new PoseRecord(new Pose3d(p), linearStdDev, angularStdDev));
-        a.ifPresent(b -> Logger.recordOutput("test", b.pose()));
-        return a;
     }
 }

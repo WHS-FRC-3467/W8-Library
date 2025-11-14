@@ -17,6 +17,7 @@ package frc.lib.io.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
+import frc.lib.devices.AprilTagCamera.CameraProperties;
 import java.util.function.Supplier;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
@@ -37,45 +38,26 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     private final PhotonCameraSim cameraSim;
     private final VisionSystemSim system;
 
-    /**
-     * Constructs a new simulated PhotonVision IO implementation.
-     *
-     * @param camera The virtual {@link CameraProperties} configuration.
-     * @param system The {@link VisionSystemSim} managing simulated vision sources.
-     * @param poseSupplier A {@link Supplier} that provides the robot's current {@link Pose2d} in
-     *        simulation.
-     * @param fieldLayout The {@link AprilTagFieldLayout} describing all AprilTags in the field.
-     */
     public VisionIOPhotonVisionSim(
-        CameraProperties camera,
+        CameraProperties cameraProperties,
         VisionSystemSim system,
         Supplier<Pose2d> poseSupplier,
         AprilTagFieldLayout fieldLayout) {
-        super(camera);
+        super(cameraProperties);
         this.poseSupplier = poseSupplier;
         this.system = system;
 
         var simCameraProperties = new SimCameraProperties();
         simCameraProperties.setCalibration(
-            camera.resolutionWidth(),
-            camera.resolutionHeight(),
-            camera.cameraMatrix(),
-            camera.distCoeffs());
+            cameraProperties.resolutionWidth(),
+            cameraProperties.resolutionHeight(),
+            cameraProperties.cameraMatrix(),
+            cameraProperties.distCoeffs());
 
         cameraSim = new PhotonCameraSim(super.photonCamera, simCameraProperties, fieldLayout);
-        this.system.addCamera(cameraSim, camera.robotToCamera());
+        this.system.addCamera(cameraSim, cameraProperties.robotToCamera());
     }
 
-    /**
-     * Updates the input data from the simulated PhotonVision system.
-     *
-     * <p>
-     * This method updates the vision simulation with the current robot pose and calls the
-     * superclass to populate the {@link VisionIOInputs} with simulated camera observations and pose
-     * estimates.
-     *
-     * @param inputs The structure to store the latest simulated vision data.
-     */
     @Override
     public void updateInputs(VisionIOInputs inputs) {
         system.update(poseSupplier.get());

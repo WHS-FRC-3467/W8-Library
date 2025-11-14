@@ -15,11 +15,12 @@
 
 package frc.lib.posestimator.visionprocessors;
 
-import static edu.wpi.first.units.Units.Meters;
 import java.util.Optional;
+import org.photonvision.targeting.PhotonPipelineResult;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform3d;
-import frc.lib.io.vision.VisionIO.VisionObservation;
+import frc.lib.devices.AprilTagCamera.CameraProperties;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -38,78 +39,56 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class MultiTagOnCoproc implements VisionProcessor {
 
-    /** Default scaling factor for linear standard deviation (distance-based uncertainty). */
     private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
 
-    /** Default scaling factor for angular standard deviation (orientation-based uncertainty). */
     private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
 
-    /** The {@link VisionProcessor} to fall back to if there is no multitag result */
     private final Optional<VisionProcessor> fallbackProcessor;
 
-    /** Scaling factor for linear standard deviation (distance-based uncertainty). */
+    private final AprilTagFieldLayout fieldLayout;
+
     @Getter
     @Setter
     private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
 
-    /** Scaling factor for angular standard deviation (orientation-based uncertainty). */
     @Getter
     @Setter
     private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
 
-    /**
-     * Processes a {@link VisionObservation} containing multi-tag pose data from the coprocessor and
-     * produces an estimated robot pose.
-     *
-     * <p>
-     * If the observation does not include any tag detections, this method returns
-     * {@link Optional#empty()}.
-     * 
-     * If the observation does not include a multi-tag result and there is no fallback, this method
-     * returns {@link Optional#empty()}.
-     *
-     * @param observation The current {@link VisionObservation} containing detected tags and an
-     *        optional multi-tag camera pose.
-     * @param heading The robot’s current field-relative heading. (Unused in this implementation.)
-     * @return An {@link Optional} containing a {@link PoseRecord} with the estimated robot pose, or
-     *         empty if no valid observation data was available.
-     */
     @Override
-    public Optional<PoseRecord> processVisionObservation(VisionObservation observation,
+    public Optional<PoseRecord> processVisionObservation(
+        PhotonPipelineResult result,
+        CameraProperties camera,
         Rotation2d heading) {
-
-        var tags = observation.tagObservations();
-        int tagCount = tags.size();
-        Transform3d cameraToRobot = observation.camera().robotToCamera().inverse();
-        var optionalMultiTagCameraPose = observation.multiTagCameraPose();
-
-        // Ignore invalid observations
-        if (observation.tagObservations().isEmpty()) {
-            return Optional.empty();
-        }
-
-        // If there's no multitag result and we have a fallback, use it
-        if (optionalMultiTagCameraPose.isEmpty()) {
+        if (result.getMultiTagResult().isEmpty()) {
             if (fallbackProcessor.isEmpty()) {
                 return Optional.empty();
             }
 
-            return fallbackProcessor.get().processVisionObservation(observation, heading);
+            return fallbackProcessor.get().processVisionObservation(result, camera, heading);
         }
 
+        var best_tf = result.getMultiTagResult().get().estimatedPose.best;
+        var best =
+            Pose3d.kZero
+                .plus(best_tf) // field-to-camera
+                .relativeTo(fieldLayout.getOrigin())
+                .plus(camera.robotToCamera().inverse()); // field-to-robot
+
         // Compute distance-based uncertainty scaling
-        double avgDistance = tags.stream()
-            .mapToDouble(tag -> tag.distance().in(Meters))
+        double avgDistance = result.getTargets().stream()
+            .mapToDouble(target -> target.getBestCameraToTarget().getTranslation().getNorm())
             .average().orElse(0.0);
 
         double stdDevFactor =
-            (Math.pow(avgDistance, 2.0) / tagCount) * observation.camera().stdDevFactor();
+            (Math.pow(avgDistance, 2.0) / result.getTargets().size())
+                * camera.stdDevFactor();
         double linearStdDev = linearStdDevFactor * stdDevFactor;
         double angularStdDev = angularStdDevFactor * stdDevFactor;
 
         return Optional.of(
             new PoseRecord(
-                optionalMultiTagCameraPose.get().plus(cameraToRobot),
+                best,
                 linearStdDev,
                 angularStdDev));
     }

@@ -41,7 +41,6 @@ import frc.lib.devices.AprilTagCamera;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
 import frc.lib.io.vision.VisionIOPhotonVisionSim;
-import frc.lib.io.vision.VisionIO.CameraProperties;
 import frc.lib.posestimator.PoseEstimator;
 import frc.lib.util.LoggedDashboardChooser;
 import frc.lib.util.LoggedTunableNumber;

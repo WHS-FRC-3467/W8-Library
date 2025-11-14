@@ -28,10 +28,10 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
 import edu.wpi.first.math.util.Units;
 import frc.lib.devices.AprilTagCamera;
+import frc.lib.devices.AprilTagCamera.CameraProperties;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
 import frc.lib.io.vision.VisionIOPhotonVisionSim;
-import frc.lib.io.vision.VisionIO.CameraProperties;
 import frc.robot.Constants;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
@@ -127,11 +127,11 @@ public class VisionConstants {
 
     private static Optional<VisionSystemSim> visionSim = Optional.empty();
 
-    private static VisionIO getFrontLeftIOReal() {
+    private static VisionIOPhotonVision getFrontLeftIOReal() {
         return new VisionIOPhotonVision(FRONT_LEFT);
     }
 
-    private static VisionIO getFrontLeftIOSim() {
+    private static VisionIOPhotonVisionSim getFrontLeftIOSim() {
         if (visionSim.isEmpty()) {
             visionSim = Optional.of(new VisionSystemSim("main"));
             visionSim.get().addAprilTags(FieldConstants.aprilTagLayout);
@@ -144,12 +144,12 @@ public class VisionConstants {
             FieldConstants.aprilTagLayout);
     }
 
-    private static VisionIO getFrontRightIOReal() {
+    private static VisionIOPhotonVision getFrontRightIOReal() {
         return new VisionIOPhotonVision(
             FRONT_RIGHT);
     }
 
-    private static VisionIO getFrontRightIOSim() {
+    private static VisionIOPhotonVisionSim getFrontRightIOSim() {
         if (visionSim.isEmpty()) {
             visionSim = Optional.of(new VisionSystemSim("main"));
             visionSim.get().addAprilTags(FieldConstants.aprilTagLayout);
@@ -163,27 +163,26 @@ public class VisionConstants {
     }
 
     public static void create() {
-        RobotState robotState = RobotState.getInstance();
         switch (Constants.currentMode) {
             case REAL -> {
-                var camera1 = new AprilTagCamera(FRONT_LEFT_NAME, getFrontLeftIOReal(),
-                    robotState::addVisionObservation);
-                var camera2 = new AprilTagCamera(FRONT_RIGHT_NAME, getFrontRightIOReal(),
-                    robotState::addVisionObservation);
+                var camera1 = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOReal(),
+                    RobotState.getInstance()::addVisionObservation);
+                var camera2 = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOReal(),
+                    RobotState.getInstance()::addVisionObservation);
                 new VisionSubsystem(camera1, camera2);
             }
             case SIM -> {
-                var camera1 = new AprilTagCamera(FRONT_LEFT_NAME, getFrontLeftIOSim(),
-                    robotState::addVisionObservation);
-                var camera2 = new AprilTagCamera(FRONT_RIGHT_NAME, getFrontRightIOSim(),
-                    robotState::addVisionObservation);
+                var camera1 = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim(),
+                    RobotState.getInstance()::addVisionObservation);
+                var camera2 = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim(),
+                    RobotState.getInstance()::addVisionObservation);
                 new VisionSubsystem(camera1, camera2);
             }
             default -> {
-                var camera1 = new AprilTagCamera(FRONT_LEFT_NAME, new VisionIO() {},
-                    robotState::addVisionObservation);
-                var camera2 = new AprilTagCamera(FRONT_RIGHT_NAME, new VisionIO() {},
-                    robotState::addVisionObservation);
+                var camera1 = new AprilTagCamera(FRONT_LEFT, new VisionIO() {},
+                    RobotState.getInstance()::addVisionObservation);
+                var camera2 = new AprilTagCamera(FRONT_RIGHT, new VisionIO() {},
+                    RobotState.getInstance()::addVisionObservation);
                 new VisionSubsystem(camera1, camera2);
             }
         }

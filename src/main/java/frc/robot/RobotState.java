@@ -19,15 +19,17 @@ import static edu.wpi.first.units.Units.Seconds;
 import java.util.Optional;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import frc.lib.io.vision.VisionIO.TagObservation;
-import frc.lib.io.vision.VisionIO.VisionObservation;
+import frc.lib.devices.AprilTagCamera.CameraProperties;
 import frc.lib.posestimator.PoseEstimator;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
+import frc.lib.posestimator.visionprocessors.ConstrainedSolvePnp;
 import frc.lib.posestimator.visionprocessors.LowestAmbiguity;
 import frc.lib.posestimator.visionprocessors.MultiTagOnCoproc;
 import frc.lib.posestimator.visionprocessors.VisionProcessor.PoseRecord;
@@ -54,14 +56,17 @@ public class RobotState {
         double x = pose.getX();
         double y = pose.getY();
         double z = pose.getZ();
-
         return z > MAX_Z_METERS || x < 0.0 || x > FIELD_LENGTH || y < 0.0 || y > FIELD_WIDTH;
     }
 
     private final LowestAmbiguity fallbackVisionProcessor =
         new LowestAmbiguity(FieldConstants.aprilTagLayout);
-    private final MultiTagOnCoproc visionProcessor =
-        new MultiTagOnCoproc(Optional.of(fallbackVisionProcessor));
+    private final MultiTagOnCoproc seedVisionProcessor =
+        new MultiTagOnCoproc(
+            Optional.of(fallbackVisionProcessor),
+            FieldConstants.aprilTagLayout);
+    private final ConstrainedSolvePnp visionProcessor =
+        new ConstrainedSolvePnp(seedVisionProcessor, FieldConstants.aprilTagLayout);
 
     private final PoseEstimator poseEstimator = new PoseEstimator(
         visionProcessor,
@@ -76,7 +81,7 @@ public class RobotState {
     private Pose2d estimatedPose = Pose2d.kZero;
 
     @Getter
-    private Optional<TagObservation> closestTagObservation = Optional.empty();
+    private Optional<PhotonTrackedTarget> closestTagObservation = Optional.empty();
 
     @Getter
     @Setter
@@ -87,16 +92,17 @@ public class RobotState {
         estimatedPose = poseEstimator.estimatedPose();
     }
 
-    public void addVisionObservation(VisionObservation observation) {
-        closestTagObservation = observation.tagObservations().stream().sorted((t1, t2) -> {
-            if (t2.distance().lt(t1.distance()))
+    public void addVisionObservation(PhotonPipelineResult observation, CameraProperties camera) {
+        closestTagObservation = observation.getTargets().stream().sorted((t1, t2) -> {
+            double t1Distance = t1.getBestCameraToTarget().getTranslation().getNorm();
+            double t2Distance = t2.getBestCameraToTarget().getTranslation().getNorm();
+            if (t2Distance < t1Distance)
                 return -1;
-            if (t2.distance().gt(t1.distance()))
+            if (t2Distance > t1Distance)
                 return 1;
             return 0;
         }).findFirst();
-
-        poseEstimator.addVisionObservation(observation);
+        poseEstimator.addVisionObservation(observation, camera);
         estimatedPose = poseEstimator.estimatedPose();
     }
 

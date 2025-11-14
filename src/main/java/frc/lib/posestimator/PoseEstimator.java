@@ -19,6 +19,7 @@ import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.Optional;
 import java.util.function.Predicate;
+import org.photonvision.targeting.PhotonPipelineResult;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
@@ -29,8 +30,7 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
-
-import frc.lib.io.vision.VisionIO.VisionObservation;
+import frc.lib.devices.AprilTagCamera.CameraProperties;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.lib.posestimator.visionprocessors.VisionProcessor;
 import frc.lib.posestimator.visionprocessors.VisionProcessor.PoseRecord;
@@ -38,26 +38,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-/**
- * Estimates the robot's field-relative pose using a combination of swerve-drive odometry and
- * AprilTag-based vision observations.
- *
- * <p>
- * This class fuses kinematic odometry data with visual pose estimates to produce a more accurate
- * and robust {@link Pose2d} estimate of the robot's position and orientation on the field. It
- * supports single- and multi-tag vision measurements, distance-based confidence scaling, and
- * single-tag based triangulation for zero-ambiguity pose estimation with close distances.
- *
- * <p>
- * Pose updates occur via two main data sources:
- * <ul>
- * <li>{@link #addOdometryObservation(OdometryObservation)} — incremental odometry updates</li>
- * <li>{@link #addVisionObservation(VisionObservation)} — vision-based pose corrections</li>
- * </ul>
- *
- * <p>
- * Recent odometry samples are also buffered to support timestamp interpolation.
- */
 @Accessors(fluent = true)
 public class PoseEstimator {
     private static final double DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS = 2;
@@ -65,51 +45,16 @@ public class PoseEstimator {
     private final SwerveOdometry odometer;
     private final VisionProcessor visionProcessor;
 
-    /** Precomputed square of the linear standard deviation (noise) of odometry */
     private double linearOdometryStdDevSquared;
 
-    /** Precomputed square of the angular standard deviation (noise) of odometry */
     private double angularOdometryStdDevSquared;
 
-    /**
-     * Sets a filter predicate that determines whether a vision-based pose observation should be
-     * accepted or rejected before fusion.
-     *
-     * <p>
-     * The filter is applied to each {@link VisionProcessor.PoseRecord} produced by the
-     * {@link VisionProcessor}. If the predicate returns {@code true}, the vision correction is
-     * applied to the estimated pose; if it returns {@code false}, the observation is discarded.
-     *
-     * <p>
-     * This allows implementing exclusively pose-based rejection strategies, such as filtering by
-     * z-height, or bounds. Filtering on unprocessed data should be implemented at the individual
-     * {@link VisionProcessor} implementation.
-     *
-     * @param visionPoseFilter a {@link Predicate} that evaluates whether a given
-     *        {@link VisionProcessor.PoseRecord} should be used for pose correction
-     */
     @Setter
     private Optional<Predicate<PoseRecord>> visionPoseFilter;
 
-    /**
-     * Returns the current fused estimated pose of the robot.
-     *
-     * <p>
-     * This pose includes odometry integration and accepted vision corrections.
-     */
     @Getter
     private Pose2d estimatedPose = Pose2d.kZero;
 
-    /**
-     * Constructs a new {@code PoseEstimator}.
-     * 
-     * @param visionProcessor The {@code VisionProcessor} to use
-     * @param kinematics The robot's swerve drive kinematics model
-     * @param odometryBufferSize The maximum duration of stored odometry samples used for
-     *        interpolation
-     * @param linearOdometryStdDev The linear standard deviation (noise) of odometry
-     * @param angularOdometryStdDev The angular standard deviation (noise) of odometry
-     */
     public PoseEstimator(
         VisionProcessor visionProcessor,
         SwerveDriveKinematics kinematics,
@@ -122,14 +67,6 @@ public class PoseEstimator {
         odometer = new SwerveOdometry(kinematics, odometryBufferSize);
     }
 
-    /**
-     * Constructs a new {@code PoseEstimator} using a default heading buffer size.
-     *
-     * @param visionProcessor The {@code VisionProcessor} to use
-     * @param kinematics the robot's swerve drive kinematics model
-     * @param linearOdometryStdDev The linear standard deviation (noise) of odometry
-     * @param angularOdometryStdDev The angular standard deviation (noise) of odometry
-     */
     public PoseEstimator(
         VisionProcessor visionProcessor,
         SwerveDriveKinematics kinematics,
@@ -143,16 +80,6 @@ public class PoseEstimator {
             angularOdometryStdDev);
     }
 
-    /**
-     * Adds an odometry observation to the estimator.
-     *
-     * <p>
-     * This updates the internal swerve odometry, tracks the pose over time, and updates the fused
-     * pose estimate.
-     *
-     * @param observation the odometry observation containing timestamp, swerve module states, and
-     *        an optional gyro heading
-     */
     public void addOdometryObservation(OdometryObservation observation) {
         Pose2d lastOdometryPose = odometer.getOdometryPose();
         odometer.addOdometryObservation(observation);
@@ -163,19 +90,8 @@ public class PoseEstimator {
         estimatedPose = estimatedPose.exp(twist);
     }
 
-    /**
-     * Attempts to get the tranform between the pose of the robot at the specified timestamp and
-     * now.
-     * 
-     * <p>
-     * This method will fail if the odometer's buffer does not contain enough measurements to
-     * interpolate.
-     * 
-     * @param time The timestamp to get the transform from
-     * @return The optional transform from {@code time} to now
-     */
-    private Optional<Transform2d> getPoseDelta(Time time) {
-        var optionalOdometryPoseAtTime = odometer.getOdometryBuffer().getSample(time.in(Seconds));
+    private Optional<Transform2d> getPoseDelta(double timestampSeconds) {
+        var optionalOdometryPoseAtTime = odometer.getOdometryBuffer().getSample(timestampSeconds);
         if (optionalOdometryPoseAtTime.isEmpty()) {
             return Optional.empty();
         }
@@ -186,21 +102,10 @@ public class PoseEstimator {
         return Optional.of(thenToNow);
     }
 
-    /**
-     * Adds a vision observation to the estimator.
-     *
-     * <p>
-     * Processes detected AprilTags to correct the estimated robot pose. Depending on the number of
-     * tags and observation ambiguity, the estimator may accept or reject the vision update. The
-     * update uncertainty scales with distance and tag count.
-     *
-     * @param observation the vision observation containing tag detections, timestamp, and camera
-     *        metadata
-     */
-    public void addVisionObservation(VisionObservation observation) {
+    public void addVisionObservation(PhotonPipelineResult result, CameraProperties camera) {
         // Attempt to get heading. Fails if the odometer has not recorded
         // a measurement near this timestamp
-        var optionalPoseDelta = getPoseDelta(observation.timestamp());
+        var optionalPoseDelta = getPoseDelta(result.getTimestampSeconds());
         if (optionalPoseDelta.isEmpty()) {
             return;
         }
@@ -208,7 +113,7 @@ public class PoseEstimator {
 
         Pose2d oldPose = estimatedPose.plus(poseDelta.inverse());
         var optionalGlobalPoseRecord =
-            visionProcessor.processVisionObservation(observation, oldPose.getRotation());
+            visionProcessor.processVisionObservation(result, camera, oldPose.getRotation());
         if (optionalGlobalPoseRecord.isEmpty()) {
             return;
         }

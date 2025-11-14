@@ -15,33 +15,53 @@
 
 package frc.lib.devices;
 
-import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.targeting.PhotonPipelineResult;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.numbers.N8;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIO.VisionIOInputs;
-import frc.lib.io.vision.VisionIO.VisionObservation;
 
 public class AprilTagCamera {
-    private final String name;
+    public record CameraProperties(
+        String name,
+        Transform3d robotToCamera,
+        Matrix<N3, N3> cameraMatrix,
+        Matrix<N8, N1> distCoeffs,
+        int resolutionWidth,
+        int resolutionHeight,
+        double stdDevFactor) {
+    }
+
+    private final CameraProperties properties;
     private final VisionIO io;
-    private final VisionIOInputs inputs = new VisionIOInputs();
+    private final VisionIOInputs inputs;
 
-    private final Consumer<VisionObservation> visionConsumer;
+    private final BiConsumer<PhotonPipelineResult, CameraProperties> visionConsumer;
 
-    public AprilTagCamera(String name, VisionIO io, Consumer<VisionObservation> visionConsumer) {
-        this.name = name;
+    public AprilTagCamera(
+        CameraProperties properties,
+        VisionIO io,
+        BiConsumer<PhotonPipelineResult, CameraProperties> visionConsumer) {
+        this.properties = properties;
         this.io = io;
         this.visionConsumer = visionConsumer;
+        inputs = new VisionIOInputs(properties.cameraMatrix(), properties.distCoeffs());
     }
 
     public void periodic() {
         io.updateInputs(inputs);
-        Logger.processInputs(name, inputs);
+        Logger.processInputs(properties.name(), inputs);
 
         if (!inputs.connected)
             return;
 
-        List.of(inputs.poseObservations).forEach(visionConsumer);
+        Stream.of(inputs.results)
+            .forEach((PhotonPipelineResult result) -> visionConsumer.accept(result, properties));
     }
 }
