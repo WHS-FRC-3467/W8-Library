@@ -24,8 +24,8 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
-import frc.lib.io.vision.VisionIO;
-import frc.lib.io.vision.VisionIO.VisionIOInputs;
+import frc.lib.io.vision.photonvision.VisionIOPhotonVision;
+import frc.lib.io.vision.photonvision.VisionIOPhotonVision.VisionIOPhotonVisionInputs;
 
 public class AprilTagCamera {
     public record CameraProperties(
@@ -39,20 +39,20 @@ public class AprilTagCamera {
     }
 
     private final CameraProperties properties;
-    private final VisionIO io;
-    private final VisionIOInputs inputs;
+    private final VisionIOPhotonVision io;
+    private final VisionIOPhotonVisionInputs inputs;
 
     private final BiConsumer<PhotonPipelineResult, CameraProperties> visionConsumer;
 
     public AprilTagCamera(
         CameraProperties properties,
-        VisionIO io,
+        VisionIOPhotonVision io,
         BiConsumer<PhotonPipelineResult, CameraProperties> visionConsumer)
     {
         this.properties = properties;
         this.io = io;
         this.visionConsumer = visionConsumer;
-        inputs = new VisionIOInputs(properties.cameraMatrix(), properties.distCoeffs());
+        inputs = new VisionIOPhotonVisionInputs(properties.cameraMatrix(), properties.distCoeffs());
     }
 
     public void periodic()

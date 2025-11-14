@@ -13,22 +13,22 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.io.vision;
+package frc.lib.io.vision.photonvision;
 
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonPipelineResult;
 import frc.lib.devices.AprilTagCamera.CameraProperties;
 
-public class VisionIOPhotonVision implements VisionIO {
+public class VisionIOPhotonVisionReal implements VisionIOPhotonVision {
     protected final PhotonCamera photonCamera;
 
-    public VisionIOPhotonVision(CameraProperties cameraProperties)
+    public VisionIOPhotonVisionReal(CameraProperties cameraProperties)
     {
         this.photonCamera = new PhotonCamera(cameraProperties.name());
     }
 
     @Override
-    public void updateInputs(VisionIOInputs inputs)
+    public void updateInputs(VisionIOPhotonVisionInputs inputs)
     {
         inputs.connected = photonCamera.isConnected();
 

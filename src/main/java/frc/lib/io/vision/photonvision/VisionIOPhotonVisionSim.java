@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.io.vision;
+package frc.lib.io.vision.photonvision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -24,7 +24,7 @@ import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 
 /**
- * Simulated implementation of {@link VisionIOPhotonVision} using the PhotonVision simulation
+ * Simulated implementation of {@link VisionIOPhotonVisionReal} using the PhotonVision simulation
  * framework.
  *
  * <p>
@@ -33,7 +33,7 @@ import org.photonvision.simulation.VisionSystemSim;
  * to receive realistic vision data based on the robot's simulated pose and the field's AprilTag
  * layout.
  */
-public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
+public class VisionIOPhotonVisionSim extends VisionIOPhotonVisionReal {
     private final Supplier<Pose2d> poseSupplier;
     private final PhotonCameraSim cameraSim;
     private final VisionSystemSim system;
@@ -60,7 +60,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     }
 
     @Override
-    public void updateInputs(VisionIOInputs inputs)
+    public void updateInputs(VisionIOPhotonVisionInputs inputs)
     {
         system.update(poseSupplier.get());
         super.updateInputs(inputs);

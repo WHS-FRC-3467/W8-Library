@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.io.vision;
+package frc.lib.io.vision.photonvision;
 
 import org.littletonrobotics.junction.LogTable;
 import org.littletonrobotics.junction.inputs.LoggableInputs;
@@ -23,8 +23,8 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
 
-public interface VisionIO {
-    public static class VisionIOInputs implements LoggableInputs {
+public interface VisionIOPhotonVision {
+    public static class VisionIOPhotonVisionInputs implements LoggableInputs {
         public boolean connected = false;
         public PhotonPipelineResult[] results = new PhotonPipelineResult[0];
 
@@ -32,7 +32,7 @@ public interface VisionIO {
         public Matrix<N3, N3> cameraMatrix = null;
         public Matrix<N8, N1> distCoeffs = null;
 
-        public VisionIOInputs(Matrix<N3, N3> cameraMatrix, Matrix<N8, N1> distCoeffs)
+        public VisionIOPhotonVisionInputs(Matrix<N3, N3> cameraMatrix, Matrix<N8, N1> distCoeffs)
         {
             this.cameraMatrix = cameraMatrix;
             this.distCoeffs = distCoeffs;
@@ -82,6 +82,6 @@ public interface VisionIO {
         }
     }
 
-    public default void updateInputs(VisionIOInputs inputs)
+    public default void updateInputs(VisionIOPhotonVisionInputs inputs)
     {}
 }

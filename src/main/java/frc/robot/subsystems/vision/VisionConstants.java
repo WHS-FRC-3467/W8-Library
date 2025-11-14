@@ -29,9 +29,9 @@ import edu.wpi.first.math.numbers.N8;
 import edu.wpi.first.math.util.Units;
 import frc.lib.devices.AprilTagCamera;
 import frc.lib.devices.AprilTagCamera.CameraProperties;
-import frc.lib.io.vision.VisionIO;
-import frc.lib.io.vision.VisionIOPhotonVision;
-import frc.lib.io.vision.VisionIOPhotonVisionSim;
+import frc.lib.io.vision.photonvision.VisionIOPhotonVision;
+import frc.lib.io.vision.photonvision.VisionIOPhotonVisionReal;
+import frc.lib.io.vision.photonvision.VisionIOPhotonVisionSim;
 import frc.robot.Constants;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
@@ -127,9 +127,9 @@ public class VisionConstants {
 
     private static Optional<VisionSystemSim> visionSim = Optional.empty();
 
-    private static VisionIOPhotonVision getFrontLeftIOReal()
+    private static VisionIOPhotonVisionReal getFrontLeftIOReal()
     {
-        return new VisionIOPhotonVision(FRONT_LEFT);
+        return new VisionIOPhotonVisionReal(FRONT_LEFT);
     }
 
     private static VisionIOPhotonVisionSim getFrontLeftIOSim()
@@ -146,9 +146,9 @@ public class VisionConstants {
             FieldConstants.aprilTagLayout);
     }
 
-    private static VisionIOPhotonVision getFrontRightIOReal()
+    private static VisionIOPhotonVisionReal getFrontRightIOReal()
     {
-        return new VisionIOPhotonVision(
+        return new VisionIOPhotonVisionReal(
             FRONT_RIGHT);
     }
 
@@ -184,9 +184,9 @@ public class VisionConstants {
                 new VisionSubsystem(camera1, camera2);
             }
             case REPLAY -> {
-                var camera1 = new AprilTagCamera(FRONT_LEFT, new VisionIO() {},
+                var camera1 = new AprilTagCamera(FRONT_LEFT, new VisionIOPhotonVision() {},
                     RobotState.getInstance()::addVisionObservation);
-                var camera2 = new AprilTagCamera(FRONT_RIGHT, new VisionIO() {},
+                var camera2 = new AprilTagCamera(FRONT_RIGHT, new VisionIOPhotonVision() {},
                     RobotState.getInstance()::addVisionObservation);
                 new VisionSubsystem(camera1, camera2);
             }
