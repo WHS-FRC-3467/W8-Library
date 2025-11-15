@@ -16,6 +16,7 @@
 package frc.robot.subsystems.vision;
 
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Seconds;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.Matrix;
@@ -29,9 +30,9 @@ import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.util.PhotonStrategyHelper;
 import frc.lib.util.Timestamped;
-import frc.lib.PhotonPoseEstimatorPlus;
-import frc.lib.PhotonPoseEstimatorPlus.PoseStrategy;
+import frc.robot.subsystems.vision.VisionConstants.CameraConstants;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIO.VisionIOInputs;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonPoseEstimator;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class Vision extends SubsystemBase {
     private final VisionConsumer consumer;
@@ -46,7 +48,6 @@ public class Vision extends SubsystemBase {
     private final VisionIOInputs[] inputs;
     private final Alert[] disconnectedAlerts;
     private final CameraConstants[] cameraConstants = VisionConstants.cameraConstants;
-    private final PhotonPoseEstimatorPlus[] poseEstimators;
 
     private final Supplier<Timestamped<Rotation2d>> timestampedHeadingSupplier;
 
@@ -61,14 +62,9 @@ public class Vision extends SubsystemBase {
 
 
         // Initialize inputs
-        this.poseEstimators = new PhotonPoseEstimatorPlus[io.length];
         this.inputs = new VisionIOInputs[io.length];
         for (int i = 0; i < inputs.length; i++) {
             inputs[i] = new VisionIOInputs();
-            poseEstimators[i] = new PhotonPoseEstimatorPlus(
-                aprilTagLayout,
-                PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-                cameraConstants[i].robotToCamera());
         }
 
         // Initialize disconnected alerts
@@ -83,6 +79,7 @@ public class Vision extends SubsystemBase {
     @Override
     public void periodic()
     {
+
         for (int i = 0; i < io.length; i++) {
             io[i].updateInputs(inputs[i]);
             Logger.processInputs("Vision/Camera " + cameraConstants[i].name(), inputs[i]);
@@ -105,63 +102,75 @@ public class Vision extends SubsystemBase {
             List<Pose3d> robotPosesAccepted = new ArrayList<>();
             List<Pose3d> robotPosesRejected = new ArrayList<>();
 
-            // Add tag poses
-            for (int tagId : inputs[cameraIndex].tagIds) {
-                var tagPose = aprilTagLayout.getTagPose(tagId);
-                if (tagPose.isPresent()) {
-                    tagPoses.add(tagPose.get());
-                }
-            }
-
             // Loop over pose observations
             for (var observation : inputs[cameraIndex].results) {
-                // Check whether to reject pose
 
-                var optionalPose = poseEstimators[cameraIndex].update(observation);
+
+                var optionalPose = PhotonStrategyHelper.multiTagOnCoprocStrategy(
+                    observation,
+                    aprilTagLayout,
+                    cameraConstants[cameraIndex].robotToCamera());
+
+
 
                 if (optionalPose.isEmpty()) {
-                    continue;
+                    optionalPose = PhotonStrategyHelper.lowestAmbiguityStrategy(
+                        observation,
+                        aprilTagLayout,
+                        cameraConstants[cameraIndex].robotToCamera());
+                    if (optionalPose.isEmpty()) {
+                        continue;
+                    }
                 }
+
                 var estimatedPose = optionalPose.get();
+                Logger.recordOutput(
+                    "Vision/Camera" + Integer.toString(cameraIndex) + "/PoseStrategy",
+                    estimatedPose.strategy.toString());
                 // Add pose to log
                 robotPoses.add(estimatedPose.estimatedPose);
 
-                if (shouldRejectPose(estimatedPose.estimatedPose, observation.getTargets().size(),
-                    observation.ambiguity)) {
-                    (observation.usedTrigEstimator() ? robotTrigPosesRejected : robotPosesRejected)
-                        .add(pose);
+                // Add tags used to logged list
+                for (PhotonTrackedTarget target : estimatedPose.targetsUsed) {
+                    var tagPose = aprilTagLayout.getTagPose(target.getFiducialId());
+                    if (tagPose.isPresent()) {
+                        tagPoses.add(tagPose.get());
+                    }
+                }
+
+                // Reject pose if it doesn't pass tuned criteria
+                if (shouldRejectPose(estimatedPose.estimatedPose, estimatedPose.targetsUsed.size(),
+                    getAvgAmbiguity(estimatedPose.targetsUsed))) {
+                    robotPosesRejected.add(estimatedPose.estimatedPose);
                     continue;
                 } else {
-                    (observation.usedTrigEstimator() ? robotTrigPosesAccepted : robotPosesAccepted)
-                        .add(pose);
+                    robotPosesAccepted.add(estimatedPose.estimatedPose);
                 }
 
-                // Calculate standard deviations
-                if (!observation.usedTrigEstimator()) {
-                    double stdDevFactor =
-                        (Math.pow(observation.averageTagDistance().in(Meters), 2.0)
-                            + 10 * observation.ambiguity())
-                            / observation.tagCount();
+                // Calculate std devs
+                double stdDevFactor =
+                    (Math.pow(getAvgDistance(estimatedPose.targetsUsed), 2.0)
+                        + 10 * estimatedPose.targetsUsed.size())
+                        / estimatedPose.targetsUsed.size();
 
-                    double linearStdDev = linearStdDevBaseline * stdDevFactor;
-                    double angularStdDev = angularStdDevBaseline * stdDevFactor;
+                double linearStdDev = linearStdDevBaseline * stdDevFactor;
+                double angularStdDev = angularStdDevBaseline * stdDevFactor;
 
-                    if (observation.tagCount() == 1) {
-                        angularStdDev = 1e6;
-                    }
-                    // if (cameraIndex < cameraStdDevFactors.length) {
-                    // linearStdDev *= cameraStdDevFactors[cameraIndex];
-                    // angularStdDev *= cameraStdDevFactors[cameraIndex];
-                    // }
+                // Adjust std devs based on camera trust
+                linearStdDev *= cameraConstants[cameraIndex].stdDevFactor();
+                angularStdDev *= cameraConstants[cameraIndex].stdDevFactor();
 
-                    // Send vision observation
-                    consumer.accept(
-                        pose.toPose2d(),
-                        observation.timestamp(),
-                        VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
-                } else {
-                    // TODO: add method for trig pose estimator
+
+                if (estimatedPose.targetsUsed.size() == 1) {
+                    angularStdDev = 1e6;
                 }
+
+
+                // Send vision observation
+                consumer.accept(
+                    estimatedPose.estimatedPose.toPose2d(),
+                    Seconds.of(observation.getTimestampSeconds()),
+                    VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
             }
 
             // Log camera datadata
@@ -220,5 +229,23 @@ public class Vision extends SubsystemBase {
 
     }
 
-    private double getAvgAmbiguity()
+    private double getAvgAmbiguity(List<PhotonTrackedTarget> targets)
+    {
+        double totalAmbiguity = 0.0;
+        for (PhotonTrackedTarget target : targets) {
+            totalAmbiguity += target.getPoseAmbiguity();
+        }
+        return totalAmbiguity / targets.size();
+
+    }
+
+    private double getAvgDistance(List<PhotonTrackedTarget> targets)
+    {
+        double totalDistance = 0.0;
+        for (PhotonTrackedTarget target : targets) {
+            totalDistance += target.getBestCameraToTarget().getTranslation().getNorm();
+        }
+        return totalDistance / targets.size();
+
+    }
 }
