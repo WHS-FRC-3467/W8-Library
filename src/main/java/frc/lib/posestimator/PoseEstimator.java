@@ -130,14 +130,14 @@ public class PoseEstimator {
         }
 
         // Solve Kalman gain matrix given observation standard deviations
-        // Copied from:
+        // Logic is copied from:
         // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/edu/wpi/first/math/estimator/PoseEstimator.java#L93-L109
-        double[] visionVariance = {
+        double[] visionVariances = {
                 Math.pow(newVisionPose.linearStdDev(), 2), // X axis
                 Math.pow(newVisionPose.linearStdDev(), 2), // Y axis
                 Math.pow(newVisionPose.angularStdDev(), 2)}; // Rotation
 
-        double[] odometryVariance = {
+        double[] odometryVariances = {
                 linearOdometryVariance, // X axis
                 linearOdometryVariance, // Y axis
                 angularOdometryVariance // Rotation
@@ -145,17 +145,18 @@ public class PoseEstimator {
 
         Matrix<N3, N3> visionKalmanGain = new Matrix<>(Nat.N3(), Nat.N3());
         for (int row = 0; row < 3; ++row) {
-            double odometryStdDev = odometryVariance[row];
-            if (odometryStdDev == 0.0) {
+            double odometryVariance = odometryVariances[row];
+            if (odometryVariance == 0.0) {
                 visionKalmanGain.set(row, row, 0.0);
             } else {
-                visionKalmanGain.set(row, row, odometryStdDev
-                    / (odometryStdDev + Math.sqrt(odometryStdDev * visionVariance[row])));
+                visionKalmanGain.set(row, row, odometryVariance
+                    / (odometryVariance + Math.sqrt(odometryVariance * visionVariances[row])));
             }
         }
 
         // Transform between our best estimated pose at the time the frame was captured to where the
         // camera is saying we should be, unscaled (without any Kalman gain applied)
+        // Logic is copied from:
         // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/edu/wpi/first/math/estimator/PoseEstimator.java#L276-L292
         Transform2d unscaledVisionCorrection =
             new Transform2d(oldPose, newVisionPose.pose().toPose2d());
