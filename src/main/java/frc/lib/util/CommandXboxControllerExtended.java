@@ -74,31 +74,38 @@ public class CommandXboxControllerExtended extends CommandXboxController {
             .andThen(() -> hid.setRumble(side, 0.0));
     }
 
+    // an exponential input curve for the joysticks
+    // good for precise movemnet while still maintaining good full speed
+    double inputCurve(double joystickInput)
+    {
+        return MathUtil.applyDeadband(
+            // Math.pow(joy, 5) - Math.pow(joy, 3) / 2 + (joy * 0.23),
+            0.5 * Math.pow(joystickInput, 5) + (joystickInput * 0.4),
+            deadband);
+    }
+
     @Override
     public double getLeftX()
     {
-        return MathUtil.applyDeadband(
-            (super.getLeftX() * ((super.getLeftX() * 0.02) * super.getLeftX())), deadband);
+        return inputCurve(super.getLeftX());
     }
 
     @Override
     public double getLeftY()
     {
-        return MathUtil.applyDeadband(
-            (super.getLeftY() * ((super.getLeftY() * 0.02) * super.getLeftY())), deadband);
+        return inputCurve(super.getLeftY());
     }
 
     @Override
     public double getRightX()
     {
-        return MathUtil.applyDeadband(
-            (super.getRightX() * ((super.getRightX() * 0.02) * super.getRightX())), deadband);
+        return inputCurve(super.getRightX());
     }
 
     @Override
     public double getRightY()
     {
-        return MathUtil.applyDeadband(
-            (super.getRightY() * ((super.getRightY() * 0.02) * super.getRightY())), deadband);
+        return inputCurve(super.getRightY());
+
     }
 }
