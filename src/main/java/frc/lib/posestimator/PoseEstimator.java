@@ -45,9 +45,9 @@ public class PoseEstimator {
     private final SwerveOdometry odometer;
     private final VisionProcessor visionProcessor;
 
-    private double linearOdometryStdDevSquared;
+    private double linearOdometryVariance;
 
-    private double angularOdometryStdDevSquared;
+    private double angularOdometryVariance;
 
     @Setter
     private Optional<Predicate<PoseRecord>> visionPoseFilter;
@@ -63,8 +63,8 @@ public class PoseEstimator {
         double angularOdometryStdDev)
     {
         this.visionProcessor = visionProcessor;
-        this.linearOdometryStdDevSquared = Math.pow(linearOdometryStdDev, 2);
-        this.angularOdometryStdDevSquared = Math.pow(angularOdometryStdDev, 2);
+        this.linearOdometryVariance = Math.pow(linearOdometryStdDev, 2);
+        this.angularOdometryVariance = Math.pow(angularOdometryStdDev, 2);
         odometer = new SwerveOdometry(kinematics, odometryBufferSize);
     }
 
@@ -132,25 +132,25 @@ public class PoseEstimator {
         // Solve Kalman gain matrix given observation standard deviations
         // Copied from:
         // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/edu/wpi/first/math/estimator/PoseEstimator.java#L93-L109
-        double[] visionStdDevs = {
+        double[] visionVariance = {
                 Math.pow(newVisionPose.linearStdDev(), 2), // X axis
                 Math.pow(newVisionPose.linearStdDev(), 2), // Y axis
                 Math.pow(newVisionPose.angularStdDev(), 2)}; // Rotation
 
-        double[] odometryStdDevs = {
-                linearOdometryStdDevSquared, // X axis
-                linearOdometryStdDevSquared, // Y axis
-                angularOdometryStdDevSquared // Rotation
+        double[] odometryVariance = {
+                linearOdometryVariance, // X axis
+                linearOdometryVariance, // Y axis
+                angularOdometryVariance // Rotation
         };
 
         Matrix<N3, N3> visionKalmanGain = new Matrix<>(Nat.N3(), Nat.N3());
         for (int row = 0; row < 3; ++row) {
-            double odometryStdDev = odometryStdDevs[row];
+            double odometryStdDev = odometryVariance[row];
             if (odometryStdDev == 0.0) {
                 visionKalmanGain.set(row, row, 0.0);
             } else {
                 visionKalmanGain.set(row, row, odometryStdDev
-                    / (odometryStdDev + Math.sqrt(odometryStdDev * visionStdDevs[row])));
+                    / (odometryStdDev + Math.sqrt(odometryStdDev * visionVariance[row])));
             }
         }
 
