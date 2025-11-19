@@ -4,14 +4,17 @@
 
 package frc.lib.commands;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.util.LoggedTuneableProfiledPID;
 import frc.robot.subsystems.drive.Drive;
@@ -136,5 +139,15 @@ public abstract class AlignToPoseBase extends Command {
         return new Pose2d(new Translation2d(), linearDirection)
             .transformBy(new Transform2d(linearMagnitude, 0.0, new Rotation2d()))
             .getTranslation();
+    }
+
+    public Distance getDistanceError()
+    {
+        return Meters.of(linearController.getPositionError());
+    }
+
+    public Angle getAngularError()
+    {
+        return Radians.of(angularController.getPositionError());
     }
 }

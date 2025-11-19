@@ -6,9 +6,9 @@ package frc.lib.devices;
 
 import org.littletonrobotics.junction.Logger;
 import java.util.ArrayList;
-import frc.lib.io.objectDetection.ObjectDetectionIO;
-import frc.lib.io.objectDetection.ObjectDetectionIOInputsAutoLogged;
-import frc.lib.io.objectDetection.ObjectDetectionIO.TargetObservation;
+import frc.lib.io.objectdetection.ObjectDetectionIO;
+import frc.lib.io.objectdetection.ObjectDetectionIOInputsAutoLogged;
+import frc.lib.io.objectdetection.ObjectDetectionIO.TargetObservation;
 import java.util.Arrays;
 import java.lang.Math;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -262,6 +262,14 @@ public class ObjectDetection {
      * recent detection (i.e. end of the list). If a detection is deemed a repeat (according to the
      * passed Translation2D tolerance), it is removed from its current location in robot memory and
      * re-added to the end of the list.
+     * 
+     * @param N The number of last detections to store in memory.
+     * @param lastNDetections The ArrayList of Translation2d objects representing the robot's memory
+     *        of last N detections.
+     * @param toleranceMeters The tolerance in meters for determining whether a detection is new or
+     *        old.
+     * @param targetTranslation The Translation2d of the current target detection to be evaluated.
+     * @return Updated lastNDetections list.
      */
     public void getLastNDetections(int N,
         ArrayList<Translation2d> lastNDetections, double toleranceMeters,

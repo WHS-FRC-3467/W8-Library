@@ -17,11 +17,17 @@ package frc.robot.subsystems.vision;
 
 import java.util.Arrays;
 import java.util.List;
+import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.VisionSystemSim;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import frc.lib.io.vision.VisionIO;
+import frc.lib.io.vision.VisionIOPhotonVision;
+import frc.lib.io.vision.VisionIOPhotonVisionSim;
+import frc.robot.Constants;
+import frc.robot.subsystems.drive.Drive;
 
 public class VisionConstants {
     // AprilTag layout
@@ -66,5 +72,38 @@ public class VisionConstants {
         var system = new VisionSystemSim("main");
         system.addAprilTags(aprilTagLayout);
         return system;
+    }
+
+    public static Vision get(Drive drive)
+    {
+        switch (Constants.currentMode) {
+            case REAL:
+                return new Vision(
+                    drive::addVisionMeasurement,
+                    () -> drive.getTimestampedHeading(),
+                    new VisionIOPhotonVision(
+                        VisionConstants.camera0Name,
+                        VisionConstants.robotToCamera0,
+                        VisionConstants.aprilTagLayout,
+                        PoseStrategy.CONSTRAINED_SOLVEPNP));
+            case SIM:
+                return new Vision(
+                    drive::addVisionMeasurement,
+                    () -> drive.getTimestampedHeading(),
+                    new VisionIOPhotonVisionSim(
+                        () -> drive.getPose(),
+                        VisionConstants.camera0Name,
+                        VisionConstants.robotToCamera0,
+                        VisionConstants.aprilTagLayout,
+                        PoseStrategy.CONSTRAINED_SOLVEPNP,
+                        getSystemSim()));
+            case REPLAY:
+                return new Vision(
+                    drive::addVisionMeasurement,
+                    () -> drive.getTimestampedHeading(),
+                    new VisionIO() {});
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }
