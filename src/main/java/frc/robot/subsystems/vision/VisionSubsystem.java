@@ -16,7 +16,9 @@
 package frc.robot.subsystems.vision;
 
 import static edu.wpi.first.units.Units.Meters;
+import java.util.ArrayList;
 import java.util.Optional;
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.targeting.PhotonPipelineResult;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -24,7 +26,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.devices.AprilTagCamera;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
-import frc.lib.posestimator.visionprocessors.ConstrainedSolvePnp;
 import frc.lib.posestimator.visionprocessors.LowestAmbiguity;
 import frc.lib.posestimator.visionprocessors.MultiTagOnCoproc;
 import frc.lib.posestimator.visionprocessors.VisionProcessor.PoseRecord;
@@ -32,6 +33,8 @@ import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 
 public class VisionSubsystem extends SubsystemBase {
+    public static final String LOG_PREFIX = "VisionProcessor/";
+
     public static final double LINEAR_STDDEV_BASELINE = 0.4;
     public static final double ANGULAR_STDDEV_BASELINE = 0.4;
 
@@ -45,7 +48,7 @@ public class VisionSubsystem extends SubsystemBase {
         double x = pose.getX();
         double y = pose.getY();
         double z = pose.getZ();
-        return z > MAX_Z_METERS || x < 0.0 || x > FIELD_LENGTH || y < 0.0 || y > FIELD_WIDTH;
+        return !(z > MAX_Z_METERS || x < 0.0 || x > FIELD_LENGTH || y < 0.0 || y > FIELD_WIDTH);
     }
 
     private final RobotState robotState = RobotState.getInstance();
@@ -54,24 +57,30 @@ public class VisionSubsystem extends SubsystemBase {
 
     private final LowestAmbiguity fallbackVisionProcessor =
         new LowestAmbiguity(FieldConstants.aprilTagLayout);
-    private final MultiTagOnCoproc seedVisionProcessor =
+    private final MultiTagOnCoproc visionProcessor =
         new MultiTagOnCoproc(
             Optional.of(fallbackVisionProcessor),
             FieldConstants.aprilTagLayout);
-    private final ConstrainedSolvePnp visionProcessor =
-        new ConstrainedSolvePnp(seedVisionProcessor, FieldConstants.aprilTagLayout, 0.1);
+
 
     public VisionSubsystem(AprilTagCamera... cameras)
     {
         this.cameras = cameras;
     }
 
-    private void processPipelineResult(PhotonPipelineResult result, AprilTagCamera camera)
+    /**
+     * Processes a {@link PhotonPipelineResult}.
+     * 
+     * @param result The result to process
+     * @param camera The camera the result came from
+     * @return Whether or not the result was accepted
+     */
+    private boolean processPipelineResult(PhotonPipelineResult result, AprilTagCamera camera)
     {
         Rotation2d heading = robotState.getPoseAtTime(result.getTimestampSeconds())
             .map(Pose2d::getRotation).orElse(null);
         if (heading == null) {
-            return;
+            return false;
         }
 
         PoseRecord poseRecord = visionProcessor.processVisionObservation(
@@ -81,7 +90,7 @@ public class VisionSubsystem extends SubsystemBase {
             .orElse(null);
 
         if (poseRecord == null || !isValid(poseRecord)) {
-            return;
+            return false;
         }
 
         double stdDevFactor =
@@ -96,19 +105,50 @@ public class VisionSubsystem extends SubsystemBase {
                 poseRecord.pose().toPose2d(),
                 linearStdDev,
                 angularStdDev));
+
+        return true;
     }
 
     @Override
     public void periodic()
     {
         for (var camera : cameras) {
+            String cameraLogPrefix = LOG_PREFIX + camera.getProperties().name() + "/";
+
             PhotonPipelineResult[] results = camera.getUnreadResults().orElse(null);
             if (results == null) {
                 return;
             }
 
+            ArrayList<PhotonPipelineResult> acceptedResults = new ArrayList<>();
+            ArrayList<PhotonPipelineResult> rejectedResults = new ArrayList<>();
             for (var result : results) {
-                processPipelineResult(result, camera);
+                boolean accepted = processPipelineResult(result, camera);
+
+                if (!accepted) {
+                    rejectedResults.add(result);
+                    continue;
+                }
+
+                acceptedResults.add(result);
+            }
+
+            Logger.recordOutput(
+                cameraLogPrefix + "/Results/AcceptedLength",
+                acceptedResults.size());
+            for (int i = 0; i < acceptedResults.size(); i++) {
+                Logger.recordOutput(
+                    cameraLogPrefix + "/Results/Accepted/" + i,
+                    acceptedResults.get(i));
+            }
+
+            Logger.recordOutput(
+                cameraLogPrefix + "/Results/RejectedLength",
+                rejectedResults.size());
+            for (int i = 0; i < rejectedResults.size(); i++) {
+                Logger.recordOutput(
+                    cameraLogPrefix + "/Results/Rejected/" + i,
+                    rejectedResults.get(i));
             }
         }
     }
