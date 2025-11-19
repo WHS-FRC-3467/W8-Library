@@ -15,6 +15,7 @@
 
 package frc.lib.posestimator.visionprocessors;
 
+import java.util.List;
 import java.util.Optional;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
@@ -26,26 +27,15 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import frc.lib.devices.AprilTagCamera.CameraProperties;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
 @RequiredArgsConstructor
 @Accessors(fluent = true)
 public class TrigSolve implements VisionProcessor {
 
-    private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
-
     private final AprilTagFieldLayout fieldLayout;
-
-    @Getter
-    @Setter
-    private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
-
-    @Getter
-    @Setter
-    private int followedAprilTag = 0;
+    private final int followedAprilTag;
 
     private Optional<Pose2d> solveTrigPosition(
         CameraProperties camera,
@@ -109,15 +99,8 @@ public class TrigSolve implements VisionProcessor {
 
         PhotonTrackedTarget wantedTarget = optionalWantedTarget.get();
 
-        double stdDevFactor =
-            Math.pow(wantedTarget.bestCameraToTarget.getTranslation().getNorm(), 2)
-                * camera.stdDevFactor();
-        double linearStdDev = linearStdDevFactor * stdDevFactor;
-
-        // This processor assumes supplied heading is perfect
-        double angularStdDev = Double.POSITIVE_INFINITY;
-
         return solveTrigPosition(camera, wantedTarget, heading)
-            .map(p -> new PoseRecord(new Pose3d(p), linearStdDev, angularStdDev));
+            .map(p -> new PoseRecord(new Pose3d(p), List.of(followedAprilTag),
+                wantedTarget.bestCameraToTarget.getTranslation().getNorm()));
     }
 }

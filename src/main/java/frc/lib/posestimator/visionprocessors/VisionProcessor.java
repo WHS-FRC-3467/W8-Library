@@ -15,6 +15,7 @@
 
 package frc.lib.posestimator.visionprocessors;
 
+import java.util.List;
 import java.util.Optional;
 import org.photonvision.targeting.PhotonPipelineResult;
 import edu.wpi.first.math.estimator.PoseEstimator;
@@ -34,8 +35,8 @@ public interface VisionProcessor {
     /** Stores a vision pose estimate along with computed uncertainty metrics. */
     public static final record PoseRecord(
         Pose3d pose,
-        double linearStdDev,
-        double angularStdDev) {
+        List<Integer> tagsUsed,
+        double averageDistanceMeters) {
     }
 
     Optional<PoseRecord> processVisionObservation(

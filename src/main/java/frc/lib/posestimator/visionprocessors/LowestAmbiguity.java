@@ -15,6 +15,7 @@
 
 package frc.lib.posestimator.visionprocessors;
 
+import java.util.List;
 import java.util.Optional;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
@@ -23,9 +24,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.lib.devices.AprilTagCamera.CameraProperties;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
 /**
@@ -36,19 +35,7 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class LowestAmbiguity implements VisionProcessor {
 
-    private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
-
-    private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
-
     private final AprilTagFieldLayout fieldLayout;
-
-    @Getter
-    @Setter
-    private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
-
-    @Getter
-    @Setter
-    private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
 
     @Override
     public Optional<PoseRecord> processVisionObservation(
@@ -75,15 +62,11 @@ public class LowestAmbiguity implements VisionProcessor {
         Pose3d robotPose = targetPose.plus(targetToCamera).plus(cameraToRobot);
 
         double distanceFromCamera = targetToCamera.getTranslation().getNorm();
-        double stdDevFactor =
-            Math.pow(distanceFromCamera, 2.0) * camera.stdDevFactor();
-        double linearStdDev = linearStdDevFactor * stdDevFactor;
-        double angularStdDev = angularStdDevFactor * stdDevFactor;
 
         return Optional.of(
             new PoseRecord(
                 robotPose,
-                linearStdDev,
-                angularStdDev));
+                List.of(lowestAmbiguity.fiducialId),
+                distanceFromCamera));
     }
 }

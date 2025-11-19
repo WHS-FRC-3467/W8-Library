@@ -21,9 +21,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.lib.devices.AprilTagCamera.CameraProperties;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
 /**
@@ -39,21 +37,8 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class MultiTagOnCoproc implements VisionProcessor {
 
-    private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
-
-    private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
-
     private final Optional<VisionProcessor> fallbackProcessor;
-
     private final AprilTagFieldLayout fieldLayout;
-
-    @Getter
-    @Setter
-    private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
-
-    @Getter
-    @Setter
-    private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
 
     @Override
     public Optional<PoseRecord> processVisionObservation(
@@ -69,10 +54,10 @@ public class MultiTagOnCoproc implements VisionProcessor {
             return fallbackProcessor.get().processVisionObservation(result, camera, heading);
         }
 
-        var best_tf = result.getMultiTagResult().get().estimatedPose.best;
+        var bestTF = result.getMultiTagResult().get().estimatedPose.best;
         var best =
             Pose3d.kZero
-                .plus(best_tf) // field-to-camera
+                .plus(bestTF) // field-to-camera
                 .relativeTo(fieldLayout.getOrigin())
                 .plus(camera.robotToCamera().inverse()); // field-to-robot
 
@@ -81,16 +66,11 @@ public class MultiTagOnCoproc implements VisionProcessor {
             .mapToDouble(target -> target.getBestCameraToTarget().getTranslation().getNorm())
             .average().orElse(0.0);
 
-        double stdDevFactor =
-            (Math.pow(avgDistance, 2.0) / result.getTargets().size())
-                * camera.stdDevFactor();
-        double linearStdDev = linearStdDevFactor * stdDevFactor;
-        double angularStdDev = angularStdDevFactor * stdDevFactor;
-
         return Optional.of(
             new PoseRecord(
                 best,
-                linearStdDev,
-                angularStdDev));
+                result.multitagResult.get().fiducialIDsUsed.stream().map(Integer::valueOf)
+                    .toList(),
+                avgDistance));
     }
 }
