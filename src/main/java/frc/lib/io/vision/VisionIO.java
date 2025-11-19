@@ -29,13 +29,13 @@ public interface VisionIO {
         public PhotonPipelineResult[] results = new PhotonPipelineResult[0];
 
         private boolean hasLoggedIntrinsics = false;
-        public Matrix<N3, N3> cameraMatrix = null;
-        public Matrix<N8, N1> distCoeffs = null;
+        public double[] cameraMatrix = null;
+        public double[] distCoeffs = null;
 
         public VisionIOInputs(Matrix<N3, N3> cameraMatrix, Matrix<N8, N1> distCoeffs)
         {
-            this.cameraMatrix = cameraMatrix;
-            this.distCoeffs = distCoeffs;
+            this.cameraMatrix = cameraMatrix.getData();
+            this.distCoeffs = distCoeffs.getData();
         }
 
         @Override
@@ -63,8 +63,8 @@ public interface VisionIO {
         public void fromLog(LogTable table)
         {
             if (!hasLoggedIntrinsics) {
-                cameraMatrix = table.get("CameraMatrix", (Matrix<N3, N3>) null);
-                distCoeffs = table.get("DistCoeffs", (Matrix<N8, N1>) null);
+                cameraMatrix = table.get("CameraMatrix", (double[]) null);
+                distCoeffs = table.get("DistCoeffs", (double[]) null);
 
                 if (!(cameraMatrix == null || distCoeffs == null)) {
                     hasLoggedIntrinsics = true;
@@ -75,6 +75,7 @@ public interface VisionIO {
 
             int resultsLength = table.get("ResultsLength", 0);
             String resultsPrefix = "Results/";
+            results = new PhotonPipelineResult[resultsLength];
             for (int i = 0; i < resultsLength; i++) {
                 String key = resultsPrefix + i;
                 results[i] = table.get(key, new PhotonPipelineResult());

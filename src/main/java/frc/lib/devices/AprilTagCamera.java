@@ -18,7 +18,9 @@ package frc.lib.devices;
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.targeting.PhotonPipelineResult;
+import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -48,9 +50,20 @@ public class AprilTagCamera {
         CameraProperties properties,
         VisionIO io)
     {
-        this.properties = properties;
         this.io = io;
         inputs = new VisionIOInputs(properties.cameraMatrix(), properties.distCoeffs());
+
+        // Get camera intrinsics from inputs to potentially pull from log if replaying
+        Logger.processInputs(properties.name, inputs);
+        this.properties =
+            new CameraProperties(
+                properties.name,
+                properties.robotToCamera,
+                MatBuilder.fill(Nat.N3(), Nat.N3(), inputs.cameraMatrix),
+                MatBuilder.fill(Nat.N8(), Nat.N1(), inputs.distCoeffs),
+                properties.resolutionWidth,
+                properties.resolutionHeight,
+                properties.stdDevFactor);
     }
 
     public Optional<PhotonPipelineResult[]> getUnreadResults()
