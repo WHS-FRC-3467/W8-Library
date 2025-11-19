@@ -16,6 +16,7 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -47,6 +48,7 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveToPose;
 import frc.robot.commands.OnTheFlyPathCommand;
 import frc.robot.commands.PointTo2DTarget;
+import frc.robot.commands.SmartAimAtTarget;
 import frc.robot.commands.autos.BranchingAuto;
 import frc.robot.commands.autos.ExampleAuto;
 import frc.robot.commands.autos.NoneAuto;
@@ -77,17 +79,23 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.objectDetector.ObjectDetector;
 import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
 import frc.robot.util.BallSimulator;
+import frc.robot.util.LookUpTable;
+import frc.robot.util.RobotToTargetUtil;
+import frc.robot.util.ShotSetpoint;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meter;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.FeetPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.VisionSystemSim;
 
@@ -255,6 +263,17 @@ public class RobotContainer {
         controller.x()
             .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
                 AlignMode.STRAFE, () -> controller.getRightX()));
+
+        // Y: Shoot on the Move
+        controller.y()
+            .whileTrue(
+                Commands.parallel(
+                    new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
+                    AlignMode.STRAFE, () -> controller.getRightX()),
+                    new SmartAimAtTarget(drive, rotary, flywheel)
+                    // Servo1 is a placeholder for the stage, or the subsystem that inserts the game piece into the shooter.
+                    .andThen(() -> servo1.setGoal(Servo1.Setpoint.EXTENDED)))
+            ).onFalse(Commands.runOnce(() -> servo1.setGoal(Servo1.Setpoint.RETRACTED)));
     }
 
     /**

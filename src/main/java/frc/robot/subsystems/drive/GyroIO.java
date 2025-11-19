@@ -30,4 +30,14 @@ public interface GyroIO {
 
     public default void updateInputs(GyroIOInputs inputs)
     {}
+
+    public default double getAccelerationX()
+    {
+        return 0.0;
+    }
+
+    public default double getAccelerationY()
+    {
+        return 0.0;
+    }
 }

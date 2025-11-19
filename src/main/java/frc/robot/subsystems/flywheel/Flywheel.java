@@ -5,6 +5,8 @@
 package frc.robot.subsystems.flywheel;
 
 import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -35,6 +37,12 @@ public class Flywheel extends SubsystemBase { // Don't extend if contained in su
             FlywheelConstants.MAX_ACCELERATION, PIDSlot.SLOT_0)).withName("Shoot");
     }
 
+    public void shoot(AngularVelocity velocity)
+    {
+        io.runVelocity(velocity,
+            FlywheelConstants.MAX_ACCELERATION, PIDSlot.SLOT_0);
+    }
+
     public Command stop()
     {
         return this.runOnce(() -> io.runCoast()).withName("Stop");
@@ -54,6 +62,11 @@ public class Flywheel extends SubsystemBase { // Don't extend if contained in su
     public AngularVelocity getVelocity()
     {
         return io.getVelocity();
+    }
+
+    public boolean nearGoal(double setpoint)
+    {
+        return MathUtil.isNear(setpoint, getVelocity().in(RotationsPerSecond), FlywheelConstants.TOLERANCE.in(RotationsPerSecond));
     }
 
     public void close()

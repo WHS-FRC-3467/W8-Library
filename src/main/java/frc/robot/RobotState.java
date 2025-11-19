@@ -23,6 +23,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
+import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.Timestamped;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -85,4 +86,8 @@ public class RobotState {
             getRotaryPose().getZ() + getLinearPose().getZ(),
             getRotaryPose().getRotation()));
     }
+
+    // Time we are giving robot to get ready to shoot per attempt
+    @Getter
+    private LoggedTunableNumber timeToBeReady = new LoggedTunableNumber("TimeToBeReady", 0.5);
 }

@@ -5,6 +5,7 @@
 package frc.robot.subsystems.rotary;
 
 import static edu.wpi.first.units.Units.Degrees;
+import java.util.function.DoubleSupplier;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -63,6 +64,13 @@ public class Rotary extends SubsystemBase {
                 PIDSlot.SLOT_0))
             .withName("Go To " + setpoint.toString() + " Setpoint");
     };
+
+    public void setSetpoint(Angle angle)
+    {
+        io.runPosition(angle, RotaryConstants.CRUISE_VELOCITY,
+                RotaryConstants.ACCELERATION, RotaryConstants.JERK,
+                PIDSlot.SLOT_0);   
+    }
 
     public boolean nearGoal(Angle targetPosition)
     {

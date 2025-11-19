@@ -423,4 +423,14 @@ public class Drive extends SubsystemBase {
                     DriveConstants.BackRight.LocationY)
         };
     }
+
+    /** Returns the acceleration of the gyro in the X direction. */
+    public double getAccelerationX() {
+        return gyroIO.getAccelerationX();
+    }
+
+    /** Returns the acceleration of the gyro in the Y direction. */
+    public double getAccelerationY() {
+        return gyroIO.getAccelerationY();
+    }
 }
