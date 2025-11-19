@@ -17,7 +17,9 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Seconds;
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
@@ -59,5 +61,28 @@ public class RobotState {
             velocity.vyMetersPerSecond,
             velocity.omegaRadiansPerSecond,
             getRotation());
+    }
+
+    @Getter
+    @Setter
+    private Pose3d rotaryPose = new Pose3d();
+
+    @Getter
+    @Setter
+    private Pose3d linearPose = new Pose3d();
+
+    /**
+     * Publishes the mechanism poses to the logger for 3d visualization. This should be changed to
+     * match the mechanical kinematics of the robot.
+     */
+
+    public void publishMechanismPoses()
+    {
+        Logger.recordOutput("Odometry/LinearPose", linearPose);
+        Logger.recordOutput("Odometry/RotaryPose", new Pose3d(
+            getRotaryPose().getX(),
+            getRotaryPose().getY(),
+            getRotaryPose().getZ() + getLinearPose().getZ(),
+            getRotaryPose().getRotation()));
     }
 }

@@ -180,4 +180,14 @@ public abstract class DriveToPoseBase extends Command {
             ? (withinDistanceTolerance && withinAngularTolerance)
             : (withinDistanceTolerance || withinAngularTolerance);
     }
+
+    public Distance getDistanceError()
+    {
+        return Meters.of(linearController.getPositionError());
+    }
+
+    public Angle getAngularError()
+    {
+        return Radians.of(angularController.getPositionError());
+    }
 }

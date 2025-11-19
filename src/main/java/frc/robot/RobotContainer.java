@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.commands.DriveToPoseBase;
+import frc.lib.commands.SteppableCommandGroup;
 import frc.lib.commands.AlignToPoseBase.AlignMode;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
@@ -67,13 +68,15 @@ import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.linear.Linear;
 import frc.robot.subsystems.linear.LinearConstants;
-import frc.robot.subsystems.rotary.RotarySubsystem;
-import frc.robot.subsystems.rotary.RotarySubsystemConstants;
-import frc.robot.subsystems.rotary.RotarySubsystem.Setpoint;
+import frc.robot.subsystems.rotary.Rotary;
+import frc.robot.subsystems.rotary.RotaryConstants;
+import frc.robot.subsystems.rotary.Rotary.Setpoint;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.subsystems.objectDetector.ObjectDetector;
+import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
@@ -106,7 +109,8 @@ public class RobotContainer {
     private final Flywheel flywheel;
     private final Linear linear;
     private final Vision vision;
-    private final RotarySubsystem rotary;
+    private final Rotary rotary;
+    private final ObjectDetector objectDetector;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -116,103 +120,23 @@ public class RobotContainer {
     private final LoggedDashboardChooser<Boolean> conditionalChooser;
     public static Field2d autoPreviewField = new Field2d();
 
-    private final Optional<VisionSystemSim> visionSim;
+
 
     /**
-     * The container for the robot. Contains subsystems, OI devices, and commands.
+     * The container for the robot. Contains subsystems, IO devices, and commands.
      */
     public RobotContainer()
     {
-        switch (Constants.currentMode) {
-            case REAL -> {
-                // Real robot, instantiate hardware IO implementations
-                drive = new Drive(
-                    new GyroIOPigeon2(),
-                    new ModuleIOTalonFX(DriveConstants.FrontLeft),
-                    new ModuleIOTalonFX(DriveConstants.FrontRight),
-                    new ModuleIOTalonFX(DriveConstants.BackLeft),
-                    new ModuleIOTalonFX(DriveConstants.BackRight));
-
-                leds = new LEDs(LEDsConstants.getLightsIOReal());
-                laserCAN1 = new LaserCAN1(LaserCAN1Constants.getReal(), drive);
-                beamBreak1 = new BeamBreak1(BeamBreak1Constants.getReal());
-                servo1 = new Servo1(Servo1Constants.getReal());
-                flywheel = new Flywheel(FlywheelConstants.getReal());
-
-                linear = new Linear(LinearConstants.getReal());
-
-                visionSim = Optional.empty();
-                vision = new Vision(
-                    drive::addVisionMeasurement,
-                    () -> drive.getTimestampedHeading(),
-                    new VisionIOPhotonVision(
-                        VisionConstants.camera0Name,
-                        VisionConstants.robotToCamera0,
-                        VisionConstants.aprilTagLayout,
-                        PoseStrategy.CONSTRAINED_SOLVEPNP));
-                rotary = new RotarySubsystem(RotarySubsystemConstants.getReal());
-            }
-
-            case SIM -> {
-                // Sim robot, instantiate physics sim IO implementations
-                drive = new Drive(
-                    new GyroIO() {},
-                    new ModuleIOSim(DriveConstants.FrontLeft),
-                    new ModuleIOSim(DriveConstants.FrontRight),
-                    new ModuleIOSim(DriveConstants.BackLeft),
-                    new ModuleIOSim(DriveConstants.BackRight));
-
-                leds = new LEDs(LEDsConstants.getLightsIOSim());
-                laserCAN1 =
-                    new LaserCAN1(LaserCAN1Constants.getSim(), drive);
-                beamBreak1 = new BeamBreak1(
-                    BeamBreak1Constants.getSim());
-                servo1 = new Servo1(Servo1Constants.getSim());
-                flywheel = new Flywheel(FlywheelConstants.getSim());
-
-                linear = new Linear(LinearConstants.getSim());
-
-                visionSim = Optional.of(VisionConstants.getSystemSim());
-                vision = new Vision(
-                    drive::addVisionMeasurement,
-                    () -> drive.getTimestampedHeading(),
-                    new VisionIOPhotonVisionSim(
-                        () -> drive.getPose(),
-                        VisionConstants.camera0Name,
-                        VisionConstants.robotToCamera0,
-                        VisionConstants.aprilTagLayout,
-                        PoseStrategy.CONSTRAINED_SOLVEPNP,
-                        visionSim.get()));
-                rotary = new RotarySubsystem(RotarySubsystemConstants.getSim());
-            }
-
-            default -> {
-                // Replayed robot, disable IO implementations
-                drive = new Drive(
-                    new GyroIO() {},
-                    new ModuleIO() {},
-                    new ModuleIO() {},
-                    new ModuleIO() {},
-                    new ModuleIO() {});
-
-                leds = new LEDs(LEDsConstants.getLightsIOReplay());
-                laserCAN1 =
-                    new LaserCAN1(LaserCAN1Constants.getReplay(), drive);
-                beamBreak1 =
-                    new BeamBreak1(BeamBreak1Constants.getReplay());
-                servo1 = new Servo1(Servo1Constants.getReplay());
-                flywheel = new Flywheel(FlywheelConstants.getReplay());
-
-                linear = new Linear(LinearConstants.getReplay());
-                rotary = new RotarySubsystem(RotarySubsystemConstants.getReplay());
-
-                visionSim = Optional.empty();
-                vision = new Vision(
-                    drive::addVisionMeasurement,
-                    () -> drive.getTimestampedHeading(),
-                    new VisionIO() {});
-            }
-        }
+        drive = DriveConstants.get();
+        laserCAN1 = LaserCAN1Constants.get();
+        flywheel = FlywheelConstants.get();
+        leds = LEDsConstants.get();
+        beamBreak1 = BeamBreak1Constants.get();
+        linear = LinearConstants.get();
+        rotary = RotaryConstants.get();
+        servo1 = Servo1Constants.get();
+        vision = VisionConstants.get(drive); // TODO: Will be refactored in the future to RobotState
+        objectDetector = ObjectDetectorConstants.get(drive);
 
         conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
         conditionalChooser.addOption("True", true);
@@ -270,7 +194,7 @@ public class RobotContainer {
                     () -> new Rotation2d()));
 
         // Switch to X pattern when X button is pressed
-        controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+        // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
         // Reset gyro to 0° when B button is pressed
         controller
@@ -283,10 +207,10 @@ public class RobotContainer {
                     .ignoringDisable(true));
 
         // Pathfind to Pose when the Y button is pressed
-        controller.y().onTrue(
-            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(1, 4, Rotation2d.kZero),
-                PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, MetersPerSecond.of(0.0),
-                PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
+        // controller.y().onTrue(
+        // DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(1, 4, Rotation2d.kZero),
+        // PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, MetersPerSecond.of(0.0),
+        // PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
 
         // On-the-fly path with waypoints while the Right Bumper is held
         controller.rightBumper().whileTrue(
@@ -300,9 +224,9 @@ public class RobotContainer {
         SmartDashboard.putData("Linear: Stow", linear.setGoal(Linear.Setpoint.STOW));
         SmartDashboard.putData("Linear: Raised", linear.setGoal(Linear.Setpoint.RAISED));
         SmartDashboard.putData("Linear: Home", linear.homeCommand());
-        SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
+        SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(Rotary.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",
-            rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
+            rotary.setSetpoint(Rotary.Setpoint.RAISED));
 
         LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
         SmartDashboard.putData("Shoot Ball", Commands
@@ -325,13 +249,22 @@ public class RobotContainer {
             new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
                 .withTolerance(Inches.of(3), Degrees.of(5)));
 
+        Command steppableCommand = new SteppableCommandGroup(
+            controller.x(),
+            controller.y(),
+            Commands.runOnce(() -> System.out.println("Step 1")),
+            Commands.runOnce(() -> System.out.println("Step 2")),
+            Commands.runOnce(() -> System.out.println("Step 3")));
+
+        SmartDashboard.putData("Steppable Command", steppableCommand);
+
         // controller.x()
         // .whileTrue(new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
         // .withTolerance(Inches.of(3), Degrees.of(5)));
 
-        controller.x()
-            .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
-                AlignMode.STRAFE, () -> controller.getRightX()));
+        // controller.x()
+        // .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
+        // AlignMode.STRAFE, () -> controller.getRightX()));
     }
 
     /**

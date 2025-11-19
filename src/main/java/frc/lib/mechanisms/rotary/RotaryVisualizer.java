@@ -11,6 +11,7 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Rotations;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
@@ -41,10 +42,14 @@ public class RotaryVisualizer {
     private final double armLength;
 
     private final Pose3d offset;
+    private Pose3d currentPose = new Pose3d();
+
+    private final RotaryMechCharacteristics constants;
 
     public RotaryVisualizer(String name, RotaryMechCharacteristics constants)
     {
         this.name = name;
+        this.constants = constants;
         mechanism = new LoggedMechanism2d(3.0, 3.0, new Color8Bit(Color.kBlack));
         LoggedMechanismRoot2d root = mechanism.getRoot(name + " root", 1.5, 1.5);
 
@@ -98,10 +103,29 @@ public class RotaryVisualizer {
 
     private void update()
     {
+        switch (constants.axis()) {
+            case ROLL:
+                currentPose = offset.rotateBy(
+                    new Rotation3d(Degrees.of(measured.getAngle()), Degrees.zero(),
+                        Degrees.zero()));
+                break;
+            case PITCH:
+                currentPose = offset.rotateBy(
+                    new Rotation3d(Degrees.zero(), Degrees.of(measured.getAngle()),
+                        Degrees.zero()));
+                break;
+            case YAW:
+                currentPose = offset.rotateBy(
+                    new Rotation3d(Degrees.zero(), Degrees.zero(),
+                        Degrees.of(measured.getAngle())));
+                break;
+
+            default:
+                break;
+        }
+
         SmartDashboard.putData(name + " Visualizer", mechanism);
-        Logger.recordOutput(name + "/Pose3d",
-            offset.rotateBy(
-                new Rotation3d(Degrees.of(measured.getAngle()), Degrees.zero(), Degrees.zero())));
+        Logger.recordOutput(name + "Pose3d", currentPose);
     }
 
     public void setCurrentAngle(Angle angle)
@@ -137,5 +161,10 @@ public class RotaryVisualizer {
         });
 
         update();
+    }
+
+    public Supplier<Pose3d> getPoseSupplier()
+    {
+        return () -> currentPose;
     }
 }

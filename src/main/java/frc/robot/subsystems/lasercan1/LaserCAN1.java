@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.devices.DistanceSensor;
 import frc.lib.io.distancesensor.DistanceSensorIO;
 import frc.robot.RobotState;
-import frc.robot.subsystems.drive.Drive;
 
 public class LaserCAN1 extends SubsystemBase {
     private final DistanceSensor distanceSensor;
@@ -25,7 +24,7 @@ public class LaserCAN1 extends SubsystemBase {
     public final Trigger inside =
         new Trigger(() -> betweenDistance(Millimeters.of(5), Millimeters.of(10)));
 
-    public LaserCAN1(DistanceSensorIO io, Drive drive)
+    public LaserCAN1(DistanceSensorIO io)
     {
         distanceSensor = new DistanceSensor(io);
         robotState = RobotState.getInstance();

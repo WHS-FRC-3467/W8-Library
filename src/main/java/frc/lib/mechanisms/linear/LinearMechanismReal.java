@@ -23,7 +23,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import frc.lib.annotations.NoSubtypeAllowed;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 
@@ -34,7 +33,7 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 public class LinearMechanismReal extends LinearMechanism {
     private final MotorIO io;
 
-    public LinearMechanismReal(@NoSubtypeAllowed MotorIO io,
+    public LinearMechanismReal(MotorIO io,
         LinearMechCharacteristics characteristics)
     {
         super(io.getName(), characteristics);
