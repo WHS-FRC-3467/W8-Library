@@ -16,6 +16,7 @@
 package frc.robot.util;
 
 import static edu.wpi.first.units.Units.Meters;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import edu.wpi.first.units.measure.Distance;
@@ -32,6 +33,10 @@ public class LookUpTable {
 
     public LookUpTable()
     {
+        // Physics simulate!
+        
+
+        // Create the list of shot setpoints
         knownShots = new ShotSetpointList();
         knownShots.getShots().add(new ShotSetpoint(1.5, 12.71, 70));
         knownShots.getShots().add(new ShotSetpoint(2.0, 21.00, 70));
@@ -158,5 +163,16 @@ public class LookUpTable {
     public void setShotList(ShotSetpointList knownShots)
     {
         this.knownShots = knownShots;
+    }
+
+    /**
+     * Returns a list of all known shot presets based on physics simulation
+     * 
+     * @return ArrayList of all known ShotSetpoints
+     */
+    public ArrayList<ShotSetpoint> getShotPresets() {
+
+
+        return new ArrayList<ShotSetpoint>(knownShots.getShots());
     }
 }
