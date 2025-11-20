@@ -36,6 +36,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.commands.DriveToPoseBase;
+import frc.lib.commands.SteppableCommandGroup;
 import frc.lib.commands.AlignToPoseBase.AlignMode;
 import frc.lib.devices.AprilTagCamera;
 import frc.lib.io.vision.VisionIO;
@@ -131,8 +133,7 @@ public class RobotContainer {
     /**
      * The container for the robot. Contains subsystems, IO devices, and commands.
      */
-    public RobotContainer()
-    {
+    public RobotContainer() {
         drive = DriveConstants.get();
         laserCAN1 = LaserCAN1Constants.get();
         flywheel = FlywheelConstants.get();
@@ -179,8 +180,7 @@ public class RobotContainer {
      * ({@link edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a
      * {@link edu.wpi.first.wpilibj2.command.button.JoystickButton}.
      */
-    private void configureButtonBindings()
-    {
+    private void configureButtonBindings() {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(
             DriveCommands.joystickDrive(
@@ -200,7 +200,7 @@ public class RobotContainer {
                     () -> new Rotation2d()));
 
         // Switch to X pattern when X button is pressed
-        controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+        // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
         // Reset gyro to 0° when B button is pressed
         controller
@@ -256,13 +256,22 @@ public class RobotContainer {
             new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
                 .withTolerance(Inches.of(3), Degrees.of(5)));
 
-        controller.x()
-            .whileTrue(new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
-                .withTolerance(Inches.of(3), Degrees.of(5)));
+        Command steppableCommand = new SteppableCommandGroup(
+            controller.x(),
+            controller.y(),
+            Commands.runOnce(() -> System.out.println("Step 1")),
+            Commands.runOnce(() -> System.out.println("Step 2")),
+            Commands.runOnce(() -> System.out.println("Step 3")));
 
-        controller.x()
-            .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
-                AlignMode.STRAFE, () -> controller.getRightX()));
+        SmartDashboard.putData("Steppable Command", steppableCommand);
+
+        // controller.x()
+        // .whileTrue(new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
+        // .withTolerance(Inches.of(3), Degrees.of(5)));
+
+        // controller.x()
+        // .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
+        // AlignMode.STRAFE, () -> controller.getRightX()));
     }
 
     /**
@@ -270,15 +279,13 @@ public class RobotContainer {
      *
      * @return the command to run in autonomous
      */
-    public Command getAutonomousCommand()
-    {
+    public Command getAutonomousCommand() {
         // return autoChooser.get();
         return Commands.none();
     }
 
     /** This function is called periodically by Robot.java when disabled. */
-    public void checkStartPose()
-    {
+    public void checkStartPose() {
 
         /* Starting pose checker for auto */
         autoPreviewField.setRobotPose(robotState.getEstimatedPose());
