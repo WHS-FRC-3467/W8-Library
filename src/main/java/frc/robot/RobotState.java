@@ -19,20 +19,15 @@ import static edu.wpi.first.units.Units.Seconds;
 import java.util.Optional;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
-import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import frc.lib.devices.AprilTagCamera.CameraProperties;
 import frc.lib.posestimator.PoseEstimator;
+import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
-import frc.lib.posestimator.visionprocessors.ConstrainedSolvePnp;
-import frc.lib.posestimator.visionprocessors.LowestAmbiguity;
-import frc.lib.posestimator.visionprocessors.MultiTagOnCoproc;
-import frc.lib.posestimator.visionprocessors.VisionProcessor.PoseRecord;
 import frc.robot.subsystems.drive.Drive;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -41,45 +36,17 @@ import lombok.Setter;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RobotState {
-    private static final double MAX_Z_METERS = 0.75;
-    private static final double FIELD_LENGTH = FieldConstants.aprilTagLayout.getFieldLength();
-    private static final double FIELD_WIDTH = FieldConstants.aprilTagLayout.getFieldLength();
-
     private static final double LINEAR_ODOMETRY_STD_DEV = 0.01;
     private static final double ANGULAR_ODOMETRY_STD_DEV = 0.01;
 
     @Getter(lazy = true)
     private static final RobotState instance = new RobotState();
 
-    private static boolean postFilter(PoseRecord poseRecord)
-    {
-        Pose3d pose = poseRecord.pose();
-        double x = pose.getX();
-        double y = pose.getY();
-        double z = pose.getZ();
-        return z > MAX_Z_METERS || x < 0.0 || x > FIELD_LENGTH || y < 0.0 || y > FIELD_WIDTH;
-    }
-
-    private final LowestAmbiguity fallbackVisionProcessor =
-        new LowestAmbiguity(FieldConstants.aprilTagLayout);
-    private final MultiTagOnCoproc seedVisionProcessor =
-        new MultiTagOnCoproc(
-            Optional.of(fallbackVisionProcessor),
-            FieldConstants.aprilTagLayout);
-    private final ConstrainedSolvePnp visionProcessor =
-        new ConstrainedSolvePnp(seedVisionProcessor, FieldConstants.aprilTagLayout);
-
     private final PoseEstimator poseEstimator = new PoseEstimator(
-        visionProcessor,
         new SwerveDriveKinematics(Drive.getModuleTranslations()),
         Seconds.of(2),
         LINEAR_ODOMETRY_STD_DEV,
-        ANGULAR_ODOMETRY_STD_DEV)
-            .visionPoseFilter(Optional.of(RobotState::postFilter));
-
-    @Getter
-    @AutoLogOutput(key = "Odometry/Robot")
-    private Pose2d estimatedPose = Pose2d.kZero;
+        ANGULAR_ODOMETRY_STD_DEV);
 
     @Getter
     private Optional<PhotonTrackedTarget> closestTagObservation = Optional.empty();
@@ -88,31 +55,37 @@ public class RobotState {
     @Setter
     private ChassisSpeeds velocity = new ChassisSpeeds();
 
+    @AutoLogOutput(key = "Odometry/OdometryPose")
+    public Pose2d getOdometryPose()
+    {
+        return poseEstimator.odometryPose();
+    }
+
+    @AutoLogOutput(key = "Odometry/EstimatedPose")
+    public Pose2d getEstimatedPose()
+    {
+        return poseEstimator.estimatedPose();
+    }
+
     public void addOdometryObservation(OdometryObservation observation)
     {
         poseEstimator.addOdometryObservation(observation);
-        estimatedPose = poseEstimator.estimatedPose();
     }
 
-    public void addVisionObservation(PhotonPipelineResult observation, CameraProperties camera)
+    public void addVisionObservation(VisionPoseObservation observation)
     {
-        closestTagObservation = observation.getTargets().stream().sorted((t1, t2) -> {
-            double t1Distance = t1.getBestCameraToTarget().getTranslation().getNorm();
-            double t2Distance = t2.getBestCameraToTarget().getTranslation().getNorm();
-            if (t2Distance < t1Distance)
-                return -1;
-            if (t2Distance > t1Distance)
-                return 1;
-            return 0;
-        }).findFirst();
-        poseEstimator.addVisionObservation(observation, camera);
-        estimatedPose = poseEstimator.estimatedPose();
+        poseEstimator.addVisionObservation(observation);
+    }
+
+    public Optional<Pose2d> getPoseAtTime(double timestampSeconds)
+    {
+        return poseEstimator.getPoseAtTime(timestampSeconds);
     }
 
     /** Returns the current odometry rotation. */
     public Rotation2d getRotation()
     {
-        return estimatedPose.getRotation();
+        return getEstimatedPose().getRotation();
     }
 
     public ChassisSpeeds getFieldRelativeVelocity()
@@ -149,8 +122,6 @@ public class RobotState {
 
     public void resetPose(Pose2d pose)
     {
-
         poseEstimator.resetPose(pose);
-        estimatedPose = poseEstimator.estimatedPose();
     }
 }

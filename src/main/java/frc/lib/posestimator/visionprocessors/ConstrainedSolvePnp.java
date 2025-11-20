@@ -19,13 +19,13 @@ import java.util.Optional;
 import org.photonvision.estimation.TargetModel;
 import org.photonvision.estimation.VisionEstimation;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.lib.devices.AprilTagCamera.CameraProperties;
 import frc.lib.util.GeomUtil;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 
 /**
@@ -38,38 +38,12 @@ import lombok.experimental.Accessors;
  * fusion with odometry.
  */
 @Accessors(fluent = true)
+@RequiredArgsConstructor
 public class ConstrainedSolvePnp implements VisionProcessor {
-
-    private static final double DEFAULT_AMBIGUITY_THRESHOLD = 0.3;
-    private static final double DEFAULT_LINEAR_STDDEV_FACTOR = 0.4;
-    private static final double DEFAULT_ANGULAR_STDDEV_FACTOR = 0.4;
-    private static final double DEFAULT_GYRO_HEADING_SCALE_FACTOR = 10.0;
 
     private final VisionProcessor seedProvider;
     private final AprilTagFieldLayout fieldLayout;
-
-    @Getter
-    @Setter
-    private double ambiguityThreshold = DEFAULT_AMBIGUITY_THRESHOLD;
-
-    @Getter
-    @Setter
-    private double gyroHeadingScaleFactor = DEFAULT_GYRO_HEADING_SCALE_FACTOR;
-
-    @Getter
-    @Setter
-    private double linearStdDevFactor = DEFAULT_LINEAR_STDDEV_FACTOR;
-
-    @Getter
-    @Setter
-    private double angularStdDevFactor = DEFAULT_ANGULAR_STDDEV_FACTOR;
-
-    public ConstrainedSolvePnp(VisionProcessor seedProvider, AprilTagFieldLayout fieldLayout)
-    {
-        this.seedProvider = seedProvider;
-        this.fieldLayout = fieldLayout;
-    }
-
+    private final double gyroHeadingScaleFactor;
 
     @Override
     public Optional<PoseRecord> processVisionObservation(
@@ -120,10 +94,8 @@ public class ConstrainedSolvePnp implements VisionProcessor {
             .mapToDouble(target -> target.getBestCameraToTarget().getTranslation().getNorm())
             .average().orElse(0.0);
 
-        double stdDevFactor = (Math.pow(avgDistance, 2.0) / tagCount) * camera.stdDevFactor();
-        double linearStdDev = linearStdDevFactor * stdDevFactor;
-        double angularStdDev = angularStdDevFactor * stdDevFactor;
-
-        return Optional.of(new PoseRecord(estimate, linearStdDev, angularStdDev));
+        return Optional.of(new PoseRecord(estimate,
+            result.getTargets().stream().map(PhotonTrackedTarget::getFiducialId).toList(),
+            avgDistance));
     }
 }

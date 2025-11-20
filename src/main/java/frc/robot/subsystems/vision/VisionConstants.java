@@ -142,7 +142,7 @@ public class VisionConstants {
         return new VisionIOPhotonVisionSim(
             FRONT_LEFT,
             visionSim.get(),
-            () -> RobotState.getInstance().getEstimatedPose(),
+            () -> RobotState.getInstance().getOdometryPose(),
             FieldConstants.aprilTagLayout);
     }
 
@@ -162,7 +162,7 @@ public class VisionConstants {
         return new VisionIOPhotonVisionSim(
             FRONT_RIGHT,
             visionSim.get(),
-            () -> RobotState.getInstance().getEstimatedPose(),
+            () -> RobotState.getInstance().getOdometryPose(),
             FieldConstants.aprilTagLayout);
     }
 
@@ -170,24 +170,18 @@ public class VisionConstants {
     {
         switch (Constants.currentMode) {
             case REAL -> {
-                var camera1 = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOReal(),
-                    RobotState.getInstance()::addVisionObservation);
-                var camera2 = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOReal(),
-                    RobotState.getInstance()::addVisionObservation);
+                var camera1 = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOReal());
+                var camera2 = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOReal());
                 new VisionSubsystem(camera1, camera2);
             }
             case SIM -> {
-                var camera1 = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim(),
-                    RobotState.getInstance()::addVisionObservation);
-                var camera2 = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim(),
-                    RobotState.getInstance()::addVisionObservation);
+                var camera1 = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim());
+                var camera2 = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim());
                 new VisionSubsystem(camera1, camera2);
             }
             case REPLAY -> {
-                var camera1 = new AprilTagCamera(FRONT_LEFT, new VisionIO() {},
-                    RobotState.getInstance()::addVisionObservation);
-                var camera2 = new AprilTagCamera(FRONT_RIGHT, new VisionIO() {},
-                    RobotState.getInstance()::addVisionObservation);
+                var camera1 = new AprilTagCamera(FRONT_LEFT, new VisionIO() {});
+                var camera2 = new AprilTagCamera(FRONT_RIGHT, new VisionIO() {});
                 new VisionSubsystem(camera1, camera2);
             }
         }
