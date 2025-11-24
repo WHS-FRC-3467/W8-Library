@@ -32,6 +32,7 @@ import frc.lib.io.motor.MotorIORev;
 import frc.lib.io.motor.MotorIORevSim;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.mechanisms.rotary.*;
+import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryAxis;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
 import frc.robot.Ports;
 import com.revrobotics.spark.ClosedLoopSlot;
@@ -64,7 +65,8 @@ public class RevRotarySubsystemConstants {
     public static final Distance ARM_LENGTH = Meters.of(1.0);
 
     public static final RotaryMechCharacteristics CONSTANTS =
-        new RotaryMechCharacteristics(OFFSET, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
+        new RotaryMechCharacteristics(OFFSET, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE,
+            RotaryAxis.PITCH);
 
     public static final Mass ARM_MASS = Kilograms.of(.01);
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);

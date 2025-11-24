@@ -158,59 +158,27 @@ public class RotaryConstants {
         return config;
     }
 
-    /**
-     * Creates the real robot implementation of the rotary mechanism.
-     * 
-     * <p>
-     * This method instantiates the actual hardware objects (TalonFX motors and CANcoder) that will
-     * be used when running on a real robot.
-     * 
-     * @return A RotaryMechanismReal object configured with real hardware
-     */
-    public static RotaryMechanismReal getReal()
+    public static Rotary get()
     {
-        return new RotaryMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
-                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
-            CONSTANTS,
-            Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
-                NAME + "Encoder", getCANcoderConfig(false))));
-    }
-
-    /**
-     * Creates the simulation implementation of the rotary mechanism.
-     * 
-     * <p>
-     * This method creates a physics-based simulation of the mechanism using WPILib's simulation
-     * classes. It models the motor, moment of inertia, and other physical properties to provide
-     * realistic behavior in simulation.
-     * 
-     * @return A RotaryMechanismSim object configured for physics simulation
-     */
-    public static RotaryMechanismSim getSim()
-    {
-        return new RotaryMechanismSim(
-            new MotorIOTalonFXSim(
-                NAME,
-                getFXConfig(),
-                Ports.RotarySubsystemMotorMain,
-                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
-            DCMOTOR, MOI, false, CONSTANTS,
-            Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
-                NAME + "Encoder", getCANcoderConfig(true))));
-    }
-
-    /**
-     * Creates the log replay implementation of the rotary mechanism.
-     * 
-     * <p>
-     * This is used with AdvantageKit's log replay feature, which allows you to replay logged data
-     * and debug robot code without having the actual robot or running simulation.
-     * 
-     * @return A RotaryMechanism object for log replay
-     */
-    public static RotaryMechanism getReplay()
-    {
-        return new RotaryMechanism(NAME, CONSTANTS) {};
+        switch (Constants.currentMode) {
+            case REAL:
+                return new Rotary(new RotaryMechanismReal(
+                    new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
+                        new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
+                    CONSTANTS,
+                    Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
+                        NAME + "Encoder", getCANcoderConfig(false)))));
+            case SIM:
+                return new Rotary(new RotaryMechanismSim(
+                    new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
+                        new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
+                    DCMOTOR, MOI, false, CONSTANTS,
+                    Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
+                        NAME + "Encoder", getCANcoderConfig(true)))));
+            case REPLAY:
+                return new Rotary(new RotaryMechanism(NAME, CONSTANTS) {});
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }
