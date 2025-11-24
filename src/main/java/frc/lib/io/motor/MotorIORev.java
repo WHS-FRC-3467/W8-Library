@@ -100,20 +100,11 @@ public class MotorIORev implements MotorIO {
      * system and can be manually controlled by the user. It also configures various settings for
      * motion profiling and closed-loop control.
      *
+     * @param name The name of the motor for identification purposes.
      * @param id The unique identifier for the motor (CAN ID).
      * @param isFlex Boolean indicating whether the motor is a SparkFlex (true) or a SparkMax
      *        (false).
-     * @param gearRatio The gear ratio applied to the motor's output.
-     * @param wheelRadius The radius of the wheel attached to the motor, used for motion
-     *        calculations.
-     * @param isBrake Boolean indicating whether the motor should use brake mode (true) or coast
-     *        mode (false).
-     * @param inverted Boolean indicating whether the motor should be inverted relative to the
-     *        control signal.
-     * @param motorType The type of motor (e.g., brushless, brushed) to configure.
-     * @param motionProfile The motion profile settings for the motor, including PID and velocity
-     *        parameters.
-     *
+     * @param config The configuration settings for the motor.
      * @see MotorIO
      */
     public MotorIORev(

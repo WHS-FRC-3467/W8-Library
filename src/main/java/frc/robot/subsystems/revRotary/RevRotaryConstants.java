@@ -11,10 +11,7 @@ import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Second;
 import java.util.Optional;
 import static edu.wpi.first.units.Units.Meters;
-import com.ctre.phoenix6.configs.*;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
+import frc.robot.Constants;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
@@ -43,7 +40,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 
 /** Add your docs here. */
-public class RevRotarySubsystemConstants {
+public class RevRotaryConstants {
     public static String NAME = "REVRotary";
 
     public static final Angle TOLERANCE = Degrees.of(2.0);
@@ -56,6 +53,7 @@ public class RevRotarySubsystemConstants {
 
     private static final double ROTOR_TO_SENSOR = (2.0 / 1.0);
     private static final double SENSOR_TO_MECHANISM = (2.0 / 1.0);
+    private static final double GEAR_RATIO = ROTOR_TO_SENSOR * SENSOR_TO_MECHANISM;
 
     public static final Translation3d OFFSET = Translation3d.kZero;
 
@@ -75,14 +73,14 @@ public class RevRotarySubsystemConstants {
 
     private static final Angle ENCODER_OFFSET = Rotations.of(0.0);
 
-    public static final RevRotarySubsystem.Setpoint DEFAULT_SETPOINT =
-        RevRotarySubsystem.Setpoint.STOW;
+    public static final RevRotary.Setpoint DEFAULT_SETPOINT =
+        RevRotary.Setpoint.STOW;
 
 
 
     // Positional PID
     private static ClosedLoopConfig SLOT0CONFIG = new ClosedLoopConfig()
-        .pid(30.0, 0, 0, ClosedLoopSlot.kSlot0);
+        .pid(30.0, 0, 5.0, ClosedLoopSlot.kSlot0); // Added D gain to match TalonFX config
 
     /**
      * Creates and returns the TalonFX motor controller configuration for the rotary mechanism.
@@ -108,6 +106,17 @@ public class RevRotarySubsystemConstants {
         config.voltageCompensation(12.0);
         config.idleMode(IdleMode.kBrake);
         config.inverted(false);
+
+        // Add gear ratio configuration for position/velocity conversion
+        config.encoder.positionConversionFactor(1.0 / GEAR_RATIO);
+        config.encoder.velocityConversionFactor(1.0 / GEAR_RATIO / 60.0); // RPM to RPS
+
+        // Add soft limits to match TalonFX behavior
+        config.softLimit.forwardSoftLimit(MAX_ANGLE.in(Rotations));
+        config.softLimit.forwardSoftLimitEnabled(false);
+        config.softLimit.reverseSoftLimit(MIN_ANGLE.in(Rotations));
+        config.softLimit.reverseSoftLimitEnabled(false);
+
         config.apply(SLOT0CONFIG);
 
         return config;
@@ -122,11 +131,11 @@ public class RevRotarySubsystemConstants {
      * 
      * @return A RotaryMechanismReal object configured with real hardware
      */
-    public static RotaryMechanismReal getReal()
+    public static RevRotary getReal()
     {
         MotorIO io = new MotorIORev(NAME, Ports.RotarySubsystemMotorMain, true, getREVConfig());
 
-        return new RotaryMechanismReal(io, CONSTANTS, null);
+        return new RevRotary(new RotaryMechanismReal(io, CONSTANTS, Optional.empty()));
     }
 
     /**
@@ -139,7 +148,7 @@ public class RevRotarySubsystemConstants {
      * 
      * @return A RotaryMechanismSim object configured for physics simulation
      */
-    public static RotaryMechanismSim getSim()
+    public static RevRotary getSim()
     {
         MotorIOSim io = new MotorIORevSim(
             NAME,
@@ -148,13 +157,13 @@ public class RevRotarySubsystemConstants {
             DCMOTOR,
             getREVConfig());
 
-        return new RotaryMechanismSim(
+        return new RevRotary(new RotaryMechanismSim(
             io,
             DCMOTOR,
             MOI,
             false,
             CONSTANTS,
-            Optional.empty());
+            Optional.empty()));
     }
 
     /**
@@ -166,8 +175,27 @@ public class RevRotarySubsystemConstants {
      * 
      * @return A RotaryMechanism object for log replay
      */
-    public static RotaryMechanism getReplay()
+    public static RevRotary getReplay()
     {
-        return new RotaryMechanism(NAME, CONSTANTS) {};
+        return new RevRotary(new RotaryMechanism(NAME, CONSTANTS) {});
+    }
+
+    /**
+     * Method to get the appropriate RotaryMechanism based on the current robot mode.
+     * 
+     * @return RotaryMechanism instance for the current mode (real, sim, or replay)
+     */
+    public static RevRotary get()
+    {
+        switch (Constants.currentMode) {
+            case REAL:
+                return getReal();
+            case SIM:
+                return getSim();
+            case REPLAY:
+                return getReplay();
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }

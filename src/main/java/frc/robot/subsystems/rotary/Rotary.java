@@ -26,19 +26,27 @@ import lombok.RequiredArgsConstructor;
 public class Rotary extends SubsystemBase {
 
     private final RotaryMechanism io;
-    private static final LoggedTunableNumber STOW_SETPOINT = new LoggedTunableNumber("TEST", 0.0);
-    private static final LoggedTunableNumber RAISED_SETPOINT =
-        new LoggedTunableNumber("RAISED", -90);
+    private static LoggedTunableNumber STOW_SETPOINT =
+        new LoggedTunableNumber("Rotary STOW", 0.0);
+    private static LoggedTunableNumber RAISED_SETPOINT =
+        new LoggedTunableNumber("Rotary RAISED", -90);
 
     @RequiredArgsConstructor
-    @SuppressWarnings("Immutable")
     @Getter
     public enum Setpoint {
-        HOME(Degrees.of(0.0)),
-        STOW(Degrees.of(STOW_SETPOINT.get())),
-        RAISED(Degrees.of(RAISED_SETPOINT.get()));
+        HOME(null),
+        STOW(STOW_SETPOINT),
+        RAISED(RAISED_SETPOINT);
 
-        private final Angle setpoint;
+        private final LoggedTunableNumber tunableNumber;
+
+        public Angle getSetpoint()
+        {
+            if (tunableNumber == null) {
+                return Degrees.of(0.0);
+            }
+            return Degrees.of(tunableNumber.get());
+        }
     }
 
     private Debouncer homeDebouncer = new Debouncer(0.1, DebounceType.kRising);

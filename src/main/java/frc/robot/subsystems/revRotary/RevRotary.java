@@ -14,55 +14,65 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.rotary.RotaryMechanism;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggerHelper;
+import frc.robot.RobotState;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-public class RevRotarySubsystem extends SubsystemBase {
+public class RevRotary extends SubsystemBase {
 
     private final RotaryMechanism io;
+    private final RobotState robotstate;
+    private Setpoint setpoint = Setpoint.STOW;
 
-    private static final LoggedTunableNumber STOW_SETPOINT = new LoggedTunableNumber("TEST", 0.0);
+    private static final LoggedTunableNumber STOW_SETPOINT =
+        new LoggedTunableNumber("REV TEST", 0.0);
     private static final LoggedTunableNumber RAISED_SETPOINT =
-        new LoggedTunableNumber("RAISED", 90);
+        new LoggedTunableNumber("REV RAISED", 90);
 
     @RequiredArgsConstructor
-    @SuppressWarnings("Immutable")
     @Getter
     public enum Setpoint {
-        STOW(Degrees.of(STOW_SETPOINT.get())),
-        RAISED(Degrees.of(RAISED_SETPOINT.get()));
+        STOW(STOW_SETPOINT),
+        RAISED(RAISED_SETPOINT);
 
-        private final Angle setpoint;
+        private final LoggedTunableNumber tunableNumber;
+
+        public Angle getSetpoint()
+        {
+            return Degrees.of(tunableNumber.get());
+        }
     }
 
 
-    public RevRotarySubsystem(RotaryMechanism io)
+    public RevRotary(RotaryMechanism io)
     {
         this.io = io;
+        this.robotstate = RobotState.getInstance();
 
-        setSetpoint(RevRotarySubsystemConstants.DEFAULT_SETPOINT).ignoringDisable(true).schedule();
+        setSetpoint(RevRotaryConstants.DEFAULT_SETPOINT).ignoringDisable(true).schedule();
     }
 
     @Override
     public void periodic()
     {
-        LoggerHelper.recordCurrentCommand(RevRotarySubsystemConstants.NAME, this);
+        LoggerHelper.recordCurrentCommand(RevRotaryConstants.NAME, this);
         io.periodic();
+        // robotstate.setRotaryPose(io.getPoseSupplier().get());
     }
 
     public Command setSetpoint(Setpoint setpoint)
     {
         return this.runOnce(
             () -> io.runPosition(setpoint.getSetpoint(),
-                RevRotarySubsystemConstants.CRUISE_VELOCITY,
-                RevRotarySubsystemConstants.ACCELERATION, RevRotarySubsystemConstants.JERK,
+                RevRotaryConstants.CRUISE_VELOCITY,
+                RevRotaryConstants.ACCELERATION, RevRotaryConstants.JERK,
                 PIDSlot.SLOT_0))
             .withName("Go To " + setpoint.toString() + " Setpoint");
     };
 
     public boolean nearGoal(Angle targetPosition)
     {
-        return io.nearGoal(targetPosition, RevRotarySubsystemConstants.TOLERANCE);
+        return io.nearGoal(targetPosition, RevRotaryConstants.TOLERANCE);
     }
 
     public Command waitUntilGoalCommand(Angle position)
@@ -88,4 +98,5 @@ public class RevRotarySubsystem extends SubsystemBase {
     {
         io.close();
     }
+
 }

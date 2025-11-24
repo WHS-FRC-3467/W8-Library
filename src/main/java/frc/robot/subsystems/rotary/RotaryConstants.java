@@ -28,7 +28,6 @@ import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIOCANCoderSim;
-import frc.lib.io.motor.MotorIORevSim;
 import frc.lib.io.motor.MotorIOTalonFX;
 import frc.lib.io.motor.MotorIOTalonFX.TalonFXFollower;
 import frc.lib.io.motor.MotorIOTalonFXSim;
@@ -37,8 +36,6 @@ import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryAxis;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
 import frc.robot.Constants;
 import frc.robot.Ports;
-import com.revrobotics.spark.config.SparkFlexConfig;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 
 public class RotaryConstants {

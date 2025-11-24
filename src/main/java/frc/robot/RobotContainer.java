@@ -35,6 +35,7 @@ import frc.lib.commands.AlignToPoseBase.AlignMode;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
 import frc.lib.io.vision.VisionIOPhotonVisionSim;
+import frc.lib.mechanisms.rotary.RotaryMechanism;
 import frc.lib.util.LoggedDashboardChooser;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggedTuneableProfiledPID;
@@ -77,6 +78,8 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.objectDetector.ObjectDetector;
 import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
+import frc.robot.subsystems.revRotary.RevRotary;
+import frc.robot.subsystems.revRotary.RevRotaryConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
@@ -110,6 +113,7 @@ public class RobotContainer {
     private final Linear linear;
     private final Vision vision;
     private final Rotary rotary;
+    private final RevRotary revRotary;
     private final ObjectDetector objectDetector;
 
     // Controller
@@ -134,6 +138,7 @@ public class RobotContainer {
         beamBreak1 = BeamBreak1Constants.get();
         linear = LinearConstants.get();
         rotary = RotaryConstants.get();
+        revRotary = RevRotaryConstants.get();
         servo1 = Servo1Constants.get();
         vision = VisionConstants.get(drive); // TODO: Will be refactored in the future to RobotState
         objectDetector = ObjectDetectorConstants.get(drive);
@@ -227,7 +232,9 @@ public class RobotContainer {
         SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(Rotary.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",
             rotary.setSetpoint(Rotary.Setpoint.RAISED));
-
+        SmartDashboard.putData("RevRotary: Stow", revRotary.setSetpoint(RevRotary.Setpoint.STOW));
+        SmartDashboard.putData("RevRotary: Raised",
+            revRotary.setSetpoint(RevRotary.Setpoint.RAISED));
         LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
         SmartDashboard.putData("Shoot Ball", Commands
             .runOnce(() -> BallSimulator.launch(FeetPerSecond.of(ballVel.getAsDouble()),
