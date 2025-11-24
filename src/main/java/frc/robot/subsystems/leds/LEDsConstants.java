@@ -36,6 +36,7 @@ import edu.wpi.first.wpilibj.util.Color;
 import frc.lib.io.lights.LightsIO;
 import frc.lib.io.lights.LightsIOCandle;
 import frc.lib.io.lights.LightsIOSim;
+import frc.robot.Constants;
 import frc.robot.Ports;
 
 public class LEDsConstants {
@@ -67,6 +68,20 @@ public class LEDsConstants {
     public static final LightsIO getLightsIOReplay()
     {
         return new LightsIO() {};
+    }
+
+    public static LEDs get()
+    {
+        switch (Constants.currentMode) {
+            case REAL:
+                return new LEDs(new LightsIOCandle(NAME, Ports.lights, CANDLE_CONFIG));
+            case SIM:
+                return new LEDs(new LightsIOSim(NAME));
+            case REPLAY:
+                return new LEDs(new LightsIO() {});
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 
     public record LEDSegment(int startIndex, int endIndex, int animationSlot) {

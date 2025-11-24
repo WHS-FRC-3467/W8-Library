@@ -4,26 +4,31 @@
 
 package frc.robot.subsystems.rotary;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Volts;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.rotary.RotaryMechanism;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggerHelper;
+import frc.robot.RobotState;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-public class RotarySubsystem extends SubsystemBase {
+public class Rotary extends SubsystemBase {
 
     private final RotaryMechanism io;
-
     private static final LoggedTunableNumber STOW_SETPOINT = new LoggedTunableNumber("TEST", 0.0);
     private static final LoggedTunableNumber RAISED_SETPOINT =
-        new LoggedTunableNumber("RAISED", 90);
+        new LoggedTunableNumber("RAISED", -90);
 
     /**
      * Predefined positions for the rotary mechanism.
@@ -57,8 +62,13 @@ public class RotarySubsystem extends SubsystemBase {
     public RotarySubsystem(RotaryMechanism io)
     {
         this.io = io;
+        this.robotstate = RobotState.getInstance();
+        setSetpoint(RotaryConstants.DEFAULT_SETPOINT)
+            .ignoringDisable(true)
+            .schedule();
+        homedTrigger =
+            new Trigger(() -> homeDebouncer.calculate(io.getSupplyCurrent().gte(Amps.of(10))));
 
-        setSetpoint(RotarySubsystemConstants.DEFAULT_SETPOINT).ignoringDisable(true).schedule();
     }
 
     /**
@@ -71,8 +81,10 @@ public class RotarySubsystem extends SubsystemBase {
     @Override
     public void periodic()
     {
-        LoggerHelper.recordCurrentCommand(RotarySubsystemConstants.NAME, this);
+        LoggerHelper.recordCurrentCommand(RotaryConstants.NAME, this);
         io.periodic();
+        robotstate.setRotaryPose(io.getPoseSupplier().get());
+
     }
 
     /**
@@ -89,8 +101,8 @@ public class RotarySubsystem extends SubsystemBase {
     public Command setSetpoint(Setpoint setpoint)
     {
         return this.runOnce(
-            () -> io.runPosition(setpoint.getSetpoint(), RotarySubsystemConstants.CRUISE_VELOCITY,
-                RotarySubsystemConstants.ACCELERATION, RotarySubsystemConstants.JERK,
+            () -> io.runPosition(setpoint.getSetpoint(), RotaryConstants.CRUISE_VELOCITY,
+                RotaryConstants.ACCELERATION, RotaryConstants.JERK,
                 PIDSlot.SLOT_0))
             .withName("Go To " + setpoint.toString() + " Setpoint");
     };
@@ -107,7 +119,7 @@ public class RotarySubsystem extends SubsystemBase {
      */
     public boolean nearGoal(Angle targetPosition)
     {
-        return io.nearGoal(targetPosition, RotarySubsystemConstants.TOLERANCE);
+        return io.nearGoal(targetPosition, RotaryConstants.TOLERANCE);
     }
 
     /**

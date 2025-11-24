@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.commands.DriveToPoseBase;
+import frc.lib.commands.SteppableCommandGroup;
 import frc.lib.commands.AlignToPoseBase.AlignMode;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
@@ -76,6 +77,8 @@ import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.subsystems.objectDetector.ObjectDetector;
+import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
@@ -119,10 +122,10 @@ public class RobotContainer {
     private final LoggedDashboardChooser<Boolean> conditionalChooser;
     public static Field2d autoPreviewField = new Field2d();
 
-    private final Optional<VisionSystemSim> visionSim;
+
 
     /**
-     * The container for the robot. Contains subsystems, OI devices, and commands.
+     * The container for the robot. Contains subsystems, IO devices, and commands.
      */
     public RobotContainer()
     {
@@ -276,7 +279,7 @@ public class RobotContainer {
                     () -> new Rotation2d()));
 
         // Switch to X pattern when X button is pressed
-        controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+        // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
         // Reset gyro to 0° when B button is pressed
         controller
@@ -289,10 +292,10 @@ public class RobotContainer {
                     .ignoringDisable(true));
 
         // Pathfind to Pose when the Y button is pressed
-        controller.y().onTrue(
-            DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(1, 4, Rotation2d.kZero),
-                PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, MetersPerSecond.of(0.0),
-                PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
+        // controller.y().onTrue(
+        // DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(1, 4, Rotation2d.kZero),
+        // PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, MetersPerSecond.of(0.0),
+        // PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
 
         // On-the-fly path with waypoints while the Right Bumper is held
         controller.rightBumper().whileTrue(
@@ -306,7 +309,7 @@ public class RobotContainer {
         SmartDashboard.putData("Linear: Stow", linear.setGoal(Linear.Setpoint.STOW));
         SmartDashboard.putData("Linear: Raised", linear.setGoal(Linear.Setpoint.RAISED));
         SmartDashboard.putData("Linear: Home", linear.homeCommand());
-        SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(RotarySubsystem.Setpoint.STOW));
+        SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(Rotary.Setpoint.STOW));
         SmartDashboard.putData("Rotary: Raised",
             rotary.setSetpoint(RotarySubsystem.Setpoint.RAISED));
         SmartDashboard.putData("REV Rotary: Stow",
@@ -335,13 +338,22 @@ public class RobotContainer {
             new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
                 .withTolerance(Inches.of(3), Degrees.of(5)));
 
+        Command steppableCommand = new SteppableCommandGroup(
+            controller.x(),
+            controller.y(),
+            Commands.runOnce(() -> System.out.println("Step 1")),
+            Commands.runOnce(() -> System.out.println("Step 2")),
+            Commands.runOnce(() -> System.out.println("Step 3")));
+
+        SmartDashboard.putData("Steppable Command", steppableCommand);
+
         // controller.x()
         // .whileTrue(new DriveToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(90)))
         // .withTolerance(Inches.of(3), Degrees.of(5)));
 
-        controller.x()
-            .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
-                AlignMode.STRAFE, () -> controller.getRightX()));
+        // controller.x()
+        // .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
+        // AlignMode.STRAFE, () -> controller.getRightX()));
     }
 
     /**

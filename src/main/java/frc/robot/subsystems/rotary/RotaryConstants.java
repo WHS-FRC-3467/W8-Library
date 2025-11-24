@@ -33,14 +33,15 @@ import frc.lib.io.motor.MotorIOTalonFX;
 import frc.lib.io.motor.MotorIOTalonFX.TalonFXFollower;
 import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.rotary.*;
+import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryAxis;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
+import frc.robot.Constants;
 import frc.robot.Ports;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 
-/** Add your docs here. */
-public class RotarySubsystemConstants {
+public class RotaryConstants {
     public static String NAME = "Rotary";
 
     public static final Angle TOLERANCE = Degrees.of(2.0);
@@ -56,13 +57,19 @@ public class RotarySubsystemConstants {
 
     public static final Translation3d OFFSET = Translation3d.kZero;
 
-    public static final Angle MIN_ANGLE = Degrees.of(0.0);
+    public static final Angle MIN_ANGLE = Degrees.of(-130.0);
     public static final Angle MAX_ANGLE = Rotations.of(.5);
     public static final Angle STARTING_ANGLE = Rotations.of(0.0);
     public static final Distance ARM_LENGTH = Meters.of(1.0);
 
     public static final RotaryMechCharacteristics CONSTANTS =
-        new RotaryMechCharacteristics(OFFSET, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
+        new RotaryMechCharacteristics(
+            OFFSET,
+            ARM_LENGTH,
+            MIN_ANGLE,
+            MAX_ANGLE,
+            STARTING_ANGLE,
+            RotaryAxis.PITCH);
 
     public static final Mass ARM_MASS = Kilograms.of(.01);
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
@@ -71,7 +78,7 @@ public class RotarySubsystemConstants {
 
     private static final Angle ENCODER_OFFSET = Rotations.of(0.0);
 
-    public static final RotarySubsystem.Setpoint DEFAULT_SETPOINT = RotarySubsystem.Setpoint.STOW;
+    public static final Rotary.Setpoint DEFAULT_SETPOINT = Rotary.Setpoint.STOW;
 
     // Positional PID
     private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
