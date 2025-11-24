@@ -25,7 +25,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import frc.lib.util.Device;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
@@ -200,7 +199,8 @@ public class MotorIORev implements MotorIO {
         AngularAcceleration acceleration,
         Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
     {
-        controller.setReference(position.in(Rotation), getRevControlType(ControlType.POSITION),
+        controller.setReference(position.in(Rotation),
+            getRevControlType(ControlType.POSITION),
             getClosedLoopSlot(slot));
     }
 
