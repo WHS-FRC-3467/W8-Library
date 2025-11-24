@@ -112,10 +112,10 @@ public class RevRotaryConstants {
         config.encoder.velocityConversionFactor(1.0 / GEAR_RATIO / 60.0); // RPM to RPS
 
         // Add soft limits to match TalonFX behavior
-        config.softLimit.forwardSoftLimit(MAX_ANGLE.in(Rotations));
-        config.softLimit.forwardSoftLimitEnabled(false);
-        config.softLimit.reverseSoftLimit(MIN_ANGLE.in(Rotations));
-        config.softLimit.reverseSoftLimitEnabled(false);
+        // config.softLimit.forwardSoftLimit(MAX_ANGLE.in(Rotations));
+        // config.softLimit.forwardSoftLimitEnabled(false);
+        // config.softLimit.reverseSoftLimit(MIN_ANGLE.in(Rotations));
+        // config.softLimit.reverseSoftLimitEnabled(false);
 
         config.apply(SLOT0CONFIG);
 

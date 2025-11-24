@@ -25,7 +25,7 @@ public class RevRotary extends SubsystemBase {
     private Setpoint setpoint = Setpoint.STOW;
 
     private static final LoggedTunableNumber STOW_SETPOINT =
-        new LoggedTunableNumber("REV TEST", 0.0);
+        new LoggedTunableNumber("REV STOW", 0.0);
     private static final LoggedTunableNumber RAISED_SETPOINT =
         new LoggedTunableNumber("REV RAISED", 90);
 
