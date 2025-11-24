@@ -59,7 +59,7 @@ public class Rotary extends SubsystemBase {
      * 
      * @param io The RotaryMechanism IO layer (real hardware, simulation, or replay)
      */
-    public RotarySubsystem(RotaryMechanism io)
+    public Rotary(RotaryMechanism io)
     {
         this.io = io;
         this.robotstate = RobotState.getInstance();

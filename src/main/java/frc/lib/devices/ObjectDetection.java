@@ -6,9 +6,6 @@ package frc.lib.devices;
 
 import org.littletonrobotics.junction.Logger;
 import java.util.ArrayList;
-import frc.lib.io.objectdetection.ObjectDetectionIO;
-import frc.lib.io.objectdetection.ObjectDetectionIOInputsAutoLogged;
-import frc.lib.io.objectdetection.ObjectDetectionIO.TargetObservation;
 import java.util.Arrays;
 import java.lang.Math;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -16,6 +13,9 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import frc.lib.io.objectDetection.ObjectDetectionIO;
+import frc.lib.io.objectDetection.ObjectDetectionIO.TargetObservation;
+import frc.lib.io.objectDetection.ObjectDetectionIOInputsAutoLogged;
 
 /**
  * Device level implementation of an object detection camera. While the IO layer is responsible for
