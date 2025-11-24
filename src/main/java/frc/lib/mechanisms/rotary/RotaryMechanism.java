@@ -8,6 +8,8 @@ import frc.lib.io.motor.MotorIO.ControlType;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 import frc.lib.mechanisms.Mechanism;
 import static edu.wpi.first.units.Units.Degree;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Radian;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
@@ -83,7 +85,7 @@ public abstract class RotaryMechanism implements Mechanism {
 
         Logger.recordOutput(
             this.name + "/PositionDegrees",
-            inputs.position.in(Degree));
+            inputs.position.in(Degrees));
     }
 
     @Override
