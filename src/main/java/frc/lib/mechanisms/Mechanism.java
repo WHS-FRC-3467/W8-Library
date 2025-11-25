@@ -15,10 +15,8 @@
 
 package frc.lib.mechanisms;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
 import java.util.function.Supplier;
+import org.apache.commons.lang3.NotImplementedException;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
@@ -33,19 +31,25 @@ public interface Mechanism {
 
     /** Call this method periodically */
     public default void periodic()
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Sets the mechanism to coast mode.
      */
     public default void runCoast()
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Sets the mechanism to brake mode.
      */
     public default void runBrake()
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Runs the mechanism using direct voltage control.
@@ -53,7 +57,9 @@ public interface Mechanism {
      * @param voltage Desired voltage output.
      */
     public default void runVoltage(Voltage voltage)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Runs the mechanism with a specified current output.
@@ -61,7 +67,9 @@ public interface Mechanism {
      * @param current Desired torque-producing current.
      */
     public default void runCurrent(Current current)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Runs the mechanism using duty cycle (percentage of available voltage).
@@ -69,7 +77,9 @@ public interface Mechanism {
      * @param dutyCycle Fractional output between 0 and 1.
      */
     public default void runDutyCycle(double dutyCycle)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Runs the mechanism to a specific position.
@@ -83,7 +93,20 @@ public interface Mechanism {
     public default void runPosition(Angle position, AngularVelocity cruiseVelocity,
         AngularAcceleration acceleration,
         Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
+
+    /**
+     * Runs the mechanism to a specific position.
+     *
+     * @param position Target position.
+     * @param slot PID slot index.
+     */
+    public default void runPosition(Angle position, PIDSlot slot)
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Runs the mechanism at a target velocity.
@@ -94,7 +117,20 @@ public interface Mechanism {
      */
     public default void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
         PIDSlot slot)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
+
+    /**
+     * Runs the mechanism at a target velocity.
+     *
+     * @param velocity Desired velocity.
+     * @param slot PID slot index.
+     */
+    public default void runVelocity(AngularVelocity velocity, PIDSlot slot)
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Sets the position of the motor's internal encoder
@@ -102,11 +138,13 @@ public interface Mechanism {
      * @param position Desired position to set encoder to
      */
     public default void setEncoderPosition(Angle position)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     public default Current getSupplyCurrent()
     {
-        return Amps.of(0.0);
+        throw new NotImplementedException("This method has not been implemented");
     }
 
     /**
@@ -116,21 +154,23 @@ public interface Mechanism {
      */
     public default Angle getPosition()
     {
-        return Radians.of(0.0);
+        throw new NotImplementedException("This method has not been implemented");
     }
 
     public default Current getTorqueCurrent()
     {
-        return Amps.of(0);
+        throw new NotImplementedException("This method has not been implemented");
     }
 
     public default AngularVelocity getVelocity()
     {
-        return RadiansPerSecond.of(0.0);
+        throw new NotImplementedException("This method has not been implemented");
     }
 
     public default void close()
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Supplier for the Pose3d of the mechanism
@@ -139,6 +179,8 @@ public interface Mechanism {
      */
     public default Supplier<Pose3d> getPoseSupplier()
     {
-        return () -> Pose3d.kZero;
+        throw new NotImplementedException("This method has not been implemented");
     }
+
+
 }

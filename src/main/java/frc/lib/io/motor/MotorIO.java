@@ -21,6 +21,7 @@ import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.AngularAccelerationUnit;
@@ -97,7 +98,7 @@ public interface MotorIO {
      */
     public default String getName()
     {
-        return "";
+        throw new NotImplementedException("This method has not been implemented");
     }
 
     /**
@@ -107,19 +108,25 @@ public interface MotorIO {
      * @param inputs The structure to populate with updated sensor values.
      */
     public default void updateInputs(MotorInputs inputs)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Sets the motor to coast mode.
      */
     public default void runCoast()
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Sets the motor to brake mode.
      */
     public default void runBrake()
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Runs the motor using direct voltage control.
@@ -127,7 +134,9 @@ public interface MotorIO {
      * @param voltage Desired voltage output.
      */
     public default void runVoltage(Voltage voltage)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Runs the motor with a specified current output.
@@ -135,7 +144,9 @@ public interface MotorIO {
      * @param current Desired torque-producing current.
      */
     public default void runCurrent(Current current)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Runs the motor with a specified current output and duty cycle.
@@ -144,7 +155,9 @@ public interface MotorIO {
      * @param dutyCycle Desired dutycycle of current output, limiting top speed
      */
     public default void runCurrent(Current current, double dutyCycle)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Runs the motor using duty cycle (percentage of available voltage).
@@ -152,7 +165,9 @@ public interface MotorIO {
      * @param dutyCycle Fractional output between 0 and 1.
      */
     public default void runDutyCycle(double dutyCycle)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Runs the motor to a specific position.
@@ -166,7 +181,20 @@ public interface MotorIO {
     public default void runPosition(Angle position, AngularVelocity cruiseVelocity,
         AngularAcceleration acceleration,
         Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
+
+    /**
+     * Runs the motor to a specific position.
+     *
+     * @param position Target position.
+     * @param slot PID slot index.
+     */
+    public default void runPosition(Angle position, PIDSlot slot)
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Runs the motor at a target velocity.
@@ -177,7 +205,20 @@ public interface MotorIO {
      */
     public default void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
         PIDSlot slot)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
+
+    /**
+     * Runs the motor at a target velocity.
+     *
+     * @param velocity Desired velocity.
+     * @param slot PID slot index.
+     */
+    public default void runVelocity(AngularVelocity velocity, PIDSlot slot)
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 
     /**
      * Sets the position of the motor's internal encoder
@@ -185,5 +226,7 @@ public interface MotorIO {
      * @param position Desired position to set encoder to
      */
     public default void setEncoderPosition(Angle position)
-    {}
+    {
+        throw new NotImplementedException("This method has not been implemented");
+    }
 }

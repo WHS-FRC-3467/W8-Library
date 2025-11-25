@@ -90,6 +90,18 @@ public class RotaryMechanismReal extends RotaryMechanism {
     }
 
     @Override
+    public void runPosition(Angle position, PIDSlot slot)
+    {
+        io.runPosition(position, slot);
+    }
+
+    @Override
+    public void runVelocity(AngularVelocity velocity, PIDSlot slot)
+    {
+        io.runVelocity(velocity, slot);
+    }
+
+    @Override
     public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
         PIDSlot slot)
     {

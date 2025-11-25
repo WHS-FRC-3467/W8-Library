@@ -64,8 +64,6 @@ public class RevRotary extends SubsystemBase {
     {
         return this.runOnce(
             () -> io.runPosition(setpoint.getSetpoint(),
-                RevRotaryConstants.CRUISE_VELOCITY,
-                RevRotaryConstants.ACCELERATION, RevRotaryConstants.JERK,
                 PIDSlot.SLOT_0))
             .withName("Go To " + setpoint.toString() + " Setpoint");
     };

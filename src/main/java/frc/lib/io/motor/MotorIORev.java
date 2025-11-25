@@ -186,9 +186,7 @@ public class MotorIORev implements MotorIO {
     }
 
     @Override
-    public void runPosition(Angle position, AngularVelocity cruiseVelocity,
-        AngularAcceleration acceleration,
-        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
+    public void runPosition(Angle position, PIDSlot slot)
     {
         controller.setReference(position.in(Rotation),
             getRevControlType(ControlType.POSITION),
@@ -197,7 +195,7 @@ public class MotorIORev implements MotorIO {
 
 
     @Override
-    public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
+    public void runVelocity(AngularVelocity velocity,
         PIDSlot slot)
     {
         controller.setReference(velocity.in(RotationsPerSecond) * 60,

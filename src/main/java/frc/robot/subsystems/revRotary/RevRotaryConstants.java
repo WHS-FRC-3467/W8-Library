@@ -133,7 +133,7 @@ public class RevRotaryConstants {
      */
     public static RevRotary getReal()
     {
-        MotorIO io = new MotorIORev(NAME, Ports.RotarySubsystemMotorMain, true, getREVConfig());
+        MotorIO io = new MotorIORev(NAME, Ports.revRotarySubsytemMotorMain, true, getREVConfig());
 
         return new RevRotary(new RotaryMechanismReal(io, CONSTANTS, Optional.empty()));
     }

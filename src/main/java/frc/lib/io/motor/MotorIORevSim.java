@@ -8,24 +8,16 @@ import static edu.wpi.first.units.Units.Rotation;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.sim.SparkFlexSim;
-import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import edu.wpi.first.math.system.plant.DCMotor;
 import com.revrobotics.spark.SparkSim;
 
-import com.revrobotics.spark.config.SparkFlexConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Velocity;
 import frc.lib.util.Device;
 
 
@@ -98,9 +90,7 @@ public class MotorIORevSim extends MotorIORev implements MotorIOSim {
     }
 
     @Override
-    public void runPosition(Angle position, AngularVelocity cruiseVelocity,
-        AngularAcceleration acceleration,
-        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
+    public void runPosition(Angle position, PIDSlot slot)
     {
         simState.setPosition(position.in(Rotations));
 
@@ -108,7 +98,7 @@ public class MotorIORevSim extends MotorIORev implements MotorIOSim {
 
 
     @Override
-    public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
+    public void runVelocity(AngularVelocity velocity,
         PIDSlot slot)
     {
         simState.setVelocity(velocity.in(RotationsPerSecond) * 60);
