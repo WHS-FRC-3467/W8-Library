@@ -124,4 +124,9 @@ public class Rotary extends SubsystemBase {
     {
         return io.getVelocity();
     }
+
+    public void close()
+    {
+        io.close();
+    }
 }
