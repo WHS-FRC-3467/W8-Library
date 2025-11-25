@@ -141,7 +141,6 @@ public class MotorIORev implements MotorIO {
         inputs.appliedVoltage = Volts.of(motor.getAppliedOutput() * motor.getBusVoltage());
         inputs.supplyCurrent = Amps.of(motor.getOutputCurrent());
         inputs.temperature = Celsius.of(motor.getMotorTemperature());
-        inputs.positionError = null;
         inputs.positionError = Angle.ofBaseUnits(0, Rotation);
         inputs.velocityError = AngularVelocity.ofBaseUnits(0, RotationsPerSecond);
         inputs.goalPosition = Angle.ofBaseUnits(0, Rotation);
