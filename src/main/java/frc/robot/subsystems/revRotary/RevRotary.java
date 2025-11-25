@@ -22,7 +22,6 @@ public class RevRotary extends SubsystemBase {
 
     private final RotaryMechanism io;
     private final RobotState robotstate;
-    private Setpoint setpoint = Setpoint.STOW;
 
     private static final LoggedTunableNumber STOW_SETPOINT =
         new LoggedTunableNumber("REV STOW", 0.0);
