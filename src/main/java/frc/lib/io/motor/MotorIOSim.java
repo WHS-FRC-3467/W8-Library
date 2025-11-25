@@ -102,6 +102,7 @@ public interface MotorIOSim extends MotorIO {
      * <p>
      * Called when the simulation is shutting down to properly release any resources.
      */
+    @Override
     public default void close()
     {}
 }
