@@ -165,5 +165,10 @@ public class RotaryTest implements AutoCloseable {
 
     @Override
     public void close()
-    {}
+    {
+        if (rotary != null) {
+            rotary.close();
+            rotary = null;
+        }
+    }
 }
