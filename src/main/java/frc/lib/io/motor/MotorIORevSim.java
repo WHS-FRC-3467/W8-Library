@@ -105,6 +105,7 @@ public class MotorIORevSim extends MotorIORev implements MotorIOSim {
         return 1;
     }
 
+    @Override
     public double getSensorToMechanismRatio()
     {
         return 1;
