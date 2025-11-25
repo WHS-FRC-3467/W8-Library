@@ -83,21 +83,20 @@ public class RevRotaryConstants {
         .pid(30.0, 0, 5.0, ClosedLoopSlot.kSlot0); // Added D gain to match TalonFX config
 
     /**
-     * Creates and returns the TalonFX motor controller configuration for the rotary mechanism.
+     * Creates and returns the SparkFlex/SparkMax motor controller configuration for the rotary mechanism.
      * 
      * <p>
      * This configuration includes:
      * <ul>
-     * <li>Current limits to prevent motor damage and brownouts</li>
-     * <li>Voltage limits for power output</li>
-     * <li>Brake mode to hold position when not moving</li>
-     * <li>Software limit switches to prevent mechanism damage</li>
-     * <li>Gear ratios for proper position/velocity feedback</li>
-     * <li>Remote CANcoder feedback for absolute positioning</li>
-     * <li>PID gains for control</li>
+     * <li>Voltage compensation for consistent power output</li>
+     * <li>Idle (brake) mode to hold position when not moving</li>
+     * <li>Motor inversion setting</li>
+     * <li>Encoder position and velocity conversion factors for proper feedback scaling</li>
+     * <li>PID gains applied to the selected closed-loop slot</li>
+     * <!-- Add other REV-specific features as needed -->
      * </ul>
      * 
-     * @return A configured TalonFXConfiguration object ready to apply to a motor controller
+     * @return A configured {@link SparkBaseConfig} object ready to apply to a REV Robotics SparkFlex or SparkMax motor controller
      */
     public static SparkBaseConfig getREVConfig()
     {
