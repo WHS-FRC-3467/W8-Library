@@ -14,14 +14,12 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.rotary.RotaryMechanism;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggerHelper;
-import frc.robot.RobotState;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 public class RevRotary extends SubsystemBase {
 
     private final RotaryMechanism io;
-    private final RobotState robotstate;
 
     private static final LoggedTunableNumber STOW_SETPOINT =
         new LoggedTunableNumber("REV STOW", 0.0);
@@ -46,7 +44,6 @@ public class RevRotary extends SubsystemBase {
     public RevRotary(RotaryMechanism io)
     {
         this.io = io;
-        this.robotstate = RobotState.getInstance();
 
         setSetpoint(RevRotaryConstants.DEFAULT_SETPOINT).ignoringDisable(true).schedule();
     }
