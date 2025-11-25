@@ -45,7 +45,7 @@ import frc.lib.util.Device;
  */
 public class MotorIORevSim extends MotorIORev implements MotorIOSim {
 
-    public record RevFollowerFollower(int id, boolean opposesLeader) {
+    public record RevFollower(int id, boolean opposesLeader) {
     }
 
     public SparkBase motor;
@@ -70,7 +70,7 @@ public class MotorIORevSim extends MotorIORev implements MotorIOSim {
         boolean isFlex,
         DCMotor gearBox,
         SparkBaseConfig config,
-        RevFollowerFollower... followerData)
+        RevFollower... followerData)
     {
         super(name, id, isFlex, config);
 
