@@ -329,7 +329,7 @@ public class RobotContainer {
      * Helper method for unit testing.
      * 
      * If we have any REV subsystems, close their resources here. IF we don't do this then we will
-     * get duplicate CAN ID errors when running multiple tests.ß
+     * get duplicate CAN ID errors when running multiple tests.
      */
     public void closeREVSubsystems()
     {
