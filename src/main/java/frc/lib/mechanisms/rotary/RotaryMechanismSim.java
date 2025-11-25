@@ -179,6 +179,8 @@ public class RotaryMechanismSim extends RotaryMechanism {
     @Override
     public void close()
     {
-        io.close();
+        if (io != null) {
+            io.close();
+        }
     }
 }

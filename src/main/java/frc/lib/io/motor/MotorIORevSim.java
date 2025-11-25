@@ -139,7 +139,7 @@ public class MotorIORevSim extends MotorIORev implements MotorIOSim {
     @Override
     public void close()
     {
-        super.motor.close();
+        super.close();
     }
 
 }

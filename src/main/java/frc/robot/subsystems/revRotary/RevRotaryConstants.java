@@ -152,7 +152,7 @@ public class RevRotaryConstants {
     {
         MotorIOSim io = new MotorIORevSim(
             NAME,
-            Ports.RotarySubsystemMotorMain,
+            Ports.revRotarySubsytemMotorMain,
             true,
             DCMOTOR,
             getREVConfig());

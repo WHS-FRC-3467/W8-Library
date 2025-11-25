@@ -229,4 +229,13 @@ public interface MotorIO {
     {
         throw new NotImplementedException("This method has not been implemented");
     }
+
+    /**
+     * Closes and cleans up motor controller resources. Called when the motor is no longer needed to
+     * properly release hardware.
+     */
+    public default void close()
+    {
+        // Default implementation does nothing for interfaces that don't need cleanup
+    }
 }

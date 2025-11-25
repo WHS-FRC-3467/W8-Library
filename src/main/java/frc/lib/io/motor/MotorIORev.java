@@ -215,9 +215,18 @@ public class MotorIORev implements MotorIO {
         return (motor instanceof SparkFlex) ? new SparkFlexConfig() : new SparkMaxConfig();
     }
 
-    protected void close()
+    @Override
+    public void close()
     {
-        this.motor.close();
+        if (this.motor != null) {
+            // Clear references to help with cleanup
+            this.controller = null;
+            this.encoder = null;
+
+            // Close the motor (this should release the CAN ID)
+            this.motor.close();
+            this.motor = null;
+        }
     }
 
     protected SparkFlex getMotor()
