@@ -7,11 +7,10 @@ import static edu.wpi.first.units.Units.Celsius;
 import static edu.wpi.first.units.Units.Rotation;
 import static edu.wpi.first.units.Units.Volts;
 
-import com.revrobotics.sim.SparkFlexSim;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkClosedLoopController;
-import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import edu.wpi.first.math.system.plant.DCMotor;
 import com.revrobotics.spark.SparkSim;
@@ -49,7 +48,7 @@ public class MotorIORevSim extends MotorIORev implements MotorIOSim {
     public record RevFollowerFollower(int id, boolean opposesLeader) {
     }
 
-    public SparkFlex motor;
+    public SparkBase motor;
     public SparkClosedLoopController controller;
     private SparkSim simState;
 
@@ -77,12 +76,7 @@ public class MotorIORevSim extends MotorIORev implements MotorIOSim {
 
         motor = this.getMotor();
 
-        if (isFlex) {
-            simState = new SparkFlexSim(motor, gearBox);
-        } else {
-            // motor = new SparkMax(id, MotorType.kBrushless);
-        }
-
+        simState = new SparkSim(motor, gearBox);
 
         motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 

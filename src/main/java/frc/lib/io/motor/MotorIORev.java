@@ -9,28 +9,27 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.EnumMap;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import frc.lib.util.Device;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 public class MotorIORev implements MotorIO {
 
-    public SparkFlex motor;
+    public SparkBase motor;
     public SparkClosedLoopController controller;
     private RelativeEncoder encoder;
 
@@ -118,7 +117,7 @@ public class MotorIORev implements MotorIO {
         if (isFlex) {
             motor = new SparkFlex(id.id(), MotorType.kBrushless);
         } else {
-            // motor = new SparkMax(id, MotorType.kBrushless);
+            motor = new SparkMax(id.id(), MotorType.kBrushless);
         }
 
         controller = motor.getClosedLoopController();
@@ -229,7 +228,7 @@ public class MotorIORev implements MotorIO {
         }
     }
 
-    protected SparkFlex getMotor()
+    protected SparkBase getMotor()
     {
         return this.motor;
     }
