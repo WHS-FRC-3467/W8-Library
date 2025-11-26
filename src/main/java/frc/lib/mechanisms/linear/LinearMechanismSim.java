@@ -69,7 +69,7 @@ public class LinearMechanismSim extends LinearMechanism {
         // Note: ElevatorSim assumes vertical orientation for gravity simulation.
         // The visualization and 3D pose will correctly reflect any orientation angle,
         // but physics simulation is most accurate when useGravity=true and orientation
-        // is vertical (pitch = 90°), or when useGravity=false for horizontal mechanisms.
+        // is vertical (pitch = -90° for upward, 90° for downward), or when useGravity=false for horizontal mechanisms.
         sim = new ElevatorSim(
             dcMotor,
             io.getRotorToSensorRatio() * io.getSensorToMechanismRatio(),
@@ -89,7 +89,7 @@ public class LinearMechanismSim extends LinearMechanism {
         Time currentTime = Seconds.of(Timer.getTimestamp());
         double deltaTime = currentTime.minus(lastTime).in(Seconds);
 
-        // Note: ElevatorSim internally simulates gravity for vertical (pitch = 90°) mechanisms.
+        // Note: ElevatorSim internally simulates gravity for vertical mechanisms (pitch = -90° for upward, 90° for downward), matching the convention in LinearMechanism.java and LinearConstants.java.
         // For non-vertical mechanisms, the gravity simulation is an approximation since
         // ElevatorSim doesn't support dynamic gravity angle changes.
         // The visualization and 3D pose correctly reflect the orientation, but physics
