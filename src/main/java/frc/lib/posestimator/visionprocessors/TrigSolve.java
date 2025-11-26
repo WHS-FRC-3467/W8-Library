@@ -101,6 +101,6 @@ public class TrigSolve implements VisionProcessor {
 
         return solveTrigPosition(camera, wantedTarget, heading)
             .map(p -> new PoseRecord(new Pose3d(p), List.of(followedAprilTag),
-                wantedTarget.bestCameraToTarget.getTranslation().getNorm()));
+                wantedTarget.getBestCameraToTarget().getTranslation().getNorm()));
     }
 }
