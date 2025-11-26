@@ -136,14 +136,14 @@ public class VisionConstants {
     {
         if (visionSim.isEmpty()) {
             visionSim = Optional.of(new VisionSystemSim("main"));
-            visionSim.get().addAprilTags(FieldConstants.aprilTagLayout);
+            visionSim.get().addAprilTags(FieldConstants.APRILTAG_LAYOUT);
         }
 
         return new VisionIOPhotonVisionSim(
             FRONT_LEFT,
             visionSim.get(),
             () -> RobotState.getInstance().getOdometryPose(),
-            FieldConstants.aprilTagLayout);
+            FieldConstants.APRILTAG_LAYOUT);
     }
 
     private static VisionIOPhotonVision getFrontRightIOReal()
@@ -156,14 +156,14 @@ public class VisionConstants {
     {
         if (visionSim.isEmpty()) {
             visionSim = Optional.of(new VisionSystemSim("main"));
-            visionSim.get().addAprilTags(FieldConstants.aprilTagLayout);
+            visionSim.get().addAprilTags(FieldConstants.APRILTAG_LAYOUT);
         }
 
         return new VisionIOPhotonVisionSim(
             FRONT_RIGHT,
             visionSim.get(),
             () -> RobotState.getInstance().getOdometryPose(),
-            FieldConstants.aprilTagLayout);
+            FieldConstants.APRILTAG_LAYOUT);
     }
 
     public static void create()

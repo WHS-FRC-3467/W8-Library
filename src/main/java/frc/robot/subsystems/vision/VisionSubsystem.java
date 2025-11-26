@@ -39,8 +39,8 @@ public class VisionSubsystem extends SubsystemBase {
     public static final double ANGULAR_STDDEV_BASELINE = 0.4;
 
     public static final double MAX_Z_METERS = 0.75;
-    public static final double FIELD_WIDTH = FieldConstants.FIELDWIDTH.in(Meters);
-    public static final double FIELD_LENGTH = FieldConstants.FIELDLENGTH.in(Meters);
+    public static final double FIELD_WIDTH = FieldConstants.FIELD_WIDTH.in(Meters);
+    public static final double FIELD_LENGTH = FieldConstants.FIELD_LENGTH.in(Meters);
 
     public static boolean isValid(PoseRecord poseRecord)
     {
@@ -56,11 +56,11 @@ public class VisionSubsystem extends SubsystemBase {
     private final AprilTagCamera[] cameras;
 
     private final LowestAmbiguity fallbackVisionProcessor =
-        new LowestAmbiguity(FieldConstants.aprilTagLayout);
+        new LowestAmbiguity(FieldConstants.APRILTAG_LAYOUT);
     private final MultiTagOnCoproc visionProcessor =
         new MultiTagOnCoproc(
             Optional.of(fallbackVisionProcessor),
-            FieldConstants.aprilTagLayout);
+            FieldConstants.APRILTAG_LAYOUT);
 
 
     public VisionSubsystem(AprilTagCamera... cameras)

@@ -19,17 +19,17 @@ import edu.wpi.first.units.measure.Distance;
  * have a blue alliance origin.
  */
 public class FieldConstants {
-    public static final AprilTagFieldLayout aprilTagLayout =
+    public static final AprilTagFieldLayout APRILTAG_LAYOUT =
         AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
-    public static final Distance FIELDLENGTH = Meters.of(aprilTagLayout.getFieldLength());
-    public static final Distance FIELDWIDTH = Meters.of(aprilTagLayout.getFieldWidth());
+    public static final Distance FIELD_LENGTH = Meters.of(APRILTAG_LAYOUT.getFieldLength());
+    public static final Distance FIELD_WIDTH = Meters.of(APRILTAG_LAYOUT.getFieldWidth());
 
-    public static final Distance STARTINGLINEX = Inches.of(299.438);
+    public static final Distance STARTING_LINE_X = Inches.of(299.438);
 
-    public static final Translation2d FIELDCENTER =
-        new Translation2d(FIELDLENGTH.in(Meters) / 2, FIELDWIDTH.in(Meters) / 2);
+    public static final Translation2d FIELD_CENTER =
+        new Translation2d(FIELD_LENGTH.in(Meters) / 2, FIELD_WIDTH.in(Meters) / 2);
 
-    public static final Distance ALGAEDIAMETER = Meters.of(.41);
+    public static final Distance ALGAE_DIAMETER = Meters.of(.41);
 
 }

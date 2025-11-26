@@ -40,7 +40,7 @@ public class AlignTo2DTarget extends Command {
             rotationController.enableContinuousInput(-Math.PI, Math.PI);
             strafeController.setSetpoint(0);
             rotationController.setSetpoint(
-                FieldConstants.aprilTagLayout
+                FieldConstants.APRILTAG_LAYOUT
                     .getTagPose(robotState.getClosestTagObservation().get().fiducialId)
                     .get().getRotation().getZ() + Math.PI);
 
