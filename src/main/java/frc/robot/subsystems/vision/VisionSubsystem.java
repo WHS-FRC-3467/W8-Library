@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -65,6 +66,40 @@ public class VisionSubsystem extends SubsystemBase {
     public static final double FIELD_LENGTH = FieldConstants.FIELD_LENGTH.in(Meters);
 
     /**
+     * Quickly checks whether a {@link PhotonPipelineResult} is likely to be useful before full
+     * processing.
+     * <p>
+     * Rejects results with no targets, ambiguous poses above 0.2, or targets farther than 10
+     * meters.
+     * </p>
+     *
+     * @param result the pipeline result to pre-filter
+     * @return {@code true} if the result passes preliminary checks, {@code false} otherwise
+     */
+    public static boolean preFilter(PhotonPipelineResult result)
+    {
+        if (!result.hasTargets()) {
+            return false;
+        }
+
+        if (result.getMultiTagResult().isPresent()) {
+            return true;
+        }
+
+        PhotonTrackedTarget bestTarget = result.getBestTarget();
+
+        if (bestTarget.getBestCameraToTarget().getTranslation().getNorm() > 10.0) {
+            return false;
+        }
+
+        if (bestTarget.getPoseAmbiguity() > 0.2) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Checks whether a given {@link VisionPoseRecord} is valid on the field.
      * <p>
      * A pose is considered valid if it is within field boundaries and below {@link #MAX_Z_METERS}.
@@ -73,7 +108,7 @@ public class VisionSubsystem extends SubsystemBase {
      * @param poseRecord the pose record to validate
      * @return {@code true} if the pose is valid, {@code false} otherwise
      */
-    public static boolean isValid(VisionPoseRecord poseRecord)
+    public static boolean postFilter(VisionPoseRecord poseRecord)
     {
         Pose3d pose = poseRecord.pose();
         double x = pose.getX();
@@ -115,6 +150,10 @@ public class VisionSubsystem extends SubsystemBase {
      */
     private boolean processPipelineResult(PhotonPipelineResult result, AprilTagCamera camera)
     {
+        if (!preFilter(result)) {
+            return false;
+        }
+
         Rotation2d heading = robotState.getPoseAtTime(result.getTimestampSeconds())
             .map(Pose2d::getRotation).orElse(null);
         if (heading == null) {
@@ -127,7 +166,7 @@ public class VisionSubsystem extends SubsystemBase {
             heading)
             .orElse(null);
 
-        if (poseRecord == null || !isValid(poseRecord)) {
+        if (poseRecord == null || !postFilter(poseRecord)) {
             return false;
         }
 
