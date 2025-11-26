@@ -13,9 +13,9 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import frc.lib.io.objectDetection.ObjectDetectionIO;
-import frc.lib.io.objectDetection.ObjectDetectionIO.TargetObservation;
 import frc.lib.io.objectDetection.ObjectDetectionIOInputsAutoLogged;
+import frc.lib.io.objectdetection.ObjectDetectionIO;
+import frc.lib.io.objectdetection.ObjectDetectionIO.TargetObservation;
 
 /**
  * Device level implementation of an object detection camera. While the IO layer is responsible for

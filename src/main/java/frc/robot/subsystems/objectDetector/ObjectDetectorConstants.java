@@ -13,9 +13,9 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.Timer;
-import frc.lib.io.objectDetection.ObjectDetectionIO;
-import frc.lib.io.objectDetection.ObjectDetectionIOPhotonVision;
-import frc.lib.io.objectDetection.ObjectDetectionIOSim;
+import frc.lib.io.objectdetection.ObjectDetectionIO;
+import frc.lib.io.objectdetection.ObjectDetectionIOPhotonVision;
+import frc.lib.io.objectdetection.ObjectDetectionIOSim;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
 
