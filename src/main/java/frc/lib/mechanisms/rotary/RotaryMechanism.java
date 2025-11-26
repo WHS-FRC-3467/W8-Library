@@ -7,10 +7,8 @@ package frc.lib.mechanisms.rotary;
 import frc.lib.io.motor.MotorIO.ControlType;
 import frc.lib.io.motor.MotorInputsAutoLogged;
 import frc.lib.mechanisms.Mechanism;
-import static edu.wpi.first.units.Units.Degrees;
 import java.util.Optional;
 import java.util.function.Supplier;
-import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -81,9 +79,6 @@ public abstract class RotaryMechanism implements Mechanism {
         visualizer.setTrajectoryAngle(getTrajectoryAngle());
         visualizer.setGoalAngle(getGoalAngle());
 
-        Logger.recordOutput(
-            this.name + "/PositionDegrees",
-            inputs.position.in(Degrees));
     }
 
     @Override
