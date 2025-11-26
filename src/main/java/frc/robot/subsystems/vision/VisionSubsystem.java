@@ -117,7 +117,7 @@ public class VisionSubsystem extends SubsystemBase {
 
             PhotonPipelineResult[] results = camera.getUnreadResults().orElse(null);
             if (results == null) {
-                return;
+                continue;
             }
 
             ArrayList<PhotonPipelineResult> acceptedResults = new ArrayList<>();
