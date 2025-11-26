@@ -25,6 +25,8 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.numbers.N8;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIO.VisionIOInputs;
 import lombok.Getter;
@@ -43,6 +45,11 @@ public class AprilTagCamera {
     private final VisionIO io;
     private final VisionIOInputs inputs;
 
+    private final Alert mismatchedIntrinsicsAlert =
+        new Alert(
+            "Supplied intrinsics in code do not match intrinsics from replayed inputs! Defaulting to inputs!",
+            AlertType.kWarning);
+
     @Getter
     private final CameraProperties properties;
 
@@ -55,12 +62,21 @@ public class AprilTagCamera {
 
         // Get camera intrinsics from inputs to potentially pull from log if replaying
         Logger.processInputs(properties.name, inputs);
+
+        Matrix<N3, N3> cameraMatrix = MatBuilder.fill(Nat.N3(), Nat.N3(), inputs.cameraMatrix);
+        Matrix<N8, N1> distCoeffs = MatBuilder.fill(Nat.N8(), Nat.N1(), inputs.distCoeffs);
+
+        if (!cameraMatrix.equals(properties.cameraMatrix)
+            || !distCoeffs.equals(properties.distCoeffs)) {
+            mismatchedIntrinsicsAlert.set(true);
+        }
+
         this.properties =
             new CameraProperties(
                 properties.name,
                 properties.robotToCamera,
-                MatBuilder.fill(Nat.N3(), Nat.N3(), inputs.cameraMatrix),
-                MatBuilder.fill(Nat.N8(), Nat.N1(), inputs.distCoeffs),
+                cameraMatrix,
+                distCoeffs,
                 properties.resolutionWidth,
                 properties.resolutionHeight,
                 properties.stdDevFactor);
