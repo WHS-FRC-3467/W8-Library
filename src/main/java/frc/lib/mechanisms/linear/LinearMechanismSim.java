@@ -39,7 +39,8 @@ import frc.lib.io.motor.MotorIOSim;
 
 /**
  * A simulated implementation of the LinearMechanism interface that uses ElevatorSim to simulate the
- * behavior of a linear mechanism.
+ * behavior of a linear mechanism at any orientation. The orientation's pitch component (Y-axis
+ * rotation) determines the angle from horizontal, affecting gravity simulation.
  */
 public class LinearMechanismSim extends LinearMechanism {
 
@@ -48,14 +49,29 @@ public class LinearMechanismSim extends LinearMechanism {
 
     private Time lastTime = Seconds.zero();
 
-    public LinearMechanismSim(MotorIOSim io, DCMotor characteristics, Mass mass,
+    /**
+     * Creates a new LinearMechanismSim.
+     *
+     * @param io The motor IO simulation
+     * @param dcMotor The DC motor characteristics
+     * @param mass The mass of the carriage
+     * @param constraints The mechanism characteristics including orientation
+     * @param useGravity Whether to simulate gravity effects (applies when orientation is vertical)
+     */
+    public LinearMechanismSim(MotorIOSim io, DCMotor dcMotor, Mass mass,
         LinearMechCharacteristics constraints, Boolean useGravity)
     {
         super(io.getName(), constraints);
 
         this.io = io;
+
+        // ElevatorSim is used as the underlying physics simulation.
+        // Note: ElevatorSim assumes vertical orientation for gravity simulation.
+        // The visualization and 3D pose will correctly reflect any orientation angle,
+        // but physics simulation is most accurate when useGravity=true and orientation
+        // is vertical (pitch = -90° for upward, 90° for downward), or when useGravity=false for horizontal mechanisms.
         sim = new ElevatorSim(
-            characteristics,
+            dcMotor,
             io.getRotorToSensorRatio() * io.getSensorToMechanismRatio(),
             mass.in(Kilograms),
             constraints.converter().getDrumRadius().in(Meters),
@@ -73,6 +89,12 @@ public class LinearMechanismSim extends LinearMechanism {
         Time currentTime = Seconds.of(Timer.getTimestamp());
         double deltaTime = currentTime.minus(lastTime).in(Seconds);
 
+        // Note: ElevatorSim internally simulates gravity for vertical mechanisms (pitch = -90° for upward, 90° for downward), matching the convention in LinearMechanism.java and LinearConstants.java.
+        // For non-vertical mechanisms, the gravity simulation is an approximation since
+        // ElevatorSim doesn't support dynamic gravity angle changes.
+        // The visualization and 3D pose correctly reflect the orientation, but physics
+        // simulation uses the orientation set at construction time.
+        // For accurate physics at arbitrary angles, consider using a custom LinearSystemSim.
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
         RoboRioSim.setVInVoltage(
