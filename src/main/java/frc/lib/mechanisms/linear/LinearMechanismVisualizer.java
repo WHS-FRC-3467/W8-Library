@@ -23,6 +23,17 @@ import frc.lib.mechanisms.linear.LinearMechanism.LinearMechCharacteristics;
 /**
  * A visualizer for linear mechanisms that displays the current distance, trajectory, and goal
  * distance using a LoggedMechanism2d. Supports mechanisms at any orientation angle.
+ *
+ * <p>The orientation uses WPILib's Rotation3d convention where:
+ * <ul>
+ *   <li>The mechanism extends along the positive X-axis in its local frame</li>
+ *   <li>Pitch (Y-axis rotation) determines the angle from horizontal for 2D visualization</li>
+ *   <li>A pitch of 90° (π/2 radians) represents a vertical mechanism</li>
+ *   <li>A pitch of 0° represents a horizontal mechanism extending forward</li>
+ * </ul>
+ *
+ * <p>For 3D pose calculation, the distance is projected along the orientation direction
+ * by rotating a vector [distance, 0, 0] by the orientation Rotation3d.
  */
 public class LinearMechanismVisualizer {
 

@@ -20,7 +20,6 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 import org.littletonrobotics.junction.Logger;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
@@ -47,8 +46,6 @@ public class LinearMechanismSim extends LinearMechanism {
 
     private final MotorIOSim io;
     private final ElevatorSim sim;
-    private final boolean useGravity;
-    private final LinearMechCharacteristics characteristics;
 
     private Time lastTime = Seconds.zero();
 
@@ -59,7 +56,7 @@ public class LinearMechanismSim extends LinearMechanism {
      * @param dcMotor The DC motor characteristics
      * @param mass The mass of the carriage
      * @param constraints The mechanism characteristics including orientation
-     * @param useGravity Whether to simulate gravity effects (scaled by orientation angle)
+     * @param useGravity Whether to simulate gravity effects (applies when orientation is vertical)
      */
     public LinearMechanismSim(MotorIOSim io, DCMotor dcMotor, Mass mass,
         LinearMechCharacteristics constraints, Boolean useGravity)
@@ -67,13 +64,12 @@ public class LinearMechanismSim extends LinearMechanism {
         super(io.getName(), constraints);
 
         this.io = io;
-        this.useGravity = useGravity;
-        this.characteristics = constraints;
 
         // ElevatorSim is used as the underlying physics simulation.
-        // For non-vertical mechanisms, the gravity effect is scaled based on the pitch angle.
-        // We enable gravity in ElevatorSim and then scale the input voltage to compensate
-        // for the actual orientation angle.
+        // Note: ElevatorSim assumes vertical orientation for gravity simulation.
+        // The visualization and 3D pose will correctly reflect any orientation angle,
+        // but physics simulation is most accurate when useGravity=true and orientation
+        // is vertical (pitch = 90°), or when useGravity=false for horizontal mechanisms.
         sim = new ElevatorSim(
             dcMotor,
             io.getRotorToSensorRatio() * io.getSensorToMechanismRatio(),
@@ -85,22 +81,6 @@ public class LinearMechanismSim extends LinearMechanism {
             constraints.startingDistance().in(Meters));
     }
 
-    /**
-     * Gets the gravity scale factor based on the current orientation. A vertical mechanism (pitch =
-     * 90°) has a scale of 1.0, horizontal (pitch = 0°) has a scale of 0.0.
-     *
-     * @return The gravity scale factor (0.0 to 1.0)
-     */
-    private double getGravityScaleFactor()
-    {
-        if (!useGravity) {
-            return 0.0;
-        }
-        // Get the pitch angle (rotation around Y-axis) which determines the angle from horizontal
-        // sin(pitch) gives us the vertical component: 0 at horizontal, 1 at vertical
-        return Math.sin(getOrientation().getY());
-    }
-
     @Override
     public void periodic()
     {
@@ -109,18 +89,13 @@ public class LinearMechanismSim extends LinearMechanism {
         Time currentTime = Seconds.of(Timer.getTimestamp());
         double deltaTime = currentTime.minus(lastTime).in(Seconds);
 
-        // Apply gravity scaling based on orientation
-        // ElevatorSim assumes full vertical gravity, so we scale the voltage
-        // to simulate the reduced gravity effect at non-vertical angles
-        double appliedVoltage = inputs.appliedVoltage.in(Volts);
-        double gravityScale = getGravityScaleFactor();
-
-        // The ElevatorSim's gravity is calculated for vertical (scale = 1.0)
-        // For angles less than vertical, we need to compensate by adding voltage
-        // that offsets the extra gravity the sim applies
-        // This is a simplification - for more accurate physics, a custom linear system would be
-        // needed
-        sim.setInputVoltage(appliedVoltage);
+        // Note: ElevatorSim internally simulates gravity for vertical (pitch = 90°) mechanisms.
+        // For non-vertical mechanisms, the gravity simulation is an approximation since
+        // ElevatorSim doesn't support dynamic gravity angle changes.
+        // The visualization and 3D pose correctly reflect the orientation, but physics
+        // simulation uses the orientation set at construction time.
+        // For accurate physics at arbitrary angles, consider using a custom LinearSystemSim.
+        sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
         RoboRioSim.setVInVoltage(
             BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
@@ -134,13 +109,6 @@ public class LinearMechanismSim extends LinearMechanism {
 
         io.updateInputs(inputs);
         Logger.processInputs(io.getName(), inputs);
-    }
-
-    @Override
-    public void setOrientation(Rotation3d orientation)
-    {
-        super.setOrientation(orientation);
-        // Orientation changes are handled in getGravityScaleFactor() which is called each periodic
     }
 
     @Override

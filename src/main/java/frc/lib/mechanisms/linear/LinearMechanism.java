@@ -33,9 +33,14 @@ public abstract class LinearMechanism implements Mechanism {
      * @param maxDistance Maximum extension distance
      * @param startingDistance Starting extension distance
      * @param converter Converts between rotational and linear units
-     * @param orientation The 3D orientation of the linear mechanism's axis of motion. The pitch
-     *        component (rotation around Y-axis) determines the angle from horizontal for gravity
-     *        simulation. A pitch of 90 degrees represents a vertical mechanism (like an elevator).
+     * @param orientation The 3D orientation of the linear mechanism's axis of motion. The mechanism
+     *        extends along the positive X-axis in its local frame, then rotated by this orientation.
+     *        The pitch component (Y-axis rotation) determines the angle from horizontal:
+     *        <ul>
+     *          <li>Pitch of 90° (π/2 radians) = vertical mechanism (like an elevator)</li>
+     *          <li>Pitch of 0° = horizontal mechanism extending forward</li>
+     *          <li>Pitch of -90° = vertical mechanism extending downward</li>
+     *        </ul>
      */
     public record LinearMechCharacteristics(
         Translation3d offset,
