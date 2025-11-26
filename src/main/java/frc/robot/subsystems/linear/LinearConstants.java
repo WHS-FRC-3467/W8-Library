@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems.linear;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Rotations;
@@ -12,6 +13,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
@@ -24,7 +26,6 @@ import edu.wpi.first.units.measure.Velocity;
 import frc.lib.io.motor.MotorIOTalonFX;
 import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.linear.*;
-import frc.lib.mechanisms.linear.LinearMechanism.LinearAxis;
 import frc.lib.mechanisms.linear.LinearMechanism.LinearMechCharacteristics;
 import frc.lib.util.MechanismUtil.DistanceAngleConverter;
 import frc.robot.Constants;
@@ -54,9 +55,16 @@ public class LinearConstants {
 
     public static final DistanceAngleConverter CONVERTER = new DistanceAngleConverter(DRUM_RADIUS);
 
+    // Orientation for the linear mechanism.
+    // A pitch of 90 degrees (around Y-axis) represents a vertical mechanism like an elevator.
+    // Pitch of 0 degrees would be horizontal.
+    // Roll and yaw can be used for mechanisms that extend in other directions.
+    private static final Rotation3d ORIENTATION =
+        new Rotation3d(0.0, Degrees.of(90.0).in(Units.Radians), 0.0);
+
     private static final LinearMechCharacteristics CHARACTERISTICS =
         new LinearMechCharacteristics(new Translation3d(0.0, 0.0, 0.0), MIN_DISTANCE, MAX_DISTANCE,
-            STARTING_DISTANCE, CONVERTER, LinearAxis.Z);
+            STARTING_DISTANCE, CONVERTER, ORIENTATION);
 
     // Positional PID
     public static Slot0Configs SLOT0CONFIG = new Slot0Configs()
