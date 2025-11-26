@@ -24,17 +24,19 @@ import frc.lib.mechanisms.linear.LinearMechanism.LinearMechCharacteristics;
  * A visualizer for linear mechanisms that displays the current distance, trajectory, and goal
  * distance using a LoggedMechanism2d. Supports mechanisms at any orientation angle.
  *
- * <p>The orientation uses WPILib's Rotation3d convention (counter-clockwise positive around Y-axis):
+ * <p>
+ * The orientation uses WPILib's Rotation3d convention (counter-clockwise positive around Y-axis):
  * <ul>
- *   <li>The mechanism extends along the positive X-axis in its local frame</li>
- *   <li>Pitch (Y-axis rotation) determines the angle from horizontal for 2D visualization</li>
- *   <li>A pitch of 0° represents a horizontal mechanism extending forward</li>
- *   <li>A pitch of -90° (-π/2 radians) represents a vertical mechanism extending upward</li>
- *   <li>A pitch of 90° (π/2 radians) represents a vertical mechanism extending downward</li>
+ * <li>The mechanism extends along the positive X-axis in its local frame</li>
+ * <li>Pitch (Y-axis rotation) determines the angle from horizontal for 2D visualization</li>
+ * <li>A pitch of 0° represents a horizontal mechanism extending forward</li>
+ * <li>A pitch of -90° (-π/2 radians) represents a vertical mechanism extending upward</li>
+ * <li>A pitch of 90° (π/2 radians) represents a vertical mechanism extending downward</li>
  * </ul>
  *
- * <p>For 3D pose calculation, the distance is projected along the orientation direction
- * by rotating a vector [distance, 0, 0] by the orientation Rotation3d.
+ * <p>
+ * For 3D pose calculation, the distance is projected along the orientation direction by rotating a
+ * vector [distance, 0, 0] by the orientation Rotation3d.
  */
 public class LinearMechanismVisualizer {
 
@@ -65,10 +67,10 @@ public class LinearMechanismVisualizer {
 
         // Calculate the 2D angle for mechanism visualization (using pitch as the primary angle)
         // WPILib uses counter-clockwise positive, so pitch directly maps to visualization angle
-        double visualAngleDegrees = Math.toDegrees(orientation.getY());
+        double visualAngleDegrees = Math.toDegrees(-orientation.getY());
 
         mechanism = new LoggedMechanism2d(3.0, 3.0, new Color8Bit(Color.kBlack));
-        LoggedMechanismRoot2d root = mechanism.getRoot(name + " root", 1.5, 0.0);
+        LoggedMechanismRoot2d root = mechanism.getRoot(name + " root", 1.5, 1.5);
 
         lowerBound =
             new LoggedMechanismLigament2d(name + "lowerBound",
@@ -136,7 +138,7 @@ public class LinearMechanismVisualizer {
     {
         // Convert the pitch (Y rotation) to a 2D visualization angle
         // WPILib uses counter-clockwise positive, so pitch directly maps to visualization angle
-        double visualAngleDegrees = Math.toDegrees(orientation.getY());
+        double visualAngleDegrees = Math.toDegrees(-orientation.getY());
 
         lowerBound.setAngle(visualAngleDegrees);
         upperBound.setAngle(visualAngleDegrees);
