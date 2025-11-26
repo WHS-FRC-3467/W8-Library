@@ -34,8 +34,8 @@ import lombok.experimental.Accessors;
  * <p>
  * Each incoming {@link VisionObservation} is evaluated for validity and consistency based on tag
  * count, ambiguity, distance, and field boundaries. The resulting pose estimates are stored or
- * returned as a {@link PoseRecord}, each containing pose data and uncertainty metrics for later
- * fusion with odometry.
+ * returned as a {@link VisionPoseRecord}, each containing pose data and uncertainty metrics for
+ * later fusion with odometry.
  */
 @Accessors(fluent = true)
 @RequiredArgsConstructor
@@ -46,7 +46,7 @@ public class ConstrainedSolvePnp implements VisionProcessor {
     private final double gyroHeadingScaleFactor;
 
     @Override
-    public Optional<PoseRecord> processVisionObservation(
+    public Optional<VisionPoseRecord> processVisionObservation(
         PhotonPipelineResult result,
         CameraProperties camera,
         Rotation2d heading)
@@ -94,7 +94,7 @@ public class ConstrainedSolvePnp implements VisionProcessor {
             .mapToDouble(target -> target.getBestCameraToTarget().getTranslation().getNorm())
             .average().orElse(0.0);
 
-        return Optional.of(new PoseRecord(estimate,
+        return Optional.of(new VisionPoseRecord(estimate,
             result.getTargets().stream().map(PhotonTrackedTarget::getFiducialId).toList(),
             avgDistance));
     }

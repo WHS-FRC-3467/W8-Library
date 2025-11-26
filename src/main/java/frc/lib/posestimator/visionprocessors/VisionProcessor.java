@@ -33,13 +33,13 @@ import frc.lib.devices.AprilTagCamera.CameraProperties;
  */
 public interface VisionProcessor {
     /** Stores a vision pose estimate along with computed uncertainty metrics. */
-    public static final record PoseRecord(
+    public static final record VisionPoseRecord(
         Pose3d pose,
         List<Integer> tagsUsed,
         double averageDistanceMeters) {
     }
 
-    Optional<PoseRecord> processVisionObservation(
+    Optional<VisionPoseRecord> processVisionObservation(
         PhotonPipelineResult observation,
         CameraProperties camera,
         Rotation2d heading);

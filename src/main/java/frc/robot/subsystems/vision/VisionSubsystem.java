@@ -28,7 +28,7 @@ import frc.lib.devices.AprilTagCamera;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.visionprocessors.LowestAmbiguity;
 import frc.lib.posestimator.visionprocessors.MultiTagOnCoproc;
-import frc.lib.posestimator.visionprocessors.VisionProcessor.PoseRecord;
+import frc.lib.posestimator.visionprocessors.VisionProcessor.VisionPoseRecord;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 
@@ -65,7 +65,7 @@ public class VisionSubsystem extends SubsystemBase {
     public static final double FIELD_LENGTH = FieldConstants.FIELD_LENGTH.in(Meters);
 
     /**
-     * Checks whether a given {@link PoseRecord} is valid on the field.
+     * Checks whether a given {@link VisionPoseRecord} is valid on the field.
      * <p>
      * A pose is considered valid if it is within field boundaries and below {@link #MAX_Z_METERS}.
      * </p>
@@ -73,7 +73,7 @@ public class VisionSubsystem extends SubsystemBase {
      * @param poseRecord the pose record to validate
      * @return {@code true} if the pose is valid, {@code false} otherwise
      */
-    public static boolean isValid(PoseRecord poseRecord)
+    public static boolean isValid(VisionPoseRecord poseRecord)
     {
         Pose3d pose = poseRecord.pose();
         double x = pose.getX();
@@ -121,7 +121,7 @@ public class VisionSubsystem extends SubsystemBase {
             return false;
         }
 
-        PoseRecord poseRecord = visionProcessor.processVisionObservation(
+        VisionPoseRecord poseRecord = visionProcessor.processVisionObservation(
             result,
             camera.getProperties(),
             heading)

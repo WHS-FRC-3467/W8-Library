@@ -74,7 +74,7 @@ public class TrigSolve implements VisionProcessor {
     }
 
     @Override
-    public Optional<PoseRecord> processVisionObservation(
+    public Optional<VisionPoseRecord> processVisionObservation(
         PhotonPipelineResult observation,
         CameraProperties camera,
         Rotation2d heading)
@@ -100,7 +100,7 @@ public class TrigSolve implements VisionProcessor {
         PhotonTrackedTarget wantedTarget = optionalWantedTarget.get();
 
         return solveTrigPosition(camera, wantedTarget, heading)
-            .map(p -> new PoseRecord(new Pose3d(p), List.of(followedAprilTag),
+            .map(p -> new VisionPoseRecord(new Pose3d(p), List.of(followedAprilTag),
                 wantedTarget.getBestCameraToTarget().getTranslation().getNorm()));
     }
 }

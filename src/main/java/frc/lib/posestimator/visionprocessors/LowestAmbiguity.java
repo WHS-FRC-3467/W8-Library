@@ -38,7 +38,7 @@ public class LowestAmbiguity implements VisionProcessor {
     private final AprilTagFieldLayout fieldLayout;
 
     @Override
-    public Optional<PoseRecord> processVisionObservation(
+    public Optional<VisionPoseRecord> processVisionObservation(
         PhotonPipelineResult observation,
         CameraProperties camera,
         Rotation2d heading)
@@ -64,7 +64,7 @@ public class LowestAmbiguity implements VisionProcessor {
         double distanceFromCamera = targetToCamera.getTranslation().getNorm();
 
         return Optional.of(
-            new PoseRecord(
+            new VisionPoseRecord(
                 robotPose,
                 List.of(lowestAmbiguity.fiducialId),
                 distanceFromCamera));

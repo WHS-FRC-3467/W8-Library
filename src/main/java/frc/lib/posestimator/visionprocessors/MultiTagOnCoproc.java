@@ -41,7 +41,7 @@ public class MultiTagOnCoproc implements VisionProcessor {
     private final AprilTagFieldLayout fieldLayout;
 
     @Override
-    public Optional<PoseRecord> processVisionObservation(
+    public Optional<VisionPoseRecord> processVisionObservation(
         PhotonPipelineResult result,
         CameraProperties camera,
         Rotation2d heading)
@@ -67,7 +67,7 @@ public class MultiTagOnCoproc implements VisionProcessor {
             .average().orElse(0.0);
 
         return Optional.of(
-            new PoseRecord(
+            new VisionPoseRecord(
                 best,
                 result.multitagResult.get().fiducialIDsUsed.stream().map(Integer::valueOf)
                     .toList(),
