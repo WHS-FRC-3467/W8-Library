@@ -135,6 +135,7 @@ public class MotorIORev implements MotorIO {
     @Override
     public void updateInputs(MotorInputs inputs)
     {
+        // TODO: implement isConnected check for REV motors
         inputs.connected = true;
         inputs.position = Rotation.of(encoder.getPosition());
         inputs.velocity = RotationsPerSecond.of(encoder.getVelocity() / 60.0);
