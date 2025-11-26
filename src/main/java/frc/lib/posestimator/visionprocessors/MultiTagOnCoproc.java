@@ -69,7 +69,7 @@ public class MultiTagOnCoproc implements VisionProcessor {
         return Optional.of(
             new VisionPoseRecord(
                 best,
-                result.multitagResult.get().fiducialIDsUsed.stream().map(Integer::valueOf)
+                result.getMultiTagResult().get().fiducialIDsUsed.stream().map(Integer::valueOf)
                     .toList(),
                 avgDistance));
     }
