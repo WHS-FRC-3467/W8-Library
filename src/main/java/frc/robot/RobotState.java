@@ -19,7 +19,6 @@ import static edu.wpi.first.units.Units.Seconds;
 import java.util.Optional;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
-import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -47,9 +46,6 @@ public class RobotState {
         Seconds.of(2),
         LINEAR_ODOMETRY_STD_DEV,
         ANGULAR_ODOMETRY_STD_DEV);
-
-    @Getter
-    private Optional<PhotonTrackedTarget> closestTagObservation = Optional.empty();
 
     @Getter
     @Setter
