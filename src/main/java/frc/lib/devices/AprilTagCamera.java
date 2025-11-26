@@ -31,7 +31,26 @@ import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIO.VisionIOInputs;
 import lombok.Getter;
 
+/**
+ * Represents a single AprilTag camera on the robot.
+ * 
+ * <p>
+ * Handles interfacing with the {@link VisionIO} hardware layer, providing camera intrinsics,
+ * mounting transforms, and reading vision results.
+ */
 public class AprilTagCamera {
+
+    /**
+     * Immutable set of properties describing the camera.
+     *
+     * @param name Unique name for the camera
+     * @param robotToCamera Transform from the robot frame to the camera frame
+     * @param cameraMatrix Intrinsic camera matrix
+     * @param distCoeffs Distortion coefficients for the camera
+     * @param resolutionWidth Camera resolution width in pixels
+     * @param resolutionHeight Camera resolution height in pixels
+     * @param stdDevFactor Standard deviation factor used in vision pose estimation
+     */
     public record CameraProperties(
         String name,
         Transform3d robotToCamera,
@@ -50,12 +69,21 @@ public class AprilTagCamera {
             "Supplied intrinsics in code do not match intrinsics from replayed inputs! Defaulting to inputs!",
             AlertType.kWarning);
 
+    /** The camera's properties, including intrinsics and transform relative to the robot. */
     @Getter
     private final CameraProperties properties;
 
-    public AprilTagCamera(
-        CameraProperties properties,
-        VisionIO io)
+    /**
+     * Constructs a new {@code AprilTagCamera}.
+     * <p>
+     * Initializes the camera properties, sets up logging of inputs, and validates that supplied
+     * intrinsics match those from the {@link VisionIO} inputs.
+     * </p>
+     *
+     * @param properties the camera properties
+     * @param io the VisionIO interface for this camera
+     */
+    public AprilTagCamera(CameraProperties properties, VisionIO io)
     {
         this.io = io;
         inputs = new VisionIOInputs(properties.cameraMatrix(), properties.distCoeffs());
@@ -82,6 +110,17 @@ public class AprilTagCamera {
                 properties.stdDevFactor);
     }
 
+    /**
+     * Retrieves unread vision results from the camera.
+     * <p>
+     * Updates inputs from the {@link VisionIO}, processes them through the logger, and returns any
+     * results if the camera is connected. Returns an empty {@link Optional} if the camera is not
+     * connected.
+     * </p>
+     *
+     * @return an {@link Optional} containing an array of {@link PhotonPipelineResult} if available,
+     *         or {@link Optional#empty()} if the camera is disconnected
+     */
     public Optional<PhotonPipelineResult[]> getUnreadResults()
     {
         io.updateInputs(inputs);
