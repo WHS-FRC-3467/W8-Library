@@ -32,16 +32,47 @@ import frc.lib.posestimator.visionprocessors.VisionProcessor.PoseRecord;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 
+/**
+ * The {@code VisionSubsystem} manages all vision-related processing for the robot.
+ * 
+ * <p>
+ * It uses one or more {@link AprilTagCamera}s to detect field elements and estimate the robot's
+ * pose on the field. Observations are processed through the {@link MultiTagOnCoproc} vision
+ * processor, with a fallback to {@link LowestAmbiguity} if necessary. Valid observations are added
+ * to {@link RobotState} for use in localization and navigation.
+ * 
+ * <p>
+ * The subsystem periodically polls cameras for new results and logs both accepted and rejected
+ * vision observations.
+ */
 public class VisionSubsystem extends SubsystemBase {
+
     public static final String LOG_PREFIX = "VisionProcessor/";
 
+    /** Baseline linear standard deviation used for vision observations. */
     public static final double LINEAR_STDDEV_BASELINE = 0.4;
+
+    /** Baseline angular standard deviation used for vision observations. */
     public static final double ANGULAR_STDDEV_BASELINE = 0.4;
 
+    /** Maximum allowable height (Z-axis) of a detected pose to be considered valid. */
     public static final double MAX_Z_METERS = 0.75;
+
+    /** Width of the field in meters. */
     public static final double FIELD_WIDTH = FieldConstants.FIELD_WIDTH.in(Meters);
+
+    /** Length of the field in meters. */
     public static final double FIELD_LENGTH = FieldConstants.FIELD_LENGTH.in(Meters);
 
+    /**
+     * Checks whether a given {@link PoseRecord} is valid on the field.
+     * <p>
+     * A pose is considered valid if it is within field boundaries and below {@link #MAX_Z_METERS}.
+     * </p>
+     *
+     * @param poseRecord the pose record to validate
+     * @return {@code true} if the pose is valid, {@code false} otherwise
+     */
     public static boolean isValid(PoseRecord poseRecord)
     {
         Pose3d pose = poseRecord.pose();
@@ -52,9 +83,7 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     private final RobotState robotState = RobotState.getInstance();
-
     private final AprilTagCamera[] cameras;
-
     private final LowestAmbiguity fallbackVisionProcessor =
         new LowestAmbiguity(FieldConstants.APRILTAG_LAYOUT);
     private final MultiTagOnCoproc visionProcessor =
@@ -62,18 +91,27 @@ public class VisionSubsystem extends SubsystemBase {
             Optional.of(fallbackVisionProcessor),
             FieldConstants.APRILTAG_LAYOUT);
 
-
+    /**
+     * Constructs a new {@code VisionSubsystem} with the specified cameras.
+     *
+     * @param cameras the cameras to use for vision processing
+     */
     public VisionSubsystem(AprilTagCamera... cameras)
     {
         this.cameras = cameras;
     }
 
     /**
-     * Processes a {@link PhotonPipelineResult}.
-     * 
-     * @param result The result to process
-     * @param camera The camera the result came from
-     * @return Whether or not the result was accepted
+     * Processes a single {@link PhotonPipelineResult} from a camera.
+     * <p>
+     * If the result is valid and passes checks, it is converted to a {@link VisionPoseObservation}
+     * and added to {@link RobotState}. The method also computes standard deviation factors for
+     * linear and angular uncertainty.
+     * </p>
+     *
+     * @param result the pipeline result to process
+     * @param camera the camera that generated the result
+     * @return {@code true} if the result was accepted and processed, {@code false} otherwise
      */
     private boolean processPipelineResult(PhotonPipelineResult result, AprilTagCamera camera)
     {
@@ -109,6 +147,14 @@ public class VisionSubsystem extends SubsystemBase {
         return true;
     }
 
+    /**
+     * Periodically called by the scheduler.
+     * <p>
+     * This method polls all cameras for unread results, processes each result using
+     * {@link #processPipelineResult(PhotonPipelineResult, AprilTagCamera)}, and logs accepted and
+     * rejected observations for debugging and analysis.
+     * </p>
+     */
     @Override
     public void periodic()
     {
