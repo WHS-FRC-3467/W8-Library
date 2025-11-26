@@ -51,13 +51,13 @@ public class LowestAmbiguity implements VisionProcessor {
 
         PhotonTrackedTarget lowestAmbiguity = observation.getBestTarget();
 
-        var optionalTargetPose = fieldLayout.getTagPose(lowestAmbiguity.fiducialId);
+        var optionalTargetPose = fieldLayout.getTagPose(lowestAmbiguity.getFiducialId());
         if (optionalTargetPose.isEmpty()) {
             return Optional.empty();
         }
         Pose3d targetPose = optionalTargetPose.get();
 
-        Transform3d targetToCamera = lowestAmbiguity.bestCameraToTarget.inverse();
+        Transform3d targetToCamera = lowestAmbiguity.getBestCameraToTarget().inverse();
         Transform3d cameraToRobot = camera.robotToCamera().inverse();
         Pose3d robotPose = targetPose.plus(targetToCamera).plus(cameraToRobot);
 
