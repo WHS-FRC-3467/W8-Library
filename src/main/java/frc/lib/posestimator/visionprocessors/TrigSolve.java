@@ -89,7 +89,7 @@ public class TrigSolve implements VisionProcessor {
 
         // The observation that matches the tag ID we're looking for
         var optionalWantedTarget = tagObservations.stream()
-            .filter(target -> target.fiducialId == followedAprilTag)
+            .filter(target -> target.getFiducialId() == followedAprilTag)
             .findFirst();
 
         // It wasn't found
