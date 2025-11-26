@@ -24,12 +24,13 @@ import frc.lib.mechanisms.linear.LinearMechanism.LinearMechCharacteristics;
  * A visualizer for linear mechanisms that displays the current distance, trajectory, and goal
  * distance using a LoggedMechanism2d. Supports mechanisms at any orientation angle.
  *
- * <p>The orientation uses WPILib's Rotation3d convention where:
+ * <p>The orientation uses WPILib's Rotation3d convention (counter-clockwise positive around Y-axis):
  * <ul>
  *   <li>The mechanism extends along the positive X-axis in its local frame</li>
  *   <li>Pitch (Y-axis rotation) determines the angle from horizontal for 2D visualization</li>
- *   <li>A pitch of 90° (π/2 radians) represents a vertical mechanism</li>
  *   <li>A pitch of 0° represents a horizontal mechanism extending forward</li>
+ *   <li>A pitch of -90° (-π/2 radians) represents a vertical mechanism extending upward</li>
+ *   <li>A pitch of 90° (π/2 radians) represents a vertical mechanism extending downward</li>
  * </ul>
  *
  * <p>For 3D pose calculation, the distance is projected along the orientation direction
@@ -63,7 +64,8 @@ public class LinearMechanismVisualizer {
         this.orientation = characteristics.orientation();
 
         // Calculate the 2D angle for mechanism visualization (using pitch as the primary angle)
-        double visualAngleDegrees = Math.toDegrees(orientation.getY()) + 90.0;
+        // WPILib uses counter-clockwise positive, so pitch directly maps to visualization angle
+        double visualAngleDegrees = Math.toDegrees(orientation.getY());
 
         mechanism = new LoggedMechanism2d(3.0, 3.0, new Color8Bit(Color.kBlack));
         LoggedMechanismRoot2d root = mechanism.getRoot(name + " root", 1.5, 0.0);
@@ -133,8 +135,8 @@ public class LinearMechanismVisualizer {
     private void updateVisualizationAngle()
     {
         // Convert the pitch (Y rotation) to a 2D visualization angle
-        // Adding 90 degrees because 0 degrees pitch means horizontal, but 90 degrees in 2D is up
-        double visualAngleDegrees = Math.toDegrees(orientation.getY()) + 90.0;
+        // WPILib uses counter-clockwise positive, so pitch directly maps to visualization angle
+        double visualAngleDegrees = Math.toDegrees(orientation.getY());
 
         lowerBound.setAngle(visualAngleDegrees);
         upperBound.setAngle(visualAngleDegrees);

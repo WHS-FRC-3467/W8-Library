@@ -56,11 +56,12 @@ public class LinearConstants {
     public static final DistanceAngleConverter CONVERTER = new DistanceAngleConverter(DRUM_RADIUS);
 
     // Orientation for the linear mechanism.
-    // A pitch of 90 degrees (around Y-axis) represents a vertical mechanism like an elevator.
-    // Pitch of 0 degrees would be horizontal.
+    // Uses WPILib's counter-clockwise positive convention around Y-axis:
+    // A pitch of -90 degrees represents a vertical mechanism extending upward (like an elevator).
+    // Pitch of 0 degrees would be horizontal extending forward.
     // Roll and yaw can be used for mechanisms that extend in other directions.
     private static final Rotation3d ORIENTATION =
-        new Rotation3d(0.0, Degrees.of(90.0).in(Units.Radians), 0.0);
+        new Rotation3d(0.0, Degrees.of(-90.0).in(Units.Radians), 0.0);
 
     private static final LinearMechCharacteristics CHARACTERISTICS =
         new LinearMechCharacteristics(new Translation3d(0.0, 0.0, 0.0), MIN_DISTANCE, MAX_DISTANCE,
