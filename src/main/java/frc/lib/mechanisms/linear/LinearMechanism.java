@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Distance;
@@ -19,23 +20,35 @@ import frc.lib.util.MechanismUtil.DistanceAngleConverter;
 /**
  * Abstract class for linear mechanisms, which are mechanisms that move in a straight line. This
  * class implements the Mechanism interface and provides characteristics specific to linear
- * mechanisms.
+ * mechanisms. Supports mechanisms at any orientation angle, including dynamic angle updates for
+ * pivoting mechanisms.
  */
 public abstract class LinearMechanism implements Mechanism {
 
-    public enum LinearAxis {
-        X,
-        Y,
-        Z
-    }
-
+    /**
+     * Characteristics for a linear mechanism.
+     *
+     * @param offset The 3D offset from the robot origin to the base of the mechanism
+     * @param minDistance Minimum extension distance
+     * @param maxDistance Maximum extension distance
+     * @param startingDistance Starting extension distance
+     * @param converter Converts between rotational and linear units
+     * @param orientation The 3D orientation of the linear mechanism's axis of motion. The mechanism
+     *        extends along the positive X-axis in its local frame, then rotated by this orientation.
+     *        Uses WPILib's counter-clockwise positive convention around Y-axis:
+     *        <ul>
+     *          <li>Pitch of 0° = horizontal mechanism extending forward</li>
+     *          <li>Pitch of -90° (-π/2 radians) = vertical mechanism extending upward (elevator)</li>
+     *          <li>Pitch of 90° (π/2 radians) = vertical mechanism extending downward</li>
+     *        </ul>
+     */
     public record LinearMechCharacteristics(
         Translation3d offset,
         Distance minDistance,
         Distance maxDistance,
         Distance startingDistance,
         DistanceAngleConverter converter,
-        LinearAxis axis) {
+        Rotation3d orientation) {
     }
 
     protected final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
@@ -82,6 +95,27 @@ public abstract class LinearMechanism implements Mechanism {
         visualizer.setMeasuredDistance(converter.toDistance(inputs.position));
         visualizer.setTrajectoryDistance(getTrajectoryDistance());
         visualizer.setGoalDistance(getGoalDistance());
+    }
+
+    /**
+     * Updates the orientation of the linear mechanism. This is useful for pivoting linear
+     * mechanisms where the angle changes dynamically.
+     *
+     * @param orientation The new orientation of the mechanism
+     */
+    public void setOrientation(Rotation3d orientation)
+    {
+        visualizer.setOrientation(orientation);
+    }
+
+    /**
+     * Gets the current orientation of the linear mechanism.
+     *
+     * @return The current orientation
+     */
+    public Rotation3d getOrientation()
+    {
+        return visualizer.getOrientation();
     }
 
     @Override
