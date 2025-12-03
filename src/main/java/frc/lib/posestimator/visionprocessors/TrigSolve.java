@@ -45,7 +45,7 @@ public class TrigSolve implements VisionProcessor {
      */
     private final Function<List<PhotonTrackedTarget>, Optional<PhotonTrackedTarget>> aprilTagChooser;
 
-    private Optional<Pose2d> solveTrigPosition(
+    public Optional<Pose2d> solveTrigPosition(
         CameraProperties camera,
         PhotonTrackedTarget target,
         Rotation2d heading)
