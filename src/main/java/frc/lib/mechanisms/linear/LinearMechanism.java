@@ -34,16 +34,15 @@ public abstract class LinearMechanism implements Mechanism {
      * @param startingDistance Starting extension distance
      * @param converter Converts between rotational and linear units
      * @param orientation The 3D orientation of the linear mechanism's axis of motion. The mechanism
-     *        extends along the positive X-axis in its local frame, then rotated by this orientation.
-     *        Uses WPILib's counter-clockwise positive convention around Y-axis:
+     *        extends along the positive X-axis in its local frame, then rotated by this
+     *        orientation. Uses WPILib's counter-clockwise positive convention around Y-axis:
      *        <ul>
-     *          <li>Pitch of 0° = horizontal mechanism extending forward</li>
-     *          <li>Pitch of -90° (-π/2 radians) = vertical mechanism extending upward (elevator)</li>
-     *          <li>Pitch of 90° (π/2 radians) = vertical mechanism extending downward</li>
+     *        <li>Pitch of 0° = horizontal mechanism extending forward</li>
+     *        <li>Pitch of -90° (-π/2 radians) = vertical mechanism extending upward (elevator)</li>
+     *        <li>Pitch of 90° (π/2 radians) = vertical mechanism extending downward</li>
      *        </ul>
      */
     public record LinearMechCharacteristics(
-        Translation3d offset,
         Distance minDistance,
         Distance maxDistance,
         Distance startingDistance,

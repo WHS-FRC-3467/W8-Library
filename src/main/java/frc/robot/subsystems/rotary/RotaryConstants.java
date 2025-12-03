@@ -15,7 +15,6 @@ import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.Units;
@@ -51,8 +50,6 @@ public class RotaryConstants {
     private static final double ROTOR_TO_SENSOR = (2.0 / 1.0);
     private static final double SENSOR_TO_MECHANISM = (2.0 / 1.0);
 
-    public static final Translation3d OFFSET = Translation3d.kZero;
-
     public static final Angle MIN_ANGLE = Degrees.of(-130.0);
     public static final Angle MAX_ANGLE = Rotations.of(.5);
     public static final Angle STARTING_ANGLE = Rotations.of(0.0);
@@ -60,7 +57,6 @@ public class RotaryConstants {
 
     public static final RotaryMechCharacteristics CONSTANTS =
         new RotaryMechCharacteristics(
-            OFFSET,
             ARM_LENGTH,
             MIN_ANGLE,
             MAX_ANGLE,

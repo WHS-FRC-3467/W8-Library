@@ -45,7 +45,6 @@ public class Rotary extends SubsystemBase {
     private Trigger homedTrigger;
 
     private final RobotState robotstate;
-    private Setpoint setpoint = Setpoint.STOW;
 
     public Rotary(RotaryMechanism io)
     {
@@ -96,18 +95,12 @@ public class Rotary extends SubsystemBase {
             .withName("Go To " + setpoint.toString() + " Setpoint with wait");
     }
 
-    public Command setStateCommand(Setpoint setpoint)
-    {
-        return this.runOnce(() -> this.setpoint = setpoint)
-            .withName("Elevator Set State: " + setpoint.name());
-    }
-
     public Command homeCommand()
     {
         return Commands.sequence(runOnce(() -> io.runVoltage(Volts.of(-2))),
             Commands.waitUntil(homedTrigger),
             runOnce(() -> io.setEncoderPosition(Setpoint.HOME.getSetpoint())),
-            this.setStateCommand(Setpoint.STOW))
+            setSetpoint(Setpoint.STOW))
             .withName("Homing");
 
     }
