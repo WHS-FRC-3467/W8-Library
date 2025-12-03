@@ -16,6 +16,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Seconds;
+import java.util.HashMap;
 import java.util.Optional;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -35,11 +36,16 @@ import lombok.Setter;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RobotState {
+    public static record TrigPoseRecord(Pose2d pose, double distance, double timestamp) {
+    }
+
     private static final double LINEAR_ODOMETRY_STD_DEV = 0.01;
     private static final double ANGULAR_ODOMETRY_STD_DEV = 0.01;
 
     @Getter(lazy = true)
     private static final RobotState instance = new RobotState();
+
+    private HashMap<Integer, TrigPoseRecord> trigPoses = new HashMap<>();
 
     private final PoseEstimator poseEstimator = new PoseEstimator(
         new SwerveDriveKinematics(Drive.getModuleTranslations()),
@@ -71,6 +77,11 @@ public class RobotState {
     public void addVisionObservation(VisionPoseObservation observation)
     {
         poseEstimator.addVisionObservation(observation);
+    }
+
+    public void addTrigPose(int tagId, TrigPoseRecord trigPose)
+    {
+        trigPoses.put(tagId, trigPose);
     }
 
     public Optional<Pose2d> getPoseAtTime(double timestampSeconds)
