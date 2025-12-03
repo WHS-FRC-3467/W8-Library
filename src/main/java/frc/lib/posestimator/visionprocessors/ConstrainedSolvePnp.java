@@ -29,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 
 /**
- * ProcessesAprilTag observations to estimate the robot’s field-relative pose.
+ * Processes AprilTag observations to estimate the robot’s field-relative pose.
  *
  * <p>
  * Each incoming {@link VisionObservation} is evaluated for validity and consistency based on tag
