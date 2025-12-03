@@ -87,7 +87,6 @@ public class TrigSolve implements VisionProcessor {
         CameraProperties camera,
         Rotation2d heading)
     {
-
         var tagObservations = observation.getTargets();
 
         // Nothing to go off of
