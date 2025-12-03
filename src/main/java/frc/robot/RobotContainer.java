@@ -233,8 +233,10 @@ public class RobotContainer {
             .runOnce(() -> BallSimulator.launch(FeetPerSecond.of(ballVel.getAsDouble()),
                 RobotState.getInstance())));
 
+        var testpose = new Pose2d(5, 5, new Rotation2d());
+
         SmartDashboard.putData("Align2d",
-            new AlignTo2DTarget(drive, vision, () -> controller.getLeftY()));
+            new AlignTo2DTarget(drive, () -> (testpose.relativeTo(drive.getPose()))));
         SmartDashboard.putData("PointToTarget",
             new PointTo2DTarget(drive, vision));
 
