@@ -64,10 +64,7 @@ public class AprilTagCamera {
     private final VisionIO io;
     private final VisionIOInputs inputs;
 
-    private final Alert mismatchedIntrinsicsAlert =
-        new Alert(
-            "Supplied intrinsics in code do not match intrinsics from replayed inputs! Defaulting to inputs!",
-            AlertType.kWarning);
+    private final Alert mismatchedIntrinsicsAlert;
 
     /** The camera's properties, including intrinsics and transform relative to the robot. */
     @Getter
@@ -85,6 +82,12 @@ public class AprilTagCamera {
      */
     public AprilTagCamera(CameraProperties properties, VisionIO io)
     {
+        mismatchedIntrinsicsAlert = new Alert(
+            "Camera "
+                + properties.name()
+                + "'s supplied intrinsics in code do not match intrinsics from replayed inputs! Defaulting to inputs!",
+            AlertType.kWarning);
+
         this.io = io;
         inputs = new VisionIOInputs(properties.cameraMatrix(), properties.distCoeffs());
 
