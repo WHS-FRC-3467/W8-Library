@@ -71,8 +71,8 @@ public class RobotState {
         return poseEstimator.estimatedPose();
     }
 
-    @AutoLogOutput(key = "Odometry/TestPose")
-    public Pose2d getTestPose()
+    @AutoLogOutput(key = "Odometry/TrigTestPose")
+    public Pose2d getTrigTestPose()
     {
         return getTrigPose(10).orElse(Pose2d.kZero);
     }
