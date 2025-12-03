@@ -80,52 +80,88 @@ public class PoseEstimator {
             angularOdometryStdDev);
     }
 
+    public Pose2d odometryPose()
+    {
+        return odometry.odometryPose();
+    }
+
+    /**
+     * Adds a new odometry observation to the pose estimator and updates the estimated pose.
+     * 
+     * This method retrieves the last odometry pose, applies the new odometry observation, and
+     * calculates the change in pose (twist) between the last and new odometry poses. The estimated
+     * pose is then updated by applying the calculated twist.
+     * 
+     * @param observation The new odometry observation to be added. This observation typically
+     *        contains information about the robot's movement such as displacement and rotation.
+     */
     public void addOdometryObservation(OdometryObservation observation)
     {
-        Pose2d lastOdometryPose = odometry.getOdometryPose();
+        Pose2d lastOdometryPose = odometry.odometryPose();
         odometry.addOdometryObservation(observation);
-        Pose2d newOdometryPose = odometry.getOdometryPose();
+        Pose2d newOdometryPose = odometry.odometryPose();
 
         Twist2d twist = lastOdometryPose.log(newOdometryPose);
 
         estimatedPose = estimatedPose.exp(twist);
     }
 
-    public Pose2d odometryPose()
+    /**
+     * Calculates the change in pose (delta) between the odometry pose at a given timestamp and the
+     * current odometry pose. This is mainly used for latency compensation for vision.
+     *
+     * @param timestampSeconds The timestamp (in seconds) for which to retrieve the odometry pose.
+     * @return An {@link Optional} containing the {@link Transform2d} representing the pose delta if
+     *         the odometry pose at the given timestamp exists; otherwise, an empty
+     *         {@link Optional}.
+     */
+    public Optional<Transform2d> getPoseDeltaThenToNow(double timestampSeconds)
     {
-        return odometry.getOdometryPose();
-    }
-
-    private Optional<Transform2d> getPoseDelta(double timestampSeconds)
-    {
-        var optionalOdometryPoseAtTime = odometry.getOdometryBuffer().getSample(timestampSeconds);
+        var optionalOdometryPoseAtTime = odometry.odometryBuffer().getSample(timestampSeconds);
         if (optionalOdometryPoseAtTime.isEmpty()) {
             return Optional.empty();
         }
         Pose2d odometryPoseAtTime = optionalOdometryPoseAtTime.get();
 
-        Transform2d thenToNow = odometryPoseAtTime.minus(odometry.getOdometryPose());
+        Transform2d thenToNow = odometry.odometryPose().minus(odometryPoseAtTime);
 
         return Optional.of(thenToNow);
     }
 
+    /**
+     * Retrieves the estimated pose of the robot at a specific timestamp.
+     *
+     * This method calculates the pose at the given timestamp by determining the pose delta from the
+     * current estimated pose and applying the inverse of that delta to the current pose.
+     *
+     * @param timestampSeconds The timestamp (in seconds) for which the pose is requested.
+     * @return An {@code Optional<Pose2d>} containing the estimated pose at the specified timestamp,
+     *         or an empty {@code Optional} if the pose cannot be determined.
+     */
     public Optional<Pose2d> getPoseAtTime(double timestampSeconds)
     {
-        return getPoseDelta(timestampSeconds)
-            .map(thenToNow -> estimatedPose.plus(thenToNow.inverse()));
+        return getPoseDeltaThenToNow(timestampSeconds)
+            .map(thenToNow -> estimatedPose.plus(thenToNow));
     }
 
+    /**
+     * Incorporates a vision-based pose observation into the pose estimator. This method uses a
+     * Kalman filter approach to blend the vision-based observation with the current odometry-based
+     * pose estimate, accounting for the variances in both sources of data.
+     *
+     * @param observation The vision pose observation
+     */
     public void addVisionObservation(VisionPoseObservation observation)
     {
         // Attempt to get heading. Fails if the odometer has not recorded
         // a measurement near this timestamp
-        var optionalPoseDelta = getPoseDelta(observation.timestampSeconds);
-        if (optionalPoseDelta.isEmpty()) {
+        Transform2d poseDeltaThenToNow =
+            getPoseDeltaThenToNow(observation.timestampSeconds).orElse(null);
+        if (poseDeltaThenToNow == null) {
             return;
         }
-        Transform2d poseDelta = optionalPoseDelta.get();
 
-        Pose2d oldPose = estimatedPose.plus(poseDelta.inverse());
+        Pose2d oldPose = estimatedPose.plus(poseDeltaThenToNow.inverse());
         Pose2d newVisionPose = observation.robotPose;
 
         double visionLinearVariance = observation.linearStdDev * observation.linearStdDev;
@@ -172,7 +208,7 @@ public class PoseEstimator {
 
         estimatedPose = oldPose
             .transformBy(scaledVisionCorrection) // Adjust by the correction
-            .transformBy(poseDelta); // Bring back to present time (latency comp)
+            .transformBy(poseDeltaThenToNow); // Bring back to present time (latency comp)
     }
 
     /**

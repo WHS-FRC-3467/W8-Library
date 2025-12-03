@@ -25,6 +25,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.wpilibj.Timer;
 import frc.lib.posestimator.PoseEstimator;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
@@ -41,6 +42,7 @@ public class RobotState {
 
     private static final double LINEAR_ODOMETRY_STD_DEV = 0.01;
     private static final double ANGULAR_ODOMETRY_STD_DEV = 0.01;
+    private static final double TRIG_POSE_STALE_SECS = 0.2;
 
     @Getter(lazy = true)
     private static final RobotState instance = new RobotState();
@@ -69,6 +71,12 @@ public class RobotState {
         return poseEstimator.estimatedPose();
     }
 
+    @AutoLogOutput(key = "Odometry/TestPose")
+    public Pose2d getTestPose()
+    {
+        return getTrigPose(10).orElse(Pose2d.kZero);
+    }
+
     public void addOdometryObservation(OdometryObservation observation)
     {
         poseEstimator.addOdometryObservation(observation);
@@ -87,6 +95,21 @@ public class RobotState {
     public Optional<Pose2d> getPoseAtTime(double timestampSeconds)
     {
         return poseEstimator.getPoseAtTime(timestampSeconds);
+    }
+
+    public Optional<Pose2d> getTrigPose(int tagId)
+    {
+        if (!trigPoses.containsKey(tagId)) {
+            return Optional.empty();
+        }
+        var data = trigPoses.get(tagId);
+
+        if (Timer.getTimestamp() - data.timestamp() >= TRIG_POSE_STALE_SECS) {
+            return Optional.empty();
+        }
+
+        return poseEstimator.getPoseDeltaThenToNow(data.timestamp())
+            .map(delta -> data.pose().transformBy(delta));
     }
 
     /** Returns the current odometry rotation. */

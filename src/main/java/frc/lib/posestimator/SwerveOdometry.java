@@ -26,6 +26,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.units.measure.Time;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 
 /**
  * Integrates swerve-drive odometry observations to maintain a continuous estimate of the robot's
@@ -38,6 +39,7 @@ import lombok.Getter;
  * used by a higher-level {@link PoseEstimator} that fuses odometry with vision or other sensors. Do
  * not use this class on it's own, use {@link SwerveDriveOdometry}.
  */
+@Accessors(fluent = true)
 public class SwerveOdometry {
     /**
      * Represents a single odometry observation from the swerve drive.

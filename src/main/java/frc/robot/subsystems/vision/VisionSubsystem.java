@@ -29,9 +29,11 @@ import frc.lib.devices.AprilTagCamera;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.visionprocessors.LowestAmbiguity;
 import frc.lib.posestimator.visionprocessors.MultiTagOnCoproc;
+import frc.lib.posestimator.visionprocessors.TrigSolve;
 import frc.lib.posestimator.visionprocessors.VisionProcessor.VisionPoseRecord;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
+import frc.robot.RobotState.TrigPoseRecord;
 
 /**
  * The {@code VisionSubsystem} manages all vision-related processing for the robot.
@@ -96,17 +98,16 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     /**
-     * Checks whether a given {@link VisionPoseRecord} is valid on the field.
+     * Checks whether a given {@link Pose3d} is valid on the field.
      * <p>
      * A pose is considered valid if it is within field boundaries and below {@link #MAX_Z_METERS}.
      * </p>
      *
-     * @param poseRecord the pose record to validate
+     * @param pose the pose to validate
      * @return {@code true} if the pose is valid, {@code false} otherwise
      */
-    public static boolean postFilter(VisionPoseRecord poseRecord)
+    public static boolean postFilter(Pose3d pose)
     {
-        Pose3d pose = poseRecord.pose();
         double x = pose.getX();
         double y = pose.getY();
         double z = pose.getZ();
@@ -156,13 +157,28 @@ public class VisionSubsystem extends SubsystemBase {
             return false;
         }
 
+        result.targets.forEach(target -> {
+            Pose2d pose = TrigSolve.solveTrigPosition(FieldConstants.APRILTAG_LAYOUT,
+                camera.getProperties(), target, heading).orElse(null);
+            if (pose == null || !postFilter(new Pose3d(pose))) {
+                return;
+            }
+
+            robotState.addTrigPose(
+                target.getFiducialId(),
+                new TrigPoseRecord(
+                    pose,
+                    target.getBestCameraToTarget().getTranslation().getNorm(),
+                    result.getTimestampSeconds()));
+        });
+
         VisionPoseRecord poseRecord = visionProcessor.processVisionObservation(
             result,
             camera.getProperties(),
             heading)
             .orElse(null);
 
-        if (poseRecord == null || !postFilter(poseRecord)) {
+        if (poseRecord == null || !postFilter(poseRecord.pose())) {
             return false;
         }
 

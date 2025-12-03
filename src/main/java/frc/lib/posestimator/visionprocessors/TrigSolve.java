@@ -35,17 +35,8 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class TrigSolve implements VisionProcessor {
 
-    private final AprilTagFieldLayout fieldLayout;
-
-    /**
-     * A function that selects an optional {@link PhotonTrackedTarget} from a list of
-     * {@link PhotonTrackedTarget}s. This can be used to determine which AprilTag target to
-     * prioritize or process based on a custom selection strategy. Return {@link Optional#empty()}
-     * to reject the observation entirely.
-     */
-    private final Function<List<PhotonTrackedTarget>, Optional<PhotonTrackedTarget>> aprilTagChooser;
-
-    public Optional<Pose2d> solveTrigPosition(
+    public static Optional<Pose2d> solveTrigPosition(
+        AprilTagFieldLayout fieldLayout,
         CameraProperties camera,
         PhotonTrackedTarget target,
         Rotation2d heading)
@@ -81,6 +72,16 @@ public class TrigSolve implements VisionProcessor {
         return Optional.of(robotPose);
     }
 
+    private final AprilTagFieldLayout fieldLayout;
+
+    /**
+     * A function that selects an optional {@link PhotonTrackedTarget} from a list of
+     * {@link PhotonTrackedTarget}s. This can be used to determine which AprilTag target to
+     * prioritize or process based on a custom selection strategy. Return {@link Optional#empty()}
+     * to reject the observation entirely.
+     */
+    private final Function<List<PhotonTrackedTarget>, Optional<PhotonTrackedTarget>> aprilTagChooser;
+
     @Override
     public Optional<VisionPoseRecord> processVisionObservation(
         PhotonPipelineResult observation,
@@ -104,7 +105,7 @@ public class TrigSolve implements VisionProcessor {
 
         PhotonTrackedTarget wantedTarget = optionalWantedTarget.get();
 
-        return solveTrigPosition(camera, wantedTarget, heading)
+        return solveTrigPosition(fieldLayout, camera, wantedTarget, heading)
             .map(p -> new VisionPoseRecord(new Pose3d(p), List.of(wantedTarget.getFiducialId()),
                 wantedTarget.getBestCameraToTarget().getTranslation().getNorm()));
     }
