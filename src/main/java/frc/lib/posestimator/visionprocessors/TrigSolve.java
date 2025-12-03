@@ -17,6 +17,7 @@ package frc.lib.posestimator.visionprocessors;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -35,7 +36,14 @@ import lombok.experimental.Accessors;
 public class TrigSolve implements VisionProcessor {
 
     private final AprilTagFieldLayout fieldLayout;
-    private final int followedAprilTag;
+
+    /**
+     * A function that selects an optional {@link PhotonTrackedTarget} from a list of
+     * {@link PhotonTrackedTarget}s. This can be used to determine which AprilTag target to
+     * prioritize or process based on a custom selection strategy. Return {@link Optional#empty()}
+     * to reject the observation entirely.
+     */
+    private final Function<List<PhotonTrackedTarget>, Optional<PhotonTrackedTarget>> aprilTagChooser;
 
     private Optional<Pose2d> solveTrigPosition(
         CameraProperties camera,
@@ -87,10 +95,8 @@ public class TrigSolve implements VisionProcessor {
             return Optional.empty();
         }
 
-        // The observation that matches the tag ID we're looking for
-        var optionalWantedTarget = tagObservations.stream()
-            .filter(target -> target.getFiducialId() == followedAprilTag)
-            .findFirst();
+        // The observation that matches the tag we're looking for
+        var optionalWantedTarget = aprilTagChooser.apply(tagObservations);
 
         // It wasn't found
         if (optionalWantedTarget.isEmpty()) {
@@ -100,7 +106,7 @@ public class TrigSolve implements VisionProcessor {
         PhotonTrackedTarget wantedTarget = optionalWantedTarget.get();
 
         return solveTrigPosition(camera, wantedTarget, heading)
-            .map(p -> new VisionPoseRecord(new Pose3d(p), List.of(followedAprilTag),
+            .map(p -> new VisionPoseRecord(new Pose3d(p), List.of(wantedTarget.getFiducialId()),
                 wantedTarget.getBestCameraToTarget().getTranslation().getNorm()));
     }
 }
