@@ -20,9 +20,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import edu.wpi.first.units.measure.Distance;
+import frc.robot.subsystems.flywheel.FlywheelConstants;
 
 public class LookUpTable {
-    ShotSetpointList knownShots;
+    ShotSetpointList knownShots = new ShotSetpointList();
 
     private static LookUpTable instance = new LookUpTable();
 
@@ -33,19 +34,16 @@ public class LookUpTable {
 
     public LookUpTable()
     {
-        // Physics simulate!
-        
-
         // Create the list of shot setpoints
-        knownShots = new ShotSetpointList();
-        knownShots.getShots().add(new ShotSetpoint(1.5, 12.71, 70));
-        knownShots.getShots().add(new ShotSetpoint(2.0, 21.00, 70));
-        knownShots.getShots().add(new ShotSetpoint(2.5, 24.89, 70));
-        knownShots.getShots().add(new ShotSetpoint(3.0, 29.00, 70));
-        knownShots.getShots().add(new ShotSetpoint(3.5, 31.20, 70)); // Ended Here
-        knownShots.getShots().add(new ShotSetpoint(4.0, 32.50, 70)); // 32.10
-        knownShots.getShots().add(new ShotSetpoint(4.5, 34.00, 75)); // 33.80
-        knownShots.getShots().add(new ShotSetpoint(5.0, 35.00, 75)); // 32.50
+        // For every 3 ish inches (0.05 meters) from target create a new preset:
+        for (double distance = 1.5; distance < 5; distance+= 0.05) {
+            // Use Projectile Analyzer to get the vector
+            // Angle in degrees, Speed in m/s
+            ArrayList<Double> shot = ProjectileAnalyzer.getPresetShot(distance);
+            // Angle = arm output, Convert speed to flywheel output
+            knownShots.getShots().add(new ShotSetpoint(distance, shot.get(0), shot.get(1)/FlywheelConstants.FLYWHEEL_RADIUS.in(Meters)));
+        }
+
         Collections.sort(knownShots.getShots());
     }
 
@@ -171,7 +169,6 @@ public class LookUpTable {
      * @return ArrayList of all known ShotSetpoints
      */
     public ArrayList<ShotSetpoint> getShotPresets() {
-
 
         return new ArrayList<ShotSetpoint>(knownShots.getShots());
     }

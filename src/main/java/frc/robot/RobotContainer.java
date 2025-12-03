@@ -80,7 +80,6 @@ import frc.robot.subsystems.objectDetector.ObjectDetector;
 import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.util.LookUpTable;
-import frc.robot.util.RobotToTargetUtil;
 import frc.robot.util.ShotSetpoint;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;

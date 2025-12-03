@@ -15,17 +15,23 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.Timestamped;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -90,4 +96,68 @@ public class RobotState {
     // Time we are giving robot to get ready to shoot per attempt
     @Getter
     private LoggedTunableNumber timeToBeReady = new LoggedTunableNumber("TimeToBeReady", 0.5);
+
+    @AllArgsConstructor
+    public enum Target {
+        // NAME(BLUE, RED, HEIGHT)
+        ONE(new Pose2d(Meters.of(0), Meters.of(0), Rotation2d.kZero), new Pose2d(FieldConstants.FIELDLENGTH, FieldConstants.FIELDLENGTH, Rotation2d.k180deg), Meters.of(2.64)),
+        TWO(new Pose2d(), new Pose2d(), Meters.of(0.0));
+
+        @Getter
+        private final Pose2d bluePose;
+
+        @Getter
+        private final Pose2d redPose;
+
+        @Getter
+        private final Distance height;
+
+    }
+   
+    /** Keeps track of current target to aim for */
+    @AutoLogOutput(key = "Robot/CurrentTarget")
+    @Setter
+    public static Target target = Target.ONE;
+
+    /** Returns 2d distance from robot to target in meters */
+    public Distance getDistanceToTarget(Pose2d robotPose) {
+        Translation2d robotTranslation = robotPose.getTranslation();
+        Translation2d targetTranslation = (DriverStation.getAlliance().get() == Alliance.Blue ? target.bluePose.getTranslation() : target.redPose.getTranslation());
+        return Meters.of(robotTranslation.getDistance(targetTranslation));
+    }
+
+    /** Returns 2d distance from robot to target in meters */
+    public static Distance getDistanceToTarget(Translation2d robotPose) {
+        Translation2d targetTranslation = (DriverStation.getAlliance().get() == Alliance.Blue ? target.bluePose.getTranslation() : target.redPose.getTranslation());
+        return Meters.of(robotPose.getDistance(targetTranslation));
+    }
+
+    /** Returns angle from robot to target */
+    public static Rotation2d getAngleToTarget(Translation2d robotPose) {
+        return (DriverStation.getAlliance().get() == Alliance.Blue ? target.bluePose.getTranslation() : target.redPose.getTranslation()).minus(robotPose).getAngle();
+    }
+
+    /** Returns target pose based on alliance color */
+    public static Pose2d getTargetPose(Target target) {
+        return (DriverStation.getAlliance().get() == Alliance.Blue ? target.getBluePose() : target.getRedPose());
+    }
+    
+    /**
+     * 
+     * @param mechanismHeight height of the mechanism from which the projectile is launched
+     * @return height difference from mechanism to target, in meters
+     */
+    public Distance getHeightToTarget() {
+        double mechanismHeight = getRotaryPose().getZ() + getLinearPose().getZ();
+        return target.getHeight().minus(Meters.of(mechanismHeight));
+    }
+
+    /**
+     * 
+     * @param mechanismHeight height of the mechanism from which the projectile is launched
+     * @return height difference from mechanism to target, in meters
+     */
+    public static Distance getHeightToTarget(Distance mechanismHeight) {
+        return target.getHeight().minus(mechanismHeight);
+    }
 }

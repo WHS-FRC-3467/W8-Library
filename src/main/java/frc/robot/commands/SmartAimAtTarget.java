@@ -27,7 +27,6 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.rotary.Rotary;
 import frc.robot.util.LookUpTable;
-import frc.robot.util.RobotToTargetUtil;
 import frc.robot.util.ShotSetpoint;
 
 public class SmartAimAtTarget extends Command {
@@ -53,16 +52,14 @@ public class SmartAimAtTarget extends Command {
 
     /** The initial subroutine of a command. Called once when the command is initially scheduled. */
     @Override
-    public void initialize() {
-
-    }
+    public void initialize() {}
 
     /** The main body of a command. Called repeatedly while the command is scheduled. */
     @Override
     public void execute() {
         Pose2d futurePose = getFuturePose(() -> RobotState.getInstance().getTimeToBeReady().getAsDouble()); // Look ahead 0.2 seconds
         // Determine where to aim based on predicted future pose
-        ShotSetpoint setpoints = lookup.getShotData(RobotToTargetUtil.getDistanceToTarget(futurePose));
+        ShotSetpoint setpoints = lookup.getShotData(RobotState.getInstance().getDistanceToTarget(futurePose));
         // Set rotary angle & flywheel setpoint based on predicted future pose.
         // Hopefully the subsystems will "catch up" along the way.
         rotary.setSetpoint(Degrees.of(setpoints.getArmOutput()));
@@ -85,7 +82,7 @@ public class SmartAimAtTarget extends Command {
      */
     @Override
     public boolean isFinished() {
-        ShotSetpoint setpoints = lookup.getShotData(RobotToTargetUtil.getDistanceToTarget(drive.getPose()));
+        ShotSetpoint setpoints = lookup.getShotData(RobotState.getInstance().getDistanceToTarget(drive.getPose()));
         return rotary.nearGoal(Degrees.of(setpoints.getArmOutput())) 
             && flywheel.nearGoal(setpoints.getFlywheelOutput());
     }
