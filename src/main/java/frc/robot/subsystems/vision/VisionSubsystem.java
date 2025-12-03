@@ -92,11 +92,7 @@ public class VisionSubsystem extends SubsystemBase {
             return false;
         }
 
-        if (bestTarget.getPoseAmbiguity() > 0.2) {
-            return false;
-        }
-
-        return true;
+        return bestTarget.getPoseAmbiguity() <= 0.2;
     }
 
     /**
