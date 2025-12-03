@@ -59,7 +59,6 @@ public class ConstrainedSolvePnp implements VisionProcessor {
             return Optional.empty();
         }
 
-        // Solve for robot pose using constrained PnP
         var robotToCamera = camera.robotToCamera();
 
         // Attempt to extract seed pose from the observation
@@ -69,6 +68,7 @@ public class ConstrainedSolvePnp implements VisionProcessor {
         }
         Pose3d seed = optionalSeed.get().pose();
 
+        // Solve for robot pose using constrained PnP
         Optional<Pose3d> optionalEstimate =
             VisionEstimation.estimateRobotPoseConstrainedSolvepnp(
                 camera.cameraMatrix(),
