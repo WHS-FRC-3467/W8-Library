@@ -89,7 +89,6 @@ public class ConstrainedSolvePnp implements VisionProcessor {
 
         Pose3d estimate = optionalEstimate.get();
 
-        // Compute distance-based uncertainty scaling
         double avgDistance = targets.stream()
             .mapToDouble(target -> target.getBestCameraToTarget().getTranslation().getNorm())
             .average().orElse(0.0);
