@@ -41,7 +41,6 @@ public class RotaryVisualizer {
 
     private final double armLength;
 
-    private final Pose3d offset;
     private Pose3d currentPose = new Pose3d();
 
     private final RotaryMechCharacteristics constants;
@@ -54,7 +53,6 @@ public class RotaryVisualizer {
         LoggedMechanismRoot2d root = mechanism.getRoot(name + " root", 1.5, 1.5);
 
         armLength = constants.armLength().in(Meters);
-        offset = new Pose3d(constants.offset(), Rotation3d.kZero);
 
         if (constants.maxAngle().minus(constants.minAngle()).in(Rotations) < 1) {
             lowerBound =
@@ -105,17 +103,17 @@ public class RotaryVisualizer {
     {
         switch (constants.axis()) {
             case ROLL:
-                currentPose = offset.rotateBy(
+                currentPose = Pose3d.kZero.rotateBy(
                     new Rotation3d(Degrees.of(measured.getAngle()), Degrees.zero(),
                         Degrees.zero()));
                 break;
             case PITCH:
-                currentPose = offset.rotateBy(
+                currentPose = Pose3d.kZero.rotateBy(
                     new Rotation3d(Degrees.zero(), Degrees.of(measured.getAngle()),
                         Degrees.zero()));
                 break;
             case YAW:
-                currentPose = offset.rotateBy(
+                currentPose = Pose3d.kZero.rotateBy(
                     new Rotation3d(Degrees.zero(), Degrees.zero(),
                         Degrees.of(measured.getAngle())));
                 break;
