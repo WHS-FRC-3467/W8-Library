@@ -184,7 +184,7 @@ public class VisionSubsystem extends SubsystemBase {
 
         double stdDevFactor =
             (Math.pow(poseRecord.averageDistanceMeters(), 2.0) / result.getTargets().size())
-                * VisionConstants.FRONT_LEFT.stdDevFactor();
+                * camera.getProperties().stdDevFactor();
         double linearStdDev = LINEAR_STDDEV_BASELINE * stdDevFactor;
         double angularStdDev = ANGULAR_STDDEV_BASELINE * stdDevFactor;
 
