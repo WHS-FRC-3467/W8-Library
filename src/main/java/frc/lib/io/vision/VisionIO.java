@@ -66,7 +66,7 @@ public interface VisionIO {
                 cameraMatrix = table.get("CameraMatrix", (double[]) null);
                 distCoeffs = table.get("DistCoeffs", (double[]) null);
 
-                if (!(cameraMatrix == null || distCoeffs == null)) {
+                if (cameraMatrix != null && distCoeffs != null) {
                     hasLoggedIntrinsics = true;
                 }
             }
