@@ -141,7 +141,7 @@ public class PoseEstimator {
     public Optional<Pose2d> getPoseAtTime(double timestampSeconds)
     {
         return getPoseDeltaThenToNow(timestampSeconds)
-            .map(thenToNow -> estimatedPose.plus(thenToNow));
+            .map(thenToNow -> estimatedPose.plus(thenToNow.inverse()));
     }
 
     /**
