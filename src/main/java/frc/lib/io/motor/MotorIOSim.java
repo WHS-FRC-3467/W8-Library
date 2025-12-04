@@ -66,7 +66,4 @@ public interface MotorIOSim extends MotorIO {
     {
         return 0.0;
     }
-
-    public default void close()
-    {}
 }
