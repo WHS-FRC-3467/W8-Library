@@ -49,7 +49,7 @@ public class AlignTo2DTarget extends Command {
     public void execute()
     {
 
-        double strafeOutput = strafeController.calculate(relativePose.get().getY());
+        double strafeOutput = strafeController.calculate(-relativePose.get().getY());
         double rotationOutput =
             rotationController.calculate(drive.getPose().getRotation().getRadians());
 
