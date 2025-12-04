@@ -4,13 +4,17 @@
 
 package frc.robot.subsystems.rotary;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
-import java.util.function.DoubleSupplier;
+import static edu.wpi.first.units.Units.Volts;
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.rotary.RotaryMechanism;
 import frc.lib.util.LoggedTunableNumber;
@@ -22,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 public class Rotary extends SubsystemBase {
 
     private final RotaryMechanism io;
-
     private static final LoggedTunableNumber STOW_SETPOINT = new LoggedTunableNumber("TEST", 0.0);
     private static final LoggedTunableNumber RAISED_SETPOINT =
         new LoggedTunableNumber("RAISED", -90);
@@ -31,20 +34,28 @@ public class Rotary extends SubsystemBase {
     @SuppressWarnings("Immutable")
     @Getter
     public enum Setpoint {
+        HOME(Degrees.of(0.0)),
         STOW(Degrees.of(STOW_SETPOINT.get())),
         RAISED(Degrees.of(RAISED_SETPOINT.get()));
 
         private final Angle setpoint;
     }
 
-    private final RobotState robotstate;
+    private Debouncer homeDebouncer = new Debouncer(0.1, DebounceType.kRising);
+    private Trigger homedTrigger;
 
+    private final RobotState robotstate;
 
     public Rotary(RotaryMechanism io)
     {
         this.io = io;
         this.robotstate = RobotState.getInstance();
-        setSetpoint(RotaryConstants.DEFAULT_SETPOINT).ignoringDisable(true).schedule();
+        setSetpoint(RotaryConstants.DEFAULT_SETPOINT)
+            .ignoringDisable(true)
+            .schedule();
+        homedTrigger =
+            new Trigger(() -> homeDebouncer.calculate(io.getSupplyCurrent().gte(Amps.of(10))));
+
     }
 
     @Override
@@ -89,6 +100,16 @@ public class Rotary extends SubsystemBase {
         return waitUntilGoalCommand(setpoint.getSetpoint())
             .deadlineFor(setSetpoint(setpoint))
             .withName("Go To " + setpoint.toString() + " Setpoint with wait");
+    }
+
+    public Command homeCommand()
+    {
+        return Commands.sequence(runOnce(() -> io.runVoltage(Volts.of(-2))),
+            Commands.waitUntil(homedTrigger),
+            runOnce(() -> io.setEncoderPosition(Setpoint.HOME.getSetpoint())),
+            setSetpoint(Setpoint.STOW))
+            .withName("Homing");
+
     }
 
     public AngularVelocity getVelocity()
