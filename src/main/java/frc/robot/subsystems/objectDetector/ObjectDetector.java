@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.subsystems.objectDetector;
+package frc.robot.subsystems.objectdetector;
 
 import frc.lib.devices.ObjectDetection;
 import frc.lib.io.objectdetection.ObjectDetectionIO;
@@ -26,8 +26,7 @@ import java.util.ArrayList;
 public class ObjectDetector extends SubsystemBase {
     private final ObjectDetection objectDetection;
     private final Drive drive;
-    private double range, heading, distance;
-    private Translation2d targetLocation;
+
     private ArrayList<Translation2d> lastNDetections = new ArrayList<>(10);
 
     // Pass in any object detection IO implementation (e.g. PhotonVision) that implements
@@ -45,16 +44,17 @@ public class ObjectDetector extends SubsystemBase {
         objectDetection.periodic();
 
         if (objectDetection.getTargetObservations().length > 0) {
-            range = objectDetection.rangeToTarget_Pitch(objectDetection.getTargetObservations()[0],
-                ObjectDetectorConstants.CAMERA0_TRANSFORM,
-                ObjectDetectorConstants.algaeHeightMeters / 2,
-                1, 0);
-            heading =
+            double range =
+                objectDetection.rangeToTarget_Pitch(objectDetection.getTargetObservations()[0],
+                    ObjectDetectorConstants.CAMERA0_TRANSFORM,
+                    ObjectDetectorConstants.algaeHeightMeters / 2,
+                    1, 0);
+            double heading =
                 objectDetection.headingToTarget_Yaw(objectDetection.getTargetObservations()[0],
                     ObjectDetectorConstants.CAMERA0_TRANSFORM,
                     range, 1, 0);
-            distance = objectDetection.distanceToTarget2d(range, heading);
-            targetLocation =
+            double distance = objectDetection.distanceToTarget2d(range, heading);
+            Translation2d targetLocation =
                 objectDetection.estimateTargetToField(range, heading, drive.getPose());
             objectDetection.getLastNDetections(10, lastNDetections, 0.4572,
                 targetLocation);
