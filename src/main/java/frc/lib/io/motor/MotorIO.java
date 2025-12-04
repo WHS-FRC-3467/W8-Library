@@ -38,7 +38,7 @@ import lombok.Getter;
  * Standardized interface for motor controllers used in FRC. Supports multiple control modes and
  * telemetry reporting.
  */
-public interface MotorIO {
+public interface MotorIO extends AutoCloseable {
 
     @Getter
     @AllArgsConstructor
@@ -185,5 +185,9 @@ public interface MotorIO {
      * @param position Desired position to set encoder to
      */
     public default void setEncoderPosition(Angle position)
+    {}
+
+    @Override
+    public default void close()
     {}
 }

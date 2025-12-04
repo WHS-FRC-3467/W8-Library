@@ -46,9 +46,8 @@ class FlywheelTest implements AutoCloseable {
         Timer.delay(0.100);
     }
 
-    @SuppressWarnings("PMD.SignatureDeclareThrowsException")
     @AfterEach // this method will run after each test
-    void shutdown() throws Exception
+    void shutdown()
     {
         close();
     }
