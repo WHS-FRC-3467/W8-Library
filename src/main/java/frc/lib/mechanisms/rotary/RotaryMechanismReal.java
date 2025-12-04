@@ -107,4 +107,11 @@ public class RotaryMechanismReal extends RotaryMechanism {
     {
         return inputs.velocity;
     }
+
+    @Override
+    public void close()
+    {
+        io.close();
+        absoluteEncoder.ifPresent(AbsoluteEncoderIO::close);
+    }
 }

@@ -74,15 +74,12 @@ import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
-import frc.robot.subsystems.linear.Linear;
-import frc.robot.subsystems.linear.LinearConstants;
 import frc.robot.subsystems.objectdetector.ObjectDetector;
 import frc.robot.subsystems.objectdetector.ObjectDetectorConstants;
-import frc.robot.subsystems.rotary.Rotary;
-import frc.robot.subsystems.rotary.RotaryConstants;
-import frc.robot.subsystems.rotary.Rotary.Setpoint;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
+import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
@@ -116,9 +113,8 @@ public class RobotContainer {
     private final BeamBreak1 beamBreak1;
     private final Servo1 servo1;
     private final Flywheel flywheel;
-    private final Linear linear;
-    private final Rotary rotary;
     private final ObjectDetector objectDetector;
+    private final Superstructure superstructure;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -138,8 +134,7 @@ public class RobotContainer {
         flywheel = FlywheelConstants.get();
         leds = LEDsConstants.get();
         beamBreak1 = BeamBreak1Constants.get();
-        linear = LinearConstants.get();
-        rotary = RotaryConstants.get();
+        superstructure = SuperstructureConstants.get();
         servo1 = Servo1Constants.get();
         objectDetector = ObjectDetectorConstants.get();
         VisionConstants.create();
@@ -229,12 +224,10 @@ public class RobotContainer {
                 MetersPerSecond.of(0.0), false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
                 PathConstants.PATHGENERATION_ROT_TOLERANCE));
 
-        SmartDashboard.putData("Linear: Stow", linear.setGoal(Linear.Setpoint.STOW));
-        SmartDashboard.putData("Linear: Raised", linear.setGoal(Linear.Setpoint.RAISED));
-        SmartDashboard.putData("Linear: Home", linear.homeCommand());
-        SmartDashboard.putData("Rotary: Stow", rotary.setSetpoint(Rotary.Setpoint.STOW));
-        SmartDashboard.putData("Rotary: Raised",
-            rotary.setSetpoint(Rotary.Setpoint.RAISED));
+        SmartDashboard.putData("Superstructure: Stow",
+            superstructure.setGoal(Superstructure.Setpoint.STOW));
+        SmartDashboard.putData("Superstructure: Raised",
+            superstructure.setGoal(Superstructure.Setpoint.RAISED));
 
         LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
         SmartDashboard.putData("Shoot Ball", Commands

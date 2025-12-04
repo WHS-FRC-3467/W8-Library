@@ -55,14 +55,12 @@ public class LinearMechanismVisualizer {
     private final LoggedMechanismLigament2d upperBoundArm;
     private final String name;
 
-    private final Translation3d offset;
     private Rotation3d orientation;
     private Pose3d currentPose = new Pose3d();
 
     public LinearMechanismVisualizer(String name, LinearMechCharacteristics characteristics)
     {
         this.name = name;
-        this.offset = characteristics.offset();
         this.orientation = characteristics.orientation();
 
         // Calculate the 2D angle for mechanism visualization (using pitch as the primary angle)
@@ -158,7 +156,7 @@ public class LinearMechanismVisualizer {
         Translation3d direction = new Translation3d(distance, 0, 0).rotateBy(orientation);
 
         // Apply offset and calculate final pose
-        currentPose = new Pose3d(offset.plus(direction), orientation);
+        currentPose = new Pose3d(direction, orientation);
 
         SmartDashboard.putData(name + " Visualizer", mechanism);
         Logger.recordOutput(name + "Pose3d", currentPose);

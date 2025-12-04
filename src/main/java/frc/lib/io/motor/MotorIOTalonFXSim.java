@@ -152,10 +152,4 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
 
         inputs.controlType = super.getCurrentControlType();
     }
-
-    @Override
-    public void close()
-    {
-        super.motor.close();
-    }
 }
