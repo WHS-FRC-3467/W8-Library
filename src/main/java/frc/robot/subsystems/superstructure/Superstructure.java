@@ -118,6 +118,13 @@ public class Superstructure extends SubsystemBase implements AutoCloseable {
     }
 
     @Override
+    public void periodic()
+    {
+        rotaryIO.periodic();
+        linearIO.periodic();
+    }
+
+    @Override
     public void close()
     {
         rotaryIO.close();
