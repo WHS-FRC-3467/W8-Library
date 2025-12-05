@@ -76,6 +76,8 @@ import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.objectdetector.ObjectDetector;
 import frc.robot.subsystems.objectdetector.ObjectDetectorConstants;
+import frc.robot.subsystems.objectdetector.ObjectDetector;
+import frc.robot.subsystems.objectdetector.ObjectDetectorConstants;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.superstructure.Superstructure;
