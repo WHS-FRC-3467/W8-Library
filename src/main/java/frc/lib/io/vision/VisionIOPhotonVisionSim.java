@@ -17,47 +17,52 @@ package frc.lib.io.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform3d;
-import frc.lib.util.Timestamped;
+import frc.lib.devices.AprilTagCamera.CameraProperties;
 import java.util.function.Supplier;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 
-/** IO implementation for physics sim using PhotonVision simulator. */
+/**
+ * Simulated implementation of {@link VisionIOPhotonVision} using the PhotonVision simulation
+ * framework.
+ *
+ * <p>
+ * This class connects a {@link PhotonCameraSim} to a {@link VisionSystemSim} to simulate the
+ * behavior of a real PhotonVision camera in a physics-based environment. It allows the robot code
+ * to receive realistic vision data based on the robot's simulated pose and the field's AprilTag
+ * layout.
+ */
 public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     private final Supplier<Pose2d> poseSupplier;
     private final PhotonCameraSim cameraSim;
-
     private final VisionSystemSim system;
 
-    /**
-     * Creates a new VisionIOPhotonVisionSim.
-     *
-     * @param name The name of the camera.
-     * @param poseSupplier Supplier for the robot pose to use in simulation.
-     */
-    public VisionIOPhotonVisionSim(Supplier<Pose2d> poseSupplier, String name,
-        Transform3d robotToCamera,
-        AprilTagFieldLayout fieldLayout, PoseStrategy strategy, VisionSystemSim system)
+    public VisionIOPhotonVisionSim(
+        CameraProperties cameraProperties,
+        VisionSystemSim system,
+        Supplier<Pose2d> poseSupplier,
+        AprilTagFieldLayout fieldLayout)
     {
-        super(name, robotToCamera, fieldLayout, strategy);
+        super(cameraProperties);
         this.poseSupplier = poseSupplier;
-
         this.system = system;
 
-        // Add sim camera
-        var cameraProperties = new SimCameraProperties();
-        cameraSim = new PhotonCameraSim(camera, cameraProperties, fieldLayout);
-        this.system.addCamera(cameraSim, robotToCamera);
+        var simCameraProperties = new SimCameraProperties();
+        simCameraProperties.setCalibration(
+            cameraProperties.resolutionWidth(),
+            cameraProperties.resolutionHeight(),
+            cameraProperties.cameraMatrix(),
+            cameraProperties.distCoeffs());
+
+        cameraSim = new PhotonCameraSim(super.photonCamera, simCameraProperties, fieldLayout);
+        this.system.addCamera(cameraSim, cameraProperties.robotToCamera());
     }
 
     @Override
-    public void updateInputs(VisionIOInputs inputs, Timestamped<Rotation2d> timestampedHeading)
+    public void updateInputs(VisionIOInputs inputs)
     {
         system.update(poseSupplier.get());
-        super.updateInputs(inputs, timestampedHeading);
+        super.updateInputs(inputs);
     }
 }

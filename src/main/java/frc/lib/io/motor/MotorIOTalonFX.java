@@ -386,4 +386,14 @@ public class MotorIOTalonFX implements MotorIO {
     {
         motor.setPosition(position);
     }
+
+    @Override
+    public void close()
+    {
+        motor.close();
+        for (TalonFX follower : followers) {
+            follower.close();
+        }
+        updateThread.close();
+    }
 }
