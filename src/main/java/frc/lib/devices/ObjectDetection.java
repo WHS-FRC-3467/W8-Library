@@ -5,9 +5,9 @@
 package frc.lib.devices;
 
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.targeting.PhotonTrackedTarget;
 import frc.lib.io.objectdetection.ObjectDetectionIO;
-import frc.lib.io.objectdetection.ObjectDetectionIOInputsAutoLogged;
-import frc.lib.io.objectdetection.ObjectDetectionIO.TargetObservation;
+import frc.lib.io.objectdetection.ObjectDetectionIO.ObjectDetectionIOInputs;
 import java.util.ArrayList;
 import java.util.Arrays;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -26,8 +26,8 @@ public class ObjectDetection {
     // Placeholder for concrete implementation of ObjectDetectionIO.
     private final ObjectDetectionIO io;
     // DetectionMLIOInputs (e.g. skew, yaw, objID, etc.) from the AutoLog file.
-    private final ObjectDetectionIOInputsAutoLogged inputs =
-        new ObjectDetectionIOInputsAutoLogged();
+    private final ObjectDetectionIOInputs inputs =
+        new ObjectDetectionIOInputs();
 
     /*
      * Interface as a data type allows ObjectDetection to accept various implementations of
@@ -48,32 +48,32 @@ public class ObjectDetection {
     }
 
     /*
-     * Returns the latestTargetObservation field (array of TargetObservations [itself a record]) of
-     * inputs. Result is an array of object information (e.g. skew, yaw, objID, etc.) from latest
-     * pipeline result. Each index contains information for a single detected object.
+     * Returns the latestPhotonTrackedTarget field (array of PhotonTrackedTargets) of inputs. Result
+     * is an array of object information (e.g. skew, yaw, objID, etc.) from latest pipeline result.
+     * Each index contains information for a single detected object.
      */
-    public TargetObservation[] getTargetObservations()
+    public PhotonTrackedTarget[] getTargets()
     {
-        return inputs.latestTargetObservations;
+        return inputs.latestTargets;
     }
 
     /**
-     * Uses an empirical curve fit of objArea to estimate distance (in.). deltaS = a*objArea^3 +
-     * b*objArea^2 + c*objArea + d. Cubic fit required to better match governing physics (tan(x)
-     * based). Determine fit coefficients from calibration procedure.
+     * Uses an empirical curve fit of area to estimate distance (in.). deltaS = a*area^3 + b*area^2
+     * + c*area + d. Cubic fit required to better match governing physics (tan(x) based). Determine
+     * fit coefficients from calibration procedure.
      * 
-     * @param targetObservation A data type containing vision pipeline results for a single object.
+     * @param target A data type containing vision pipeline results for a single object.
      * @param a Coefficient for cubic term in curve fit equation.
      * @param b Coefficient for quadratic term in curve fit equation.
      * @param c Coefficient for linear term in curve fit equation.
      * @param d Coefficient for constant term in curve fit equation.
      * @return The estimated range to the object in meters.
      */
-    public double rangeToTarget_SingleFactorArea(TargetObservation targetObservation,
+    public double rangeToTarget_SingleFactorArea(PhotonTrackedTarget target,
         float a, float b, float c, float d)
     {
-        return (a * Math.pow(targetObservation.objArea(), 3)
-            + b * Math.pow(targetObservation.objArea(), 2) + c * targetObservation.objArea() + d);
+        return (a * Math.pow(target.getArea(), 3)
+            + b * Math.pow(target.getArea(), 2) + c * target.getArea() + d);
     }
 
     /**
@@ -83,7 +83,7 @@ public class ObjectDetection {
      * H = known height of object (in.). For unreliable corner detection or object digital height
      * calculation, use rangeToTarget_SingleFactorArea.
      * 
-     * @param targetObservation A data type containing vision pipeline results for a single object.
+     * @param target A data type containing vision pipeline results for a single object.
      * @param objectPhysicalHeightMeters The physical height of the object being targeted in meters.
      * @param cameraFocalLengthPixels The camera focal length in pixels as determined by a
      *        calibration procedure.
@@ -91,13 +91,13 @@ public class ObjectDetection {
      *        blur, distortion, focus).
      * @return The estimated range to the object in meters.
      */
-    public double rangeToTarget_FocalLength(TargetObservation targetObservation,
+    public double rangeToTarget_FocalLength(PhotonTrackedTarget target,
         double objectPhysicalHeightMeters, double cameraFocalLengthPixels, double cameraCalFactor)
     {
         // Return & sort corners to estimate detected object's digital height in pixels.
         double[] objectDigitalCorners_px =
-            {targetObservation.cornerOne()[2], targetObservation.cornerTwo()[2],
-                    targetObservation.cornerThree()[2], targetObservation.cornerFour()[2]};
+            {target.getDetectedCorners().get(0).y, target.getDetectedCorners().get(1).y,
+                    target.getDetectedCorners().get(2).y, target.getDetectedCorners().get(3).y};
         Arrays.sort(objectDigitalCorners_px);
         // Calculate object's digital height in pixels.
         double objectPhysicalHeightPixels =
@@ -119,10 +119,10 @@ public class ObjectDetection {
      * differential between goal and camera. The larger this differential, the more accurate the
      * distance estimate will be. For very small differentials, use rangeToTarget_FocalLength.
      *
-     * @param targetObservation A data type containing vision pipeline results for a single target.
-     *        Used to determine the pitch & yaw of the target from the centerline of the camera's
-     *        lens in degrees; centerline assumed through geometric center of conical FOV. Target
-     *        pitch is positive above centerline and target yaw is positive right of centerline.
+     * @param target A data type containing vision pipeline results for a single target. Used to
+     *        determine the pitch & yaw of the target from the centerline of the camera's lens in
+     *        degrees; centerline assumed through geometric center of conical FOV. Target pitch is
+     *        positive above centerline and target yaw is positive right of centerline.
      * @param cameraTransform Transform3d of the camera relative to the robot. Used to determine the
      *        camera's height off the ground, the range offset, installation pitch, and installation
      *        yaw.
@@ -136,7 +136,7 @@ public class ObjectDetection {
      *        as a result of either camera hardware or installation.
      * @return The estimated robot range to the target in meters.
      */
-    public double rangeToTarget_Pitch(TargetObservation targetObservation,
+    public double rangeToTarget_Pitch(PhotonTrackedTarget target,
         Transform3d cameraTransform, double targetHeightMeters, double cameraCalFactor,
         double cameraOffset)
     {
@@ -167,10 +167,10 @@ public class ObjectDetection {
                 // estimation or vector transforms are more appropriate but not implemented.
                 // Mathematical approach: lens centerline projection onto object/lens-center plane.
                 yawCorrection =
-                    Math.cos(Math.abs(cameraYawRadians - Math.toRadians(targetObservation.yaw())));
+                    Math.cos(Math.abs(cameraYawRadians - Math.toRadians(target.getYaw())));
             }
             return (((targetHeightMeters - cameraHeightMeters)
-                / Math.tan(cameraPitchRadians + Math.toRadians(targetObservation.pitch())))
+                / Math.tan(cameraPitchRadians + Math.toRadians(target.getPitch())))
                 * yawCorrection * cameraCalFactor + cameraOffset + cameraRangeDelta);
 
         } else {
@@ -187,10 +187,10 @@ public class ObjectDetection {
      * finite range between goal and camera. The larger this differential, the more accurate the
      * distance estimate will be.
      *
-     * @param targetObservation A data type containing vision pipeline results for a single target.
-     *        Used to determine the yaw of the target from the centerline of the camera's lens in
-     *        degrees; centerline assumed through geometric center of conical FOV. Target pitch is
-     *        positive above centerline and target yaw is positive right of centerline.
+     * @param target A data type containing vision pipeline results for a single target. Used to
+     *        determine the yaw of the target from the centerline of the camera's lens in degrees;
+     *        centerline assumed through geometric center of conical FOV. Target pitch is positive
+     *        above centerline and target yaw is positive right of centerline.
      * @param cameraTransform Transform3d of the camera relative to the robot. Used to determine the
      *        camera's heading offset and installation yaw.
      * @param targetRangeMeters Robot's range to the target in meters.
@@ -201,7 +201,7 @@ public class ObjectDetection {
      * @return The estimated robot heading to the target in meters. Positive heading = robot local X
      *         axis right of target; negative heading = robot local X axis left of target.
      */
-    public double headingToTarget_Yaw(TargetObservation targetObservation,
+    public double headingToTarget_Yaw(PhotonTrackedTarget target,
         Transform3d cameraTransform, double targetRangeMeters, double cameraCalFactor,
         double cameraOffset)
     {
@@ -214,7 +214,7 @@ public class ObjectDetection {
         double cameraYawRadians = cameraTransform.getRotation().getZ();
         // Mathematically verified for target left or right of centerline & camera yawed left or
         // right; no sign correction required.
-        return ((Math.tan(cameraYawRadians - Math.toRadians(targetObservation.yaw())))
+        return ((Math.tan(cameraYawRadians - Math.toRadians(target.getYaw())))
             * cameraRangeMeters * cameraCalFactor + cameraOffset + cameraHeadingDelta);
     }
 
