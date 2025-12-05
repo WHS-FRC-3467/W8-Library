@@ -139,14 +139,6 @@ public class VisionSubsystem extends SubsystemBase {
         this.cameras = cameras;
     }
 
-    /**
-     * Periodically called by the scheduler.
-     * <p>
-     * This method polls all cameras for unread results, processes each result using
-     * {@link #processPipelineResult(PhotonPipelineResult, AprilTagCamera)}, and logs accepted and
-     * rejected observations for debugging and analysis.
-     * </p>
-     */
     @Override
     public void periodic()
     {
