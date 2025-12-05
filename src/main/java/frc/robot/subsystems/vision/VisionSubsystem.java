@@ -61,6 +61,12 @@ public class VisionSubsystem extends SubsystemBase {
     /** Maximum allowable height (Z-axis) of a detected pose to be considered valid. */
     public static final double MAX_Z_METERS = 0.75;
 
+    /** Maximum allowable distance from a target to be considered valid. */
+    public static final double MAX_DISTANCE_METERS = 10;
+
+    /** Maximum ambiguity ratio allowed in a result */
+    public static final double MAX_AMBIGUITY = 0.2;
+
     /** Width of the field in meters. */
     public static final double FIELD_WIDTH = FieldConstants.FIELD_WIDTH.in(Meters);
 
@@ -90,11 +96,11 @@ public class VisionSubsystem extends SubsystemBase {
 
         PhotonTrackedTarget bestTarget = result.getBestTarget();
 
-        if (bestTarget.getBestCameraToTarget().getTranslation().getNorm() > 10.0) {
+        if (bestTarget.getBestCameraToTarget().getTranslation().getNorm() > MAX_DISTANCE_METERS) {
             return false;
         }
 
-        return bestTarget.getPoseAmbiguity() <= 0.2;
+        return bestTarget.getPoseAmbiguity() <= MAX_AMBIGUITY;
     }
 
     /**
