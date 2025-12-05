@@ -134,71 +134,6 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     /**
-     * Processes a single {@link PhotonPipelineResult} from a camera.
-     * <p>
-     * If the result is valid and passes checks, it is converted to a {@link VisionPoseObservation}
-     * and added to {@link RobotState}. The method also computes standard deviation factors for
-     * linear and angular uncertainty.
-     * </p>
-     *
-     * @param result the pipeline result to process
-     * @param camera the camera that generated the result
-     * @return {@code true} if the result was accepted and processed, {@code false} otherwise
-     */
-    private boolean processPipelineResult(PhotonPipelineResult result, AprilTagCamera camera)
-    {
-        if (!preFilter(result)) {
-            return false;
-        }
-
-        Rotation2d heading = robotState.getPoseAtTime(result.getTimestampSeconds())
-            .map(Pose2d::getRotation).orElse(null);
-        if (heading == null) {
-            return false;
-        }
-
-        result.targets.forEach(target -> {
-            Pose2d pose = TrigSolve.solveTrigPosition(FieldConstants.APRILTAG_LAYOUT,
-                camera.getProperties(), target, heading).orElse(null);
-            if (pose == null || !postFilter(new Pose3d(pose))) {
-                return;
-            }
-
-            robotState.addTrigPose(
-                target.getFiducialId(),
-                new TrigPoseRecord(
-                    pose,
-                    target.getBestCameraToTarget().getTranslation().getNorm(),
-                    result.getTimestampSeconds()));
-        });
-
-        VisionPoseRecord poseRecord = visionProcessor.processVisionObservation(
-            result,
-            camera.getProperties(),
-            heading)
-            .orElse(null);
-
-        if (poseRecord == null || !postFilter(poseRecord.pose())) {
-            return false;
-        }
-
-        double stdDevFactor =
-            (Math.pow(poseRecord.averageDistanceMeters(), 2.0) / result.getTargets().size())
-                * camera.getProperties().stdDevFactor();
-        double linearStdDev = LINEAR_STDDEV_BASELINE * stdDevFactor;
-        double angularStdDev = ANGULAR_STDDEV_BASELINE * stdDevFactor;
-
-        robotState.addVisionObservation(
-            new VisionPoseObservation(
-                result.getTimestampSeconds(),
-                poseRecord.pose().toPose2d(),
-                linearStdDev,
-                angularStdDev));
-
-        return true;
-    }
-
-    /**
      * Periodically called by the scheduler.
      * <p>
      * This method polls all cameras for unread results, processes each result using
@@ -219,15 +154,71 @@ public class VisionSubsystem extends SubsystemBase {
 
             ArrayList<PhotonPipelineResult> acceptedResults = new ArrayList<>();
             ArrayList<PhotonPipelineResult> rejectedResults = new ArrayList<>();
-            for (var result : results) {
-                boolean accepted = processPipelineResult(result, camera);
+            ArrayList<Pose2d> acceptedPoses = new ArrayList<>();
+            ArrayList<Pose2d> rejectedPoses = new ArrayList<>();
 
-                if (!accepted) {
+            for (var result : results) {
+                if (!preFilter(result)) {
                     rejectedResults.add(result);
                     continue;
                 }
 
+                Rotation2d heading = robotState.getPoseAtTime(result.getTimestampSeconds())
+                    .map(Pose2d::getRotation).orElse(null);
+                if (heading == null) {
+                    rejectedResults.add(result);
+                    continue;
+                }
+
+                result.targets.forEach(target -> {
+                    Pose2d pose = TrigSolve.solveTrigPosition(FieldConstants.APRILTAG_LAYOUT,
+                        camera.getProperties(), target, heading).orElse(null);
+                    if (pose == null || !postFilter(new Pose3d(pose))) {
+                        return;
+                    }
+
+                    robotState.addTrigPose(
+                        target.getFiducialId(),
+                        new TrigPoseRecord(
+                            pose,
+                            target.getBestCameraToTarget().getTranslation().getNorm(),
+                            result.getTimestampSeconds()));
+                });
+
+                VisionPoseRecord poseRecord = visionProcessor.processVisionObservation(
+                    result,
+                    camera.getProperties(),
+                    heading)
+                    .orElse(null);
+
+                if (poseRecord == null) {
+                    rejectedResults.add(result);
+                    continue;
+                }
+
+                if (!postFilter(poseRecord.pose())) {
+                    rejectedResults.add(result);
+                    rejectedPoses.add(
+                        poseRecord.pose().toPose2d());
+                    continue;
+                }
+
+                double stdDevFactor =
+                    (Math.pow(poseRecord.averageDistanceMeters(), 2.0) / result.getTargets().size())
+                        * camera.getProperties().stdDevFactor();
+                double linearStdDev = LINEAR_STDDEV_BASELINE * stdDevFactor;
+                double angularStdDev = ANGULAR_STDDEV_BASELINE * stdDevFactor;
+
+                robotState.addVisionObservation(
+                    new VisionPoseObservation(
+                        result.getTimestampSeconds(),
+                        poseRecord.pose().toPose2d(),
+                        linearStdDev,
+                        angularStdDev));
+
                 acceptedResults.add(result);
+                acceptedPoses.add(
+                    poseRecord.pose().toPose2d());
             }
 
             Logger.recordOutput(
@@ -246,6 +237,24 @@ public class VisionSubsystem extends SubsystemBase {
                 Logger.recordOutput(
                     cameraLogPrefix + "/Results/Rejected/" + i,
                     rejectedResults.get(i));
+            }
+
+            Logger.recordOutput(
+                cameraLogPrefix + "/Poses/AcceptedLength",
+                acceptedPoses.size());
+            for (int i = 0; i < acceptedPoses.size(); i++) {
+                Logger.recordOutput(
+                    cameraLogPrefix + "/Poses/Accepted/" + i,
+                    acceptedPoses.get(i));
+            }
+
+            Logger.recordOutput(
+                cameraLogPrefix + "/Poses/RejectedLength",
+                rejectedPoses.size());
+            for (int i = 0; i < rejectedPoses.size(); i++) {
+                Logger.recordOutput(
+                    cameraLogPrefix + "/Results/Rejected/" + i,
+                    rejectedPoses.get(i));
             }
         }
     }
