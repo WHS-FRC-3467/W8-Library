@@ -34,7 +34,7 @@ class FlywheelTest implements AutoCloseable {
     @BeforeEach // this method will run before each test
     void setup()
     {
-        assert HAL.initialize(500, 0); // initialize the HAL, crash if failed
+        assertTrue(HAL.initialize(500, 0)); // initialize the HAL, crash if failed
 
         flywheel = FlywheelConstants.get();
 
