@@ -8,8 +8,8 @@ import org.littletonrobotics.junction.Logger;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import frc.lib.io.objectdetection.ObjectDetectionIO;
 import frc.lib.io.objectdetection.ObjectDetectionIO.ObjectDetectionIOInputs;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -214,7 +214,7 @@ public class ObjectDetection {
         double cameraYawRadians = cameraTransform.getRotation().getZ();
         // Mathematically verified for target left or right of centerline & camera yawed left or
         // right; no sign correction required.
-        return ((Math.tan(cameraYawRadians - Math.toRadians(target.getYaw())))
+        return (Math.tan(cameraYawRadians - Math.toRadians(target.getYaw()))
             * cameraRangeMeters * cameraCalFactor + cameraOffset + cameraHeadingDelta);
     }
 
@@ -263,15 +263,14 @@ public class ObjectDetection {
      * re-added to the end of the list.
      * 
      * @param N The number of last detections to store in memory.
-     * @param lastNDetections The ArrayList of Translation2d objects representing the robot's memory
-     *        of last N detections.
+     * @param lastNDetections The List of Translation2d objects representing the robot's memory of
+     *        last N detections.
      * @param toleranceMeters The tolerance in meters for determining whether a detection is new or
      *        old.
      * @param targetTranslation The Translation2d of the current target detection to be evaluated.
-     * @return Updated lastNDetections list.
      */
     public void getLastNDetections(int N,
-        ArrayList<Translation2d> lastNDetections, double toleranceMeters,
+        List<Translation2d> lastNDetections, double toleranceMeters,
         Translation2d targetTranslation)
     {
         Translation2d currentTranslation;

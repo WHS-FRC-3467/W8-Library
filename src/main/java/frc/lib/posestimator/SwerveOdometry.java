@@ -55,6 +55,7 @@ public class SwerveOdometry {
      * @param swervePositions the current positions of the swerve modules
      * @param gyroAngle optional gyro angle to correct heading drift
      */
+    @SuppressWarnings("ArrayRecordComponent")
     public static final record OdometryObservation(
         Time timestamp,
         SwerveModulePosition[] swervePositions,

@@ -37,7 +37,7 @@ class DriveTest {
     @BeforeEach // this method will run before each test
     void setup()
     {
-        assert HAL.initialize(500, 0); // initialize the HAL, crash if failed
+        assertTrue(HAL.initialize(500, 0)); // initialize the HAL, crash if failed
         drive = new Drive(new GyroIO() {},
             new ModuleIOSim(DriveConstants.FrontLeft),
             new ModuleIOSim(DriveConstants.FrontRight),

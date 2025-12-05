@@ -52,7 +52,7 @@ public class ObjectDetectorConstants {
                 new TargetModel(algaeHeightMeters)),
             new VisionTargetSim(new Pose3d(7, 6, algaeHeightMeters / 2, new Rotation3d()),
                 new TargetModel(algaeHeightMeters)),
-            new VisionTargetSim((new Pose3d(12, 7, algaeHeightMeters / 2, new Rotation3d())),
+            new VisionTargetSim(new Pose3d(12, 7, algaeHeightMeters / 2, new Rotation3d()),
                 new TargetModel(algaeHeightMeters)),
             null,
     };
@@ -63,11 +63,11 @@ public class ObjectDetectorConstants {
                     new TargetModel(algaeHeightMeters)),
                 new VisionTargetSim(new Pose3d(7, 6, algaeHeightMeters / 2, new Rotation3d()),
                     new TargetModel(algaeHeightMeters)),
-                new VisionTargetSim((new Pose3d(12, 7, algaeHeightMeters / 2, new Rotation3d())),
+                new VisionTargetSim(new Pose3d(12, 7, algaeHeightMeters / 2, new Rotation3d()),
                     new TargetModel(algaeHeightMeters)),
                 new VisionTargetSim(
-                    (new Pose3d(16, 3.5 * Math.sin(0.25 * Math.PI * Timer.getFPGATimestamp()) + 4.1,
-                        algaeHeightMeters / 2, new Rotation3d())),
+                    new Pose3d(16, 3.5 * Math.sin(0.25 * Math.PI * Timer.getFPGATimestamp()) + 4.1,
+                        algaeHeightMeters / 2, new Rotation3d()),
                     new TargetModel(algaeHeightMeters)),
         };
     // 2026 Targets
