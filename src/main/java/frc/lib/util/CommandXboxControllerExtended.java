@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 public class CommandXboxControllerExtended extends CommandXboxController {
     private GenericHID hid;
     private double deadband = 0.0;
+    private boolean applyCurve = false;
 
     public CommandXboxControllerExtended(int port)
     {
@@ -43,6 +44,18 @@ public class CommandXboxControllerExtended extends CommandXboxController {
     public CommandXboxControllerExtended withDeadband(double deadband)
     {
         this.deadband = deadband;
+        return this;
+    }
+
+    /**
+     * Square the output of the controllers to provide precise control
+     * 
+     * @param applyCurve Whether or not to apply the curve
+     * @return this
+     */
+    public CommandXboxControllerExtended applyCurve(boolean applyCurve)
+    {
+        this.applyCurve = applyCurve;
         return this;
     }
 
@@ -74,38 +87,36 @@ public class CommandXboxControllerExtended extends CommandXboxController {
             .andThen(() -> hid.setRumble(side, 0.0));
     }
 
-    // an exponential input curve for the joysticks
-    // good for precise movemnet while still maintaining good full speed
-    double inputCurve(double joystickInput)
+    double applyModifiers(double joystickInput)
     {
-        return MathUtil.applyDeadband(
-            // Math.pow(joy, 5) - Math.pow(joy, 3) / 2 + (joy * 0.23),
-            0.5 * Math.pow(joystickInput, 5) + (joystickInput * 0.4),
-            deadband);
+        if (applyCurve) {
+            joystickInput = joystickInput * joystickInput;
+        }
+
+        return MathUtil.applyDeadband(joystickInput, deadband);
     }
 
     @Override
     public double getLeftX()
     {
-        return inputCurve(super.getLeftX());
+        return applyModifiers(super.getLeftX());
     }
 
     @Override
     public double getLeftY()
     {
-        return inputCurve(super.getLeftY());
+        return applyModifiers(super.getLeftY());
     }
 
     @Override
     public double getRightX()
     {
-        return inputCurve(super.getRightX());
+        return applyModifiers(super.getRightX());
     }
 
     @Override
     public double getRightY()
     {
-        return inputCurve(super.getRightY());
-
+        return applyModifiers(super.getRightY());
     }
 }
