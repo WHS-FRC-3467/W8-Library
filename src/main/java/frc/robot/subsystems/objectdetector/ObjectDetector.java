@@ -41,14 +41,14 @@ public class ObjectDetector extends SubsystemBase {
     {
         objectDetection.periodic();
 
-        if (objectDetection.getTargetObservations().length > 0) {
+        if (objectDetection.getTargets().length > 0) {
             double range =
-                objectDetection.rangeToTarget_Pitch(objectDetection.getTargetObservations()[0],
+                objectDetection.rangeToTarget_Pitch(objectDetection.getTargets()[0],
                     ObjectDetectorConstants.CAMERA0_TRANSFORM,
                     ObjectDetectorConstants.algaeHeightMeters / 2,
                     1, 0);
             double heading =
-                objectDetection.headingToTarget_Yaw(objectDetection.getTargetObservations()[0],
+                objectDetection.headingToTarget_Yaw(objectDetection.getTargets()[0],
                     ObjectDetectorConstants.CAMERA0_TRANSFORM,
                     range, 1, 0);
             double distance = objectDetection.distanceToTarget2d(range, heading);
