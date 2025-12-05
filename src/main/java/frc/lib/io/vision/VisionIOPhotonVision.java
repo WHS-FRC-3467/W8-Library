@@ -15,102 +15,27 @@
 
 package frc.lib.io.vision;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.units.measure.Distance;
-import frc.lib.util.Timestamped;
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Seconds;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import org.apache.commons.lang3.ArrayUtils;
-import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
-import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
+import frc.lib.devices.AprilTagCamera.CameraProperties;
 
-/** IO implementation for real PhotonVision hardware. */
 public class VisionIOPhotonVision implements VisionIO {
-    protected final PhotonCamera camera;
-    protected final PhotonPoseEstimator poseEstimator;
+    protected final PhotonCamera photonCamera;
 
-    /**
-     * Creates a new VisionIOPhotonVision.
-     *
-     * @param name The configured name of the camera.
-     * @param robotToCamera The 3D position of the camera relative to the robot.
-     */
-    public VisionIOPhotonVision(String name, Transform3d robotToCamera,
-        AprilTagFieldLayout fieldLayout, PoseStrategy strategy)
+    public VisionIOPhotonVision(CameraProperties cameraProperties)
     {
-        camera = new PhotonCamera(name);
-        poseEstimator = new PhotonPoseEstimator(fieldLayout, strategy, robotToCamera);
+        this.photonCamera = new PhotonCamera(cameraProperties.name());
     }
 
     @Override
-    public void updateInputs(VisionIOInputs inputs, Timestamped<Rotation2d> timestampedHeading)
+    public void updateInputs(VisionIOInputs inputs)
     {
-        inputs.connected = camera.isConnected();
+        inputs.connected = photonCamera.isConnected();
 
-        List<PoseObservation> estimates = new ArrayList<>();
-        List<PhotonTrackedTarget> allTargets = new ArrayList<>();
-        List<TagObservation> tagObservations = new ArrayList<>();
-        Set<Integer> tagIDs = new HashSet<>();
-
-        poseEstimator.addHeadingData(timestampedHeading.timestamp().in(Seconds),
-            timestampedHeading.get());
-        for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
-            if (!result.hasTargets()) {
-                continue;
-            }
-
-            allTargets.addAll(result.getTargets());
-
-            Optional<EstimatedRobotPose> optionalEstimate = poseEstimator.update(result);
-            if (optionalEstimate.isEmpty()) {
-                continue;
-            }
-
-            EstimatedRobotPose estimate = optionalEstimate.get();
-
-            int tagCount = estimate.targetsUsed.size();
-
-            Distance totalDistance = Meters.zero();
-            double totalAmbiguity = 0.0;
-            for (PhotonTrackedTarget target : estimate.targetsUsed) {
-                totalDistance = totalDistance
-                    .plus(Meters.of(target.bestCameraToTarget.getTranslation().getNorm()));
-                totalAmbiguity += target.poseAmbiguity;
-                tagIDs.add(target.fiducialId);
-            }
-
-            Distance averageDistance = totalDistance.div(tagCount);
-            double averageAmbiguity = totalAmbiguity / tagCount;
-            estimates.add(
-                new PoseObservation(
-                    Seconds.of(estimate.timestampSeconds),
-                    estimate.estimatedPose,
-                    averageAmbiguity,
-                    tagCount,
-                    averageDistance));
+        if (!inputs.connected) {
+            return;
         }
 
-        inputs.poseObservations = estimates.toArray(new PoseObservation[0]);
-        inputs.tagIds = ArrayUtils.toPrimitive(tagIDs.toArray(new Integer[0]));
-
-        for (PhotonTrackedTarget target : allTargets) {
-            tagObservations.add(new TagObservation(
-                target.fiducialId,
-                target.getPitch(),
-                target.getYaw(),
-                target.getArea()));
-        }
-        inputs.allTargets = tagObservations.toArray(new TagObservation[0]);
+        inputs.results = photonCamera.getAllUnreadResults().toArray(PhotonPipelineResult[]::new);
     }
 }

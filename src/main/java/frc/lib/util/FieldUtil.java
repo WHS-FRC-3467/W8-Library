@@ -14,7 +14,7 @@ import frc.robot.FieldConstants;
 
 /** Utility class for field-related methods. */
 public class FieldUtil {
-    private static final Translation2d fieldCenter = FieldConstants.FIELDCENTER;
+    private static final Translation2d fieldCenter = FieldConstants.FIELD_CENTER;
 
     /**
      * Whether or not a pose needs to be flipped
@@ -54,8 +54,8 @@ public class FieldUtil {
     public static boolean isPoseInField(Translation2d translation, Distance margin)
     {
         return translation.getX() >= margin.in(Meters)
-            && translation.getX() <= FieldConstants.FIELDLENGTH.in(Meters) - margin.in(Meters)
+            && translation.getX() <= FieldConstants.FIELD_LENGTH.in(Meters) - margin.in(Meters)
             && translation.getY() >= margin.in(Meters)
-            && translation.getY() <= FieldConstants.FIELDWIDTH.in(Meters) - margin.in(Meters);
+            && translation.getY() <= FieldConstants.FIELD_WIDTH.in(Meters) - margin.in(Meters);
     }
 }

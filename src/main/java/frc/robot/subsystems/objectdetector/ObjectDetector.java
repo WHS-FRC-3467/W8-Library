@@ -17,25 +17,23 @@ package frc.robot.subsystems.objectdetector;
 
 import frc.lib.devices.ObjectDetection;
 import frc.lib.io.objectdetection.ObjectDetectionIO;
-import frc.robot.subsystems.drive.Drive;
+import frc.robot.RobotState;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.ArrayList;
 
 public class ObjectDetector extends SubsystemBase {
+    private final RobotState robotState = RobotState.getInstance();
     private final ObjectDetection objectDetection;
-    private final Drive drive;
 
     private ArrayList<Translation2d> lastNDetections = new ArrayList<>(10);
 
     // Pass in any object detection IO implementation (e.g. PhotonVision) that implements
     // objectDetectionIO interface [real or sim]
-    public ObjectDetector(ObjectDetectionIO io, Drive drive)
+    public ObjectDetector(ObjectDetectionIO io)
     {
         objectDetection = new ObjectDetection(io);
-        this.drive = drive;
-
     }
 
     @Override
@@ -55,7 +53,10 @@ public class ObjectDetector extends SubsystemBase {
                     range, 1, 0);
             double distance = objectDetection.distanceToTarget2d(range, heading);
             Translation2d targetLocation =
-                objectDetection.estimateTargetToField(range, heading, drive.getPose());
+                objectDetection.estimateTargetToField(
+                    range,
+                    heading,
+                    robotState.getEstimatedPose());
             objectDetection.getLastNDetections(10, lastNDetections, 0.4572,
                 targetLocation);
 
@@ -71,13 +72,13 @@ public class ObjectDetector extends SubsystemBase {
 
             Logger.recordOutput("Detection/" + "Sim Target #0 True Range",
                 ObjectDetectorConstants.SIM_TARGETS[0].getPose().toPose2d().getTranslation()
-                    .minus(drive.getPose().getTranslation()).getX());
+                    .minus(robotState.getEstimatedPose().getTranslation()).getX());
             Logger.recordOutput("Detection/" + "Sim Target #0 True Heading",
                 ObjectDetectorConstants.SIM_TARGETS[0].getPose().toPose2d().getTranslation()
-                    .minus(drive.getPose().getTranslation()).getY());
+                    .minus(robotState.getEstimatedPose().getTranslation()).getY());
             Logger.recordOutput("Detection/" + "Sim Target #0 True Distance",
                 ObjectDetectorConstants.SIM_TARGETS[0].getPose().toPose2d().getTranslation()
-                    .getDistance(drive.getPose().getTranslation()));
+                    .getDistance(robotState.getEstimatedPose().getTranslation()));
         }
     }
 }

@@ -9,7 +9,6 @@ import java.util.function.Supplier;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Distance;
 import frc.lib.io.motor.MotorIO.ControlType;

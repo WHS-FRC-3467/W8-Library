@@ -13,31 +13,18 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.io.servo;
+package frc.robot.subsystems.superstructure;
 
-import edu.wpi.first.units.measure.Angle;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-public interface ServoIO {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class SuperstructureConstants {
+    public static final Superstructure.Setpoint DEFAULT_SETPOINT =
+        Superstructure.Setpoint.STOW;
 
-    /**
-     * Getter for the name of the servo
-     * 
-     * @return The name of the servo
-     */
-    public default String getName()
+    public static Superstructure get()
     {
-        return "";
+        return new Superstructure(RotaryConstants.get(), LinearConstants.get());
     }
-
-    /**
-     * Runs the servo to position using an {@link Angle} value. The value should not exceed the
-     * lower and upper limits of the servo.
-     */
-    public default void setAngle(Angle position)
-    {}
-
-    /* Disables output until told to run to a position again. */
-    public default void stop()
-    {}
-
 }
