@@ -16,11 +16,18 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
@@ -32,22 +39,23 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.commands.DriveToPoseBase;
 import frc.lib.commands.SteppableCommandGroup;
 import frc.lib.commands.AlignToPoseBase.AlignMode;
+import frc.lib.devices.AprilTagCamera;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOPhotonVision;
 import frc.lib.io.vision.VisionIOPhotonVisionSim;
+import frc.lib.posestimator.PoseEstimator;
 import frc.lib.util.LoggedDashboardChooser;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggedTuneableProfiledPID;
 import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.lib.util.GamePieceVisualizer;
+import frc.robot.Constants.Mode;
 import frc.robot.Constants.PathConstants;
-import frc.robot.commands.AlignTo2DTarget;
 import frc.robot.commands.AlignToPose;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveToPose;
 import frc.robot.commands.OnTheFlyPathCommand;
-import frc.robot.commands.PointTo2DTarget;
 import frc.robot.commands.autos.BranchingAuto;
 import frc.robot.commands.autos.ExampleAuto;
 import frc.robot.commands.autos.NoneAuto;
@@ -66,14 +74,13 @@ import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
+import frc.robot.subsystems.objectdetector.ObjectDetector;
+import frc.robot.subsystems.objectdetector.ObjectDetectorConstants;
 import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
-import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
-import frc.robot.subsystems.objectDetector.ObjectDetector;
-import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
@@ -97,6 +104,8 @@ import org.photonvision.simulation.VisionSystemSim;
  */
 @SuppressWarnings("unused")
 public class RobotContainer {
+    private final RobotState robotState = RobotState.getInstance();
+
     // Subsystems
     public final Drive drive;
     private final LEDs leds;
@@ -104,7 +113,6 @@ public class RobotContainer {
     private final BeamBreak1 beamBreak1;
     private final Servo1 servo1;
     private final Flywheel flywheel;
-    private final Vision vision;
     private final ObjectDetector objectDetector;
     private final Superstructure superstructure;
 
@@ -115,8 +123,6 @@ public class RobotContainer {
     private final LoggedDashboardChooser<AutoCommand> autoChooser;
     private final LoggedDashboardChooser<Boolean> conditionalChooser;
     public static Field2d autoPreviewField = new Field2d();
-
-
 
     /**
      * The container for the robot. Contains subsystems, IO devices, and commands.
@@ -130,8 +136,8 @@ public class RobotContainer {
         beamBreak1 = BeamBreak1Constants.get();
         superstructure = SuperstructureConstants.get();
         servo1 = Servo1Constants.get();
-        vision = VisionConstants.get(drive); // TODO: Will be refactored in the future to RobotState
-        objectDetector = ObjectDetectorConstants.get(drive);
+        objectDetector = ObjectDetectorConstants.get();
+        VisionConstants.create();
 
         conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
         conditionalChooser.addOption("True", true);
@@ -196,22 +202,24 @@ public class RobotContainer {
             .b()
             .onTrue(
                 Commands.runOnce(
-                    () -> drive.setPose(
-                        new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
-                    drive)
+                    () -> robotState.resetPose(
+                        new Pose2d(robotState.getEstimatedPose().getTranslation(),
+                            new Rotation2d())))
                     .ignoringDisable(true));
 
         // Pathfind to Pose when the Y button is pressed
-        // controller.y().onTrue(
-        // DriveCommands.pathFindToPose(() -> drive.getPose(), new Pose2d(1, 4, Rotation2d.kZero),
-        // PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, MetersPerSecond.of(0.0),
-        // PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
+        controller.y().onTrue(
+            DriveCommands.pathFindToPose(() -> robotState.getEstimatedPose(),
+                new Pose2d(1, 4, Rotation2d.kZero),
+                PathConstants.ON_THE_FLY_PATH_CONSTRAINTS, MetersPerSecond.of(0.0),
+                PathConstants.PATHGENERATION_DRIVE_TOLERANCE));
 
         // On-the-fly path with waypoints while the Right Bumper is held
         controller.rightBumper().whileTrue(
-            new OnTheFlyPathCommand(drive, () -> drive.getPose(), new ArrayList<>(Arrays.asList()), // List
-                                                                                                    // of
-                                                                                                    // waypoints
+            new OnTheFlyPathCommand(drive, () -> robotState.getEstimatedPose(),
+                new ArrayList<>(Arrays.asList()), // List
+                // of
+                // waypoints
                 new Pose2d(6, 6, Rotation2d.k180deg), PathConstants.ON_THE_FLY_PATH_CONSTRAINTS,
                 MetersPerSecond.of(0.0), false, PathConstants.PATHGENERATION_DRIVE_TOLERANCE,
                 PathConstants.PATHGENERATION_ROT_TOLERANCE));
@@ -223,13 +231,7 @@ public class RobotContainer {
 
         LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
         SmartDashboard.putData("Shoot Ball", Commands
-            .runOnce(() -> BallSimulator.launch(FeetPerSecond.of(ballVel.getAsDouble()),
-                RobotState.getInstance())));
-
-        SmartDashboard.putData("Align2d",
-            new AlignTo2DTarget(drive, vision, () -> controller.getLeftY()));
-        SmartDashboard.putData("PointToTarget",
-            new PointTo2DTarget(drive, vision));
+            .runOnce(() -> BallSimulator.launch(FeetPerSecond.of(ballVel.getAsDouble()))));
 
         GamePieceVisualizer algaeViz =
             new GamePieceVisualizer("Algae #1", new Pose3d(1, 1, 1, new Rotation3d()));
@@ -275,13 +277,15 @@ public class RobotContainer {
     {
 
         /* Starting pose checker for auto */
-        autoPreviewField.setRobotPose(drive.getPose());
+        autoPreviewField.setRobotPose(robotState.getEstimatedPose());
 
         try {
-            double distanceFromStartPose = drive.getPose().getTranslation()
+            double distanceFromStartPose = robotState.getEstimatedPose().getTranslation()
                 .getDistance(autoPreviewField.getObject("path").getPoses().get(0).getTranslation());
-            double degreesFromStartPose = Math.abs(drive.getPose().getRotation().minus(
-                autoPreviewField.getObject("path").getPoses().get(0).getRotation()).getDegrees());
+            double degreesFromStartPose = Math.abs(robotState.getEstimatedPose().getRotation()
+                .minus(
+                    autoPreviewField.getObject("path").getPoses().get(0).getRotation())
+                .getDegrees());
 
             SmartDashboard.putNumber("Auto Pose Check/Inches from Start",
                 Math.round(distanceFromStartPose * 100.0) / 100.0);

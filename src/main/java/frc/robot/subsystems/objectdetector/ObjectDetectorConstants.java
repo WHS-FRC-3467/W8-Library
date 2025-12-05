@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.objectDetector;
+package frc.robot.subsystems.objectdetector;
 
 import java.util.function.Supplier;
 import org.photonvision.estimation.TargetModel;
@@ -15,7 +15,7 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.io.objectdetection.*;
 import frc.robot.Constants;
-import frc.robot.subsystems.drive.Drive;
+import frc.robot.RobotState;
 
 /*
  * Subsystem constants (e.g. names, transforms) for the various object detector cameras on the
@@ -71,19 +71,20 @@ public class ObjectDetectorConstants {
     // ...
 
     // Robot runtime mode for use in roboRIO & AKit
-    public static ObjectDetector get(Drive drive)
+    public static ObjectDetector get()
     {
+        RobotState robotState = RobotState.getInstance();
         switch (Constants.currentMode) {
             case REAL:
                 // Real IO, inputs = PhotonVision implementation of ObjectDetectionIO
-                return new ObjectDetector(new ObjectDetectionIOPhotonVision(CAMERA0_NAME), drive);
+                return new ObjectDetector(new ObjectDetectionIOPhotonVision(CAMERA0_NAME));
             case SIM:
                 // Sim IO, inputs = sim implementation of ObjectionDetectionIO
                 return new ObjectDetector(new ObjectDetectionIOSim(CAMERA0_NAME, CAMERA0_TRANSFORM,
-                    () -> drive.getPose(), SIM_NAME, visionTargetSimSupplier), drive);
+                    () -> robotState.getEstimatedPose(), SIM_NAME, visionTargetSimSupplier));
             case REPLAY:
                 // Replayed robot, use logged data for IO
-                return new ObjectDetector(new ObjectDetectionIO() {}, drive);
+                return new ObjectDetector(new ObjectDetectionIO() {});
             default:
                 throw new IllegalStateException("Unrecognized Robot Mode");
         }

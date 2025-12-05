@@ -30,7 +30,7 @@ import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
@@ -86,7 +86,7 @@ public class LinearMechanismSim extends LinearMechanism {
     {
         super.periodic();
 
-        Time currentTime = Seconds.of(Timer.getTimestamp());
+        Time currentTime = RobotController.getMeasureTime();
         double deltaTime = currentTime.minus(lastTime).in(Seconds);
 
         // Note: ElevatorSim internally simulates gravity for vertical mechanisms (pitch = -90° for upward, 90° for downward), matching the convention in LinearMechanism.java and LinearConstants.java.

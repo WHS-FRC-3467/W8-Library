@@ -31,10 +31,10 @@ public class BallSimulator {
     private static final double AIR_DENSITY = 1.225;
     private static final double DRAG_COEFFICIENT = 0.45;
     private static final double CROSSECTION_AREA =
-        Math.PI * Math.pow(FieldConstants.ALGAEDIAMETER.in(Meters) / 2, 2);
+        Math.PI * Math.pow(FieldConstants.ALGAE_DIAMETER.in(Meters) / 2, 2);
     private static final double MASS = 0.68;
 
-    private static Distance ballDiameter = FieldConstants.ALGAEDIAMETER;
+    private static Distance ballDiameter = FieldConstants.ALGAE_DIAMETER;
 
     private static Transform3d shooterOffset =
         new Transform3d(
@@ -46,12 +46,14 @@ public class BallSimulator {
                 -Math.toRadians(45), 0 // 45 degree launch angle
             ));
 
-    public static void launch(LinearVelocity velocity, RobotState robotState)
+    public static void launch(LinearVelocity velocity)
     {
+        RobotState robotState = RobotState.getInstance();
+
         objectTrajectory.clear();
 
         // Set initial position
-        currentPose = new Pose3d(robotState.getPose()).plus(shooterOffset);
+        currentPose = new Pose3d(robotState.getEstimatedPose()).plus(shooterOffset);
 
         // Set initial velocity
         objectVelocity = new Translation3d(velocity.in(MetersPerSecond), currentPose.getRotation());

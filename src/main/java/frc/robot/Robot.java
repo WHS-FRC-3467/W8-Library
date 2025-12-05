@@ -41,6 +41,8 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
  * project.
  */
 public class Robot extends LoggedRobot {
+    private final RobotState robotState = RobotState.getInstance();
+
     private Command autonomousCommand;
     private RobotContainer robotContainer;
 
@@ -186,7 +188,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void autonomousPeriodic()
     {
-        RobotContainer.autoPreviewField.setRobotPose(robotContainer.drive.getPose());
+        RobotContainer.autoPreviewField.setRobotPose(robotState.getEstimatedPose());
     }
 
     /** This function is called once when teleop is enabled. */
