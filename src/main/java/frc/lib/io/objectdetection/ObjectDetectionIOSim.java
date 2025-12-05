@@ -19,7 +19,6 @@ import edu.wpi.first.math.geometry.Transform3d;
 
 /** An object detection sim class that utilizes the PhotonVision implementation for tests. */
 public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
-    protected final String cameraName;
     private final VisionSystemSim visionSim;
     private final PhotonCamera cam;
     private final PhotonCameraSim camSim;
@@ -35,7 +34,6 @@ public class ObjectDetectionIOSim extends ObjectDetectionIOPhotonVision {
         String target_name, Supplier<VisionTargetSim[]> visionTargetSupplier)
     {
         super(cameraName);
-        this.cameraName = cameraName;
         this.target_name = target_name;
         // Initialize simulated object detection camera
         cam = new PhotonCamera(cameraName);
