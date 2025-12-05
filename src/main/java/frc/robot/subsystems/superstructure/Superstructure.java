@@ -46,6 +46,7 @@ public class Superstructure extends SubsystemBase implements AutoCloseable {
     private final LinearMechanism linearIO;
 
     @RequiredArgsConstructor
+    @SuppressWarnings("ImmutableEnumChecker")
     @Getter
     public enum Setpoint {
         STOW(() -> Inches.of(LINEAR_STOW_SETPOINT.get()),
