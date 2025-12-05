@@ -128,14 +128,14 @@ public class RotaryConstants {
     {
         switch (Constants.currentMode) {
             case REAL:
-                return new RotaryMechanismReal(
+                return new RotaryMechanismReal(NAME,
                     new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
                         new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
                     CONSTANTS,
                     Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
                         NAME + "Encoder", getCANcoderConfig(false))));
             case SIM:
-                return new RotaryMechanismSim(
+                return new RotaryMechanismSim(NAME,
                     new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
                         new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
                     DCMOTOR, MOI, false, CONSTANTS,

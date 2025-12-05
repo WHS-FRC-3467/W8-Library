@@ -36,7 +36,6 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.lib.util.Device;
-import lombok.Getter;
 import frc.lib.util.CANUpdateThread;
 
 /**
@@ -47,9 +46,6 @@ public class MotorIOTalonFX implements MotorIO {
 
     public record TalonFXFollower(Device.CAN id, boolean opposesMain) {
     }
-
-    @Getter
-    protected final String name;
 
     protected final TalonFX motor;
     protected final TalonFX[] followers;
@@ -93,7 +89,6 @@ public class MotorIOTalonFX implements MotorIO {
     public MotorIOTalonFX(String name, TalonFXConfiguration config, Device.CAN main,
         TalonFXFollower... followerData)
     {
-        this.name = name;
 
         motor = new TalonFX(main.id(), main.bus());
         updateThread.CTRECheckErrorAndRetry(() -> motor.getConfigurator().apply(config));

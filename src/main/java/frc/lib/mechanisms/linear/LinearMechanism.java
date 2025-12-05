@@ -48,6 +48,7 @@ public abstract class LinearMechanism implements Mechanism {
         Rotation3d orientation) {
     }
 
+    protected final String name;
     protected final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
     protected final DistanceAngleConverter converter;
 
@@ -55,6 +56,7 @@ public abstract class LinearMechanism implements Mechanism {
 
     public LinearMechanism(String name, LinearMechCharacteristics characteristics)
     {
+        this.name = name;
         visualizer = new LinearMechanismVisualizer(name, characteristics);
         converter = characteristics.converter();
     }
