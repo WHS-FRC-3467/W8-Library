@@ -27,7 +27,6 @@ public abstract class LinearMechanism implements Mechanism {
     /**
      * Characteristics for a linear mechanism.
      *
-     * @param offset The 3D offset from the robot origin to the base of the mechanism
      * @param minDistance Minimum extension distance
      * @param maxDistance Maximum extension distance
      * @param startingDistance Starting extension distance
