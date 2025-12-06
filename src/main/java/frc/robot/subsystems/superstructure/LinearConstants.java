@@ -115,10 +115,10 @@ public class LinearConstants {
     {
         switch (Constants.currentMode) {
             case REAL:
-                return new LinearMechanismReal(
+                return new LinearMechanismReal(NAME,
                     new MotorIOTalonFX(NAME, getFXConfig(), Ports.linear), CHARACTERISTICS);
             case SIM:
-                return new LinearMechanismSim(
+                return new LinearMechanismSim(NAME,
                     new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.linear),
                     DCMOTOR, CARRIAGE_MASS, CHARACTERISTICS, true);
             case REPLAY:

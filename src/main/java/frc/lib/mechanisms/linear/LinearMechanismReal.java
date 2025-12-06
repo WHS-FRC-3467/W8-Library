@@ -33,10 +33,10 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 public class LinearMechanismReal extends LinearMechanism {
     private final MotorIO io;
 
-    public LinearMechanismReal(MotorIO io,
+    public LinearMechanismReal(String name, MotorIO io,
         LinearMechCharacteristics characteristics)
     {
-        super(io.getName(), characteristics);
+        super(name, characteristics);
 
         this.io = io;
     }
@@ -47,7 +47,7 @@ public class LinearMechanismReal extends LinearMechanism {
         super.periodic();
 
         io.updateInputs(inputs);
-        Logger.processInputs(io.getName(), inputs);
+        Logger.processInputs(name, inputs);
     }
 
     @Override

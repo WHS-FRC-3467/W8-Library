@@ -29,10 +29,10 @@ public class RotaryMechanismReal extends RotaryMechanism {
         new AbsoluteEncoderInputsAutoLogged();
     private final Optional<AbsoluteEncoderIO> absoluteEncoder;
 
-    public RotaryMechanismReal(MotorIO io,
+    public RotaryMechanismReal(String name, MotorIO io,
         RotaryMechCharacteristics characteristics, Optional<AbsoluteEncoderIO> absoluteEncoder)
     {
-        super(io.getName(), characteristics);
+        super(name, characteristics);
         this.io = io;
         this.absoluteEncoder = absoluteEncoder;
     }
@@ -43,7 +43,7 @@ public class RotaryMechanismReal extends RotaryMechanism {
         super.periodic();
 
         io.updateInputs(inputs);
-        Logger.processInputs(io.getName(), inputs);
+        Logger.processInputs(name, inputs);
 
         absoluteEncoder.ifPresent(encoder -> {
             encoder.updateInputs(absoluteEncoderInputs);

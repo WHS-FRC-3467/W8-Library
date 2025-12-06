@@ -31,12 +31,14 @@ public abstract class RotaryMechanism implements Mechanism {
         RotaryAxis axis) {
     }
 
+    protected final String name;
     protected final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
 
     private final RotaryVisualizer visualizer;
 
     public RotaryMechanism(String name, RotaryMechCharacteristics characteristics)
     {
+        this.name = name;
         visualizer = new RotaryVisualizer(name, characteristics);
     }
 

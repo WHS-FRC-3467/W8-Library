@@ -46,6 +46,7 @@ import frc.lib.io.motor.MotorInputsAutoLogged;
  */
 public class FlywheelMechanismSim implements FlywheelMechanism {
 
+    private final String name;
     private final MotorIOSim io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
     private final FlywheelSim sim;
@@ -54,9 +55,11 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
 
     private Time lastTime = Seconds.zero();
 
-    public FlywheelMechanismSim(MotorIOSim io, DCMotor characteristics,
+    public FlywheelMechanismSim(String name, MotorIOSim io, DCMotor characteristics,
         MomentOfInertia momentOfInertia, AngularVelocity tolerance)
     {
+        this.name = name;
+
         if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
             throw new IllegalArgumentException(
                 "momentOfInertia must be greater than zero!");
@@ -67,7 +70,7 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
             momentOfInertia.in(KilogramSquareMeters),
             io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()), characteristics);
 
-        visualizer = new FlywheelVisualizer(io.getName());
+        visualizer = new FlywheelVisualizer(name);
     }
 
     @Override
@@ -93,7 +96,7 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
         io.setPosition(inputs.position.plus(positionChange));
 
         io.updateInputs(inputs);
-        Logger.processInputs(io.getName(), inputs);
+        Logger.processInputs(name, inputs);
 
         visualizer.setAngle(inputs.position);
         if (inputs.velocityError != null) {

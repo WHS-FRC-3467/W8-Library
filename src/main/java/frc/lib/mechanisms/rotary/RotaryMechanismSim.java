@@ -46,12 +46,12 @@ public class RotaryMechanismSim extends RotaryMechanism {
     private final Optional<AbsoluteEncoderIOSim> absoluteEncoderSim;
     private Time lastTime = Seconds.zero();
 
-    public RotaryMechanismSim(MotorIOSim io, DCMotor dcMotor,
+    public RotaryMechanismSim(String name, MotorIOSim io, DCMotor dcMotor,
         MomentOfInertia momentOfInertia, Boolean useGravity,
         RotaryMechCharacteristics characteristics,
         Optional<AbsoluteEncoderIOSim> absoluteEncoderSim)
     {
-        super(io.getName(), characteristics);
+        super(name, characteristics);
 
         if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
             throw new IllegalArgumentException(
@@ -90,7 +90,7 @@ public class RotaryMechanismSim extends RotaryMechanism {
         io.setRotorVelocity(RadiansPerSecond.of(sim.getVelocityRadPerSec())
             .times(io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()));
 
-        Logger.recordOutput(io.getName() + " Sim Angle", sim.getAngleRads());
+        Logger.recordOutput(name + " Sim Angle", sim.getAngleRads());
 
         absoluteEncoderSim.ifPresent(encoderSim -> {
             encoderSim
@@ -104,7 +104,7 @@ public class RotaryMechanismSim extends RotaryMechanism {
         });
 
         io.updateInputs(inputs);
-        Logger.processInputs(io.getName(), inputs);
+        Logger.processInputs(name, inputs);
     }
 
     @Override

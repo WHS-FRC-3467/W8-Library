@@ -91,16 +91,6 @@ public interface MotorIO extends AutoCloseable {
     }
 
     /**
-     * Getter for the name of the motor
-     * 
-     * @return The name of the motor
-     */
-    public default String getName()
-    {
-        return "";
-    }
-
-    /**
      * Updates the provided {@link MotorInputs} instance with the latest sensor readings. If the
      * sensor is not connected, it populates the fields with default values.
      *
