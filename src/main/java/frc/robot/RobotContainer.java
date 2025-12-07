@@ -82,6 +82,8 @@ import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
+import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.TurretConstants;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
@@ -117,6 +119,7 @@ public class RobotContainer {
     private final Flywheel flywheel;
     private final ObjectDetector objectDetector;
     private final Superstructure superstructure;
+    private final Turret turret;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -125,6 +128,8 @@ public class RobotContainer {
     private final LoggedDashboardChooser<AutoCommand> autoChooser;
     private final LoggedDashboardChooser<Boolean> conditionalChooser;
     public static Field2d autoPreviewField = new Field2d();
+
+    Rotation2d state = new Rotation2d();
 
     /**
      * The container for the robot. Contains subsystems, IO devices, and commands.
@@ -139,6 +144,7 @@ public class RobotContainer {
         superstructure = SuperstructureConstants.get();
         servo1 = Servo1Constants.get();
         objectDetector = ObjectDetectorConstants.get();
+        turret = TurretConstants.get();
         VisionConstants.create();
 
         conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
@@ -230,6 +236,14 @@ public class RobotContainer {
             superstructure.setGoal(Superstructure.Setpoint.STOW));
         SmartDashboard.putData("Superstructure: Raised",
             superstructure.setGoal(Superstructure.Setpoint.RAISED));
+
+        SmartDashboard.putData("Turret: Move Turret",
+            turret.moveTurretFieldRelative(drive, () -> -controller.getLeftX(),
+                () -> -controller.getLeftY(),
+                () -> {
+                    state = state.plus(new Rotation2d(-controller.getRightX()).div(10));
+                    return state;
+                }));
 
         LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
         SmartDashboard.putData("Shoot Ball", Commands

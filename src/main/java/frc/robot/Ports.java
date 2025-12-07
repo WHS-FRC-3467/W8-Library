@@ -39,6 +39,9 @@ public class Ports {
     public static final Device.CAN RotarySubsystemMotorFollower = new CAN(4, "rio");
     public static final Device.CAN RotarySubsystemEncoder = new CAN(6, "rio");
 
+    public static final Device.CAN turret = new CAN(17, "rio");
+    public static final Device.CAN test = new CAN(18, "rio");
+
     public static final Device.PWM servo1 = new PWM(1);
 
 }
