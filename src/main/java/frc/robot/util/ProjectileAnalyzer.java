@@ -17,7 +17,9 @@
 package frc.robot.util;
 
 import static edu.wpi.first.units.Units.Meters;
-import java.util.ArrayList;
+import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.numbers.N3;
 import frc.robot.RobotState;
 
 public class ProjectileAnalyzer {
@@ -26,14 +28,17 @@ public class ProjectileAnalyzer {
     private static final double LITTLE_G = 9.80665; // Magnitude of acceleration due to gravity (m/s^2)
     private static final double MIN_ANGLE = 20.0; // Minimum launch angle in degrees
     private static final double MAX_ANGLE = 70.0; // Maximum launch angle in degrees
-    private static final double dT = 0.02; // Delta Time or Time step
+    private static final double DT = 0.02; // Delta Time or Time step
     private static final double SHOT_TOLERANCE = 0.02; // Tolerance for hitting the target, in meters for each component
     private static final double AIR_DENSITY = 1.225; // kg/m^3 at sea level
     private static final double DRAG_COEFFICIENT = 0.45;
     private static final double CROSS_SECTIONAL_AREA = Math.PI * Math.pow(0.1, 2); // Example diameter of 0.2m
     private static final double PROJECTILE_MASS = 0.68; // Example mass in kg
-    private static final double LIFT_COEFFICIENT = 0.2; // Example Magnus effect coefficient
+    private static final double LIFT_COEFFICIENT = 0.2; // Example Magnus effect coefficient - need to experimentally determine
     private static final double SPIN_RATE = 1; // The how much spin is on the projectile, in revolutions per second
+    private static final boolean SPIN = false; // Whether to include Magnus effect in simulation
+
+    public record Shot(double angle, double magnitude) {}
 
     /**
      * Returns a list containing arm and flywheel targets based on physics simulation for a provided
@@ -42,10 +47,8 @@ public class ProjectileAnalyzer {
      * @param distance Horizontal distance to the target in meters
      * @return ArrayList<Double> containing the optimal launch angle (degrees) and velocity (m/s)
      */
-    public static ArrayList<Double> getPresetShot(double distance) {
+    public static Shot getPresetShot(double distance) {
 
-        // Instantiate an ArrayList to contain the optimal angle and velocity
-        ArrayList<Double> result = new ArrayList<>();
         // Height difference between release point and target
         // z of 3D pose of target, in meters. 0.8 is a placeholder for the mechanism release height
         double deltaH = RobotState.getInstance().getHeightToTarget().in(Meters);
@@ -74,11 +77,7 @@ public class ProjectileAnalyzer {
             }
         }
 
-        // Add the optimal angle and velocity to the result
-        result.add(optimalAngle);
-        result.add(optimalVelocity);
-
-        return result;
+        return new Shot(optimalAngle, optimalVelocity);
     }
 
     /**
@@ -106,27 +105,46 @@ public class ProjectileAnalyzer {
             // So target is at (distance, height), relative to the zero point
             double x = 0, z = 0;
 
+            // Declare vectors for Magnus effect calculation
+            Vector<N3> velocityVector;
+            Vector<N3> angularVelocityVector;
+            Vector<N3> magnusDirectionVector;
+            Vector<N3> magnusForceVector;
+
             // Simulate until the projectile hits the ground or passes the target
             while (z >= 0 && x < distance + SHOT_TOLERANCE) { 
                 // Calculate forces
                 double speed = Math.sqrt(vx * vx + vz * vz);
                 double dragForce = 0.5 * DRAG_COEFFICIENT * AIR_DENSITY * CROSS_SECTIONAL_AREA * speed * speed;
-                double magnusForce = 0; // TODO: Figure out Magnus effect calculation
-
-                // Decompose forces into components
+                // Decompose drag force into components
                 double dragX = -dragForce * (vx / speed);
                 double dragZ = -dragForce * (vz / speed);
-                double magnusX = 0; // Magnus force in x-direction (assume negligible for simplicity for now)
-                                    // TODO: Break magnus force into x and z components. It is technically normal to the velocity vector
-                double magnusZ = magnusForce; // Magnus force in z-direction (upward lift)
+                if (SPIN) {
+                    /* Calculate the Magnus effect force
+                     * Magnus Force = (1/2) * A * CL * ​(ω×v)
+                     * A = Cross-sectional area
+                     * CL = Lift coefficient (determined experimentally)
+                     * ​ω×v = Cross product of angular velocity vector * linear velocity vector
+                     */
+                    velocityVector = new Vector<>(new Translation3d(vx, 0.0, vz).toVector());
+                    angularVelocityVector = new Vector<>(new Translation3d(0.0, SPIN_RATE * 2 * Math.PI, 0.0).toVector()); // Convert rev/s to rad/s
+                    magnusDirectionVector = Vector.cross(velocityVector, angularVelocityVector);
+                    magnusForceVector = magnusDirectionVector.times(0.5 * CROSS_SECTIONAL_AREA * LIFT_COEFFICIENT);
+                    // Break magnus force into x and z components. It is technically normal to the velocity vector
+                    double magnusX = magnusForceVector.get(0); // Magnus force in x-direction (horizontal towards target)
+                    double magnusZ = magnusForceVector.get(2); // Magnus force in z-direction (upward lift)
 
-                // Update velocity
-                vx += (dragX + magnusX) / PROJECTILE_MASS * dT; // delta v = F/m * delta t
-                vz += (dragZ + magnusZ - LITTLE_G) / PROJECTILE_MASS * dT;
-
+                    // Update velocity
+                    vx += (dragX + magnusX) / PROJECTILE_MASS * DT; // delta v = F/m * delta t
+                    vz += (dragZ + magnusZ - LITTLE_G) / PROJECTILE_MASS * DT;
+                } else {
+                    // Update velocity
+                    vx += dragX / PROJECTILE_MASS * DT; // delta v = F/m * delta t
+                    vz += (dragZ - LITTLE_G) / PROJECTILE_MASS * DT;
+                }
                 // Update position
-                x += vx * dT;
-                z += vz * dT;
+                x += vx * DT;
+                z += vz * DT;
 
                 // Check if the projectile hits the target - or reaches a point close enough
                 if (Math.abs(x - distance) < SHOT_TOLERANCE && Math.abs(z - height) < SHOT_TOLERANCE) {

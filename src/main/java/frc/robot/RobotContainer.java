@@ -80,7 +80,6 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.objectDetector.ObjectDetector;
 import frc.robot.subsystems.objectDetector.ObjectDetectorConstants;
 import frc.robot.util.BallSimulator;
-import frc.robot.util.LookUpTable;
 import frc.robot.util.ShotSetpoint;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
 import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
@@ -276,9 +275,8 @@ public class RobotContainer {
         // Y: Shoot on the Move
         controller.y()
             .whileTrue(
-                Commands.parallel(
-                    new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
-                    AlignMode.STRAFE, () -> controller.getRightX()),
+                Commands.race(
+                    new PointTo2DTarget(drive, vision),
                     new SmartAimAtTarget(drive, rotary, flywheel)
                     // Servo1 is a placeholder for the stage, or the subsystem that inserts the game piece into the shooter.
                     .andThen(() -> servo1.setGoal(Servo1.Setpoint.EXTENDED)))

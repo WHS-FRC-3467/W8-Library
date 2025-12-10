@@ -15,35 +15,12 @@
 
 package frc.robot.util;
 
-import lombok.Getter;
-import lombok.Setter;
-
 /* Shot preset which is used in the lookup table */
 
-public class ShotSetpoint implements Comparable<ShotSetpoint> {
-
-    @Setter
-    @Getter
-    private double armOutput;
-
-    @Setter
-    @Getter
-    private double flywheelOutput;
-
-    @Setter
-    @Getter
-    private double distance;
-
-    public ShotSetpoint(double distance, double armOutput, double flywheelOutput)
-    {
-        this.distance = distance;
-        this.armOutput = armOutput;
-        this.flywheelOutput = flywheelOutput;
-    }
-
+public record ShotSetpoint(double distance, double armOutput, double flywheelOutput) implements Comparable<ShotSetpoint> {
     @Override
     public int compareTo(ShotSetpoint shot)
     {
-        return Double.compare(this.getDistance(), shot.getDistance());
+        return Double.compare(this.distance(), shot.distance());
     }
 }
