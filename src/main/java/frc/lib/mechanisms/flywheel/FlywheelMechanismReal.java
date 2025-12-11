@@ -23,7 +23,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import frc.lib.annotations.NoSubtypeAllowed;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorInputsAutoLogged;
@@ -33,12 +32,14 @@ import frc.lib.io.motor.MotorInputsAutoLogged;
  * through a MotorIO interface.
  */
 public class FlywheelMechanismReal implements FlywheelMechanism {
+    private final String name;
     private final MotorIO io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
 
 
-    public FlywheelMechanismReal(@NoSubtypeAllowed MotorIO io)
+    public FlywheelMechanismReal(String name, MotorIO io)
     {
+        this.name = name;
         this.io = io;
     }
 
@@ -46,7 +47,7 @@ public class FlywheelMechanismReal implements FlywheelMechanism {
     public void periodic()
     {
         io.updateInputs(inputs);
-        Logger.processInputs(io.getName(), inputs);
+        Logger.processInputs(name, inputs);
     }
 
     @Override

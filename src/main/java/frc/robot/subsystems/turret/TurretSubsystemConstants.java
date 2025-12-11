@@ -14,7 +14,6 @@ import static edu.wpi.first.units.Units.Meters;
 import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.Units;
@@ -28,7 +27,9 @@ import edu.wpi.first.units.measure.Velocity;
 import frc.lib.io.motor.MotorIOTalonFX;
 import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.rotary.*;
+import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryAxis;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
+import frc.robot.Constants;
 import frc.robot.Ports;
 
 /** Add your docs here. */
@@ -46,15 +47,14 @@ public class TurretSubsystemConstants {
     private static final double ROTOR_TO_SENSOR = (1.0 / 1.0);
     private static final double SENSOR_TO_MECHANISM = (49.26 / 1.0);
 
-    public static final Translation3d OFFSET = Translation3d.kZero;
-
     public static final Angle MIN_ANGLE = Degrees.of(0.0);
     public static final Angle MAX_ANGLE = Degrees.of(225.0);
     public static final Angle STARTING_ANGLE = Rotations.of(0.0);
     public static final Distance ARM_LENGTH = Meters.of(1.0);
 
     public static final RotaryMechCharacteristics CONSTANTS =
-        new RotaryMechCharacteristics(OFFSET, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
+        new RotaryMechCharacteristics(ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE,
+            RotaryAxis.PITCH);
 
     public static final Mass ARM_MASS = Kilograms.of(1);
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
@@ -98,24 +98,22 @@ public class TurretSubsystemConstants {
         return config;
     }
 
-    public static RotaryMechanismReal getReal()
+    public static TurretSubsystem get()
     {
-        return new RotaryMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.TurretSubsystemMotorMain),
-            CONSTANTS,
-            Optional.empty());
-    }
-
-    public static RotaryMechanismSim getSim()
-    {
-        return new RotaryMechanismSim(
-            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.TurretSubsystemMotorMain),
-            DCMOTOR, MOI, false, CONSTANTS,
-            Optional.empty());
-    }
-
-    public static RotaryMechanism getReplay()
-    {
-        return new RotaryMechanism(NAME, CONSTANTS) {};
+        return switch (Constants.currentMode) {
+            case REAL -> new TurretSubsystem(
+                new RotaryMechanismReal(
+                    NAME,
+                    new MotorIOTalonFX(NAME, getFXConfig(), Ports.TurretSubsystemMotorMain),
+                    CONSTANTS,
+                    Optional.empty()));
+            case SIM -> new TurretSubsystem(
+                new RotaryMechanismSim(
+                    NAME,
+                    new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.TurretSubsystemMotorMain),
+                    DCMOTOR, MOI, false, CONSTANTS,
+                    Optional.empty()));
+            case REPLAY -> new TurretSubsystem(new RotaryMechanism(NAME, CONSTANTS) {});
+        };
     }
 }

@@ -80,6 +80,7 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         return rotorToSensorRatio;
     }
 
+    @Override
     public double getSensorToMechanismRatio()
     {
         return sensorToMechanismRatio;
@@ -125,12 +126,16 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
 
         inputs.positionError = isRunningPositionControl
             ? Rotations.of(closedLoopErrorValue)
-            : null;
+            : Rotations.zero();
 
         inputs.activeTrajectoryPosition =
             isRunningPositionControl && isRunningMotionMagic
                 ? Rotations.of(closedLoopTargetValue)
-                : null;
+                : Rotations.zero();
+
+        inputs.goalPosition = isRunningPositionControl
+            ? goalPosition
+            : Rotations.zero();
 
         if (isRunningVelocityControl) {
             inputs.velocityError = RotationsPerSecond.of(closedLoopErrorValue);
@@ -141,16 +146,10 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
                 targetVelocity - inputs.velocity.in(RotationsPerSecond));
             inputs.activeTrajectoryVelocity = RotationsPerSecond.of(targetVelocity);
         } else {
-            inputs.velocityError = null;
-            inputs.activeTrajectoryVelocity = null;
+            inputs.velocityError = RotationsPerSecond.zero();
+            inputs.activeTrajectoryVelocity = RotationsPerSecond.zero();
         }
 
-        inputs.controlType = super.getCurrentControlType();
-    }
-
-    @Override
-    public void close()
-    {
-        super.motor.close();
+        inputs.controlType = getCurrentControlType();
     }
 }

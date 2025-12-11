@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.Angle;
 import frc.lib.io.servo.ServoIO;
 import frc.lib.io.servo.ServoIOPWM;
 import frc.lib.io.servo.ServoIOSim;
+import frc.robot.Constants;
 import frc.robot.Ports;
 
 public class Servo1Constants {
@@ -30,18 +31,17 @@ public class Servo1Constants {
     // Change as necessary
     public final static Angle MAXIMUM_ANGLE = Degrees.of(180.0);
 
-    public static ServoIOPWM getReal()
+    public static Servo1 get()
     {
-        return new ServoIOPWM(Ports.servo1, NAME, MINIMUM_ANGLE, MAXIMUM_ANGLE);
-    }
-
-    public static ServoIOSim getSim()
-    {
-        return new ServoIOSim(NAME, MINIMUM_ANGLE, MAXIMUM_ANGLE);
-    }
-
-    public static ServoIO getReplay()
-    {
-        return new ServoIO() {};
+        switch (Constants.currentMode) {
+            case REAL:
+                return new Servo1(new ServoIOPWM(Ports.servo1, NAME, MINIMUM_ANGLE, MAXIMUM_ANGLE));
+            case SIM:
+                return new Servo1(new ServoIOSim(NAME, MINIMUM_ANGLE, MAXIMUM_ANGLE));
+            case REPLAY:
+                return new Servo1(new ServoIO() {});
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }

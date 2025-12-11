@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.rotary;
+package frc.robot.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
@@ -15,7 +15,6 @@ import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.Units;
@@ -32,12 +31,17 @@ import frc.lib.io.motor.MotorIOTalonFX;
 import frc.lib.io.motor.MotorIOTalonFX.TalonFXFollower;
 import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.rotary.*;
+import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryAxis;
 import frc.lib.mechanisms.rotary.RotaryMechanism.RotaryMechCharacteristics;
+import frc.robot.Constants;
 import frc.robot.Ports;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /** Add your docs here. */
-public class RotarySubsystemConstants {
-    public static String NAME = "Rotary";
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class RotaryConstants {
+    public static final String NAME = "Rotary";
 
     public static final Angle TOLERANCE = Degrees.of(2.0);
 
@@ -50,15 +54,18 @@ public class RotarySubsystemConstants {
     private static final double ROTOR_TO_SENSOR = (2.0 / 1.0);
     private static final double SENSOR_TO_MECHANISM = (2.0 / 1.0);
 
-    public static final Translation3d OFFSET = Translation3d.kZero;
-
-    public static final Angle MIN_ANGLE = Degrees.of(0.0);
+    public static final Angle MIN_ANGLE = Degrees.of(-130.0);
     public static final Angle MAX_ANGLE = Rotations.of(.5);
     public static final Angle STARTING_ANGLE = Rotations.of(0.0);
     public static final Distance ARM_LENGTH = Meters.of(1.0);
 
     public static final RotaryMechCharacteristics CONSTANTS =
-        new RotaryMechCharacteristics(OFFSET, ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
+        new RotaryMechCharacteristics(
+            ARM_LENGTH,
+            MIN_ANGLE,
+            MAX_ANGLE,
+            STARTING_ANGLE,
+            RotaryAxis.PITCH);
 
     public static final Mass ARM_MASS = Kilograms.of(.01);
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
@@ -67,10 +74,8 @@ public class RotarySubsystemConstants {
 
     private static final Angle ENCODER_OFFSET = Rotations.of(0.0);
 
-    public static final RotarySubsystem.Setpoint DEFAULT_SETPOINT = RotarySubsystem.Setpoint.STOW;
-
     // Positional PID
-    private static Slot0Configs SLOT0CONFIG = new Slot0Configs()
+    private static final Slot0Configs SLOT_0_CONFIG = new Slot0Configs()
         .withKP(30.0)
         .withKI(0.0)
         .withKD(5.0);
@@ -105,7 +110,7 @@ public class RotarySubsystemConstants {
         config.Feedback.FeedbackRemoteSensorID = Ports.RotarySubsystemEncoder.id();
         config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
 
-        config.Slot0 = SLOT0CONFIG;
+        config.Slot0 = SLOT_0_CONFIG;
 
         return config;
     }
@@ -119,28 +124,27 @@ public class RotarySubsystemConstants {
         return config;
     }
 
-    public static RotaryMechanismReal getReal()
+    public static RotaryMechanism get()
     {
-        return new RotaryMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
-                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
-            CONSTANTS,
-            Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
-                NAME + "Encoder", getCANcoderConfig(false))));
-    }
-
-    public static RotaryMechanismSim getSim()
-    {
-        return new RotaryMechanismSim(
-            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
-                new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
-            DCMOTOR, MOI, false, CONSTANTS,
-            Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
-                NAME + "Encoder", getCANcoderConfig(true))));
-    }
-
-    public static RotaryMechanism getReplay()
-    {
-        return new RotaryMechanism(NAME, CONSTANTS) {};
+        switch (Constants.currentMode) {
+            case REAL:
+                return new RotaryMechanismReal(NAME,
+                    new MotorIOTalonFX(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
+                        new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
+                    CONSTANTS,
+                    Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
+                        NAME + "Encoder", getCANcoderConfig(false))));
+            case SIM:
+                return new RotaryMechanismSim(NAME,
+                    new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.RotarySubsystemMotorMain,
+                        new TalonFXFollower(Ports.RotarySubsystemMotorFollower, false)),
+                    DCMOTOR, MOI, false, CONSTANTS,
+                    Optional.of(new AbsoluteEncoderIOCANCoderSim(Ports.RotarySubsystemEncoder,
+                        NAME + "Encoder", getCANcoderConfig(true))));
+            case REPLAY:
+                return new RotaryMechanism(NAME, CONSTANTS) {};
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }

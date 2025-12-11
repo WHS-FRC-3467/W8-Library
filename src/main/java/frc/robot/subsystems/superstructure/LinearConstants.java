@@ -2,8 +2,9 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.linear;
+package frc.robot.subsystems.superstructure;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Rotations;
@@ -12,7 +13,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.Units;
@@ -26,12 +27,16 @@ import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.linear.*;
 import frc.lib.mechanisms.linear.LinearMechanism.LinearMechCharacteristics;
 import frc.lib.util.MechanismUtil.DistanceAngleConverter;
+import frc.robot.Constants;
 import frc.robot.Ports;
 import frc.robot.Robot;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /** Add your docs here. */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LinearConstants {
-    public static String NAME = "Linear";
+    public static final String NAME = "Linear";
 
     public static final Distance TOLERANCE = Inches.of(2.0);
 
@@ -52,12 +57,20 @@ public class LinearConstants {
 
     public static final DistanceAngleConverter CONVERTER = new DistanceAngleConverter(DRUM_RADIUS);
 
+    // Orientation for the linear mechanism.
+    // Uses WPILib's counter-clockwise positive convention around Y-axis:
+    // A pitch of -90 degrees represents a vertical mechanism extending upward (like an elevator).
+    // Pitch of 0 degrees would be horizontal extending forward.
+    // Roll and yaw can be used for mechanisms that extend in other directions.
+    private static final Rotation3d ORIENTATION =
+        new Rotation3d(0.0, Degrees.of(-90.0).in(Units.Radians), 0.0);
+
     private static final LinearMechCharacteristics CHARACTERISTICS =
-        new LinearMechCharacteristics(new Translation3d(0.0, 0.0, 0.0), MIN_DISTANCE, MAX_DISTANCE,
-            STARTING_DISTANCE, CONVERTER);
+        new LinearMechCharacteristics(MIN_DISTANCE, MAX_DISTANCE,
+            STARTING_DISTANCE, CONVERTER, ORIENTATION);
 
     // Positional PID
-    public static Slot0Configs SLOT0CONFIG = new Slot0Configs()
+    public static final Slot0Configs SLOT_0_CONFIG = new Slot0Configs()
         .withKP(50.0)
         .withKI(0.0)
         .withKD(0.0);
@@ -93,26 +106,25 @@ public class LinearConstants {
 
         config.Feedback.SensorToMechanismRatio = GEARING;
 
-        config.Slot0 = SLOT0CONFIG;
+        config.Slot0 = SLOT_0_CONFIG;
 
         return config;
     }
 
-    public static LinearMechanismReal getReal()
+    public static LinearMechanism get()
     {
-        return new LinearMechanismReal(
-            new MotorIOTalonFX(NAME, getFXConfig(), Ports.linear), CHARACTERISTICS);
-    }
-
-    public static LinearMechanismSim getSim()
-    {
-        return new LinearMechanismSim(
-            new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.linear),
-            DCMOTOR, CARRIAGE_MASS, CHARACTERISTICS, true);
-    }
-
-    public static LinearMechanism getReplay()
-    {
-        return new LinearMechanism(NAME, CHARACTERISTICS) {};
+        switch (Constants.currentMode) {
+            case REAL:
+                return new LinearMechanismReal(NAME,
+                    new MotorIOTalonFX(NAME, getFXConfig(), Ports.linear), CHARACTERISTICS);
+            case SIM:
+                return new LinearMechanismSim(NAME,
+                    new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.linear),
+                    DCMOTOR, CARRIAGE_MASS, CHARACTERISTICS, true);
+            case REPLAY:
+                return new LinearMechanism(NAME, CHARACTERISTICS) {};
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }

@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.subsystems.linear;
+package frc.robot.subsystems.superstructure;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -25,16 +25,15 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import frc.robot.TestUtil;
 
-public class LinearTest implements AutoCloseable {
-    static final double DELTA = 1e-2; // acceptable deviation range
-    Linear linear;
+class SuperstructureTest implements AutoCloseable {
+    Superstructure superstructure;
 
     @BeforeEach // this method will run before each test
     void setup()
     {
-        assert HAL.initialize(500, 0); // initialize the HAL, crash if failed
+        assertTrue(HAL.initialize(500, 0)); // initialize the HAL, crash if failed
 
-        linear = new Linear(LinearConstants.getSim());
+        superstructure = SuperstructureConstants.get();
 
         /* enable the robot */
         DriverStationSim.setEnabled(true);
@@ -44,40 +43,30 @@ public class LinearTest implements AutoCloseable {
         Timer.delay(0.100);
     }
 
-    @SuppressWarnings("PMD.SignatureDeclareThrowsException")
     @AfterEach // this method will run after each test
-    void shutdown() throws Exception
+    void shutdown()
     {
         close();
     }
 
     @Test // marks this method as a test
-    void home()
-    {
-        TestUtil.runTest(linear.homeCommand(), 0.1, linear);
-        try {
-            // Check position to check if it is homed, and within tolerance of STOW setpoint.
-            assertTrue(linear.nearGoal(Linear.Setpoint.STOW.getSetpoint()));
-        } catch (Exception e) {
-            fail("Failed to home Linear Subsystem: " + e.getMessage());
-        }
-    }
-
-    @Test
     void goToGoal()
     {
-        TestUtil.runTest(linear.setGoal(Linear.Setpoint.RAISED), 2, linear);
+        TestUtil.runTest(
+            superstructure.setGoalWithWait(Superstructure.Setpoint.STOW),
+            3,
+            superstructure);
         try {
-            // Check to see if linear subsystem is within tolerance of RAISED setpoint.
-            assertTrue(linear.nearGoal(Linear.Setpoint.RAISED.getSetpoint()));
+            // Check position to check if the subsystem is actually in tolerance of STOW setpoint.
+            assertTrue(superstructure.nearSetpoint(Superstructure.Setpoint.STOW));
         } catch (Exception e) {
-            fail("Failed to run Linear Subsystem to RAISED: " + e.getMessage());
+            fail("Failed to run Rotary Subsystem to STOW: " + e.getMessage());
         }
     }
 
     @Override
     public void close()
     {
-        linear.close();
+        superstructure.close();
     }
 }

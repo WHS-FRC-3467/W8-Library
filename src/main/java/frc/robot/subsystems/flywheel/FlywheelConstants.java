@@ -20,6 +20,7 @@ import frc.lib.io.motor.MotorIOTalonFXSim;
 import frc.lib.mechanisms.flywheel.FlywheelMechanism;
 import frc.lib.mechanisms.flywheel.FlywheelMechanismReal;
 import frc.lib.mechanisms.flywheel.FlywheelMechanismSim;
+import frc.robot.Constants;
 import frc.robot.Ports;
 import frc.robot.Robot;
 
@@ -76,19 +77,20 @@ public class FlywheelConstants {
         return config;
     }
 
-    public static FlywheelMechanismReal getReal()
+    public static Flywheel get()
     {
-        return new FlywheelMechanismReal(new MotorIOTalonFX(NAME, getFXConfig(), Ports.flywheel));
-    }
-
-    public static FlywheelMechanismSim getSim()
-    {
-        return new FlywheelMechanismSim(new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.flywheel),
-            DCMOTOR, MOI, TOLERANCE);
-    }
-
-    public static FlywheelMechanism getReplay()
-    {
-        return new FlywheelMechanism() {};
+        switch (Constants.currentMode) {
+            case REAL:
+                return new Flywheel(new FlywheelMechanismReal(NAME,
+                    new MotorIOTalonFX(NAME, getFXConfig(), Ports.flywheel)));
+            case SIM:
+                return new Flywheel(new FlywheelMechanismSim(NAME,
+                    new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.flywheel),
+                    DCMOTOR, MOI, TOLERANCE));
+            case REPLAY:
+                return new Flywheel(new FlywheelMechanism() {});
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }

@@ -14,14 +14,14 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.lib.util.AutoCommand;
+import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 
 public class WheelSlipAuto extends AutoCommand {
-    private final Drive drive;
+    private final RobotState robotState = RobotState.getInstance();
 
     public WheelSlipAuto(Drive drive)
     {
-        this.drive = drive;
         addCommands(Commands.sequence(
             Commands.run(() -> drive.runCharacterization(0.0)).withTimeout(2),
             rampUntilVelocity(drive, 0.2, RotationsPerSecond.of(1))));
@@ -36,7 +36,7 @@ public class WheelSlipAuto extends AutoCommand {
     @Override
     public Pose2d getStartingPose()
     {
-        return drive.getPose();
+        return robotState.getEstimatedPose();
     }
 
     private static Command rampUntilVelocity(Drive drive, double rampRate,

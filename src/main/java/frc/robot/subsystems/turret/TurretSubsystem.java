@@ -4,7 +4,6 @@
 
 package frc.robot.subsystems.turret;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
@@ -16,11 +15,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.rotary.RotaryMechanism;
-import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggerHelper;
-import frc.robot.subsystems.linear.Linear.Setpoint;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 public class TurretSubsystem extends SubsystemBase {
 
@@ -56,20 +51,18 @@ public class TurretSubsystem extends SubsystemBase {
                 TurretSubsystemConstants.ACCELERATION,
                 TurretSubsystemConstants.JERK,
                 PIDSlot.SLOT_0)),
-            Commands.waitUntil(() -> nearGoal(position))
-        );
+            Commands.waitUntil(() -> nearGoal(position)));
     }
     // make a method to home and zero the motor
 
-    public Command homeZero() 
+    public Command homeZero()
     {
         return Commands.sequence(
             this.runOnce(() -> io.runVoltage(Volts.of(3))),
             Commands.waitUntil(stationaryTrigger),
             this.runOnce(io::runBrake),
-            this.runOnce(() -> io.setEncoderPosition(Rotations.zero()))
-        );
-    } 
+            this.runOnce(() -> io.setEncoderPosition(Rotations.zero())));
+    }
 
     public AngularVelocity getVelocity()
     {

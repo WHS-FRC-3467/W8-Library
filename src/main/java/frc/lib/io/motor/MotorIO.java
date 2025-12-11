@@ -19,6 +19,8 @@ import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Celsius;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import org.littletonrobotics.junction.AutoLog;
@@ -38,7 +40,7 @@ import lombok.Getter;
  * Standardized interface for motor controllers used in FRC. Supports multiple control modes and
  * telemetry reporting.
  */
-public interface MotorIO {
+public interface MotorIO extends AutoCloseable {
 
     @Getter
     @AllArgsConstructor
@@ -77,25 +79,17 @@ public interface MotorIO {
         /** Motor temperature in degrees. */
         public Temperature temperature = Celsius.of(0.0);
         /** Error in position */
-        public Angle positionError = null;
+        public Angle positionError = Rotations.zero();
         /** Error in velocity */
-        public AngularVelocity velocityError = null;
+        public AngularVelocity velocityError = RotationsPerSecond.zero();
         /** Active trajectory position in rotations */
-        public Angle activeTrajectoryPosition = null;
+        public Angle activeTrajectoryPosition = Rotations.zero();
         /** Active trajectory velocity in rotations per second. */
-        public AngularVelocity activeTrajectoryVelocity = null;
+        public AngularVelocity activeTrajectoryVelocity = RotationsPerSecond.zero();
+        /** Goal position */
+        public Angle goalPosition = Rotations.zero();
         /** Current control type */
-        public ControlType controlType = null;
-    }
-
-    /**
-     * Getter for the name of the motor
-     * 
-     * @return The name of the motor
-     */
-    public default String getName()
-    {
-        return "";
+        public ControlType controlType = ControlType.BRAKE;
     }
 
     /**
@@ -183,5 +177,9 @@ public interface MotorIO {
      * @param position Desired position to set encoder to
      */
     public default void setEncoderPosition(Angle position)
+    {}
+
+    @Override
+    public default void close()
     {}
 }

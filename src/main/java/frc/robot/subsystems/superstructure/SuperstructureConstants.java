@@ -13,11 +13,18 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.annotations;
+package frc.robot.subsystems.superstructure;
 
-import java.lang.annotation.*;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-@Target(ElementType.PARAMETER)
-@Retention(RetentionPolicy.CLASS)
-public @interface NoSubtypeAllowed {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class SuperstructureConstants {
+    public static final Superstructure.Setpoint DEFAULT_SETPOINT =
+        Superstructure.Setpoint.STOW;
+
+    public static Superstructure get()
+    {
+        return new Superstructure(RotaryConstants.get(), LinearConstants.get());
+    }
 }

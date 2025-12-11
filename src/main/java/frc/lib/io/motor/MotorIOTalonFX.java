@@ -36,7 +36,6 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.lib.util.Device;
-import lombok.Getter;
 import frc.lib.util.CANUpdateThread;
 
 /**
@@ -47,9 +46,6 @@ public class MotorIOTalonFX implements MotorIO {
 
     public record TalonFXFollower(Device.CAN id, boolean opposesMain) {
     }
-
-    @Getter
-    protected final String name;
 
     protected final TalonFX motor;
     protected final TalonFX[] followers;
@@ -80,6 +76,8 @@ public class MotorIOTalonFX implements MotorIO {
 
     private final Alert[] followerOnWrongBusAlert;
 
+    protected Angle goalPosition = Rotations.of(0.0);
+
     /**
      * Constructs and initializes a TalonFX motor.
      *
@@ -91,7 +89,6 @@ public class MotorIOTalonFX implements MotorIO {
     public MotorIOTalonFX(String name, TalonFXConfiguration config, Device.CAN main,
         TalonFXFollower... followerData)
     {
-        this.name = name;
 
         motor = new TalonFX(main.id(), main.bus());
         updateThread.CTRECheckErrorAndRetry(() -> motor.getConfigurator().apply(config));
@@ -252,12 +249,16 @@ public class MotorIOTalonFX implements MotorIO {
 
         inputs.positionError = isRunningPositionControl
             ? Rotations.of(closedLoopErrorValue)
-            : null;
+            : Rotations.zero();
 
         inputs.activeTrajectoryPosition =
             isRunningPositionControl && isRunningMotionMagic
                 ? Rotations.of(closedLoopTargetValue)
-                : null;
+                : Rotations.zero();
+
+        inputs.goalPosition = isRunningPositionControl
+            ? goalPosition
+            : Rotations.zero();
 
         if (isRunningVelocityControl) {
             inputs.velocityError = RotationsPerSecond.of(closedLoopErrorValue);
@@ -268,8 +269,8 @@ public class MotorIOTalonFX implements MotorIO {
                 targetVelocity - inputs.velocity.in(RotationsPerSecond));
             inputs.activeTrajectoryVelocity = RotationsPerSecond.of(targetVelocity);
         } else {
-            inputs.velocityError = null;
-            inputs.activeTrajectoryVelocity = null;
+            inputs.velocityError = RotationsPerSecond.zero();
+            inputs.activeTrajectoryVelocity = RotationsPerSecond.zero();
         }
 
         inputs.controlType = getCurrentControlType();
@@ -354,6 +355,7 @@ public class MotorIOTalonFX implements MotorIO {
         AngularAcceleration acceleration,
         Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
     {
+        this.goalPosition = position;
         motor.setControl(positionControl.withPosition(position).withVelocity(cruiseVelocity)
             .withAcceleration(acceleration).withJerk(maxJerk).withSlot(slot.getNum()));
     }
@@ -378,5 +380,15 @@ public class MotorIOTalonFX implements MotorIO {
     public void setEncoderPosition(Angle position)
     {
         motor.setPosition(position);
+    }
+
+    @Override
+    public void close()
+    {
+        motor.close();
+        for (TalonFX follower : followers) {
+            follower.close();
+        }
+        updateThread.close();
     }
 }

@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import frc.lib.io.distancesensor.DistanceSensorIO;
 import frc.lib.io.distancesensor.DistanceSensorIOLaserCAN;
 import frc.lib.io.distancesensor.DistanceSensorIOSim;
+import frc.robot.Constants;
 import frc.robot.Ports;
 
 /** Add your docs here. */
@@ -48,5 +49,21 @@ public class LaserCAN1Constants {
     public static DistanceSensorIO getReplay()
     {
         return new DistanceSensorIO() {};
+    }
+
+    public static LaserCAN1 get()
+    {
+        switch (Constants.currentMode) {
+            case REAL:
+                return new LaserCAN1(
+                    new DistanceSensorIOLaserCAN(Ports.laserCAN1, NAME, RANGING_MODE, ROI,
+                        TIMING_BUDGET));
+            case SIM:
+                return new LaserCAN1(new DistanceSensorIOSim(NAME));
+            case REPLAY:
+                return new LaserCAN1(new DistanceSensorIO() {});
+            default:
+                throw new IllegalStateException("Unrecognized Robot Mode");
+        }
     }
 }
