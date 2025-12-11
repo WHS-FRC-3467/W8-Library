@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.io.motor.MotorIO.PIDSlot;
+import frc.lib.mechanisms.flywheel.FlywheelMechanism;
 import frc.lib.mechanisms.rotary.RotaryMechanism;
 import frc.robot.RobotState;
 import frc.robot.commands.DriveCommands;
@@ -35,10 +36,12 @@ public class Turret extends SubsystemBase implements AutoCloseable {
     private final RobotState robotState = RobotState.getInstance();
 
     private final RotaryMechanism rotaryIO;
+    private final FlywheelMechanism flywheelIO;
 
-    public Turret(RotaryMechanism rotaryIO)
+    public Turret(RotaryMechanism rotaryIO, FlywheelMechanism flywheelIO)
     {
         this.rotaryIO = rotaryIO;
+        this.flywheelIO = flywheelIO;
     }
 
     private Command setTurretPosition(Supplier<Angle> angle)
@@ -70,6 +73,7 @@ public class Turret extends SubsystemBase implements AutoCloseable {
     public void periodic()
     {
         rotaryIO.periodic();
+        flywheelIO.periodic();
 
         var currentRobotHeading = robotState.getEstimatedPose().getRotation();
 
@@ -82,5 +86,6 @@ public class Turret extends SubsystemBase implements AutoCloseable {
     public void close()
     {
         rotaryIO.close();
+        flywheelIO.close();
     }
 }

@@ -110,21 +110,21 @@ public class TurretConstants {
         return config;
     }
 
-    public static Turret get()
+    public static RotaryMechanism get()
     {
         switch (Constants.currentMode) {
             case REAL:
-                return new Turret(new RotaryMechanismReal(NAME,
+                return new RotaryMechanismReal(NAME,
                     new MotorIOTalonFX(NAME, getFXConfig(), Ports.turret),
                     CONSTANTS,
-                    Optional.empty()));
+                    Optional.empty());
             case SIM:
-                return new Turret(new RotaryMechanismSim(NAME,
+                return new RotaryMechanismSim(NAME,
                     new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.turret),
                     DCMOTOR, MOI, false, CONSTANTS,
-                    Optional.empty()));
+                    Optional.empty());
             case REPLAY:
-                return new Turret(new RotaryMechanism(NAME, CONSTANTS) {});
+                return new RotaryMechanism(NAME, CONSTANTS) {};
             default:
                 throw new IllegalStateException("Unrecognized Robot Mode");
         }
