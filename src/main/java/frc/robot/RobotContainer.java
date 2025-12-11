@@ -48,6 +48,7 @@ import frc.robot.commands.DriveToPose;
 import frc.robot.commands.OnTheFlyPathCommand;
 import frc.robot.commands.PointTo2DTarget;
 import frc.robot.commands.autos.BranchingAuto;
+import frc.robot.commands.autos.DoesStuff;
 import frc.robot.commands.autos.ExampleAuto;
 import frc.robot.commands.autos.NoneAuto;
 import frc.robot.commands.autos.WheelCharacterizationAuto;
@@ -224,6 +225,7 @@ public class RobotContainer {
 
         autoChooser.addDefaultOption("None", new NoneAuto());
         autoChooser.addOption("ExampleAuto", new ExampleAuto(drive));
+        autoChooser.addOption("DoesStuff", new DoesStuff(drive, linear, flywheel));
         autoChooser.addOption("BranchingAuto",
             new BranchingAuto(drive, () -> conditionalChooser.get()));
 
