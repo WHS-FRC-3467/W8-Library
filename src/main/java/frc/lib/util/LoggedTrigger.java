@@ -24,13 +24,23 @@ import org.littletonrobotics.junction.Logger;
  * 
  * <p>This class extends WPILib's Trigger and adds automatic logging of the trigger's state
  * whenever it changes. The logging is handled internally without requiring external method calls.
+ * 
+ * <p>Example usage:
+ * <pre>{@code
+ * // In a subsystem, create a logged trigger that tracks when a beam break is triggered
+ * public final LoggedTrigger broken = new LoggedTrigger("BeamBreak/Broken", beamBreak::isBroken);
+ * 
+ * // The state will be automatically logged to "BeamBreak/Broken" whenever it changes
+ * // Use it just like a normal Trigger
+ * broken.onTrue(Commands.print("Beam is broken!"));
+ * }</pre>
  */
 public class LoggedTrigger extends Trigger {
     /**
      * Creates a new LoggedTrigger that logs state changes.
      *
-     * @param name The name to use as the log key
-     * @param condition The condition to evaluate
+     * @param name The name to use as the log key for AdvantageKit logging
+     * @param condition The condition to evaluate (typically a method reference or lambda)
      */
     public LoggedTrigger(String name, BooleanSupplier condition)
     {
