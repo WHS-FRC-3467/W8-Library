@@ -97,6 +97,7 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.VisionSystemSim;
 
@@ -274,10 +275,11 @@ public class RobotContainer {
         // AlignMode.STRAFE, () -> controller.getRightX()));
 
         inAllianceRegionTrigger.onTrue(
-            Commands.runOnce(() -> System.out.println("Entered Alliance Region"))
+            Commands.runOnce(() -> Logger.recordOutput("InAllianceRegionTrigger", true))
                 .ignoringDisable(true));
-
-
+        inAllianceRegionTrigger.onFalse(
+            Commands.runOnce(() -> Logger.recordOutput("InAllianceRegionTrigger", false))
+                .ignoringDisable(true));
     }
 
     /**
