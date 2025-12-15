@@ -9,6 +9,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
+import java.util.List;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.*;
@@ -31,5 +32,12 @@ public class FieldConstants {
         new Translation2d(FIELD_LENGTH.in(Meters) / 2, FIELD_WIDTH.in(Meters) / 2);
 
     public static final Distance ALGAE_DIAMETER = Meters.of(.41);
+
+    public static final List<Translation2d> ALLIANCE_STATION_POLYGON =
+        List.of(
+            new Translation2d(0, 0),
+            new Translation2d(0, FIELD_WIDTH.in(Meters)),
+            new Translation2d(1.5, FIELD_WIDTH.in(Meters)),
+            new Translation2d(1.5, 0));
 
 }
