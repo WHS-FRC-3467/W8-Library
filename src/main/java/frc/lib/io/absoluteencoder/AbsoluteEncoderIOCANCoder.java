@@ -55,4 +55,10 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
 
         inputs.angle = angle.getValue();
     }
+
+    @Override
+    public void close()
+    {
+        CANCoder.close();
+    }
 }

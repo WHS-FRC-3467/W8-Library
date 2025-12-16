@@ -15,7 +15,9 @@
 
 package frc.lib.io.objectdetection;
 
-import org.littletonrobotics.junction.AutoLog;
+import org.littletonrobotics.junction.LogTable;
+import org.littletonrobotics.junction.inputs.LoggableInputs;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 /**
  * Standardized interface for ObjectDetection-IO used in FRC. This interface is often implemented
@@ -24,41 +26,42 @@ import org.littletonrobotics.junction.AutoLog;
 public interface ObjectDetectionIO {
 
     /*
-     * Abstract class defining data type for updateInputs method.
+     * Class defining data type for updateInputs method.
      */
-    @AutoLog
-    abstract class ObjectDetectionIOInputs {
+    public class ObjectDetectionIOInputs implements LoggableInputs {
         /** Whether the camera is connected. */
         public boolean connected = false;
         /**
-         * Each index of latestTargetObservations is a single TargetObservation (defined below) with
-         * members for objID, objConf, etc., effectively acting as a 2D array.
+         * Each index of latestPhotonTrackedTargets is a single {@link PhotonTrackedTarget} with all
+         * the data needed for each target
          */
-        public TargetObservation[] latestTargetObservations = new TargetObservation[0];
-    }
+        public PhotonTrackedTarget[] latestTargets = new PhotonTrackedTarget[0];
 
-    /* Data structure of target information. */
-    public static record TargetObservation(
-        /** ID of detected object. */
-        int objID,
-        /** Confidence of detected object. */
-        float objConf,
-        /** Circumscribed area of detected object. */
-        double objArea,
-        /** Pitch of detected object. */
-        double pitch,
-        /** Yaw of detected object. */
-        double yaw,
-        /** Skew of detected object. */
-        double skew,
-        /** X-coord & Y-coord of bounding box corner 1. */
-        double[] cornerOne,
-        /** X-coord & Y-coord of bounding box corner 2. */
-        double[] cornerTwo,
-        /** X-coord & Y-coord of bounding box corner 3. */
-        double[] cornerThree,
-        /** X-coord & Y-coord of bounding box corner 4. */
-        double[] cornerFour) {
+        @Override
+        public void toLog(LogTable table)
+        {
+            int targetsLength = latestTargets.length;
+            table.put("TargetsLength", targetsLength);
+
+            String targetsPrefix = "Targets/";
+            for (int i = 0; i < targetsLength; i++) {
+                String targetKey = targetsPrefix + i;
+                table.put(targetKey, latestTargets[i]);
+            }
+        }
+
+        @Override
+        public void fromLog(LogTable table)
+        {
+            int targetsLength = table.get("TargetsLength", 0);
+            latestTargets = new PhotonTrackedTarget[targetsLength];
+
+            String targetsPrefix = "Targets/";
+            for (int i = 0; i < targetsLength; i++) {
+                String targetKey = targetsPrefix + i;
+                latestTargets[i] = table.get(targetKey, (PhotonTrackedTarget) null);
+            }
+        }
     }
 
     /*

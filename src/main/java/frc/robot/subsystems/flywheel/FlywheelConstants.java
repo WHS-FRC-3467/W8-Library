@@ -84,10 +84,10 @@ public class FlywheelConstants {
     {
         switch (Constants.currentMode) {
             case REAL:
-                return new Flywheel(new FlywheelMechanismReal(
+                return new Flywheel(new FlywheelMechanismReal(NAME,
                     new MotorIOTalonFX(NAME, getFXConfig(), Ports.flywheel)));
             case SIM:
-                return new Flywheel(new FlywheelMechanismSim(
+                return new Flywheel(new FlywheelMechanismSim(NAME,
                     new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.flywheel),
                     DCMOTOR, MOI, TOLERANCE));
             case REPLAY:

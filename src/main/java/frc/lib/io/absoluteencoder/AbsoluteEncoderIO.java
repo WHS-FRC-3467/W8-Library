@@ -19,7 +19,7 @@ import edu.wpi.first.units.measure.Angle;
 import org.littletonrobotics.junction.AutoLog;
 
 /** Standardized interface for absolute encoders used in FRC. */
-public interface AbsoluteEncoderIO {
+public interface AbsoluteEncoderIO extends AutoCloseable {
 
     @AutoLog
     abstract class AbsoluteEncoderInputs {
@@ -46,5 +46,9 @@ public interface AbsoluteEncoderIO {
      * @param inputs The structure to populate with updated sensor values.
      */
     public default void updateInputs(AbsoluteEncoderInputs inputs)
+    {}
+
+    @Override
+    public default void close()
     {}
 }

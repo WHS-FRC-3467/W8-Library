@@ -9,7 +9,6 @@ import java.util.function.Supplier;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Distance;
 import frc.lib.io.motor.MotorIO.ControlType;
@@ -28,7 +27,6 @@ public abstract class LinearMechanism implements Mechanism {
     /**
      * Characteristics for a linear mechanism.
      *
-     * @param offset The 3D offset from the robot origin to the base of the mechanism
      * @param minDistance Minimum extension distance
      * @param maxDistance Maximum extension distance
      * @param startingDistance Starting extension distance
@@ -50,6 +48,7 @@ public abstract class LinearMechanism implements Mechanism {
         Rotation3d orientation) {
     }
 
+    protected final String name;
     protected final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
     protected final DistanceAngleConverter converter;
 
@@ -57,6 +56,7 @@ public abstract class LinearMechanism implements Mechanism {
 
     public LinearMechanism(String name, LinearMechCharacteristics characteristics)
     {
+        this.name = name;
         visualizer = new LinearMechanismVisualizer(name, characteristics);
         converter = characteristics.converter();
     }

@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.subsystems.rotary;
+package frc.robot.subsystems.superstructure;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -25,15 +25,15 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import frc.robot.TestUtil;
 
-public class RotaryTest implements AutoCloseable {
-    Rotary rotary;
+class SuperstructureTest implements AutoCloseable {
+    Superstructure superstructure;
 
     @BeforeEach // this method will run before each test
     void setup()
     {
-        assert HAL.initialize(500, 0); // initialize the HAL, crash if failed
+        assertTrue(HAL.initialize(500, 0)); // initialize the HAL, crash if failed
 
-        rotary = RotaryConstants.get();
+        superstructure = SuperstructureConstants.get();
 
         /* enable the robot */
         DriverStationSim.setEnabled(true);
@@ -43,32 +43,22 @@ public class RotaryTest implements AutoCloseable {
         Timer.delay(0.100);
     }
 
-    @SuppressWarnings("PMD.SignatureDeclareThrowsException")
     @AfterEach // this method will run after each test
-    void shutdown() throws Exception
+    void shutdown()
     {
         close();
     }
 
-    @Test
+    @Test // marks this method as a test
     void goToGoal()
     {
-        TestUtil.runTest(rotary.setSetpoint(Rotary.Setpoint.RAISED), 3, rotary);
-        try {
-            // Check to see if Rotary subsystem is within tolerance of RAISED setpoint.
-            assertTrue(rotary.nearGoal(Rotary.Setpoint.RAISED.getSetpoint()));
-        } catch (Exception e) {
-            fail("Failed to run Rotary Subsystem to RAISED: " + e.getMessage());
-        }
-    }
-
-    @Test // marks this method as a test
-    void goToGoalWithWait()
-    {
-        TestUtil.runTest(rotary.setGoalCommandWithWait(Rotary.Setpoint.STOW), 3, rotary);
+        TestUtil.runTest(
+            superstructure.setGoalWithWait(Superstructure.Setpoint.STOW),
+            3,
+            superstructure);
         try {
             // Check position to check if the subsystem is actually in tolerance of STOW setpoint.
-            assertTrue(rotary.nearGoal(Rotary.Setpoint.STOW.getSetpoint()));
+            assertTrue(superstructure.nearSetpoint(Superstructure.Setpoint.STOW));
         } catch (Exception e) {
             fail("Failed to run Rotary Subsystem to STOW: " + e.getMessage());
         }
@@ -77,6 +67,6 @@ public class RotaryTest implements AutoCloseable {
     @Override
     public void close()
     {
-        rotary.close();
+        superstructure.close();
     }
 }

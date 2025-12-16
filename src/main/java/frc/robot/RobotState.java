@@ -17,6 +17,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
+import java.util.HashMap;
+import java.util.Optional;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -24,12 +26,16 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.util.LoggedTunableNumber;
-import frc.lib.util.Timestamped;
+import frc.lib.posestimator.PoseEstimator;
+import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
+import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
+import frc.robot.subsystems.drive.Drive;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -38,27 +44,85 @@ import lombok.Setter;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RobotState {
+    public static record TrigPoseRecord(Pose2d pose, double distance, double timestamp) {
+    }
+
+    private static final double LINEAR_ODOMETRY_STD_DEV = 0.01;
+    private static final double ANGULAR_ODOMETRY_STD_DEV = 0.01;
+    private static final double TRIG_POSE_STALE_SECS = 0.2;
+
     @Getter(lazy = true)
     private static final RobotState instance = new RobotState();
 
-    @Getter
-    @Setter
-    @AutoLogOutput(key = "Odometry/Robot")
-    private Pose2d pose = Pose2d.kZero;
+    private HashMap<Integer, TrigPoseRecord> trigPoses = new HashMap<>();
+
+    private final PoseEstimator poseEstimator = new PoseEstimator(
+        new SwerveDriveKinematics(Drive.getModuleTranslations()),
+        Seconds.of(2),
+        LINEAR_ODOMETRY_STD_DEV,
+        ANGULAR_ODOMETRY_STD_DEV);
 
     @Getter
     @Setter
     private ChassisSpeeds velocity = new ChassisSpeeds();
 
+    @AutoLogOutput(key = "Odometry/OdometryPose")
+    public Pose2d getOdometryPose()
+    {
+        return poseEstimator.odometryPose();
+    }
+
+    @AutoLogOutput(key = "Odometry/EstimatedPose")
+    public Pose2d getEstimatedPose()
+    {
+        return poseEstimator.estimatedPose();
+    }
+
+    @AutoLogOutput(key = "Odometry/TrigTestPose")
+    public Pose2d getTrigTestPose()
+    {
+        return getTrigPose(10).orElse(Pose2d.kZero);
+    }
+
+    public void addOdometryObservation(OdometryObservation observation)
+    {
+        poseEstimator.addOdometryObservation(observation);
+    }
+
+    public void addVisionObservation(VisionPoseObservation observation)
+    {
+        poseEstimator.addVisionObservation(observation);
+    }
+
+    public void addTrigPose(int tagId, TrigPoseRecord trigPose)
+    {
+        trigPoses.put(tagId, trigPose);
+    }
+
+    public Optional<Pose2d> getPoseAtTime(double timestampSeconds)
+    {
+        return poseEstimator.getPoseAtTime(timestampSeconds);
+    }
+
+    public Optional<Pose2d> getTrigPose(int tagId)
+    {
+        if (!trigPoses.containsKey(tagId)) {
+            return Optional.empty();
+        }
+        var data = trigPoses.get(tagId);
+
+        if (Timer.getTimestamp() - data.timestamp() >= TRIG_POSE_STALE_SECS) {
+            return Optional.empty();
+        }
+
+        return poseEstimator.getPoseDeltaThenToNow(data.timestamp())
+            .map(delta -> data.pose().transformBy(delta));
+    }
+
     /** Returns the current odometry rotation. */
     public Rotation2d getRotation()
     {
-        return getPose().getRotation();
-    }
-
-    public Timestamped<Rotation2d> getTimestampedHeading()
-    {
-        return new Timestamped<Rotation2d>(Seconds.of(Timer.getTimestamp()), getRotation());
+        return getEstimatedPose().getRotation();
     }
 
     public ChassisSpeeds getFieldRelativeVelocity()
@@ -93,6 +157,11 @@ public class RobotState {
             getRotaryPose().getRotation()));
     }
 
+    public void resetPose(Pose2d pose)
+    {
+        poseEstimator.resetPose(pose);
+    }
+
     // Time we are giving robot to get ready to shoot per attempt
     @Getter
     private LoggedTunableNumber timeToBeReady = new LoggedTunableNumber("TimeToBeReady", 0.5);
@@ -100,7 +169,7 @@ public class RobotState {
     @AllArgsConstructor
     public enum Target {
         // NAME(BLUE, RED, HEIGHT)
-        ONE(new Pose2d(Meters.of(0), Meters.of(0), Rotation2d.kZero), new Pose2d(FieldConstants.FIELDLENGTH, FieldConstants.FIELDLENGTH, Rotation2d.k180deg), Meters.of(2.64)),
+        ONE(new Pose2d(Meters.of(0), Meters.of(0), Rotation2d.kZero), new Pose2d(FieldConstants.FIELD_LENGTH, FieldConstants.FIELD_LENGTH, Rotation2d.k180deg), Meters.of(2.64)),
         TWO(new Pose2d(), new Pose2d(), Meters.of(0.0));
 
         @Getter

@@ -31,7 +31,7 @@ import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
@@ -46,6 +46,7 @@ import frc.lib.io.motor.MotorInputsAutoLogged;
  */
 public class FlywheelMechanismSim implements FlywheelMechanism {
 
+    private final String name;
     private final MotorIOSim io;
     private final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
     private final FlywheelSim sim;
@@ -54,9 +55,11 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
 
     private Time lastTime = Seconds.zero();
 
-    public FlywheelMechanismSim(MotorIOSim io, DCMotor characteristics,
+    public FlywheelMechanismSim(String name, MotorIOSim io, DCMotor characteristics,
         MomentOfInertia momentOfInertia, AngularVelocity tolerance)
     {
+        this.name = name;
+
         if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
             throw new IllegalArgumentException(
                 "momentOfInertia must be greater than zero!");
@@ -67,13 +70,13 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
             momentOfInertia.in(KilogramSquareMeters),
             io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()), characteristics);
 
-        visualizer = new FlywheelVisualizer(io.getName());
+        visualizer = new FlywheelVisualizer(name);
     }
 
     @Override
     public void periodic()
     {
-        Time currentTime = Seconds.of(Timer.getTimestamp());
+        Time currentTime = RobotController.getMeasureTime();
         double deltaTime = currentTime.minus(lastTime).in(Seconds);
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
@@ -93,7 +96,7 @@ public class FlywheelMechanismSim implements FlywheelMechanism {
         io.setPosition(inputs.position.plus(positionChange));
 
         io.updateInputs(inputs);
-        Logger.processInputs(io.getName(), inputs);
+        Logger.processInputs(name, inputs);
 
         visualizer.setAngle(inputs.position);
         if (inputs.velocityError != null) {

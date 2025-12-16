@@ -17,6 +17,7 @@
 package frc.robot.commands;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import java.util.function.Supplier;
@@ -29,7 +30,7 @@ import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.flywheel.Flywheel;
 import frc.robot.subsystems.flywheel.FlywheelConstants;
-import frc.robot.subsystems.rotary.Rotary;
+import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.util.ProjectileAnalyzer;
 
 public class SmartAimAtTarget extends Command {
@@ -78,7 +79,7 @@ public class SmartAimAtTarget extends Command {
     }
 
     private final Drive drive;
-    private final Rotary rotary;
+    private final Superstructure superstructure;
     private final Flywheel flywheel;
 
      /**
@@ -88,11 +89,11 @@ public class SmartAimAtTarget extends Command {
      * @param rotary The rotary subsystem used by this command.
      * @param flywheel The flywheel subsystem used by this command.
      */
-    public SmartAimAtTarget(Drive drive, Rotary rotary, Flywheel flywheel) {
+    public SmartAimAtTarget(Drive drive, Superstructure superstructure, Flywheel flywheel) {
         this.drive = drive;
-        this.rotary = rotary;
         this.flywheel = flywheel;
-        addRequirements(rotary, flywheel);
+        this.superstructure = superstructure;
+        addRequirements(superstructure, flywheel);
     }
 
     /** The initial subroutine of a command. Called once when the command is initially scheduled. */
@@ -103,12 +104,14 @@ public class SmartAimAtTarget extends Command {
     @Override
     public void execute() {
         Pose2d futurePose = getFuturePose(() -> RobotState.getInstance().getTimeToBeReady().getAsDouble()); // Look ahead 0.2 seconds
-        // Determine where to aim based on predicted future pose
-        double angle = angleMap.get(RobotState.getInstance().getDistanceToTarget(futurePose).in(Meters));
-        double magnitude = magnitudeMap.get(RobotState.getInstance().getDistanceToTarget(futurePose).in(Meters));
-        // Set rotary angle & flywheel setpoint based on predicted future pose.
-        // Hopefully the subsystems will "catch up" along the way.
-        rotary.setSetpoint(Degrees.of(angle));
+        double distanceToTarget = RobotState.getInstance().getDistanceToTarget(futurePose).in(Meters);
+    
+        // Determine the desired angle and magnitude based on the distance to the target
+        double angle = angleMap.get(distanceToTarget);
+        double magnitude = magnitudeMap.get(distanceToTarget);
+    
+        // Use the superstructure to set the desired state
+        superstructure.setGoal(Degrees.of(angle), Inches.of(0));
         flywheel.shoot(RotationsPerSecond.of(magnitude));
     }
 
@@ -128,16 +131,16 @@ public class SmartAimAtTarget extends Command {
      */
     @Override
     public boolean isFinished() {
-        double angle = angleMap.get(RobotState.getInstance().getDistanceToTarget(RobotState.getInstance().getPose()).in(Meters));
-        double magnitude = magnitudeMap.get(RobotState.getInstance().getDistanceToTarget(RobotState.getInstance().getPose()).in(Meters));
-        return rotary.nearGoal(Degrees.of(angle)) 
-            && flywheel.nearGoal(magnitude)
-            && MathUtil.isNear(
-                RobotState.getAngleToTarget(RobotState.getInstance().getPose().getTranslation()).getDegrees(), 
-                drive.getRotation().getDegrees(), 
-                ROTATION_TOLERANCE)
-            &&  Math.abs(RobotState.getInstance().getVelocity().omegaRadiansPerSecond)
-                < MAX_ANGULAR_ROBOT_VELOCITY;
+        Pose2d estimatedPose = RobotState.getInstance().getEstimatedPose();
+        double distanceToTarget = RobotState.getInstance().getDistanceToTarget(estimatedPose).in(Meters);
+    
+        // Determine the desired angle and magnitude based on the distance to the target
+        double angle = angleMap.get(distanceToTarget);
+        double magnitude = magnitudeMap.get(distanceToTarget);
+    
+        // Check if the superstructure is near the goal and the drivetrain is stable
+        return superstructure.nearSetpoint(Degrees.of(angle), Inches.of(0)) && flywheel.nearGoal(magnitude)
+            && MathUtil.isNear(RobotState.getInstance().getVelocity().omegaRadiansPerSecond, 0.0, MAX_ANGULAR_ROBOT_VELOCITY);
     }
 
     /**
@@ -148,7 +151,7 @@ public class SmartAimAtTarget extends Command {
      */
     public Pose2d getFuturePose(Supplier<Double> timeSecondsAhead) {
         double deltaT = timeSecondsAhead.get();
-        Pose2d currentPose = RobotState.getInstance().getPose();
+        Pose2d currentPose = RobotState.getInstance().getEstimatedPose();
         double currentHeadingRad = currentPose.getRotation().getRadians();
         double vx = RobotState.getInstance().getFieldRelativeVelocity().vxMetersPerSecond;
         double vy = RobotState.getInstance().getFieldRelativeVelocity().vyMetersPerSecond;

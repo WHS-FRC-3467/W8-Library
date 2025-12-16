@@ -15,7 +15,7 @@
 package frc.robot.subsystems.flywheel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import edu.wpi.first.hal.HAL;
 
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
@@ -34,7 +34,7 @@ class FlywheelTest implements AutoCloseable {
     @BeforeEach // this method will run before each test
     void setup()
     {
-        assert HAL.initialize(500, 0); // initialize the HAL, crash if failed
+        assertTrue(HAL.initialize(500, 0)); // initialize the HAL, crash if failed
 
         flywheel = FlywheelConstants.get();
 
@@ -46,9 +46,8 @@ class FlywheelTest implements AutoCloseable {
         Timer.delay(0.100);
     }
 
-    @SuppressWarnings("PMD.SignatureDeclareThrowsException")
     @AfterEach // this method will run after each test
-    void shutdown() throws Exception
+    void shutdown()
     {
         close();
     }

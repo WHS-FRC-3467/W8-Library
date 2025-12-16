@@ -19,9 +19,12 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggedTuneableProfiledPID;
+import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive; // TODO: refactor drive to exist in lib
 
 public abstract class DriveToPoseBase extends Command {
+    private final RobotState robotState = RobotState.getInstance();
+
     private final Drive drive;
     private final Supplier<Pose2d> targetPose;
 
@@ -56,7 +59,7 @@ public abstract class DriveToPoseBase extends Command {
 
     /**
      * Sets the distance tolerance for the command to finish
-     * 
+     *
      * @param tolerance Allowable distance to target pose
      */
     public DriveToPoseBase withDistanceTolerance(Distance tolerance)
@@ -67,7 +70,7 @@ public abstract class DriveToPoseBase extends Command {
 
     /**
      * Sets the angular tolerance for the command to finish
-     * 
+     *
      * @param tolerance Allowable angle to target pose
      */
     public DriveToPoseBase withAngularTolerance(Angle tolerance)
@@ -78,7 +81,7 @@ public abstract class DriveToPoseBase extends Command {
 
     /**
      * Sets both distance and angular tolerances for the command to finish
-     * 
+     *
      * @param distanceTolerance Allowable distance to target pose
      * @param angleTolerance Allowable angle to target pose
      */
@@ -93,12 +96,13 @@ public abstract class DriveToPoseBase extends Command {
     public void initialize()
     {
         ChassisSpeeds fieldVelocity =
-            ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), drive.getRotation());
+            ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(),
+                robotState.getEstimatedPose().getRotation());
 
         linearController.reset(0.0);
 
         angularController.reset(
-            drive.getRotation().getRadians(),
+            robotState.getEstimatedPose().getRotation().getRadians(),
             fieldVelocity.omegaRadiansPerSecond);
     }
 
@@ -112,7 +116,7 @@ public abstract class DriveToPoseBase extends Command {
 
         // Calculate translation and direction to target
         Translation2d translationToTarget =
-            targetPose.get().getTranslation().minus(drive.getPose().getTranslation());
+            targetPose.get().getTranslation().minus(robotState.getEstimatedPose().getTranslation());
 
         Rotation2d directionToTarget = translationToTarget.getAngle();
 
@@ -125,7 +129,7 @@ public abstract class DriveToPoseBase extends Command {
             maxLinearSpeed.get());
 
         double angularOutput = angularController.calculate(
-            drive.getRotation().getRadians(),
+            robotState.getEstimatedPose().getRotation().getRadians(),
             targetPose.get().getRotation().getRadians());
 
         angularOutput = MathUtil.clamp(
@@ -140,7 +144,8 @@ public abstract class DriveToPoseBase extends Command {
             angularOutput);
 
         drive.runVelocity(
-            ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeed, drive.getRotation()));
+            ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeed,
+                robotState.getEstimatedPose().getRotation()));
 
         Logger.recordOutput("DriveToPose/Target Pose", targetPose.get());
         Logger.recordOutput("DriveToPose/Distance To Target (m)", translationToTarget.getNorm());

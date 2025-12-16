@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 public class CommandXboxControllerExtended extends CommandXboxController {
     private GenericHID hid;
     private double deadband = 0.0;
+    private boolean applyCurve = false;
 
     public CommandXboxControllerExtended(int port)
     {
@@ -43,6 +44,18 @@ public class CommandXboxControllerExtended extends CommandXboxController {
     public CommandXboxControllerExtended withDeadband(double deadband)
     {
         this.deadband = deadband;
+        return this;
+    }
+
+    /**
+     * Square the output of the controllers to provide precise control
+     * 
+     * @param applyCurve Whether or not to apply the curve
+     * @return this
+     */
+    public CommandXboxControllerExtended applyCurve(boolean applyCurve)
+    {
+        this.applyCurve = applyCurve;
         return this;
     }
 
@@ -74,27 +87,36 @@ public class CommandXboxControllerExtended extends CommandXboxController {
             .andThen(() -> hid.setRumble(side, 0.0));
     }
 
+    double applyModifiers(double joystickInput)
+    {
+        if (applyCurve) {
+            joystickInput = joystickInput * joystickInput;
+        }
+
+        return MathUtil.applyDeadband(joystickInput, deadband);
+    }
+
     @Override
     public double getLeftX()
     {
-        return MathUtil.applyDeadband(super.getLeftX(), deadband);
+        return applyModifiers(super.getLeftX());
     }
 
     @Override
     public double getLeftY()
     {
-        return MathUtil.applyDeadband(super.getLeftY(), deadband);
+        return applyModifiers(super.getLeftY());
     }
 
     @Override
     public double getRightX()
     {
-        return MathUtil.applyDeadband(super.getRightX(), deadband);
+        return applyModifiers(super.getRightX());
     }
 
     @Override
     public double getRightY()
     {
-        return MathUtil.applyDeadband(super.getRightY(), deadband);
+        return applyModifiers(super.getRightY());
     }
 }

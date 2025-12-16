@@ -32,6 +32,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import static edu.wpi.first.units.Units.Meters;
 import java.text.DecimalFormat;
@@ -77,6 +78,7 @@ public class DriveCommands {
         DoubleSupplier ySupplier,
         DoubleSupplier omegaSupplier)
     {
+        RobotState robotState = RobotState.getInstance();
         return Commands.run(
             () -> {
                 // Get linear velocity
@@ -101,8 +103,9 @@ public class DriveCommands {
                     ChassisSpeeds.fromFieldRelativeSpeeds(
                         speeds,
                         isFlipped
-                            ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                            : drive.getRotation()));
+                            ? robotState.getEstimatedPose().getRotation()
+                                .plus(new Rotation2d(Math.PI))
+                            : robotState.getEstimatedPose().getRotation()));
             },
             drive)
             .withName("Joystick Drive");
@@ -119,6 +122,7 @@ public class DriveCommands {
         DoubleSupplier ySupplier,
         Supplier<Rotation2d> rotationSupplier)
     {
+        RobotState robotState = RobotState.getInstance();
 
         // Create PID controller
         ProfiledPIDController angleController = new ProfiledPIDController(
@@ -138,7 +142,8 @@ public class DriveCommands {
 
                 // Calculate angular speed
                 double omega = angleController.calculate(
-                    drive.getRotation().getRadians(), rotationSupplier.get().getRadians());
+                    robotState.getEstimatedPose().getRotation().getRadians(),
+                    rotationSupplier.get().getRadians());
 
                 // Convert to field relative speeds & send command
                 ChassisSpeeds speeds = new ChassisSpeeds(
@@ -151,13 +156,15 @@ public class DriveCommands {
                     ChassisSpeeds.fromFieldRelativeSpeeds(
                         speeds,
                         isFlipped
-                            ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                            : drive.getRotation()));
+                            ? robotState.getEstimatedPose().getRotation()
+                                .plus(new Rotation2d(Math.PI))
+                            : robotState.getEstimatedPose().getRotation()));
             },
             drive)
 
             // Reset PID controller when command starts
-            .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()))
+            .beforeStarting(() -> angleController
+                .reset(robotState.getEstimatedPose().getRotation().getRadians()))
             .withName("Joystick Drive At Angle");
     }
 
@@ -231,6 +238,8 @@ public class DriveCommands {
     /** Measures the robot's wheel radius by spinning in a circle. */
     public static Command wheelRadiusCharacterization(Drive drive)
     {
+        RobotState robotState = RobotState.getInstance();
+
         SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
         WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
 
@@ -260,14 +269,14 @@ public class DriveCommands {
                 Commands.runOnce(
                     () -> {
                         state.positions = drive.getWheelRadiusCharacterizationPositions();
-                        state.lastAngle = drive.getRotation();
+                        state.lastAngle = robotState.getEstimatedPose().getRotation();
                         state.gyroDelta = 0.0;
                     }),
 
                 // Update gyro delta
                 Commands.run(
                     () -> {
-                        var rotation = drive.getRotation();
+                        var rotation = robotState.getEstimatedPose().getRotation();
                         state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRadians());
                         state.lastAngle = rotation;
                     })

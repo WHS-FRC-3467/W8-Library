@@ -22,7 +22,7 @@ import java.util.function.Supplier;
 import com.ctre.phoenix6.StatusCode;
 import frc.lib.util.LaserCANConfigurator.ConfigurationStatus;
 
-public class CANUpdateThread {
+public class CANUpdateThread implements AutoCloseable {
     // Executor for retrying config operations asynchronously
     private BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, 5,
@@ -57,5 +57,11 @@ public class CANUpdateThread {
                 }
             }
         });
+    }
+
+    @Override
+    public void close()
+    {
+        threadPoolExecutor.shutdownNow();
     }
 }
