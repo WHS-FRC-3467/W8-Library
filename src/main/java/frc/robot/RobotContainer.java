@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.commands.DriveToPoseBase;
 import frc.lib.commands.SteppableCommandGroup;
@@ -47,6 +48,7 @@ import frc.lib.posestimator.PoseEstimator;
 import frc.lib.util.LoggedDashboardChooser;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggedTuneableProfiledPID;
+import frc.lib.util.PointInPolygon;
 import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.lib.util.GamePieceVisualizer;
@@ -97,6 +99,7 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.VisionSystemSim;
 
@@ -128,7 +131,7 @@ public class RobotContainer {
     private final LoggedDashboardChooser<Boolean> conditionalChooser;
     public static Field2d autoPreviewField = new Field2d();
 
-    Rotation2d state = new Rotation2d();
+    private final Trigger inAllianceRegionTrigger;
 
     /**
      * The container for the robot. Contains subsystems, IO devices, and commands.
@@ -167,11 +170,17 @@ public class RobotContainer {
 
         autoChooser.addOption("Wheel Slip Characterization", new WheelSlipAuto(drive));
 
+        inAllianceRegionTrigger = new Trigger(() -> PointInPolygon.pointInPolygon(
+            robotState.getEstimatedPose().getTranslation(),
+            FieldConstants.ALLIANCE_STATION_POLYGON));
+
         // Configure the button bindings
         configureButtonBindings();
 
         GamePieceVisualizer algae = new GamePieceVisualizer("Algae",
             new Pose3d(new Translation3d(3, 3, 1), new Rotation3d(0, 0, 0)));
+
+
     }
 
     /**
@@ -272,6 +281,13 @@ public class RobotContainer {
         // controller.x()
         // .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
         // AlignMode.STRAFE, () -> controller.getRightX()));
+
+        inAllianceRegionTrigger.onTrue(
+            Commands.runOnce(() -> Logger.recordOutput("InAllianceRegionTrigger", true))
+                .ignoringDisable(true));
+        inAllianceRegionTrigger.onFalse(
+            Commands.runOnce(() -> Logger.recordOutput("InAllianceRegionTrigger", false))
+                .ignoringDisable(true));
     }
 
     /**
