@@ -81,7 +81,7 @@ import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
 import frc.robot.subsystems.turret.FlywheelConstants;
-import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.TurretSuperstructure;
 import frc.robot.subsystems.turret.TurretConstants;
 import frc.robot.subsystems.turret.TurretSuperstructureConstants;
 import frc.robot.subsystems.vision.VisionConstants;
@@ -118,7 +118,7 @@ public class RobotContainer {
     private final Servo1 servo1;
     private final ObjectDetector objectDetector;
     private final Superstructure superstructure;
-    private final Turret turret;
+    private final TurretSuperstructure turret;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -235,13 +235,11 @@ public class RobotContainer {
         SmartDashboard.putData("Superstructure: Raised",
             superstructure.setGoal(Superstructure.Setpoint.RAISED));
 
-        SmartDashboard.putData("Turret: Move Turret",
-            turret.moveTurretFieldRelative(drive, () -> -controller.getLeftX(),
-                () -> -controller.getLeftY(),
-                () -> {
-                    state = state.plus(new Rotation2d(-controller.getRightX()).div(10));
-                    return state;
-                }));
+        SmartDashboard.putData("Turret: Shoot Left",
+            turret.shoot(TurretConstants.MIN_ANGLE));
+
+        SmartDashboard.putData("Turret: Shoot Right",
+            turret.shoot(TurretConstants.MAX_ANGLE));
 
         LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
         SmartDashboard.putData("Shoot Ball", Commands
