@@ -72,8 +72,6 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
-import frc.robot.subsystems.flywheel.Flywheel;
-import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.objectdetector.ObjectDetector;
@@ -84,6 +82,10 @@ import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
+import frc.robot.subsystems.turret.FlywheelConstants;
+import frc.robot.subsystems.turret.TurretSuperstructure;
+import frc.robot.subsystems.turret.TurretConstants;
+import frc.robot.subsystems.turret.TurretSuperstructureConstants;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
@@ -117,9 +119,9 @@ public class RobotContainer {
     private final LaserCAN1 laserCAN1;
     private final BeamBreak1 beamBreak1;
     private final Servo1 servo1;
-    private final Flywheel flywheel;
     private final ObjectDetector objectDetector;
     private final Superstructure superstructure;
+    private final TurretSuperstructure turret;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -138,12 +140,12 @@ public class RobotContainer {
     {
         drive = DriveConstants.get();
         laserCAN1 = LaserCAN1Constants.get();
-        flywheel = FlywheelConstants.get();
         leds = LEDsConstants.get();
         beamBreak1 = BeamBreak1Constants.get();
         superstructure = SuperstructureConstants.get();
         servo1 = Servo1Constants.get();
         objectDetector = ObjectDetectorConstants.get();
+        turret = TurretSuperstructureConstants.get();
         VisionConstants.create();
 
         conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
@@ -241,6 +243,12 @@ public class RobotContainer {
             superstructure.setGoal(Superstructure.Setpoint.STOW));
         SmartDashboard.putData("Superstructure: Raised",
             superstructure.setGoal(Superstructure.Setpoint.RAISED));
+
+        SmartDashboard.putData("Turret: Shoot Left",
+            turret.shoot(TurretConstants.MIN_ANGLE));
+
+        SmartDashboard.putData("Turret: Shoot Right",
+            turret.shoot(TurretConstants.MAX_ANGLE));
 
         LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
         SmartDashboard.putData("Shoot Ball", Commands

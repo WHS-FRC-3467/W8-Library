@@ -27,7 +27,6 @@ public class Ports {
 
     public static final Device.CAN laserCAN1 = new CAN(0, "rio");
     public static final Device.CAN lights = new CAN(1, "rio");
-    public static final Device.CAN flywheel = new CAN(2, "rio");
 
     public static final Device.CAN linear = new CAN(5, "rio");
 
@@ -38,6 +37,11 @@ public class Ports {
     public static final Device.CAN RotarySubsystemMotorMain = new CAN(3, "rio");
     public static final Device.CAN RotarySubsystemMotorFollower = new CAN(4, "rio");
     public static final Device.CAN RotarySubsystemEncoder = new CAN(6, "rio");
+
+    public static final Device.CAN turret = new CAN(17, "rio");
+    public static final Device.CAN flywheel = new CAN(2, "rio");
+    public static final Device.CAN indexer = new CAN(18, "rio");
+    public static final Device.CAN indexerLaserCAN = new CAN(19, "rio");
 
     public static final Device.PWM servo1 = new PWM(1);
 
