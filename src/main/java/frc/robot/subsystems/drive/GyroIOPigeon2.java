@@ -72,6 +72,7 @@ public class GyroIOPigeon2 implements GyroIO {
         return pigeon.getAccelerationX().getValueAsDouble();
     }
 
+    @Override
     public double getAccelerationY() {
         return pigeon.getAccelerationY().getValueAsDouble();
     }
