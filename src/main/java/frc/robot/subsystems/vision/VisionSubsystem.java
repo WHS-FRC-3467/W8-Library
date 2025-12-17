@@ -24,11 +24,12 @@ import java.util.Optional;
 
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.targeting.PhotonPipelineResult;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -205,9 +206,11 @@ public class VisionSubsystem extends SubsystemBase {
                     return;
                 }
 
-                // Estimate primary camera -> robot
-                Transform3d primaryCamToRobot =
-                    average(samples.get(primary)).plus(robotCenterTransform);
+                // Estimate primary camera -> target
+                Transform3d primaryCamToTarget =
+                    average(samples.get(primary));
+
+                Transform3d primaryCamToRobot = primaryCamToTarget.plus(robotCenterTransform);
 
                 Logger.recordOutput(
                     "VisionCalibration/PrimaryCameraToRobot",
@@ -219,8 +222,11 @@ public class VisionSubsystem extends SubsystemBase {
                         continue;
                     }
 
-                    Transform3d camToPrimary =
+                    Transform3d camToTarget =
                         average(samples.get(camera));
+
+                    Transform3d camToPrimary =
+                        camToTarget.plus(primaryCamToTarget.inverse());
 
                     Transform3d camToRobot =
                         camToPrimary.plus(primaryCamToRobot);
@@ -233,36 +239,51 @@ public class VisionSubsystem extends SubsystemBase {
             }
 
             /**
-             * Simple mean of transforms (translation + rotation). Assumes small rotational
-             * variance.
+             * Simple mean of transforms (translation + rotation).
              */
             private Transform3d average(ArrayList<Transform3d> list)
             {
                 double x = 0;
                 double y = 0;
                 double z = 0;
-                double rx = 0;
-                double ry = 0;
-                double rz = 0;
+
+                double qw = 0;
+                double qx = 0;
+                double qy = 0;
+                double qz = 0;
 
                 for (var t : list) {
                     x += t.getX();
                     y += t.getY();
                     z += t.getZ();
-                    rx += t.getRotation().getX();
-                    ry += t.getRotation().getY();
-                    rz += t.getRotation().getZ();
+
+                    // Quaternion averaging (Unfortunately no WPILib built-in)
+                    var q = t.getRotation().getQuaternion();
+
+                    // Hemisphere correction
+                    if (q.getW() < 0) {
+                        qw -= q.getW();
+                        qx -= q.getX();
+                        qy -= q.getY();
+                        qz -= q.getZ();
+                    } else {
+                        qw += q.getW();
+                        qx += q.getX();
+                        qy += q.getY();
+                        qz += q.getZ();
+                    }
                 }
 
                 int n = list.size();
+
+                var avgQuat = new Quaternion(
+                    qw, qx, qy, qz).normalize();
+
                 return new Transform3d(
                     x / n,
                     y / n,
                     z / n,
-                    new edu.wpi.first.math.geometry.Rotation3d(
-                        rx / n,
-                        ry / n,
-                        rz / n));
+                    new Rotation3d(avgQuat));
             }
         };
     }
