@@ -25,7 +25,7 @@ import frc.robot.RobotState;
 public class ProjectileAnalyzer {
     
     // Constants
-    private static final double LITTLE_G = 9.80665; // Magnitude of acceleration due to gravity (m/s^2)
+    private static final double LITTLE_G = 9.81; // Magnitude of acceleration due to gravity (m/s^2)
     private static final double MIN_ANGLE = 20.0; // Minimum launch angle in degrees
     private static final double MAX_ANGLE = 70.0; // Maximum launch angle in degrees
     private static final double DT = 0.02; // Delta Time or Time step
@@ -35,7 +35,7 @@ public class ProjectileAnalyzer {
     private static final double CROSS_SECTIONAL_AREA = Math.PI * Math.pow(0.1, 2); // Example diameter of 0.2m
     private static final double PROJECTILE_MASS = 0.68; // Example mass in kg
     private static final double LIFT_COEFFICIENT = 0.2; // Example Magnus effect coefficient - need to experimentally determine
-    private static final double SPIN_RATE = 1; // The how much spin is on the projectile, in revolutions per second
+    private static final double SPIN_RATE = 1; // The amount of spin on the projectile, in revolutions per second
     private static final boolean SPIN = false; // Whether to include Magnus effect in simulation
 
     public record Shot(double angle, double magnitude) {}
@@ -112,7 +112,7 @@ public class ProjectileAnalyzer {
             Vector<N3> magnusForceVector;
 
             // Simulate until the projectile hits the ground or passes the target
-            while (z >= 0 && x < distance + SHOT_TOLERANCE) { 
+            while (z >= 0 && x <= distance + SHOT_TOLERANCE) { 
                 // Calculate forces
                 double speed = Math.sqrt(vx * vx + vz * vz);
                 double dragForce = 0.5 * DRAG_COEFFICIENT * AIR_DENSITY * CROSS_SECTIONAL_AREA * speed * speed;
@@ -128,7 +128,7 @@ public class ProjectileAnalyzer {
                      */
                     velocityVector = new Vector<>(new Translation3d(vx, 0.0, vz).toVector());
                     angularVelocityVector = new Vector<>(new Translation3d(0.0, SPIN_RATE * 2 * Math.PI, 0.0).toVector()); // Convert rev/s to rad/s
-                    magnusDirectionVector = Vector.cross(velocityVector, angularVelocityVector);
+                    magnusDirectionVector = Vector.cross(angularVelocityVector, velocityVector);
                     magnusForceVector = magnusDirectionVector.times(0.5 * CROSS_SECTIONAL_AREA * LIFT_COEFFICIENT);
                     // Break magnus force into x and z components. It is technically normal to the velocity vector
                     double magnusX = magnusForceVector.get(0); // Magnus force in x-direction (horizontal towards target)

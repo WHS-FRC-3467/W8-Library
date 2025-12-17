@@ -166,7 +166,7 @@ public class RobotState {
     public enum Target {
         // NAME(BLUE, RED, HEIGHT)
         ONE(new Pose2d(Meters.of(0), Meters.of(0), Rotation2d.kZero),
-            new Pose2d(FieldConstants.FIELD_LENGTH, FieldConstants.FIELD_LENGTH,
+            new Pose2d(FieldConstants.FIELD_LENGTH, FieldConstants.FIELD_WIDTH,
                 Rotation2d.k180deg),
             Meters.of(2.64)),
         TWO(new Pose2d(), new Pose2d(), Meters.of(0.0));
@@ -225,8 +225,9 @@ public class RobotState {
     }
 
     /**
-     * 
-     * @param mechanismHeight height of the mechanism from which the projectile is launched
+     * Computes the vertical distance from the robot's current mechanism position to the target
+     * using the robot's rotary and linear poses.
+     *
      * @return height difference from mechanism to target, in meters
      */
     public Distance getHeightToTarget()

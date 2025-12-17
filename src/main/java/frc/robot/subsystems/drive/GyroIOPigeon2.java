@@ -68,10 +68,12 @@ public class GyroIOPigeon2 implements GyroIO {
         yawPositionQueue.clear();
     }
 
+    @Override
     public double getAccelerationX() {
         return pigeon.getAccelerationX().getValueAsDouble();
     }
 
+    @Override
     public double getAccelerationY() {
         return pigeon.getAccelerationY().getValueAsDouble();
     }

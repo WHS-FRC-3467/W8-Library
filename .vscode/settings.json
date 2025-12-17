@@ -82,7 +82,6 @@
   "[java]": {
     "editor.detectIndentation": false
   },
-  "workbench.iconTheme": "catppuccin-mocha",
   "java.project.sourcePaths": [
     "src/main/java",
     "processor/src/main/java"

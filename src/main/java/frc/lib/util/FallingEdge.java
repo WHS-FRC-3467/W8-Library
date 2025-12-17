@@ -36,7 +36,7 @@ public class FallingEdge implements BooleanSupplier {
     public boolean getAsBoolean()
     {
         boolean currentState = source.getAsBoolean();
-        boolean fallingEdge = currentState && !previousState;
+        boolean fallingEdge = previousState && !currentState;
         previousState = currentState;
         return fallingEdge;
     }
