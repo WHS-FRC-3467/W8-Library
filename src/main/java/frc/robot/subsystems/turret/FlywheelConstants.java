@@ -2,7 +2,7 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.robot.subsystems.flywheel;
+package frc.robot.subsystems.turret;
 
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Second;
@@ -80,18 +80,18 @@ public class FlywheelConstants {
         return config;
     }
 
-    public static Flywheel get()
+    public static FlywheelMechanism get()
     {
         switch (Constants.currentMode) {
             case REAL:
-                return new Flywheel(new FlywheelMechanismReal(NAME,
-                    new MotorIOTalonFX(NAME, getFXConfig(), Ports.flywheel)));
+                return new FlywheelMechanismReal(NAME,
+                    new MotorIOTalonFX(NAME, getFXConfig(), Ports.flywheel));
             case SIM:
-                return new Flywheel(new FlywheelMechanismSim(NAME,
+                return new FlywheelMechanismSim(NAME,
                     new MotorIOTalonFXSim(NAME, getFXConfig(), Ports.flywheel),
-                    DCMOTOR, MOI, TOLERANCE));
+                    DCMOTOR, MOI, TOLERANCE);
             case REPLAY:
-                return new Flywheel(new FlywheelMechanism() {});
+                return new FlywheelMechanism() {};
             default:
                 throw new IllegalStateException("Unrecognized Robot Mode");
         }

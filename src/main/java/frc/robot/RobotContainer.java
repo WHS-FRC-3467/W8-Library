@@ -36,6 +36,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.commands.DriveToPoseBase;
 import frc.lib.commands.SteppableCommandGroup;
@@ -48,6 +49,7 @@ import frc.lib.posestimator.PoseEstimator;
 import frc.lib.util.LoggedDashboardChooser;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggedTuneableProfiledPID;
+import frc.lib.util.PointInPolygon;
 import frc.lib.util.AutoCommand;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.lib.util.GamePieceVisualizer;
@@ -57,7 +59,6 @@ import frc.robot.commands.AlignToPose;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveToPose;
 import frc.robot.commands.OnTheFlyPathCommand;
-import frc.robot.commands.SmartAimAtTarget;
 import frc.robot.commands.autos.BranchingAuto;
 import frc.robot.commands.autos.ExampleAuto;
 import frc.robot.commands.autos.NoneAuto;
@@ -72,8 +73,6 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
-import frc.robot.subsystems.flywheel.Flywheel;
-import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.leds.LEDs;
 import frc.robot.subsystems.leds.LEDsConstants;
 import frc.robot.subsystems.objectdetector.ObjectDetector;
@@ -84,6 +83,10 @@ import frc.robot.subsystems.servo1.Servo1;
 import frc.robot.subsystems.servo1.Servo1Constants;
 import frc.robot.subsystems.superstructure.Superstructure;
 import frc.robot.subsystems.superstructure.SuperstructureConstants;
+import frc.robot.subsystems.turret.FlywheelConstants;
+import frc.robot.subsystems.turret.TurretSuperstructure;
+import frc.robot.subsystems.turret.TurretConstants;
+import frc.robot.subsystems.turret.TurretSuperstructureConstants;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.util.BallSimulator;
 import frc.robot.util.ShotSetpoint;
@@ -100,6 +103,7 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
+import org.littletonrobotics.junction.Logger;
 import java.util.function.Supplier;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.VisionSystemSim;
@@ -120,9 +124,9 @@ public class RobotContainer {
     private final LaserCAN1 laserCAN1;
     private final BeamBreak1 beamBreak1;
     private final Servo1 servo1;
-    private final Flywheel flywheel;
     private final ObjectDetector objectDetector;
     private final Superstructure superstructure;
+    private final TurretSuperstructure turret;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -132,6 +136,8 @@ public class RobotContainer {
     private final LoggedDashboardChooser<Boolean> conditionalChooser;
     public static Field2d autoPreviewField = new Field2d();
 
+    private final Trigger inAllianceRegionTrigger;
+
     /**
      * The container for the robot. Contains subsystems, IO devices, and commands.
      */
@@ -139,12 +145,12 @@ public class RobotContainer {
     {
         drive = DriveConstants.get();
         laserCAN1 = LaserCAN1Constants.get();
-        flywheel = FlywheelConstants.get();
         leds = LEDsConstants.get();
         beamBreak1 = BeamBreak1Constants.get();
         superstructure = SuperstructureConstants.get();
         servo1 = Servo1Constants.get();
         objectDetector = ObjectDetectorConstants.get();
+        turret = TurretSuperstructureConstants.get();
         VisionConstants.create();
 
         conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
@@ -169,11 +175,17 @@ public class RobotContainer {
 
         autoChooser.addOption("Wheel Slip Characterization", new WheelSlipAuto(drive));
 
+        inAllianceRegionTrigger = new Trigger(() -> PointInPolygon.pointInPolygon(
+            robotState.getEstimatedPose().getTranslation(),
+            FieldConstants.ALLIANCE_STATION_POLYGON));
+
         // Configure the button bindings
         configureButtonBindings();
 
         GamePieceVisualizer algae = new GamePieceVisualizer("Algae",
             new Pose3d(new Translation3d(3, 3, 1), new Rotation3d(0, 0, 0)));
+
+
     }
 
     /**
@@ -270,18 +282,15 @@ public class RobotContainer {
         // AlignMode.STRAFE, () -> controller.getRightX()));
 
         // Y: Shoot on the Move
-        controller.y()
-            .whileTrue(
-                Commands.race(
-                    DriveCommands.joystickDriveAtAngle(
-                    drive,
-                    () -> -controller.getLeftY(),
-                    () -> -controller.getLeftX(),
-                    () -> new Rotation2d()),
-                    new SmartAimAtTarget(drive, superstructure, flywheel)
-                    // Servo1 is a placeholder for the stage, or the subsystem that inserts the game piece into the shooter.
-                    .andThen(() -> servo1.setGoal(Servo1.Setpoint.EXTENDED)))
-            ).onFalse(Commands.runOnce(() -> servo1.setGoal(Servo1.Setpoint.RETRACTED)));
+        controller.y().whileTrue(
+            turret.shoot(drive, () -> -controller.getLeftX(), () -> -controller.getLeftY()));
+
+        inAllianceRegionTrigger.onTrue(
+            Commands.runOnce(() -> Logger.recordOutput("InAllianceRegionTrigger", true))
+                .ignoringDisable(true));
+        inAllianceRegionTrigger.onFalse(
+            Commands.runOnce(() -> Logger.recordOutput("InAllianceRegionTrigger", false))
+                .ignoringDisable(true));
     }
 
     /**

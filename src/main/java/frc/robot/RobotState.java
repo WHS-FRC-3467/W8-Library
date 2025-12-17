@@ -162,14 +162,13 @@ public class RobotState {
         poseEstimator.resetPose(pose);
     }
 
-    // Time we are giving robot to get ready to shoot per attempt
-    @Getter
-    private LoggedTunableNumber timeToBeReady = new LoggedTunableNumber("TimeToBeReady", 0.5);
-
     @AllArgsConstructor
     public enum Target {
         // NAME(BLUE, RED, HEIGHT)
-        ONE(new Pose2d(Meters.of(0), Meters.of(0), Rotation2d.kZero), new Pose2d(FieldConstants.FIELD_LENGTH, FieldConstants.FIELD_LENGTH, Rotation2d.k180deg), Meters.of(2.64)),
+        ONE(new Pose2d(Meters.of(0), Meters.of(0), Rotation2d.kZero),
+            new Pose2d(FieldConstants.FIELD_LENGTH, FieldConstants.FIELD_LENGTH,
+                Rotation2d.k180deg),
+            Meters.of(2.64)),
         TWO(new Pose2d(), new Pose2d(), Meters.of(0.0));
 
         @Getter
@@ -182,41 +181,53 @@ public class RobotState {
         private final Distance height;
 
     }
-   
+
     /** Keeps track of current target to aim for */
     @AutoLogOutput(key = "Robot/CurrentTarget")
     @Setter
     public static Target target = Target.ONE;
 
     /** Returns 2d distance from robot to target in meters */
-    public Distance getDistanceToTarget(Pose2d robotPose) {
+    public Distance getDistanceToTarget(Pose2d robotPose)
+    {
         Translation2d robotTranslation = robotPose.getTranslation();
-        Translation2d targetTranslation = (DriverStation.getAlliance().get() == Alliance.Blue ? target.bluePose.getTranslation() : target.redPose.getTranslation());
+        Translation2d targetTranslation =
+            (DriverStation.getAlliance().get() == Alliance.Blue ? target.bluePose.getTranslation()
+                : target.redPose.getTranslation());
         return Meters.of(robotTranslation.getDistance(targetTranslation));
     }
 
     /** Returns 2d distance from robot to target in meters */
-    public static Distance getDistanceToTarget(Translation2d robotPose) {
-        Translation2d targetTranslation = (DriverStation.getAlliance().get() == Alliance.Blue ? target.bluePose.getTranslation() : target.redPose.getTranslation());
+    public static Distance getDistanceToTarget(Translation2d robotPose)
+    {
+        Translation2d targetTranslation =
+            (DriverStation.getAlliance().get() == Alliance.Blue ? target.bluePose.getTranslation()
+                : target.redPose.getTranslation());
         return Meters.of(robotPose.getDistance(targetTranslation));
     }
 
     /** Returns angle from robot to target */
-    public static Rotation2d getAngleToTarget(Translation2d robotPose) {
-        return (DriverStation.getAlliance().get() == Alliance.Blue ? target.bluePose.getTranslation() : target.redPose.getTranslation()).minus(robotPose).getAngle();
+    public static Rotation2d getAngleToTarget(Translation2d robotPose)
+    {
+        return (DriverStation.getAlliance().get() == Alliance.Blue
+            ? target.bluePose.getTranslation()
+            : target.redPose.getTranslation()).minus(robotPose).getAngle();
     }
 
     /** Returns target pose based on alliance color */
-    public static Pose2d getTargetPose(Target target) {
-        return (DriverStation.getAlliance().get() == Alliance.Blue ? target.getBluePose() : target.getRedPose());
+    public static Pose2d getTargetPose(Target target)
+    {
+        return (DriverStation.getAlliance().get() == Alliance.Blue ? target.getBluePose()
+            : target.getRedPose());
     }
-    
+
     /**
      * 
      * @param mechanismHeight height of the mechanism from which the projectile is launched
      * @return height difference from mechanism to target, in meters
      */
-    public Distance getHeightToTarget() {
+    public Distance getHeightToTarget()
+    {
         double mechanismHeight = getRotaryPose().getZ() + getLinearPose().getZ();
         return target.getHeight().minus(Meters.of(mechanismHeight));
     }
@@ -226,7 +237,8 @@ public class RobotState {
      * @param mechanismHeight height of the mechanism from which the projectile is launched
      * @return height difference from mechanism to target, in meters
      */
-    public static Distance getHeightToTarget(Distance mechanismHeight) {
+    public static Distance getHeightToTarget(Distance mechanismHeight)
+    {
         return target.getHeight().minus(mechanismHeight);
     }
 }
