@@ -16,74 +16,261 @@
 package frc.robot.subsystems.vision;
 
 import static edu.wpi.first.units.Units.Meters;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import frc.lib.devices.AprilTagCamera;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.visionprocessors.LowestAmbiguity;
 import frc.lib.posestimator.visionprocessors.MultiTagOnCoproc;
-import frc.lib.posestimator.visionprocessors.TrigSolve;
 import frc.lib.posestimator.visionprocessors.VisionProcessor.VisionPoseRecord;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
-import frc.robot.RobotState.TrigPoseRecord;
 
 /**
- * The {@code VisionSubsystem} manages all vision-related processing for the robot.
- * 
+ * VisionSubsystem handles both normal vision processing and one-shot camera extrinsic calibration
+ * using a Command.
+ *
  * <p>
- * It uses one or more {@link AprilTagCamera}s to detect field elements and estimate the robot's
- * pose on the field. Observations are processed through the {@link MultiTagOnCoproc} vision
- * processor, with a fallback to {@link LowestAmbiguity} if necessary. Valid observations are added
- * to {@link RobotState} for use in localization and navigation.
- * 
+ * Calibration strategy:
+ * <ul>
+ * <li>Assume a known, constant robot-center transform.</li>
+ * <li>Pick a primary camera.</li>
+ * <li>Collect 1000 tag-to-camera samples from the primary camera and estimate camera-to-robot.</li>
+ * <li>For each other camera, collect 1000 samples and estimate camera-to-primary-camera.</li>
+ * <li>Chain transforms to compute camera-to-robot.</li>
+ * </ul>
+ *
  * <p>
- * The subsystem periodically polls cameras for new results and logs both accepted and rejected
- * vision observations.
+ * No persistent calibration state is stored on the subsystem; all accumulation and estimation live
+ * entirely inside the calibration command.
  */
 public class VisionSubsystem extends SubsystemBase {
 
     public static final String LOG_PREFIX = "VisionProcessor/";
 
-    /** Baseline linear standard deviation used for vision observations. */
     public static final double LINEAR_STDDEV_BASELINE = 0.4;
-
-    /** Baseline angular standard deviation used for vision observations. */
     public static final double ANGULAR_STDDEV_BASELINE = 0.4;
-
-    /** Maximum allowable height (Z-axis) of a detected pose to be considered valid. */
     public static final double MAX_Z_METERS = 0.75;
-
-    /** Maximum allowable distance from a target to be considered valid. */
     public static final double MAX_DISTANCE_METERS = 10;
-
-    /** Maximum ambiguity ratio allowed in a result */
     public static final double MAX_AMBIGUITY = 0.2;
 
-    /** Width of the field in meters. */
     public static final double FIELD_WIDTH = FieldConstants.FIELD_WIDTH.in(Meters);
-
-    /** Length of the field in meters. */
     public static final double FIELD_LENGTH = FieldConstants.FIELD_LENGTH.in(Meters);
 
+    private final RobotState robotState = RobotState.getInstance();
+    private final AprilTagCamera[] cameras;
+
+    private final LowestAmbiguity fallbackVisionProcessor =
+        new LowestAmbiguity(FieldConstants.APRILTAG_LAYOUT);
+    private final MultiTagOnCoproc visionProcessor =
+        new MultiTagOnCoproc(
+            Optional.of(fallbackVisionProcessor),
+            FieldConstants.APRILTAG_LAYOUT);
+
+    public VisionSubsystem(AprilTagCamera... cameras)
+    {
+        this.cameras = cameras;
+        setDefaultCommand(visionProcessingCommand());
+    }
+
     /**
-     * Quickly checks whether a {@link PhotonPipelineResult} is likely to be useful before full
-     * processing.
-     * <p>
-     * Rejects results with no targets, ambiguous poses above 0.2, or targets farther than 10
-     * meters.
-     * </p>
-     *
-     * @param result the pipeline result to pre-filter
-     * @return {@code true} if the result passes preliminary checks, {@code false} otherwise
+     * Default command that replaces the old periodic() behavior.
      */
+    private Command visionProcessingCommand()
+    {
+        return run(() -> {
+            for (var camera : cameras) {
+                PhotonPipelineResult[] results =
+                    camera.getUnreadResults().orElse(null);
+                if (results == null) {
+                    continue;
+                }
+
+                for (var result : results) {
+                    if (!preFilter(result)) {
+                        continue;
+                    }
+
+                    Rotation2d heading = robotState
+                        .getPoseAtTime(result.getTimestampSeconds())
+                        .map(Pose2d::getRotation)
+                        .orElse(null);
+                    if (heading == null) {
+                        continue;
+                    }
+
+                    VisionPoseRecord poseRecord =
+                        visionProcessor.processVisionObservation(
+                            result,
+                            camera.getProperties(),
+                            heading).orElse(null);
+
+                    if (poseRecord == null || !postFilter(poseRecord.pose())) {
+                        continue;
+                    }
+
+                    double stdDevFactor =
+                        (Math.pow(poseRecord.averageDistanceMeters(), 2.0)
+                            / result.getTargets().size())
+                            * camera.getProperties().stdDevFactor();
+
+                    robotState.addVisionObservation(
+                        new VisionPoseObservation(
+                            result.getTimestampSeconds(),
+                            poseRecord.pose().toPose2d(),
+                            LINEAR_STDDEV_BASELINE * stdDevFactor,
+                            ANGULAR_STDDEV_BASELINE * stdDevFactor));
+                }
+            }
+        });
+    }
+
+    /**
+     * Creates a command that performs camera extrinsic calibration.
+     *
+     * @param primaryCameraIndex index into {@code cameras[]} designating the primary camera
+     * @param robotCenterTransform known transform from robot origin to robot center
+     */
+    public Command cameraCalibrationCommand(
+        int primaryCameraIndex,
+        Transform3d robotCenterTransform)
+    {
+        return new Command() {
+            private static final int SAMPLE_COUNT = 1000;
+
+            private final AprilTagCamera primary = cameras[primaryCameraIndex];
+
+            private final Map<AprilTagCamera, ArrayList<Transform3d>> samples =
+                new HashMap<>();
+
+            @Override
+            public void initialize()
+            {
+                for (var cam : cameras) {
+                    samples.put(cam, new ArrayList<>());
+                }
+            }
+
+            @Override
+            public void execute()
+            {
+                for (var camera : cameras) {
+                    if (samples.get(camera).size() >= SAMPLE_COUNT) {
+                        continue;
+                    }
+
+                    PhotonPipelineResult[] results =
+                        camera.getUnreadResults().orElse(null);
+                    if (results == null) {
+                        continue;
+                    }
+
+                    for (var result : results) {
+                        if (!result.hasTargets()) {
+                            continue;
+                        }
+
+                        result.getTargets().forEach(target -> {
+                            if (samples.get(camera).size() >= SAMPLE_COUNT) {
+                                return;
+                            }
+                            samples.get(camera)
+                                .add(target.getBestCameraToTarget());
+                        });
+                    }
+                }
+            }
+
+            @Override
+            public boolean isFinished()
+            {
+                return samples.values().stream()
+                    .allMatch(list -> list.size() >= SAMPLE_COUNT);
+            }
+
+            @Override
+            public void end(boolean interrupted)
+            {
+                if (interrupted) {
+                    return;
+                }
+
+                // Estimate primary camera -> robot
+                Transform3d primaryCamToRobot =
+                    average(samples.get(primary)).plus(robotCenterTransform);
+
+                Logger.recordOutput(
+                    "VisionCalibration/PrimaryCameraToRobot",
+                    primaryCamToRobot);
+
+                // Other cameras: camera -> primary -> robot
+                for (var camera : cameras) {
+                    if (camera == primary) {
+                        continue;
+                    }
+
+                    Transform3d camToPrimary =
+                        average(samples.get(camera));
+
+                    Transform3d camToRobot =
+                        camToPrimary.plus(primaryCamToRobot);
+
+                    Logger.recordOutput(
+                        "VisionCalibration/" + camera.getProperties().name()
+                            + "/CameraToRobot",
+                        camToRobot);
+                }
+            }
+
+            /**
+             * Simple mean of transforms (translation + rotation). Assumes small rotational
+             * variance.
+             */
+            private Transform3d average(ArrayList<Transform3d> list)
+            {
+                double x = 0;
+                double y = 0;
+                double z = 0;
+                double rx = 0;
+                double ry = 0;
+                double rz = 0;
+
+                for (var t : list) {
+                    x += t.getX();
+                    y += t.getY();
+                    z += t.getZ();
+                    rx += t.getRotation().getX();
+                    ry += t.getRotation().getY();
+                    rz += t.getRotation().getZ();
+                }
+
+                int n = list.size();
+                return new Transform3d(
+                    x / n,
+                    y / n,
+                    z / n,
+                    new edu.wpi.first.math.geometry.Rotation3d(
+                        rx / n,
+                        ry / n,
+                        rz / n));
+            }
+        };
+    }
+
     public static boolean preFilter(PhotonPipelineResult result)
     {
         if (!result.hasTargets()) {
@@ -94,166 +281,21 @@ public class VisionSubsystem extends SubsystemBase {
             return true;
         }
 
-        PhotonTrackedTarget bestTarget = result.getBestTarget();
-
-        if (bestTarget.getBestCameraToTarget().getTranslation().getNorm() > MAX_DISTANCE_METERS) {
-            return false;
-        }
-
-        return bestTarget.getPoseAmbiguity() <= MAX_AMBIGUITY;
+        return result.getBestTarget()
+            .getPoseAmbiguity() <= MAX_AMBIGUITY
+            && result.getBestTarget()
+                .getBestCameraToTarget()
+                .getTranslation()
+                .getNorm() <= MAX_DISTANCE_METERS;
     }
 
-    /**
-     * Checks whether a given {@link Pose3d} is valid on the field.
-     * <p>
-     * A pose is considered valid if it is within field boundaries and below {@link #MAX_Z_METERS}.
-     * </p>
-     *
-     * @param pose the pose to validate
-     * @return {@code true} if the pose is valid, {@code false} otherwise
-     */
     public static boolean postFilter(Pose3d pose)
     {
         double x = pose.getX();
         double y = pose.getY();
         double z = pose.getZ();
-        return !(z > MAX_Z_METERS || x < 0.0 || x > FIELD_LENGTH || y < 0.0 || y > FIELD_WIDTH);
-    }
-
-    private final RobotState robotState = RobotState.getInstance();
-    private final AprilTagCamera[] cameras;
-    private final LowestAmbiguity fallbackVisionProcessor =
-        new LowestAmbiguity(FieldConstants.APRILTAG_LAYOUT);
-    private final MultiTagOnCoproc visionProcessor =
-        new MultiTagOnCoproc(
-            Optional.of(fallbackVisionProcessor),
-            FieldConstants.APRILTAG_LAYOUT);
-
-    /**
-     * Constructs a new {@code VisionSubsystem} with the specified cameras.
-     *
-     * @param cameras the cameras to use for vision processing
-     */
-    public VisionSubsystem(AprilTagCamera... cameras)
-    {
-        this.cameras = cameras;
-    }
-
-    @Override
-    public void periodic()
-    {
-        for (var camera : cameras) {
-            String cameraLogPrefix = LOG_PREFIX + camera.getProperties().name() + "/";
-
-            PhotonPipelineResult[] results = camera.getUnreadResults().orElse(null);
-            if (results == null) {
-                continue;
-            }
-
-            ArrayList<PhotonPipelineResult> acceptedResults = new ArrayList<>();
-            ArrayList<PhotonPipelineResult> rejectedResults = new ArrayList<>();
-            ArrayList<Pose2d> acceptedPoses = new ArrayList<>();
-            ArrayList<Pose2d> rejectedPoses = new ArrayList<>();
-
-            for (var result : results) {
-                if (!preFilter(result)) {
-                    rejectedResults.add(result);
-                    continue;
-                }
-
-                Rotation2d heading = robotState.getPoseAtTime(result.getTimestampSeconds())
-                    .map(Pose2d::getRotation).orElse(null);
-                if (heading == null) {
-                    rejectedResults.add(result);
-                    continue;
-                }
-
-                result.targets.forEach(target -> {
-                    Pose2d pose = TrigSolve.solveTrigPosition(FieldConstants.APRILTAG_LAYOUT,
-                        camera.getProperties(), target, heading).orElse(null);
-                    if (pose == null || !postFilter(new Pose3d(pose))) {
-                        return;
-                    }
-
-                    robotState.addTrigPose(
-                        target.getFiducialId(),
-                        new TrigPoseRecord(
-                            pose,
-                            target.getBestCameraToTarget().getTranslation().getNorm(),
-                            result.getTimestampSeconds()));
-                });
-
-                VisionPoseRecord poseRecord = visionProcessor.processVisionObservation(
-                    result,
-                    camera.getProperties(),
-                    heading)
-                    .orElse(null);
-
-                if (poseRecord == null) {
-                    rejectedResults.add(result);
-                    continue;
-                }
-
-                if (!postFilter(poseRecord.pose())) {
-                    rejectedResults.add(result);
-                    rejectedPoses.add(
-                        poseRecord.pose().toPose2d());
-                    continue;
-                }
-
-                double stdDevFactor =
-                    (Math.pow(poseRecord.averageDistanceMeters(), 2.0) / result.getTargets().size())
-                        * camera.getProperties().stdDevFactor();
-                double linearStdDev = LINEAR_STDDEV_BASELINE * stdDevFactor;
-                double angularStdDev = ANGULAR_STDDEV_BASELINE * stdDevFactor;
-
-                robotState.addVisionObservation(
-                    new VisionPoseObservation(
-                        result.getTimestampSeconds(),
-                        poseRecord.pose().toPose2d(),
-                        linearStdDev,
-                        angularStdDev));
-
-                acceptedResults.add(result);
-                acceptedPoses.add(
-                    poseRecord.pose().toPose2d());
-            }
-
-            Logger.recordOutput(
-                cameraLogPrefix + "/Results/AcceptedLength",
-                acceptedResults.size());
-            for (int i = 0; i < acceptedResults.size(); i++) {
-                Logger.recordOutput(
-                    cameraLogPrefix + "/Results/Accepted/" + i,
-                    acceptedResults.get(i));
-            }
-
-            Logger.recordOutput(
-                cameraLogPrefix + "/Results/RejectedLength",
-                rejectedResults.size());
-            for (int i = 0; i < rejectedResults.size(); i++) {
-                Logger.recordOutput(
-                    cameraLogPrefix + "/Results/Rejected/" + i,
-                    rejectedResults.get(i));
-            }
-
-            Logger.recordOutput(
-                cameraLogPrefix + "/Poses/AcceptedLength",
-                acceptedPoses.size());
-            for (int i = 0; i < acceptedPoses.size(); i++) {
-                Logger.recordOutput(
-                    cameraLogPrefix + "/Poses/Accepted/" + i,
-                    acceptedPoses.get(i));
-            }
-
-            Logger.recordOutput(
-                cameraLogPrefix + "/Poses/RejectedLength",
-                rejectedPoses.size());
-            for (int i = 0; i < rejectedPoses.size(); i++) {
-                Logger.recordOutput(
-                    cameraLogPrefix + "/Results/Rejected/" + i,
-                    rejectedPoses.get(i));
-            }
-        }
+        return !(z > MAX_Z_METERS
+            || x < 0.0 || x > FIELD_LENGTH
+            || y < 0.0 || y > FIELD_WIDTH);
     }
 }
