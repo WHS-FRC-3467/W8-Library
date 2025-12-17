@@ -41,22 +41,17 @@ import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 
 /**
- * VisionSubsystem handles both normal vision processing and one-shot camera extrinsic calibration
- * using a Command.
- *
+ * The {@code VisionSubsystem} manages all vision-related processing for the robot.
+ * 
  * <p>
- * Calibration strategy:
- * <ul>
- * <li>Assume a known, constant robot-center transform.</li>
- * <li>Pick a primary camera.</li>
- * <li>Collect 1000 tag-to-camera samples from the primary camera and estimate camera-to-robot.</li>
- * <li>For each other camera, collect 1000 samples and estimate camera-to-primary-camera.</li>
- * <li>Chain transforms to compute camera-to-robot.</li>
- * </ul>
- *
+ * It uses one or more {@link AprilTagCamera}s to detect field elements and estimate the robot's
+ * pose on the field. Observations are processed through the {@link MultiTagOnCoproc} vision
+ * processor, with a fallback to {@link LowestAmbiguity} if necessary. Valid observations are added
+ * to {@link RobotState} for use in localization and navigation.
+ * 
  * <p>
- * No persistent calibration state is stored on the subsystem; all accumulation and estimation live
- * entirely inside the calibration command.
+ * The subsystem periodically polls cameras for new results and logs both accepted and rejected
+ * vision observations.
  */
 public class VisionSubsystem extends SubsystemBase {
 
