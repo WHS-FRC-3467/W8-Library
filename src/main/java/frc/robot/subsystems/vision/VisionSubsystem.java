@@ -277,7 +277,10 @@ public class VisionSubsystem extends SubsystemBase {
                 int n = list.size();
 
                 var avgQuat = new Quaternion(
-                    qw, qx, qy, qz).normalize();
+                    qw / n,
+                    qx / n,
+                    qy / n,
+                    qz / n).normalize();
 
                 return new Transform3d(
                     x / n,
