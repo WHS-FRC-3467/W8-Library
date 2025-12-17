@@ -155,6 +155,7 @@ public class VisionSubsystem extends SubsystemBase {
             @Override
             public void initialize()
             {
+                addRequirements(VisionSubsystem.this);
                 for (var cam : cameras) {
                     samples.put(cam, new ArrayList<>());
                 }
