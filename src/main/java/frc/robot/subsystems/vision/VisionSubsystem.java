@@ -84,7 +84,8 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     /**
-     * Default command that replaces the old periodic() behavior.
+     * Returns a command that continuously processes vision data from all cameras and
+     * adds valid pose observations to {@link RobotState}.
      */
     private Command visionProcessingCommand()
     {
