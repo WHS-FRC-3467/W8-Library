@@ -25,7 +25,7 @@ import frc.robot.RobotState;
 public class ProjectileAnalyzer {
     
     // Constants
-    private static final double LITTLE_G = 9.80665; // Magnitude of acceleration due to gravity (m/s^2)
+    private static final double LITTLE_G = 9.81; // Magnitude of acceleration due to gravity (m/s^2)
     private static final double MIN_ANGLE = 20.0; // Minimum launch angle in degrees
     private static final double MAX_ANGLE = 70.0; // Maximum launch angle in degrees
     private static final double DT = 0.02; // Delta Time or Time step
