@@ -138,8 +138,22 @@ public class VisionSubsystem extends SubsystemBase {
     /**
      * Creates a command that performs camera extrinsic calibration.
      *
+     * <p>The returned command repeatedly collects samples of the camera-to-target
+     * {@link Transform3d} reported by each AprilTag camera while the robot is held at a
+     * known calibration point on the field. For each camera, the command accumulates
+     * {@code SAMPLE_COUNT} camera-to-target transform samples, uses the known transform
+     * from the target to the robot center to infer the camera's pose relative to the
+     * robot, and then averages those inferred poses to produce an extrinsic calibration
+     * for each camera. The resulting calibration data is written to NetworkTables so
+     * it can be inspected or saved by external tooling.
+     *
+     * <p>The command finishes automatically after it has collected {@code SAMPLE_COUNT}
+     * valid samples from <em>all</em> cameras in {@link #cameras}.
+     *
      * @param primaryCameraIndex index into {@code cameras[]} designating the primary camera
-     * @param robotCenterTransform known transform from target to robot center
+     *     whose target observations are used as the reference during calibration
+     * @param robotCenterTransform known transform from the calibration target to the robot
+     *     center when the robot is positioned at the calibration point
      */
     public Command cameraCalibrationCommand(
         int primaryCameraIndex,
