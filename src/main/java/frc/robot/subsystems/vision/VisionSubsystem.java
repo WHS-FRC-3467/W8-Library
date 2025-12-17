@@ -138,7 +138,7 @@ public class VisionSubsystem extends SubsystemBase {
      * Creates a command that performs camera extrinsic calibration.
      *
      * @param primaryCameraIndex index into {@code cameras[]} designating the primary camera
-     * @param robotCenterTransform known transform from robot origin to robot center
+     * @param robotCenterTransform known transform from target to robot center
      */
     public Command cameraCalibrationCommand(
         int primaryCameraIndex,
