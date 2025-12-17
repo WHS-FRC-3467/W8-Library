@@ -136,7 +136,7 @@ public class Superstructure extends SubsystemBase implements AutoCloseable {
                 PIDSlot.SLOT_0)),
             Commands.waitUntil(
                 () -> linearIO.nearGoal(
-                    Setpoint.STOW.linearSetpoint.get(),
+                    LinearConstants.CONVERTER.toAngle(linearSetpoint),
                     LinearConstants.TOLERANCE)),
             this.runOnce(() -> rotaryIO.runPosition(
                 rotarySetpoint,
