@@ -254,7 +254,12 @@ public class VisionSubsystem extends SubsystemBase {
             }
 
             /**
-             * Simple mean of transforms (translation + rotation).
+             * Computes an average of a list of transforms.
+             *
+             * <p>Translation components (x, y, z) are averaged using a simple arithmetic mean.
+             * Rotation is averaged by summing the quaternions (with hemisphere correction to keep
+             * them on a consistent side of the unit sphere) and then normalizing the result to
+             * produce the final {@link Rotation3d}.
              */
             private Transform3d average(ArrayList<Transform3d> list)
             {
