@@ -82,7 +82,6 @@
   "[java]": {
     "editor.detectIndentation": false
   },
-  "workbench.iconTheme": "vs-seti",
   "java.project.sourcePaths": [
     "src/main/java",
     "processor/src/main/java"

@@ -21,6 +21,7 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -93,13 +94,16 @@ import frc.robot.subsystems.lasercan1.LaserCAN1Constants;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meter;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.FeetPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
+import java.util.function.Supplier;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.VisionSystemSim;
 
@@ -244,12 +248,6 @@ public class RobotContainer {
         SmartDashboard.putData("Superstructure: Raised",
             superstructure.setGoal(Superstructure.Setpoint.RAISED));
 
-        SmartDashboard.putData("Turret: Shoot Left",
-            turret.shoot(TurretConstants.MIN_ANGLE));
-
-        SmartDashboard.putData("Turret: Shoot Right",
-            turret.shoot(TurretConstants.MAX_ANGLE));
-
         LoggedTunableNumber ballVel = new LoggedTunableNumber("Ball Sim Velocity (fps)", 15);
         SmartDashboard.putData("Shoot Ball", Commands
             .runOnce(() -> BallSimulator.launch(FeetPerSecond.of(ballVel.getAsDouble()))));
@@ -281,6 +279,10 @@ public class RobotContainer {
         // controller.x()
         // .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
         // AlignMode.STRAFE, () -> controller.getRightX()));
+
+        // Right bumper: Shoot on the Move
+        controller.rightBumper().whileTrue(
+            turret.shoot(drive, () -> -controller.getLeftX(), () -> -controller.getLeftY()));
 
         inAllianceRegionTrigger.onTrue(
             Commands.runOnce(() -> Logger.recordOutput("InAllianceRegionTrigger", true))

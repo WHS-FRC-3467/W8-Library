@@ -77,6 +77,12 @@ public class Superstructure extends SubsystemBase implements AutoCloseable {
             linearIO.nearGoal(setpoint.linearSetpoint.get(), LinearConstants.TOLERANCE);
     }
 
+    public boolean nearSetpoint(Angle rotarySetpoint, Distance linearSetpoint)
+    {
+        return rotaryIO.nearGoal(rotarySetpoint, RotaryConstants.TOLERANCE) &&
+            linearIO.nearGoal(linearSetpoint, LinearConstants.TOLERANCE);
+    }
+
     public Command setGoal(Setpoint setpoint)
     {
         return Commands.sequence(
@@ -107,6 +113,39 @@ public class Superstructure extends SubsystemBase implements AutoCloseable {
                 RotaryConstants.JERK,
                 PIDSlot.SLOT_0)))
             .withName("Go To " + setpoint.toString() + " Setpoint");
+    }
+
+    public Command setGoal(Angle rotarySetpoint, Distance linearSetpoint)
+    {
+        return Commands.sequence(
+            this.runOnce(() -> rotaryIO.runPosition(
+                Setpoint.STOW.rotarySetpoint.get(),
+                RotaryConstants.CRUISE_VELOCITY,
+                RotaryConstants.ACCELERATION,
+                RotaryConstants.JERK,
+                PIDSlot.SLOT_0)),
+            Commands.waitUntil(
+                () -> rotaryIO.nearGoal(
+                    Setpoint.STOW.rotarySetpoint.get(),
+                    RotaryConstants.TOLERANCE)),
+            this.runOnce(() -> linearIO.runPosition(
+                LinearConstants.CONVERTER.toAngle(linearSetpoint),
+                LinearConstants.CRUISE_VELOCITY,
+                LinearConstants.ACCELERATION,
+                LinearConstants.JERK,
+                PIDSlot.SLOT_0)),
+            Commands.waitUntil(
+                () -> linearIO.nearGoal(
+                    linearSetpoint,
+                    LinearConstants.TOLERANCE)),
+            this.runOnce(() -> rotaryIO.runPosition(
+                rotarySetpoint,
+                RotaryConstants.CRUISE_VELOCITY,
+                RotaryConstants.ACCELERATION,
+                RotaryConstants.JERK,
+                PIDSlot.SLOT_0)))
+            .withName("Go To Custom Setpoint: " + rotarySetpoint.in(Degrees) + " deg, "
+                + linearSetpoint.in(Inches) + " in");
     }
 
     public Command setGoalWithWait(Setpoint setpoint)

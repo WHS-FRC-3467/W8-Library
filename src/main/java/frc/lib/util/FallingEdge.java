@@ -13,31 +13,32 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.robot.subsystems.drive;
+package frc.lib.util;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import org.littletonrobotics.junction.AutoLog;
+import java.util.function.BooleanSupplier;
 
-public interface GyroIO {
-    @AutoLog
-    public static class GyroIOInputs {
-        public boolean connected = false;
-        public Rotation2d yawPosition = new Rotation2d();
-        public double yawVelocityRadPerSec = 0.0;
-        public double[] odometryYawTimestamps = new double[] {};
-        public Rotation2d[] odometryYawPositions = new Rotation2d[] {};
-    }
+public class FallingEdge implements BooleanSupplier {
+    private final BooleanSupplier source;
 
-    public default void updateInputs(GyroIOInputs inputs)
-    {}
+    private boolean previousState = true;
 
-    public default double getAccelerationX()
+    public FallingEdge(BooleanSupplier source)
     {
-        return 0.0;
+        this.source = source;
     }
 
-    public default double getAccelerationY()
+    public static FallingEdge of(BooleanSupplier source)
     {
-        return 0.0;
+        return new FallingEdge(source);
     }
+
+    @Override
+    public boolean getAsBoolean()
+    {
+        boolean currentState = source.getAsBoolean();
+        boolean fallingEdge = previousState && !currentState;
+        previousState = currentState;
+        return fallingEdge;
+    }
+
 }

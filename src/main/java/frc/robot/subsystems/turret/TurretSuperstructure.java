@@ -16,10 +16,15 @@
 package frc.robot.subsystems.turret;
 
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -29,10 +34,33 @@ import frc.lib.devices.BeamBreak;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.flywheel.FlywheelMechanism;
 import frc.lib.mechanisms.rotary.RotaryMechanism;
+import frc.lib.util.FallingEdge;
+import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.RisingEdge;
 import frc.robot.RobotState;
+import frc.robot.commands.DriveCommands;
+import frc.robot.subsystems.drive.Drive;
 
 public class TurretSuperstructure extends SubsystemBase implements AutoCloseable {
+
+    private static final Pose2d SHOOT_GOAL = Pose2d.kZero;
+
+    private static final InterpolatingDoubleTreeMap magnitudeMap =
+        new InterpolatingDoubleTreeMap();
+    static {
+        // Pre-defined lookup table values
+        magnitudeMap.put(1.0, 325.0); // Use rad/s for continuity with MotorIO logging
+        magnitudeMap.put(1.5, 325.0);
+        magnitudeMap.put(2.0, 325.0);
+        magnitudeMap.put(2.5, 325.0);
+        magnitudeMap.put(3.0, 325.0);
+        magnitudeMap.put(3.5, 400.0);
+        magnitudeMap.put(4.0, 400.0);
+        magnitudeMap.put(4.5, 400.0);
+        magnitudeMap.put(5.0, 400.0);
+    }
+
+    private LoggedTunableNumber timeToBeReady = new LoggedTunableNumber("TimeToBeReady", 0.5);
 
     private final RobotState robotState = RobotState.getInstance();
 
@@ -64,10 +92,16 @@ public class TurretSuperstructure extends SubsystemBase implements AutoCloseable
             PIDSlot.SLOT_0);
     }
 
-    private Command interateIndexerPosition()
+    private Command indexerIntake()
     {
         return Commands.startEnd(this::runIndexer, this::stopIndexer)
             .until(RisingEdge.of(indexerBeamBreak::isBroken));
+    }
+
+    private Command indexerShoot()
+    {
+        return Commands.startEnd(this::runIndexer, this::stopIndexer)
+            .until(FallingEdge.of(indexerBeamBreak::isBroken));
     }
 
     private void setTurretPosition(Angle angle)
@@ -81,10 +115,9 @@ public class TurretSuperstructure extends SubsystemBase implements AutoCloseable
         return rotaryIO.nearGoal(angle, TurretConstants.TOLERANCE);
     }
 
-    private Command setTurretPositionAndWait(Angle angle)
+    private boolean turretIsAt(Rotation2d angle)
     {
-        return Commands.runOnce(() -> setTurretPosition(angle))
-            .andThen(Commands.waitUntil(() -> turretIsAt(angle)));
+        return turretIsAt(Radians.of(angle.getRadians()));
     }
 
     private void spinFlywheel(AngularVelocity velocity)
@@ -100,19 +133,54 @@ public class TurretSuperstructure extends SubsystemBase implements AutoCloseable
             FlywheelConstants.TOLERANCE.in(RotationsPerSecond));
     }
 
-    private Command spinFlywheelAndWait(AngularVelocity velocity)
+    public Command moveTurretRobotRelative(Supplier<Rotation2d> robotRelativeHeading)
     {
-        return Commands.runOnce(() -> spinFlywheel(velocity))
-            .andThen(Commands.waitUntil(() -> flywheelIsAt(velocity)));
+        return Commands
+            .run(() -> setTurretPosition(Radians.of(robotRelativeHeading.get().getRadians())));
     }
 
-    public Command shoot(Angle angle)
+    private Command moveTurretFieldRelative(
+        Drive drive,
+        DoubleSupplier xSupplier,
+        DoubleSupplier ySupplier,
+        Supplier<Rotation2d> fieldRelativeHeadingSupplier)
     {
+        return Commands.parallel(
+            DriveCommands.joystickDriveAtAngle(drive, xSupplier, ySupplier,
+                fieldRelativeHeadingSupplier),
+            moveTurretRobotRelative(
+                () -> fieldRelativeHeadingSupplier.get()
+                    .plus(robotState.getRotation().unaryMinus())));
+    }
+
+    public Command shoot(
+        Drive drive,
+        DoubleSupplier joystickXSupplier,
+        DoubleSupplier joystickYSupplier)
+    {
+        Supplier<Pose2d> futurePoseSupplier = () -> robotState.getEstimatedPose()
+            .exp(robotState.getFieldRelativeVelocity().toTwist2d(timeToBeReady.get()));
+        Supplier<AngularVelocity> flywheelVelocitySupplier = () -> RadiansPerSecond.of(
+            magnitudeMap
+                .get(SHOOT_GOAL.minus(futurePoseSupplier.get()).getTranslation().getNorm()));
+
         return Commands.sequence(
             Commands.parallel(
-                setTurretPositionAndWait(angle),
-                spinFlywheelAndWait(FlywheelConstants.MAX_VELOCITY)),
-            interateIndexerPosition(),
+                moveTurretFieldRelative(
+                    drive,
+                    joystickXSupplier,
+                    joystickYSupplier,
+                    () -> SHOOT_GOAL.minus(futurePoseSupplier.get()).getRotation()),
+                Commands.run(() -> spinFlywheel(flywheelVelocitySupplier.get())),
+                // Wait until at goal positions and make sequences depend on this
+                Commands.idle(this))
+                .until(() -> flywheelIsAt(flywheelVelocitySupplier.get())
+                    && turretIsAt(
+                        SHOOT_GOAL.minus(futurePoseSupplier.get()).getRotation()
+                            .plus(robotState.getRotation().unaryMinus()))),
+            // Shoot
+            indexerShoot(),
+            // Spin down flywheel
             Commands.runOnce(() -> spinFlywheel(RotationsPerSecond.zero())));
     }
 
