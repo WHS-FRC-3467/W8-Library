@@ -84,8 +84,8 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     /**
-     * Returns a command that continuously processes vision data from all cameras and
-     * adds valid pose observations to {@link RobotState}.
+     * Returns a command that continuously processes vision data from all cameras and adds valid
+     * pose observations to {@link RobotState}.
      */
     private Command visionProcessingCommand()
     {
@@ -139,22 +139,23 @@ public class VisionSubsystem extends SubsystemBase {
     /**
      * Creates a command that performs camera extrinsic calibration.
      *
-     * <p>The returned command repeatedly collects samples of the camera-to-target
-     * {@link Transform3d} reported by each AprilTag camera while the robot is held at a
-     * known calibration point on the field. For each camera, the command accumulates
-     * {@code SAMPLE_COUNT} camera-to-target transform samples, uses the known transform
-     * from the target to the robot center to infer the camera's pose relative to the
-     * robot, and then averages those inferred poses to produce an extrinsic calibration
-     * for each camera. The resulting calibration data is written to NetworkTables so
-     * it can be inspected or saved by external tooling.
+     * <p>
+     * The returned command repeatedly collects samples of the camera-to-target {@link Transform3d}
+     * reported by each AprilTag camera while the robot is held at a known calibration point on the
+     * field. For each camera, the command accumulates {@code SAMPLE_COUNT} camera-to-target
+     * transform samples, uses the known transform from the target to the robot center to infer the
+     * camera's pose relative to the robot, and then averages those inferred poses to produce an
+     * extrinsic calibration for each camera. The resulting calibration data is written to
+     * NetworkTables so it can be inspected or saved by external tooling.
      *
-     * <p>The command finishes automatically after it has collected {@code SAMPLE_COUNT}
-     * valid samples from <em>all</em> cameras in {@link #cameras}.
+     * <p>
+     * The command finishes automatically after it has collected {@code SAMPLE_COUNT} valid samples
+     * from <em>all</em> cameras in {@link #cameras}.
      *
-     * @param primaryCameraIndex index into {@code cameras[]} designating the primary camera
-     *     whose target observations are used as the reference during calibration
-     * @param robotCenterTransform known transform from the calibration target to the robot
-     *     center when the robot is positioned at the calibration point
+     * @param primaryCameraIndex index into {@code cameras[]} designating the primary camera whose
+     *        target observations are used as the reference during calibration
+     * @param robotCenterTransform known transform from the calibration target to the robot center
+     *        when the robot is positioned at the calibration point
      */
     public Command cameraCalibrationCommand(
         int primaryCameraIndex,
@@ -168,10 +169,14 @@ public class VisionSubsystem extends SubsystemBase {
             private final Map<AprilTagCamera, ArrayList<Transform3d>> samples =
                 new HashMap<>();
 
+            // Non-static initalizer
+            {
+                addRequirements(VisionSubsystem.this);
+            }
+
             @Override
             public void initialize()
             {
-                addRequirements(VisionSubsystem.this);
                 for (var cam : cameras) {
                     samples.put(cam, new ArrayList<>());
                 }
@@ -256,7 +261,8 @@ public class VisionSubsystem extends SubsystemBase {
             /**
              * Computes an average of a list of transforms.
              *
-             * <p>Translation components (x, y, z) are averaged using a simple arithmetic mean.
+             * <p>
+             * Translation components (x, y, z) are averaged using a simple arithmetic mean.
              * Rotation is averaged by summing the quaternions (with hemisphere correction to keep
              * them on a consistent side of the unit sphere) and then normalizing the result to
              * produce the final {@link Rotation3d}.
