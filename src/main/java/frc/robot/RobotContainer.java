@@ -281,8 +281,8 @@ public class RobotContainer {
         // .whileTrue(new AlignToPose(drive, () -> new Pose2d(5, 5, Rotation2d.fromDegrees(0)),
         // AlignMode.STRAFE, () -> controller.getRightX()));
 
-        // Y: Shoot on the Move
-        controller.y().whileTrue(
+        // Right bumper: Shoot on the Move
+        controller.rightBumper().whileTrue(
             turret.shoot(drive, () -> -controller.getLeftX(), () -> -controller.getLeftY()));
 
         inAllianceRegionTrigger.onTrue(
