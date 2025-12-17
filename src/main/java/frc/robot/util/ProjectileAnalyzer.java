@@ -35,7 +35,7 @@ public class ProjectileAnalyzer {
     private static final double CROSS_SECTIONAL_AREA = Math.PI * Math.pow(0.1, 2); // Example diameter of 0.2m
     private static final double PROJECTILE_MASS = 0.68; // Example mass in kg
     private static final double LIFT_COEFFICIENT = 0.2; // Example Magnus effect coefficient - need to experimentally determine
-    private static final double SPIN_RATE = 1; // The how much spin is on the projectile, in revolutions per second
+    private static final double SPIN_RATE = 1; // The amount of spin on the projectile, in revolutions per second
     private static final boolean SPIN = false; // Whether to include Magnus effect in simulation
 
     public record Shot(double angle, double magnitude) {}
