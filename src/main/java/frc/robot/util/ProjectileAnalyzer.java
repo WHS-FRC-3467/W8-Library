@@ -128,7 +128,7 @@ public class ProjectileAnalyzer {
                      */
                     velocityVector = new Vector<>(new Translation3d(vx, 0.0, vz).toVector());
                     angularVelocityVector = new Vector<>(new Translation3d(0.0, SPIN_RATE * 2 * Math.PI, 0.0).toVector()); // Convert rev/s to rad/s
-                    magnusDirectionVector = Vector.cross(velocityVector, angularVelocityVector);
+                    magnusDirectionVector = Vector.cross(angularVelocityVector, velocityVector);
                     magnusForceVector = magnusDirectionVector.times(0.5 * CROSS_SECTIONAL_AREA * LIFT_COEFFICIENT);
                     // Break magnus force into x and z components. It is technically normal to the velocity vector
                     double magnusX = magnusForceVector.get(0); // Magnus force in x-direction (horizontal towards target)
