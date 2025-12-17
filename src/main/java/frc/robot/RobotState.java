@@ -192,7 +192,8 @@ public class RobotState {
     {
         Translation2d robotTranslation = robotPose.getTranslation();
         Translation2d targetTranslation =
-            (DriverStation.getAlliance().get() == Alliance.Blue ? target.bluePose.getTranslation()
+            (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue
+                ? target.bluePose.getTranslation()
                 : target.redPose.getTranslation());
         return Meters.of(robotTranslation.getDistance(targetTranslation));
     }
@@ -201,7 +202,8 @@ public class RobotState {
     public static Distance getDistanceToTarget(Translation2d robotPose)
     {
         Translation2d targetTranslation =
-            (DriverStation.getAlliance().get() == Alliance.Blue ? target.bluePose.getTranslation()
+            (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue
+                ? target.bluePose.getTranslation()
                 : target.redPose.getTranslation());
         return Meters.of(robotPose.getDistance(targetTranslation));
     }
@@ -209,7 +211,7 @@ public class RobotState {
     /** Returns angle from robot to target */
     public static Rotation2d getAngleToTarget(Translation2d robotPose)
     {
-        return (DriverStation.getAlliance().get() == Alliance.Blue
+        return (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue
             ? target.bluePose.getTranslation()
             : target.redPose.getTranslation()).minus(robotPose).getAngle();
     }
@@ -217,7 +219,8 @@ public class RobotState {
     /** Returns target pose based on alliance color */
     public static Pose2d getTargetPose(Target target)
     {
-        return (DriverStation.getAlliance().get() == Alliance.Blue ? target.getBluePose()
+        return (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue
+            ? target.getBluePose()
             : target.getRedPose());
     }
 
