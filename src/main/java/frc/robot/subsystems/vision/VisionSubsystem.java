@@ -37,9 +37,11 @@ import frc.lib.devices.AprilTagCamera;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.visionprocessors.LowestAmbiguity;
 import frc.lib.posestimator.visionprocessors.MultiTagOnCoproc;
+import frc.lib.posestimator.visionprocessors.TrigSolve;
 import frc.lib.posestimator.visionprocessors.VisionProcessor.VisionPoseRecord;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
+import frc.robot.RobotState.TrigPoseRecord;
 
 /**
  * The {@code VisionSubsystem} manages all vision-related processing for the robot.
@@ -90,33 +92,63 @@ public class VisionSubsystem extends SubsystemBase {
     private Command visionProcessingCommand()
     {
         return run(() -> {
+
             for (var camera : cameras) {
-                PhotonPipelineResult[] results =
-                    camera.getUnreadResults().orElse(null);
+                String cameraLogPrefix = LOG_PREFIX + camera.getProperties().name() + "/";
+
+                PhotonPipelineResult[] results = camera.getUnreadResults().orElse(null);
                 if (results == null) {
                     continue;
                 }
 
+                ArrayList<PhotonPipelineResult> acceptedResults = new ArrayList<>();
+                ArrayList<PhotonPipelineResult> rejectedResults = new ArrayList<>();
+                ArrayList<Pose2d> acceptedPoses = new ArrayList<>();
+                ArrayList<Pose2d> rejectedPoses = new ArrayList<>();
+
                 for (var result : results) {
                     if (!preFilter(result)) {
+                        rejectedResults.add(result);
                         continue;
                     }
 
-                    Rotation2d heading = robotState
-                        .getPoseAtTime(result.getTimestampSeconds())
-                        .map(Pose2d::getRotation)
-                        .orElse(null);
+                    Rotation2d heading = robotState.getPoseAtTime(result.getTimestampSeconds())
+                        .map(Pose2d::getRotation).orElse(null);
                     if (heading == null) {
+                        rejectedResults.add(result);
                         continue;
                     }
 
-                    VisionPoseRecord poseRecord =
-                        visionProcessor.processVisionObservation(
-                            result,
-                            camera.getProperties(),
-                            heading).orElse(null);
+                    result.targets.forEach(target -> {
+                        Pose2d pose = TrigSolve.solveTrigPosition(FieldConstants.APRILTAG_LAYOUT,
+                            camera.getProperties(), target, heading).orElse(null);
+                        if (pose == null || !postFilter(new Pose3d(pose))) {
+                            return;
+                        }
 
-                    if (poseRecord == null || !postFilter(poseRecord.pose())) {
+                        robotState.addTrigPose(
+                            target.getFiducialId(),
+                            new TrigPoseRecord(
+                                pose,
+                                target.getBestCameraToTarget().getTranslation().getNorm(),
+                                result.getTimestampSeconds()));
+                    });
+
+                    VisionPoseRecord poseRecord = visionProcessor.processVisionObservation(
+                        result,
+                        camera.getProperties(),
+                        heading)
+                        .orElse(null);
+
+                    if (poseRecord == null) {
+                        rejectedResults.add(result);
+                        continue;
+                    }
+
+                    if (!postFilter(poseRecord.pose())) {
+                        rejectedResults.add(result);
+                        rejectedPoses.add(
+                            poseRecord.pose().toPose2d());
                         continue;
                     }
 
@@ -124,13 +156,55 @@ public class VisionSubsystem extends SubsystemBase {
                         (Math.pow(poseRecord.averageDistanceMeters(), 2.0)
                             / result.getTargets().size())
                             * camera.getProperties().stdDevFactor();
+                    double linearStdDev = LINEAR_STDDEV_BASELINE * stdDevFactor;
+                    double angularStdDev = ANGULAR_STDDEV_BASELINE * stdDevFactor;
 
                     robotState.addVisionObservation(
                         new VisionPoseObservation(
                             result.getTimestampSeconds(),
                             poseRecord.pose().toPose2d(),
-                            LINEAR_STDDEV_BASELINE * stdDevFactor,
-                            ANGULAR_STDDEV_BASELINE * stdDevFactor));
+                            linearStdDev,
+                            angularStdDev));
+
+                    acceptedResults.add(result);
+                    acceptedPoses.add(
+                        poseRecord.pose().toPose2d());
+                }
+
+                Logger.recordOutput(
+                    cameraLogPrefix + "/Results/AcceptedLength",
+                    acceptedResults.size());
+                for (int i = 0; i < acceptedResults.size(); i++) {
+                    Logger.recordOutput(
+                        cameraLogPrefix + "/Results/Accepted/" + i,
+                        acceptedResults.get(i));
+                }
+
+                Logger.recordOutput(
+                    cameraLogPrefix + "/Results/RejectedLength",
+                    rejectedResults.size());
+                for (int i = 0; i < rejectedResults.size(); i++) {
+                    Logger.recordOutput(
+                        cameraLogPrefix + "/Results/Rejected/" + i,
+                        rejectedResults.get(i));
+                }
+
+                Logger.recordOutput(
+                    cameraLogPrefix + "/Poses/AcceptedLength",
+                    acceptedPoses.size());
+                for (int i = 0; i < acceptedPoses.size(); i++) {
+                    Logger.recordOutput(
+                        cameraLogPrefix + "/Poses/Accepted/" + i,
+                        acceptedPoses.get(i));
+                }
+
+                Logger.recordOutput(
+                    cameraLogPrefix + "/Poses/RejectedLength",
+                    rejectedPoses.size());
+                for (int i = 0; i < rejectedPoses.size(); i++) {
+                    Logger.recordOutput(
+                        cameraLogPrefix + "/Results/Rejected/" + i,
+                        rejectedPoses.get(i));
                 }
             }
         });
