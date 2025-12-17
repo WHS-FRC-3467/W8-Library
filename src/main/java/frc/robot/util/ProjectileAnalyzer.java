@@ -112,7 +112,7 @@ public class ProjectileAnalyzer {
             Vector<N3> magnusForceVector;
 
             // Simulate until the projectile hits the ground or passes the target
-            while (z >= 0 && x < distance + SHOT_TOLERANCE) { 
+            while (z >= 0 && x <= distance + SHOT_TOLERANCE) { 
                 // Calculate forces
                 double speed = Math.sqrt(vx * vx + vz * vz);
                 double dragForce = 0.5 * DRAG_COEFFICIENT * AIR_DENSITY * CROSS_SECTIONAL_AREA * speed * speed;
