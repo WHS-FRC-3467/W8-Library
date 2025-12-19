@@ -25,13 +25,11 @@ import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.units.*;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -67,9 +65,8 @@ public class MotorIOTalonFX implements MotorIO {
     protected final VoltageOut voltageControl = new VoltageOut(0).withEnableFOC(true);
     protected final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0);
     protected final DutyCycleOut dutyCycleControl = new DutyCycleOut(0).withEnableFOC(true);
-    protected final DynamicMotionMagicTorqueCurrentFOC positionControl =
-        new DynamicMotionMagicTorqueCurrentFOC(0, 0, 0,
-            0);
+    protected final MotionMagicTorqueCurrentFOC positionControl =
+        new MotionMagicTorqueCurrentFOC(0);
     protected final VelocityTorqueCurrentFOC velocityControl = new VelocityTorqueCurrentFOC(0);
 
     private final CANUpdateThread updateThread = new CANUpdateThread();
@@ -345,19 +342,13 @@ public class MotorIOTalonFX implements MotorIO {
      * Runs the motor to a specific position.
      *
      * @param position Target position.
-     * @param cruiseVelocity Cruise velocity.
-     * @param acceleration Max acceleration.
-     * @param maxJerk Max jerk (rate of acceleration).
      * @param slot PID slot index.
      */
     @Override
-    public void runPosition(Angle position, AngularVelocity cruiseVelocity,
-        AngularAcceleration acceleration,
-        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
+    public void runPosition(Angle position, PIDSlot slot)
     {
         this.goalPosition = position;
-        motor.setControl(positionControl.withPosition(position).withVelocity(cruiseVelocity)
-            .withAcceleration(acceleration).withJerk(maxJerk).withSlot(slot.getNum()));
+        motor.setControl(positionControl.withPosition(position).withSlot(slot.getNum()));
     }
 
     /**

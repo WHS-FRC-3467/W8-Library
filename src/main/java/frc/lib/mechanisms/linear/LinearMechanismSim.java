@@ -21,14 +21,12 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
@@ -146,11 +144,9 @@ public class LinearMechanismSim extends LinearMechanism {
     }
 
     @Override
-    public void runPosition(Angle position, AngularVelocity cruiseVelocity,
-        AngularAcceleration acceleration,
-        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
+    public void runPosition(Angle position, PIDSlot slot)
     {
-        io.runPosition(position, cruiseVelocity, acceleration, maxJerk, slot);
+        io.runPosition(position, slot);
     }
 
     @Override
