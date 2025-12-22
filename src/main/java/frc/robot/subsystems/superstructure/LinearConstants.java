@@ -8,6 +8,8 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -101,12 +103,14 @@ public class LinearConstants {
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
             CONVERTER.toAngle(MIN_DISTANCE).in(Rotations);
 
-
         config.Feedback.RotorToSensorRatio = 1.0;
 
         config.Feedback.SensorToMechanismRatio = GEARING;
 
         config.Slot0 = SLOT_0_CONFIG;
+        config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY.in(RotationsPerSecond);
+        config.MotionMagic.MotionMagicAcceleration = ACCELERATION.in(RotationsPerSecondPerSecond);
+        config.MotionMagic.MotionMagicJerk = JERK.in(RotationsPerSecondPerSecond.per(Second));
 
         return config;
     }
