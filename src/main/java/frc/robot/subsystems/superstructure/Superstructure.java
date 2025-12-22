@@ -88,9 +88,6 @@ public class Superstructure extends SubsystemBase implements AutoCloseable {
         return Commands.sequence(
             this.runOnce(() -> rotaryIO.runPosition(
                 Setpoint.STOW.rotarySetpoint.get(),
-                RotaryConstants.CRUISE_VELOCITY,
-                RotaryConstants.ACCELERATION,
-                RotaryConstants.JERK,
                 PIDSlot.SLOT_0)),
             Commands.waitUntil(
                 () -> rotaryIO.nearGoal(
@@ -98,9 +95,6 @@ public class Superstructure extends SubsystemBase implements AutoCloseable {
                     RotaryConstants.TOLERANCE)),
             this.runOnce(() -> linearIO.runPosition(
                 setpoint.getLinearAngle(),
-                LinearConstants.CRUISE_VELOCITY,
-                LinearConstants.ACCELERATION,
-                LinearConstants.JERK,
                 PIDSlot.SLOT_0)),
             Commands.waitUntil(
                 () -> linearIO.nearGoal(
@@ -108,9 +102,6 @@ public class Superstructure extends SubsystemBase implements AutoCloseable {
                     LinearConstants.TOLERANCE)),
             this.runOnce(() -> rotaryIO.runPosition(
                 setpoint.rotarySetpoint.get(),
-                RotaryConstants.CRUISE_VELOCITY,
-                RotaryConstants.ACCELERATION,
-                RotaryConstants.JERK,
                 PIDSlot.SLOT_0)))
             .withName("Go To " + setpoint.toString() + " Setpoint");
     }
@@ -120,9 +111,6 @@ public class Superstructure extends SubsystemBase implements AutoCloseable {
         return Commands.sequence(
             this.runOnce(() -> rotaryIO.runPosition(
                 Setpoint.STOW.rotarySetpoint.get(),
-                RotaryConstants.CRUISE_VELOCITY,
-                RotaryConstants.ACCELERATION,
-                RotaryConstants.JERK,
                 PIDSlot.SLOT_0)),
             Commands.waitUntil(
                 () -> rotaryIO.nearGoal(
@@ -130,9 +118,6 @@ public class Superstructure extends SubsystemBase implements AutoCloseable {
                     RotaryConstants.TOLERANCE)),
             this.runOnce(() -> linearIO.runPosition(
                 LinearConstants.CONVERTER.toAngle(linearSetpoint),
-                LinearConstants.CRUISE_VELOCITY,
-                LinearConstants.ACCELERATION,
-                LinearConstants.JERK,
                 PIDSlot.SLOT_0)),
             Commands.waitUntil(
                 () -> linearIO.nearGoal(
@@ -140,9 +125,6 @@ public class Superstructure extends SubsystemBase implements AutoCloseable {
                     LinearConstants.TOLERANCE)),
             this.runOnce(() -> rotaryIO.runPosition(
                 rotarySetpoint,
-                RotaryConstants.CRUISE_VELOCITY,
-                RotaryConstants.ACCELERATION,
-                RotaryConstants.JERK,
                 PIDSlot.SLOT_0)))
             .withName("Go To Custom Setpoint: " + rotarySetpoint.in(Degrees) + " deg, "
                 + linearSetpoint.in(Inches) + " in");

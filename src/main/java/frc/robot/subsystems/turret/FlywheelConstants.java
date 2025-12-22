@@ -5,6 +5,8 @@
 package frc.robot.subsystems.turret;
 
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Second;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -76,6 +78,9 @@ public class FlywheelConstants {
         config.Feedback.SensorToMechanismRatio = GEARING;
 
         config.Slot0 = SLOT0CONFIG;
+        config.MotionMagic.MotionMagicCruiseVelocity = MAX_VELOCITY.in(RotationsPerSecond);
+        config.MotionMagic.MotionMagicAcceleration =
+            MAX_ACCELERATION.in(RotationsPerSecondPerSecond);
 
         return config;
     }

@@ -20,12 +20,10 @@ import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import java.util.function.Supplier;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 
@@ -75,14 +73,9 @@ public interface Mechanism {
      * Runs the mechanism to a specific position.
      *
      * @param position Target position.
-     * @param cruiseVelocity Cruise velocity.
-     * @param acceleration Max acceleration.
-     * @param maxJerk Max jerk (rate of acceleration).
      * @param slot PID slot index.
      */
-    public default void runPosition(Angle position, AngularVelocity cruiseVelocity,
-        AngularAcceleration acceleration,
-        Velocity<AngularAccelerationUnit> maxJerk, PIDSlot slot)
+    public default void runPosition(Angle position, PIDSlot slot)
     {}
 
     /**
