@@ -139,7 +139,7 @@ public interface MotorIO extends AutoCloseable {
     /**
      * Runs the motor using duty cycle (percentage of available voltage).
      *
-     * @param dutyCycle Fractional output between 0 and 1.
+     * @param dutyCycle Fractional output between -1 and 1.
      */
     public default void runDutyCycle(double dutyCycle)
     {}
