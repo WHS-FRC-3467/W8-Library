@@ -109,7 +109,7 @@ public class TurretConstants {
 
         config.Slot0 = SLOT_0_CONFIG;
         config.MotionMagic.MotionMagicCruiseVelocity = CRUISE_VELOCITY.in(RotationsPerSecond);
-        config.MotionMagic.MotionMagicAcceleration = ACCELERATION.in(RadiansPerSecondPerSecond);
+        config.MotionMagic.MotionMagicAcceleration = ACCELERATION.in(RotationsPerSecondPerSecond);
         config.MotionMagic.MotionMagicJerk = JERK.in(RotationsPerSecondPerSecond.per(Second));
 
         return config;
