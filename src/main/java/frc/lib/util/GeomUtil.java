@@ -7,14 +7,18 @@
 
 package frc.lib.util;
 
+import static edu.wpi.first.units.Units.Meters;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.Distance;
 
 /** Geometry utilities for working with translations, rotations, transforms, and poses. */
 public class GeomUtil {
@@ -174,4 +178,86 @@ public class GeomUtil {
     {
         return new Pose2d(pose.getTranslation(), rotation);
     }
+
+    /**
+     * Checks if two Pose3d objects are approximately equal within given distance and rotation
+     * tolerances.
+     *
+     * <p>
+     * The comparison checks both the translation (x, y, z) and the rotation (roll, pitch, yaw)
+     * components individually against the specified tolerances.
+     *
+     * @param first The first pose to compare
+     * @param second The second pose to compare
+     * @param distanceEpsilon The maximum allowable difference in translation (in meters)
+     * @param rotationEpsilon The maximum allowable difference in rotation (in radians)
+     * @return True if the poses are near each other in both translation and rotation
+     */
+    public static boolean isNear(Pose3d first, Pose3d second, Distance distanceEpsilon,
+        Rotation3d rotationEpsilon)
+    {
+        boolean positionNear =
+            MathUtil.isNear(first.getX(), second.getX(), distanceEpsilon.in(Meters))
+                && MathUtil.isNear(first.getY(), second.getY(), distanceEpsilon.in(Meters))
+                && MathUtil.isNear(first.getZ(), second.getZ(), distanceEpsilon.in(Meters));
+
+        boolean rotationNear = MathUtil.isNear(first.getRotation().getX(),
+            second.getRotation().getX(), rotationEpsilon.getX())
+            && MathUtil.isNear(first.getRotation().getY(), second.getRotation().getY(),
+                rotationEpsilon.getY())
+            && MathUtil.isNear(first.getRotation().getZ(), second.getRotation().getZ(),
+                rotationEpsilon.getZ());
+
+        return positionNear && rotationNear;
+    }
+
+    /**
+     * Checks if two Transform3d objects are approximately equal within a given distance and
+     * rotation tolerance.
+     *
+     * @param first The first transform to compare
+     * @param second The second transform to compare
+     * @param distanceEpsilon The maximum allowable distance difference in meters
+     * @param rotationEpsilon The maximum allowable rotation difference
+     * @return True if the transforms are near each other in both translation and rotation
+     */
+    public static boolean isNear(Transform3d first, Transform3d second, Distance distanceEpsilon,
+        Rotation3d rotationEpsilon)
+    {
+        return isNear(toPose3d(first), toPose3d(second), distanceEpsilon, rotationEpsilon);
+    }
+
+    /**
+     * Checks if two Pose2d objects are approximately equal within a given distance and rotation
+     * tolerance.
+     *
+     * @param first The first pose to compare
+     * @param second The second pose to compare
+     * @param distanceEpsilon The maximum allowable distance difference in meters
+     * @param rotationEpsilon The maximum allowable rotation difference
+     * @return True if the poses are near each other in both translation and rotation
+     */
+    public static boolean isNear(Pose2d first, Pose2d second, Distance distanceEpsilon,
+        Rotation2d rotationEpsilon)
+    {
+        return isNear(new Pose3d(first), new Pose3d(second), distanceEpsilon,
+            new Rotation3d(rotationEpsilon));
+    }
+
+    /**
+     * Checks if two Transform2d objects are approximately equal within a given distance and
+     * rotation tolerance.
+     *
+     * @param first The first transform to compare
+     * @param second The second transform to compare
+     * @param distanceEpsilon The maximum allowable distance difference in meters
+     * @param rotationEpsilon The maximum allowable rotation difference
+     * @return True if the transforms are near each other in both translation and rotation
+     */
+    public static boolean isNear(Transform2d first, Transform2d second, Distance distanceEpsilon,
+        Rotation2d rotationEpsilon)
+    {
+        return isNear(toPose2d(first), toPose2d(second), distanceEpsilon, rotationEpsilon);
+    }
+
 }

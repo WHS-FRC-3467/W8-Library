@@ -58,6 +58,8 @@ import frc.robot.RobotState.TrigPoseRecord;
  */
 public class VisionSubsystem extends SubsystemBase {
 
+    public static Transform3d test = new Transform3d();
+
     public static final String LOG_PREFIX = "VisionProcessor/";
 
     public static final double LINEAR_STDDEV_BASELINE = 0.4;
@@ -89,7 +91,7 @@ public class VisionSubsystem extends SubsystemBase {
      * Returns a command that continuously processes vision data from all cameras and adds valid
      * pose observations to {@link RobotState}.
      */
-    private Command visionProcessingCommand()
+    public Command visionProcessingCommand()
     {
         return run(() -> {
 
@@ -107,10 +109,10 @@ public class VisionSubsystem extends SubsystemBase {
                 ArrayList<Pose2d> rejectedPoses = new ArrayList<>();
 
                 for (var result : results) {
-                    if (!preFilter(result)) {
-                        rejectedResults.add(result);
-                        continue;
-                    }
+                    // if (!preFilter(result)) {
+                    // rejectedResults.add(result);
+                    // continue;
+                    // }
 
                     Rotation2d heading = robotState.getPoseAtTime(result.getTimestampSeconds())
                         .map(Pose2d::getRotation).orElse(null);
@@ -122,7 +124,7 @@ public class VisionSubsystem extends SubsystemBase {
                     result.targets.forEach(target -> {
                         Pose2d pose = TrigSolve.solveTrigPosition(FieldConstants.APRILTAG_LAYOUT,
                             camera.getProperties(), target, heading).orElse(null);
-                        if (pose == null || !postFilter(new Pose3d(pose))) {
+                        if (pose == null /* || !postFilter(new Pose3d(pose)) */) {
                             return;
                         }
 
@@ -145,12 +147,12 @@ public class VisionSubsystem extends SubsystemBase {
                         continue;
                     }
 
-                    if (!postFilter(poseRecord.pose())) {
-                        rejectedResults.add(result);
-                        rejectedPoses.add(
-                            poseRecord.pose().toPose2d());
-                        continue;
-                    }
+                    // if (!postFilter(poseRecord.pose())) {
+                    // rejectedResults.add(result);
+                    // rejectedPoses.add(
+                    // poseRecord.pose().toPose2d());
+                    // continue;
+                    // }
 
                     double stdDevFactor =
                         (Math.pow(poseRecord.averageDistanceMeters(), 2.0)
@@ -305,6 +307,8 @@ public class VisionSubsystem extends SubsystemBase {
                     average(samples.get(primary));
 
                 Transform3d primaryCamToRobot = primaryCamToTarget.plus(robotCenterTransform);
+
+                test = primaryCamToRobot;
 
                 Logger.recordOutput(
                     "VisionCalibration/PrimaryCameraToRobot",

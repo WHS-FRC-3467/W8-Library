@@ -166,24 +166,24 @@ public class VisionConstants {
             FieldConstants.APRILTAG_LAYOUT);
     }
 
-    public static void create()
+    public static VisionSubsystem get()
     {
-        switch (Constants.currentMode) {
+        return switch (Constants.currentMode) {
             case REAL -> {
                 var camera1 = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOReal());
                 var camera2 = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOReal());
-                new VisionSubsystem(camera1, camera2);
+                yield new VisionSubsystem(camera1, camera2);
             }
             case SIM -> {
                 var camera1 = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim());
                 var camera2 = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim());
-                new VisionSubsystem(camera1, camera2);
+                yield new VisionSubsystem(camera1, camera2);
             }
             case REPLAY -> {
                 var camera1 = new AprilTagCamera(FRONT_LEFT, new VisionIO() {});
                 var camera2 = new AprilTagCamera(FRONT_RIGHT, new VisionIO() {});
-                new VisionSubsystem(camera1, camera2);
+                yield new VisionSubsystem(camera1, camera2);
             }
-        }
+        };
     }
 }

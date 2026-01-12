@@ -13,41 +13,56 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
+
 package frc.robot;
 
+import edu.wpi.first.hal.NotifierJNI;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class TestUtil {
 
-    private static Timer timer = new Timer();
-    private static Timer loopTimer = new Timer();
+    private static final boolean USE_TIMING = false;
 
-    public static void runTest(Command command, double duration, Subsystem subsystem)
+    private static final int NOTIFIER = NotifierJNI.initializeNotifier();
+    private static final CommandScheduler SCHEDULER = CommandScheduler.getInstance();
+    private static final Timer TIMER = new Timer();
+
+    public static void runTest(Command command, double duration)
     {
-        command.initialize();
+        SCHEDULER.cancelAll();
 
-        timer.restart();
-        loopTimer.restart();
-        boolean finished = false;
-        while (timer.get() < duration) {
-            if (!finished) {
-                command.execute();
-                if (command.isFinished()) {
-                    finished = true;
+        command.schedule();
+
+        TIMER.start();
+
+        double nextCycleSeconds = 0.0;
+        while (true) {
+            if (USE_TIMING) {
+                double currentTime = TIMER.get();
+                if (nextCycleSeconds < currentTime) {
+                    // Loop overrun, start next cycle immediately
+                    nextCycleSeconds = currentTime;
+                } else {
+                    // Wait before next cycle
+                    NotifierJNI.updateNotifierAlarm(NOTIFIER, (long) nextCycleSeconds * 1000000);
+                    if (NotifierJNI.waitForNotifierAlarm(NOTIFIER) == 0L) {
+                        // Break the loop if the notifier was stopped
+                        break;
+                    }
                 }
+                nextCycleSeconds += 0.02;
             }
 
-            subsystem.periodic();
-            while (!loopTimer.advanceIfElapsed(0.02)) {
-                // wait until 20ms has passed
-            }
+            SCHEDULER.run();
+            if (TIMER.hasElapsed(duration))
+                break;
         }
 
-        command.end(!finished);
-        subsystem.periodic();
-        timer.stop();
-        loopTimer.stop();
+        TIMER.stop();
+        TIMER.reset();
+
+        SCHEDULER.cancelAll();
     }
 }
