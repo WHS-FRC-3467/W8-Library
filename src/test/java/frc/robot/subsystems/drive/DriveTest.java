@@ -66,7 +66,7 @@ class DriveTest {
     @Test // marks this method as a test
     void testStop()
     {
-        TestUtil.runTest(Commands.runOnce(() -> drive.stop()), 0.1, drive);
+        TestUtil.runTest(Commands.runOnce(() -> drive.stop()), 0.1);
         try {
             assertEquals(0.0, drive.getFFCharacterizationVelocity(), DELTA); // make sure that the
                                                                              // speed of the motor
@@ -79,8 +79,8 @@ class DriveTest {
     @Test
     void testDriveVelocity()
     {
-        TestUtil.runTest(Commands.run(() -> drive.runVelocity(new ChassisSpeeds(1.5, 1.5, 0.0))), 1,
-            drive);
+        TestUtil.runTest(Commands.run(() -> drive.runVelocity(new ChassisSpeeds(1.5, 1.5, 0.0))),
+            1);
         try {
             assertEquals(1.5, drive.getChassisSpeeds().vxMetersPerSecond, DELTA);
             assertEquals(1.5, drive.getChassisSpeeds().vyMetersPerSecond, DELTA);
@@ -94,8 +94,8 @@ class DriveTest {
     @Test
     void testSteerVelocity()
     {
-        TestUtil.runTest(Commands.run(() -> drive.runVelocity(new ChassisSpeeds(0.0, 0.0, 1.5))), 1,
-            drive);
+        TestUtil.runTest(Commands.run(() -> drive.runVelocity(new ChassisSpeeds(0.0, 0.0, 1.5))),
+            1);
         try {
             assertEquals(1.5, drive.getChassisSpeeds().omegaRadiansPerSecond, DELTA);
         } catch (Exception e) {
@@ -106,27 +106,37 @@ class DriveTest {
     @Test
     void testX()
     {
-        TestUtil.runTest(drive.runOnce(() -> drive.stopWithX()), 0.1, drive);
+        drive.removeDefaultCommand();
+        TestUtil.runTest(drive.runOnce(() -> drive.stopWithX()), 0.5);
         try {
             SwerveModulePosition[] swerveModulePositions = drive.getModulePositions();
             Rotation2d[] targetAngles = {
-                    new Rotation2d(Math.atan(
-                        DriveConstants.FrontLeft.LocationY / DriveConstants.FrontLeft.LocationX)), // Front
-                                                                                                   // Left
-                    new Rotation2d(Math.atan(
-                        DriveConstants.FrontRight.LocationY / DriveConstants.FrontRight.LocationX)), // Front
-                                                                                                     // Right
-                    new Rotation2d(Math.atan(
-                        DriveConstants.BackLeft.LocationY / DriveConstants.BackLeft.LocationX)), // Back
-                                                                                                 // Left
-                    new Rotation2d(Math.atan(
-                        DriveConstants.BackRight.LocationY / DriveConstants.BackRight.LocationX)) // Back
-                                                                                                  // Right
+                    new Rotation2d(Math.atan2(
+                        DriveConstants.FrontLeft.LocationY,
+                        DriveConstants.FrontLeft.LocationX)),
+                    new Rotation2d(Math.atan2(
+                        DriveConstants.FrontRight.LocationY,
+                        DriveConstants.FrontRight.LocationX)),
+                    new Rotation2d(Math.atan2(
+                        DriveConstants.BackLeft.LocationY,
+                        DriveConstants.BackLeft.LocationX)),
+                    new Rotation2d(Math.atan2(
+                        DriveConstants.BackRight.LocationY,
+                        DriveConstants.BackRight.LocationX))
             };
+
             // Test position of modules
             for (int i = 0; i < swerveModulePositions.length; i++) {
-                assertEquals(targetAngles[i].getRadians(),
-                    swerveModulePositions[i].angle.getRadians(), DELTA);
+                double error = Rotation2d.fromRadians(
+                    swerveModulePositions[i].angle.getRadians()
+                        - targetAngles[i].getRadians())
+                    .getRadians();
+
+                error = Math.abs(Math.IEEEremainder(error, 2 * Math.PI));
+
+                assertTrue(
+                    error < DELTA || Math.abs(error - Math.PI) < DELTA,
+                    "Module " + i + " angle incorrect");
             }
             assertEquals(0.0, drive.getChassisSpeeds().vxMetersPerSecond, DELTA); // make sure that
                                                                                   // the drivetrain

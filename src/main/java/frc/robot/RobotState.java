@@ -19,6 +19,7 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.function.Consumer;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -65,6 +66,10 @@ public class RobotState {
     @Setter
     private ChassisSpeeds velocity = new ChassisSpeeds();
 
+    @Setter
+    private Consumer<VisionPoseObservation> visionObservationConsumer =
+        poseEstimator::addVisionObservation;
+
     @AutoLogOutput(key = "Odometry/OdometryPose")
     public Pose2d getOdometryPose()
     {
@@ -90,7 +95,7 @@ public class RobotState {
 
     public void addVisionObservation(VisionPoseObservation observation)
     {
-        poseEstimator.addVisionObservation(observation);
+        visionObservationConsumer.accept(observation);
     }
 
     public void addTrigPose(int tagId, TrigPoseRecord trigPose)

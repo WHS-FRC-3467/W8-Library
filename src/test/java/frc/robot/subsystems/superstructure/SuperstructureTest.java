@@ -54,8 +54,7 @@ class SuperstructureTest implements AutoCloseable {
     {
         TestUtil.runTest(
             superstructure.setGoalWithWait(Superstructure.Setpoint.STOW),
-            3,
-            superstructure);
+            3);
         try {
             // Check position to check if the subsystem is actually in tolerance of STOW setpoint.
             assertTrue(superstructure.nearSetpoint(Superstructure.Setpoint.STOW));

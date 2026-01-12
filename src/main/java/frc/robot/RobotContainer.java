@@ -150,7 +150,7 @@ public class RobotContainer {
         servo1 = Servo1Constants.get();
         objectDetector = ObjectDetectorConstants.get();
         turret = TurretSuperstructureConstants.get();
-        VisionConstants.create();
+        VisionConstants.get();
 
         conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
         conditionalChooser.addOption("True", true);
