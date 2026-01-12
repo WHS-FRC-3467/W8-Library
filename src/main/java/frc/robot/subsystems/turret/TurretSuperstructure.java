@@ -106,8 +106,7 @@ public class TurretSuperstructure extends SubsystemBase implements AutoCloseable
 
     private void setTurretPosition(Angle angle)
     {
-        rotaryIO.runPosition(angle, TurretConstants.CRUISE_VELOCITY,
-            TurretConstants.ACCELERATION, TurretConstants.JERK, PIDSlot.SLOT_0);
+        rotaryIO.runPosition(angle, PIDSlot.SLOT_0);
     }
 
     private boolean turretIsAt(Angle angle)
