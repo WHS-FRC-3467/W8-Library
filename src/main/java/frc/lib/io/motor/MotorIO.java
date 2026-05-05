@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -23,16 +23,19 @@ import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import org.littletonrobotics.junction.AutoLog;
-
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+
+import frc.lib.util.PID;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import org.littletonrobotics.junction.AutoLog;
 
 /**
  * Standardized interface for motor controllers used in FRC. Supports multiple control modes and
@@ -64,28 +67,43 @@ public interface MotorIO extends AutoCloseable {
     abstract class MotorInputs {
         /** Whether the motor is connected. */
         public boolean connected = false;
+
         /** Motor position. */
         public Angle position = Radians.of(0.0);
+
         /** Motor velocity. */
         public AngularVelocity velocity = RadiansPerSecond.of(0.0);
+
         /** Voltage applied to the motor. */
         public Voltage appliedVoltage = Volts.of(0.0);
+
         /** Total supply current to the motor. */
         public Current supplyCurrent = Amps.of(0.0);
+
         /** Torque-producing current. */
         public Current torqueCurrent = Amps.of(0.0);
+
         /** Motor temperature in degrees. */
         public Temperature temperature = Celsius.of(0.0);
+
         /** Error in position */
         public Angle positionError = Rotations.zero();
+
         /** Error in velocity */
         public AngularVelocity velocityError = RotationsPerSecond.zero();
+
         /** Active trajectory position in rotations */
         public Angle activeTrajectoryPosition = Rotations.zero();
+
         /** Active trajectory velocity in rotations per second. */
         public AngularVelocity activeTrajectoryVelocity = RotationsPerSecond.zero();
+
         /** Goal position */
         public Angle goalPosition = Rotations.zero();
+
+        /** Goal velocity */
+        public AngularVelocity goalVelocity = RotationsPerSecond.zero();
+
         /** Current control type */
         public ControlType controlType = ControlType.BRAKE;
     }
@@ -96,36 +114,27 @@ public interface MotorIO extends AutoCloseable {
      *
      * @param inputs The structure to populate with updated sensor values.
      */
-    public default void updateInputs(MotorInputs inputs)
-    {}
+    public default void updateInputs(MotorInputs inputs) {}
 
-    /**
-     * Sets the motor to coast mode.
-     */
-    public default void runCoast()
-    {}
+    /** Sets the motor to coast mode. */
+    public default void runCoast() {}
 
-    /**
-     * Sets the motor to brake mode.
-     */
-    public default void runBrake()
-    {}
+    /** Sets the motor to brake mode. */
+    public default void runBrake() {}
 
     /**
      * Runs the motor using direct voltage control.
      *
      * @param voltage Desired voltage output.
      */
-    public default void runVoltage(Voltage voltage)
-    {}
+    public default void runVoltage(Voltage voltage) {}
 
     /**
      * Runs the motor with a specified current output.
      *
      * @param current Desired torque-producing current.
      */
-    public default void runCurrent(Current current)
-    {}
+    public default void runCurrent(Current current) {}
 
     /**
      * Runs the motor with a specified current output and duty cycle.
@@ -133,16 +142,14 @@ public interface MotorIO extends AutoCloseable {
      * @param current Desired torque-producing current.
      * @param dutyCycle Desired dutycycle of current output, limiting top speed
      */
-    public default void runCurrent(Current current, double dutyCycle)
-    {}
+    public default void runCurrent(Current current, double dutyCycle) {}
 
     /**
      * Runs the motor using duty cycle (percentage of available voltage).
      *
      * @param dutyCycle Fractional output between -1 and 1.
      */
-    public default void runDutyCycle(double dutyCycle)
-    {}
+    public default void runDutyCycle(double dutyCycle, boolean ignoringSoftLimits) {}
 
     /**
      * Runs the motor to a specific position.
@@ -150,29 +157,93 @@ public interface MotorIO extends AutoCloseable {
      * @param position Target position.
      * @param slot PID slot index.
      */
-    public default void runPosition(Angle position, PIDSlot slot)
-    {}
+    public default void runPosition(Angle position, PIDSlot slot) {}
+
+    /**
+     * Runs the motor to a specific position using a Motion Magic-style profiled position request
+     * with the provided cruise velocity and acceleration.
+     *
+     * <p>Implementations may either:
+     *
+     * <ul>
+     *   <li>embed the cruise velocity and acceleration directly in a dynamic control request (if
+     *       supported by the underlying controller), or
+     *   <li>apply the cruise velocity and acceleration to the controller's Motion Magic
+     *       configuration before issuing the request.
+     * </ul>
+     *
+     * <p>Callers must not assume that the motor controller's Motion Magic configuration remains
+     * unchanged after this call.
+     *
+     * @param position Target position.
+     * @param slot PID slot index.
+     * @param cruiseVelocity Motion Magic cruise velocity to use for the motion profile.
+     * @param acceleration Motion Magic acceleration to use for the motion profile.
+     */
+    public default void runPosition(
+            Angle position,
+            PIDSlot slot,
+            AngularVelocity cruiseVelocity,
+            AngularAcceleration acceleration) {}
+
+    /**
+     * Runs the motor to a specific position without a motion profile.
+     *
+     * @param position Target position.
+     * @param slot PID slot index.
+     */
+    public default void runUnprofiledPosition(Angle position, PIDSlot slot) {}
 
     /**
      * Runs the motor at a target velocity.
      *
      * @param velocity Desired velocity.
-     * @param acceleration Max acceleration.
      * @param slot PID slot index.
      */
-    public default void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
-        PIDSlot slot)
-    {}
+    public default void runVelocity(AngularVelocity velocity, PIDSlot slot) {}
+
+    /**
+     * Runs the motor at a target velocity using a Motion Magic velocity request that ramps to the
+     * target velocity using the provided Motion Magic acceleration.
+     *
+     * @param velocity Desired velocity.
+     * @param acceleration Motion Magic acceleration used to ramp to target velocity.
+     * @param slot PID slot index.
+     */
+    public default void runVelocity(
+            AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot) {}
 
     /**
      * Sets the position of the motor's internal encoder
-     * 
+     *
      * @param position Desired position to set encoder to
      */
-    public default void setEncoderPosition(Angle position)
-    {}
+    public default void setEncoderPosition(Angle position) {}
+
+    /**
+     * Updates one PID slot on the motor
+     *
+     * @param slot The slot to update
+     * @param pid The PID to set
+     */
+    public default void setPID(PIDSlot slot, PID pid) {}
+
+    /**
+     * Updates the motor supply current limit.
+     *
+     * @param currentLimit Desired supply current limit.
+     */
+    public default void setSupplyCurrentLimit(Current currentLimit) {}
+
+    /**
+     * Return the total number of motors associated with this motor object
+     *
+     * @return The number of motors associated with the motor object (leader + all followers)
+     */
+    public default int getNumberOfMotors() {
+        return 1;
+    }
 
     @Override
-    public default void close()
-    {}
+    public default void close() {}
 }

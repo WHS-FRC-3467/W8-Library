@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -19,20 +19,16 @@ import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
-import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
-import frc.lib.io.motor.MotorIO.PIDSlot;
+
 import frc.lib.io.motor.MotorIOSim;
 
 /**
@@ -40,29 +36,29 @@ import frc.lib.io.motor.MotorIOSim;
  * behavior of a linear mechanism at any orientation. The orientation's pitch component (Y-axis
  * rotation) determines the angle from horizontal, affecting gravity simulation.
  */
-public class LinearMechanismSim extends LinearMechanism {
-
-    private final MotorIOSim io;
+public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
     private final ElevatorSim sim;
 
-    private Time lastTime = Seconds.zero();
+    private Time lastTime = RobotController.getMeasureTime();
 
     /**
      * Creates a new LinearMechanismSim.
      *
      * @param name The name of the mechanism
      * @param io The motor IO simulation
-     * @param dcMotor The DC motor characteristics
+     * @param motor The DC motor characteristics
      * @param mass The mass of the carriage
-     * @param constraints The mechanism characteristics including orientation
      * @param useGravity Whether to simulate gravity effects (applies when orientation is vertical)
+     * @param characteristics The mechanism characteristics including orientation
      */
-    public LinearMechanismSim(String name, MotorIOSim io, DCMotor dcMotor, Mass mass,
-        LinearMechCharacteristics constraints, Boolean useGravity)
-    {
-        super(name, constraints);
-
-        this.io = io;
+    public LinearMechanismSim(
+            String name,
+            MotorIOSim io,
+            DCMotor motor,
+            Mass mass,
+            Boolean useGravity,
+            LinearMechCharacteristics characteristics) {
+        super(name, characteristics, io);
 
         // ElevatorSim is used as the underlying physics simulation.
         // Note: ElevatorSim assumes vertical orientation for gravity simulation.
@@ -70,22 +66,20 @@ public class LinearMechanismSim extends LinearMechanism {
         // but physics simulation is most accurate when useGravity=true and orientation
         // is vertical (pitch = -90° for upward, 90° for downward), or when useGravity=false for
         // horizontal mechanisms.
-        sim = new ElevatorSim(
-            dcMotor,
-            io.getRotorToSensorRatio() * io.getSensorToMechanismRatio(),
-            mass.in(Kilograms),
-            constraints.converter().getDrumRadius().in(Meters),
-            constraints.minDistance().in(Meters),
-            constraints.maxDistance().in(Meters),
-            useGravity,
-            constraints.startingDistance().in(Meters));
+        sim =
+                new ElevatorSim(
+                        motor,
+                        io.getRotorToSensorRatio() * io.getSensorToMechanismRatio(),
+                        mass.in(Kilograms),
+                        characteristics.drumRadius().in(Meters),
+                        characteristics.minDistance().in(Meters),
+                        characteristics.maxDistance().in(Meters),
+                        useGravity,
+                        characteristics.startingDistance().in(Meters));
     }
 
     @Override
-    public void periodic()
-    {
-        super.periodic();
-
+    public void periodic() {
         Time currentTime = RobotController.getMeasureTime();
         double deltaTime = currentTime.minus(lastTime).in(Seconds);
 
@@ -100,89 +94,21 @@ public class LinearMechanismSim extends LinearMechanism {
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
         RoboRioSim.setVInVoltage(
-            BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
+                BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
 
         lastTime = currentTime;
 
-        io.setPosition(converter.toAngle(Meters.of(sim.getPositionMeters())));
-
+        io.setPosition(toAngle(Meters.of(sim.getPositionMeters())));
         io.setRotorVelocity(
-            converter.toAngle(Meters.of(sim.getVelocityMetersPerSecond())).per(Seconds));
+                toAngle(Meters.of(sim.getVelocityMetersPerSecond()))
+                        .per(Seconds)
+                        .times(io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()));
 
-        io.updateInputs(inputs);
-        Logger.processInputs(name, inputs);
+        super.periodic();
     }
 
     @Override
-    public void runCoast()
-    {
-        io.runCoast();
-    }
-
-    @Override
-    public void runBrake()
-    {
-        io.runBrake();
-    }
-
-    @Override
-    public void runVoltage(Voltage voltage)
-    {
-        io.runVoltage(voltage);
-    }
-
-    @Override
-    public void runCurrent(Current current)
-    {
-        io.runCurrent(current);
-    }
-
-    @Override
-    public void runDutyCycle(double dutyCycle)
-    {
-        io.runDutyCycle(dutyCycle);
-    }
-
-    @Override
-    public void runPosition(Angle position, PIDSlot slot)
-    {
-        io.runPosition(position, slot);
-    }
-
-    @Override
-    public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
-        PIDSlot slot)
-    {
-        io.runVelocity(velocity, acceleration, slot);
-    }
-
-    @Override
-    public void setEncoderPosition(Angle position)
-    {
-        sim.setState(converter.toDistance(position).in(Meters), 0);
-    }
-
-    @Override
-    public Current getSupplyCurrent()
-    {
-        return inputs.supplyCurrent;
-    }
-
-    @Override
-    public Angle getPosition()
-    {
-        return inputs.position;
-    }
-
-    @Override
-    public AngularVelocity getVelocity()
-    {
-        return inputs.velocity;
-    }
-
-    @Override
-    public void close()
-    {
-        io.close();
+    public void setEncoderPosition(Angle position) {
+        sim.setState(toDistance(position).in(Meters), 0);
     }
 }

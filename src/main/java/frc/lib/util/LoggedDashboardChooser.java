@@ -8,15 +8,37 @@ package frc.lib.util;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
+
 import org.littletonrobotics.junction.LogTable;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.inputs.LoggableInputs;
 import org.littletonrobotics.junction.networktables.LoggedNetworkInput;
 
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
+/**
+ * A dashboard chooser that integrates with AdvantageKit's logging system.
+ *
+ * <p>This class wraps WPILib's SendableChooser to provide automatic logging of selected values.
+ * Unlike the standard SendableChooser, this version works correctly with AdvantageKit's replay
+ * functionality, allowing you to replay autonomous selections and other dashboard choices from log
+ * files.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * LoggedDashboardChooser<Command> autoChooser = new LoggedDashboardChooser<>("Auto Mode");
+ * autoChooser.addDefaultOption("Do Nothing", Commands.none());
+ * autoChooser.addOption("Simple Auto", simpleAuto());
+ * autoChooser.addOption("Complex Auto", complexAuto());
+ *
+ * // Get selected command
+ * Command selectedAuto = autoChooser.get();
+ * }</pre>
+ */
 public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
     private final String key;
     private String selectedValue = null;
@@ -26,28 +48,25 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
     private Consumer<V> listener = null;
 
     private final LoggableInputs inputs =
-        new LoggableInputs() {
-            @Override
-            public void toLog(LogTable table)
-            {
-                table.put(key, selectedValue);
-            }
+            new LoggableInputs() {
+                @Override
+                public void toLog(LogTable table) {
+                    table.put(key, selectedValue);
+                }
 
-            @Override
-            public void fromLog(LogTable table)
-            {
-                selectedValue = table.get(key, selectedValue);
-            }
-        };
+                @Override
+                public void fromLog(LogTable table) {
+                    selectedValue = table.get(key, selectedValue);
+                }
+            };
 
     /**
-     * Creates a new LoggedDashboardChooser, for handling a chooser input sent via NetworkTables.
+     * Creates a new LoggedDashboardChooser.
      *
-     * @param key The key for the chooser, published to "/SmartDashboard/{key}" for NT or
-     *        "/DashboardInputs/{key}" when logged.
+     * @param key The SmartDashboard key, published to "/SmartDashboard/{key}" for NT or
+     *     "/DashboardInputs/{key}" when logged
      */
-    public LoggedDashboardChooser(String key)
-    {
+    public LoggedDashboardChooser(String key) {
         this.key = key;
         SmartDashboard.putData(key, sendableChooser);
         periodic();
@@ -55,16 +74,14 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
     }
 
     /**
-     * Creates a new LoggedDashboardChooser, for handling a chooser input sent via NetworkTables.
-     * This constructor copies the options from a SendableChooser. Note that updates to the original
-     * SendableChooser will not affect this object.
+     * Creates a new LoggedDashboardChooser by copying options from an existing SendableChooser.
+     * Note: Updates to the original chooser after construction will not affect this object.
      *
-     * @param key The key for the chooser, published to "/SmartDashboard/{key}" for NT or
-     *        "/DashboardInputs/{key}" when logged.
+     * @param key The SmartDashboard key for this chooser
+     * @param chooser Existing SendableChooser to copy options from
      */
     @SuppressWarnings("unchecked")
-    public LoggedDashboardChooser(String key, SendableChooser<V> chooser)
-    {
+    public LoggedDashboardChooser(String key, SendableChooser<V> chooser) {
         this(key);
 
         // Get options map
@@ -74,9 +91,9 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
             mapField.setAccessible(true);
             options = (Map<String, V>) mapField.get(chooser);
         } catch (NoSuchFieldException
-            | SecurityException
-            | IllegalArgumentException
-            | IllegalAccessException e) {
+                | SecurityException
+                | IllegalArgumentException
+                | IllegalAccessException e) {
             throw new IllegalStateException(e.getMessage());
         }
 
@@ -87,9 +104,9 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
             defaultField.setAccessible(true);
             defaultString = (String) defaultField.get(chooser);
         } catch (NoSuchFieldException
-            | SecurityException
-            | IllegalArgumentException
-            | IllegalAccessException e) {
+                | SecurityException
+                | IllegalArgumentException
+                | IllegalAccessException e) {
             throw new IllegalStateException(e.getMessage());
         }
 
@@ -103,41 +120,50 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
         }
     }
 
-    /** Adds a new option to the chooser. */
-    public void addOption(String key, V value)
-    {
+    /**
+     * Adds a new option to the chooser.
+     *
+     * @param key Display name for the option
+     * @param value Value returned when this option is selected
+     */
+    public void addOption(String key, V value) {
         sendableChooser.addOption(key, key);
         options.put(key, value);
     }
 
-    /** Adds a new option to the chooser and sets it to the default. */
-    public void addDefaultOption(String key, V value)
-    {
+    /**
+     * Adds a new option and sets it as the default.
+     *
+     * @param key Display name for the default option
+     * @param value Value returned when this option is selected
+     */
+    public void addDefaultOption(String key, V value) {
         sendableChooser.setDefaultOption(key, key);
         options.put(key, value);
     }
 
     /**
-     * Returns the selected option. If there is none selected, it will return the default. If there
-     * is none selected and no default, then it will return {@code null}.
+     * Returns the currently selected option value. If no option is selected, returns the default.
+     * If no default exists, returns null.
+     *
+     * @return The selected value, or null if nothing is selected
      */
-    public V get()
-    {
+    public V get() {
         return options.get(selectedValue);
     }
 
     /**
-     * Returns the internal sendable chooser object, for use when setting up dashboard layouts. Do
-     * not read data from the sendable chooser directly.
+     * Returns the internal SendableChooser for dashboard layout configuration. Do not read data
+     * from this directly - use {@link #get()} instead.
+     *
+     * @return The internal SendableChooser object
      */
-    public SendableChooser<String> getSendableChooser()
-    {
+    public SendableChooser<String> getSendableChooser() {
         return sendableChooser;
     }
 
     @Override
-    public void periodic()
-    {
+    public void periodic() {
         if (!Logger.hasReplaySource()) {
             selectedValue = sendableChooser.getSelected();
         }
@@ -149,8 +175,12 @@ public class LoggedDashboardChooser<V> extends LoggedNetworkInput {
         lastSelected = selectedValue;
     }
 
-    public void onChange(Consumer<V> listener)
-    {
+    /**
+     * Registers a listener to be called when the selected option changes.
+     *
+     * @param listener Consumer to be called with the new value when selection changes
+     */
+    public void onChange(Consumer<V> listener) {
         this.listener = listener;
     }
 }

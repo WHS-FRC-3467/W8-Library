@@ -21,31 +21,27 @@ public class LaserCAN1 extends SubsystemBase {
     private final DistanceSensor distanceSensor;
     private final RobotState robotState;
 
-    public final Trigger inside =
-        new Trigger(() -> betweenDistance(Millimeters.of(5), Millimeters.of(10)));
+    public final Trigger inside = new Trigger(() -> betweenDistance(Millimeters.of(5), Millimeters.of(10)));
 
-    public LaserCAN1(DistanceSensorIO io)
-    {
-        distanceSensor = new DistanceSensor(io);
+    public LaserCAN1(DistanceSensorIO io) {
+        distanceSensor = new DistanceSensor(LaserCAN1Constants.NAME, io);
         robotState = RobotState.getInstance();
     }
 
     @Override
-    public void periodic()
-    {
+    public void periodic() {
         distanceSensor.periodic();
         Logger.recordOutput(LaserCAN1Constants.NAME + "Sensor Reading Pose",
-            new Pose3d(robotState.getEstimatedPose())
-                .plus(LaserCAN1Constants.LASERCAN_TRANSFORM.plus(
-                    new Transform3d(
-                        getDistance(),
-                        Inches.of(0),
-                        Inches.of(0),
-                        new Rotation3d()))));
+                new Pose3d(robotState.getEstimatedPose())
+                        .plus(LaserCAN1Constants.LASERCAN_TRANSFORM.plus(
+                                new Transform3d(
+                                        getDistance(),
+                                        Inches.of(0),
+                                        Inches.of(0),
+                                        new Rotation3d()))));
     }
 
-    public Distance getDistance()
-    {
+    public Distance getDistance() {
         if (distanceSensor.getDistance().isEmpty()) {
             return Inches.of(-1.0);
         } else {
@@ -53,8 +49,7 @@ public class LaserCAN1 extends SubsystemBase {
         }
     }
 
-    public boolean betweenDistance(Distance min, Distance max)
-    {
+    public boolean betweenDistance(Distance min, Distance max) {
         if (distanceSensor.getDistance().isEmpty()) {
             return false;
         }

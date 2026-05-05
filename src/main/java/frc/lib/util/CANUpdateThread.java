@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -15,53 +15,84 @@
 
 package frc.lib.util;
 
+import au.grapplerobotics.ConfigurationFailedException;
+
+import com.ctre.phoenix6.StatusCode;
+
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import com.ctre.phoenix6.StatusCode;
-import frc.lib.util.LaserCANConfigurator.ConfigurationStatus;
 
+/**
+ * Thread pool for executing CAN device configuration operations asynchronously. Automatically
+ * retries failed configuration attempts up to a maximum number of times. Prevents blocking the main
+ * robot loop during device initialization.
+ */
 public class CANUpdateThread implements AutoCloseable {
-    // Executor for retrying config operations asynchronously
-    private BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
-    private ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1, 1, 5,
-        java.util.concurrent.TimeUnit.MILLISECONDS, queue);
+
+    private static final int MAX_RETRIES = 5;
+
+    private final BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
+    private final ThreadPoolExecutor executor =
+            new ThreadPoolExecutor(1, 1, 5, TimeUnit.MILLISECONDS, queue);
 
     /**
-     * Attempts a CTRE action up to 5 times until it succeeds.
+     * Attempts a CTRE status-returning action up to MAX_RETRIES times.
      *
-     * @param action The status-returning operation to retry.
+     * @param action Supplier that returns a StatusCode from a CTRE configuration call
+     * @return CompletableFuture that completes when successful or throws on persistent failure
      */
-    @SuppressWarnings("FutureReturnValueIgnored")
-    public void CTRECheckErrorAndRetry(Supplier<StatusCode> action)
-    {
-        threadPoolExecutor.submit(() -> {
-            for (int i = 0; i < 5; i++) {
-                StatusCode result = action.get();
-                if (result.isOK()) {
-                    break;
-                }
-            }
-        });
+    public CompletableFuture<Void> ctreCheckErrorAndRetry(Supplier<StatusCode> action) {
+        return CompletableFuture.runAsync(
+                () -> {
+                    StatusCode lastStatus = StatusCode.OK;
+
+                    for (int i = 0; i < MAX_RETRIES; i++) {
+                        lastStatus = action.get();
+                        if (lastStatus.isOK()) {
+                            return;
+                        }
+                    }
+
+                    throw new RuntimeException("CTRE config failed: " + lastStatus);
+                },
+                executor);
     }
 
-    @SuppressWarnings("FutureReturnValueIgnored")
-    public void LaserCANCheckErrorAndRetry(Supplier<ConfigurationStatus> action)
-    {
-        threadPoolExecutor.submit(() -> {
-            for (int i = 0; i < 5; i++) {
-                ConfigurationStatus result = action.get();
-                if (result == ConfigurationStatus.SUCCESS) {
-                    break;
-                }
-            }
-        });
+    /**
+     * Attempts a LaserCAN configuration action up to MAX_RETRIES times.
+     *
+     * @param action Runnable that may throw ConfigurationFailedException
+     * @return CompletableFuture that completes when successful or throws on persistent failure
+     */
+    public CompletableFuture<Void> laserCANCheckErrorAndRetry(
+            ThrowingRunnable<ConfigurationFailedException> action) {
+        return CompletableFuture.runAsync(
+                () -> {
+                    ConfigurationFailedException lastException = null;
+
+                    for (int i = 0; i < MAX_RETRIES; i++) {
+                        try {
+                            action.run();
+                            return; // success
+                        } catch (ConfigurationFailedException e) {
+                            lastException = e;
+                        } catch (Exception e) {
+                            throw new CompletionException(e);
+                        }
+                    }
+
+                    throw new CompletionException(lastException);
+                },
+                executor);
     }
 
     @Override
-    public void close()
-    {
-        threadPoolExecutor.shutdownNow();
+    public void close() {
+        executor.shutdownNow();
     }
 }

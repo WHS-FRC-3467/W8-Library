@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -16,17 +16,13 @@
 package frc.lib.io.distancesensor;
 
 import static edu.wpi.first.units.Units.Inches;
+
 import edu.wpi.first.units.measure.Distance;
+
 import frc.lib.util.LoggedTunableNumber;
-import lombok.Getter;
 
-/**
- * A simulated distance sensor implementation
- */
+/** A simulated distance sensor implementation */
 public class DistanceSensorIOSim implements DistanceSensorIO {
-    @Getter
-    private final String name;
-
     private final LoggedTunableNumber tunableDistance;
     private Distance distance;
 
@@ -35,9 +31,7 @@ public class DistanceSensorIOSim implements DistanceSensorIO {
      *
      * @param name A human-readable name for the sensor instance.
      */
-    public DistanceSensorIOSim(String name)
-    {
-        this.name = name;
+    public DistanceSensorIOSim(String name) {
         tunableDistance = new LoggedTunableNumber(name + "/Sim Measurement (Inches)", 0.0);
     }
 
@@ -46,14 +40,12 @@ public class DistanceSensorIOSim implements DistanceSensorIO {
      *
      * @param distance The new distance readout
      */
-    public void setDistance(Distance distance)
-    {
+    public void setDistance(Distance distance) {
         this.distance = distance;
     }
 
     @Override
-    public void updateInputs(DistanceSensorInputs inputs)
-    {
+    public void updateInputs(DistanceSensorInputs inputs) {
         inputs.ambientSignal = 0.0;
         inputs.connected = true;
         if (tunableDistance.hasChanged(hashCode())) {

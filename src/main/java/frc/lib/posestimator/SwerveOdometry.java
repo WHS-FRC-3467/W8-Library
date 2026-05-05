@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -16,25 +16,32 @@
 package frc.lib.posestimator;
 
 import static edu.wpi.first.units.Units.Seconds;
-import java.util.Optional;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.units.measure.Time;
+
 import lombok.Getter;
 import lombok.experimental.Accessors;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Integrates swerve-drive odometry observations to maintain a continuous estimate of the robot's
  * field-relative pose over time. This is essentially a {@link SwerveDriveOdometry} with more
  * outputs to be utilized in a {@link PoseEstimator}.
  *
- * <p>
- * This class tracks the robot's module positions, integrates motion deltas into a {@link Pose2d}
+ * <p>This class tracks the robot's module positions, integrates motion deltas into a {@link Pose2d}
  * estimate, and maintains a time-buffered history of poses for interpolation. It is intended to be
  * used by a higher-level {@link PoseEstimator} that fuses odometry with vision or other sensors. Do
  * not use this class on it's own, use {@link SwerveDriveOdometry}.
@@ -44,113 +51,310 @@ public class SwerveOdometry {
     /**
      * Represents a single odometry observation from the swerve drive.
      *
-     * <p>
-     * Instances of this record are intended to be passed to
-     * {@link SwerveOdometry#addOdometryObservation(OdometryObservation)} or
-     * {@link PoseEstimator#addOdometryObservation(OdometryObservation)} to update the odometry
-     * estimate and store the pose in the time-buffer for interpolation with vision or other
-     * sensors.
+     * <p>{@code badWheels[i] == true} means module {@code i} should be ignored for this update.
      *
-     * @param timestamp the time of the observation
-     * @param swervePositions the current positions of the swerve modules
-     * @param gyroAngle optional gyro angle to correct heading drift
+     * <p>The mask is carried per-observation so skid detection can be done at the same
+     * rate/timestamps as odometry sampling (instead of at 50Hz in subsystem periodic).
      */
     @SuppressWarnings("ArrayRecordComponent")
     public static final record OdometryObservation(
-        Time timestamp,
-        SwerveModulePosition[] swervePositions,
-        Optional<Rotation2d> gyroAngle) {
+            Time timestamp,
+            SwerveModulePosition[] swervePositions,
+            Optional<Rotation2d> gyroAngle,
+            boolean[] badWheels) {
+
+        /** Convenience constructor when you are not doing skid detection. */
+        public OdometryObservation(
+                Time timestamp,
+                SwerveModulePosition[] swervePositions,
+                Optional<Rotation2d> gyroAngle) {
+            this(timestamp, swervePositions, gyroAngle, null);
+        }
     }
 
     /** The swerve drive kinematics used to compute motion deltas. */
     private final SwerveDriveKinematics kinematics;
 
+    /**
+     * Module locations are required to solve chassis motion from a subset of wheels.
+     *
+     * <p>If module translations are not provided, we still run odometry normally, but we cannot
+     * ignore skidding wheels because we can't build correct subset kinematics.
+     */
+    private final Translation2d[] moduleTranslationsOrNull;
+
+    /**
+     * Cache of kinematics objects for "good wheel subsets".
+     *
+     * <p>{@link SwerveDriveKinematics} is constructed from a fixed set of module translation
+     * vectors. When we ignore a skidding wheel, the set of translations changes, so we need a
+     * different kinematics object to correctly solve chassis motion from only the remaining wheels.
+     *
+     * <p>Odometry can run at 100 to 250 Hz. When skid is active, repeatedly constructing new
+     * kinematics objects creates unnecessary allocation and garbage collection work. The possible
+     * patterns are small and repeat often (usually none, or one wheel), so caching keeps the
+     * runtime steady.
+     *
+     * <p>The key is based on the contents of the badWheels array. We do not use the boolean[]
+     * directly because arrays are mutable and use reference identity for hash/equality.
+     */
+    private final Map<Integer, SwerveDriveKinematics> subsetKinematicsCache = new HashMap<>();
+
+    // Max module count assumed 4 (FL, FR, BL, BR)
+    private final Translation2d[] scratchTranslations;
+    private final SwerveModulePosition[] scratchLast;
+    private final SwerveModulePosition[] scratchCurrent;
+
     /** Stores recent odometry poses for interpolation purposes. */
-    @Getter
-    private final TimeInterpolatableBuffer<Pose2d> odometryBuffer;
+    @Getter private final TimeInterpolatableBuffer<Pose2d> odometryBuffer;
 
     /** Tracks last known module positions for computing motion deltas. */
-    private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[] {
-            new SwerveModulePosition(),
-            new SwerveModulePosition(),
-            new SwerveModulePosition(),
-            new SwerveModulePosition()
-    };
+    private SwerveModulePosition[] lastModulePositions =
+            new SwerveModulePosition[] {
+                new SwerveModulePosition(),
+                new SwerveModulePosition(),
+                new SwerveModulePosition(),
+                new SwerveModulePosition()
+            };
 
     /** The offset from the gyro's 0 at boot and the last reset frame of rotation */
     private Rotation2d gyroOffset = Rotation2d.kZero;
 
     /** The most recent odometry-based robot pose. */
-    @Getter
-    private Pose2d odometryPose = Pose2d.kZero;
+    @Getter private Pose2d odometryPose = new Pose2d(1.0, 1.0, gyroOffset);
+
+    /** Optional validator for candidate odometry poses. */
+    private Predicate<Pose2d> poseValidator = pose -> true;
 
     /**
-     * Constructs a new {@code OdometryPoseIntegrator}.
+     * True when a pose reset has occurred and the next odometry observation should re-seed the
+     * module position baseline to avoid a spurious jump.
+     */
+    private boolean pendingPositionReset = false;
+
+    /**
+     * Constructs a new {@code SwerveOdometry}.
      *
      * @param kinematics the swerve drive kinematics for computing motion deltas
      * @param odometryBufferSize the duration for which odometry poses are buffered for
-     *        interpolation
+     *     interpolation
      */
-    public SwerveOdometry(SwerveDriveKinematics kinematics, Time odometryBufferSize)
-    {
+    public SwerveOdometry(SwerveDriveKinematics kinematics, Time odometryBufferSize) {
+        this(kinematics, null, odometryBufferSize);
+    }
+
+    /**
+     * Constructs a new {@code SwerveOdometry} with module locations.
+     *
+     * <p>Provide {@code moduleTranslations} if you want to ignore skidding wheels. The translations
+     * must be in the same module index order used everywhere else (FL, FR, BL, BR in your code).
+     */
+    public SwerveOdometry(
+            SwerveDriveKinematics kinematics,
+            Translation2d[] moduleTranslations,
+            Time odometryBufferSize) {
         this.kinematics = kinematics;
+        this.moduleTranslationsOrNull = moduleTranslations;
         odometryBuffer = TimeInterpolatableBuffer.createBuffer(odometryBufferSize.in(Seconds));
+
+        if (moduleTranslationsOrNull != null) {
+            int moduleCount = moduleTranslationsOrNull.length;
+            scratchTranslations = new Translation2d[moduleCount];
+            scratchLast = new SwerveModulePosition[moduleCount];
+            scratchCurrent = new SwerveModulePosition[moduleCount];
+        } else {
+            scratchTranslations = null;
+            scratchLast = null;
+            scratchCurrent = null;
+        }
     }
 
     /**
      * Adds an odometry observation to the integrator.
      *
-     * <p>
-     * This method performs the following steps:
-     * <ul>
-     * <li>Updates the latest odometry timestamp.</li>
-     * <li>Computes the robot's incremental motion (twist) from the last known module
-     * positions.</li>
-     * <li>Integrates the twist into the current odometry pose.</li>
-     * <li>If a gyro angle is provided, corrects the pose heading accordingly.</li>
-     * <li>Stores the resulting pose in the time-buffer for interpolation.</li>
-     * </ul>
-     *
-     * @param observation an {@link OdometryObservation} containing module positions, timestamp, and
-     *        an optional gyro angle
+     * @param observation an {@link OdometryObservation} containing module positions, timestamp, an
+     *     optional gyro angle, and an optional skid mask
      */
-    public void addOdometryObservation(OdometryObservation observation)
-    {
-
+    public void addOdometryObservation(OdometryObservation observation) {
         double timestampSeconds = observation.timestamp().in(Seconds);
         SwerveModulePosition[] currentPositions = observation.swervePositions();
 
-        // Compute robot motion (twist) since last update
-        Twist2d twist = kinematics.toTwist2d(lastModulePositions, currentPositions);
-        lastModulePositions = currentPositions;
+        if (pendingPositionReset) {
+            lastModulePositions = copyPositions(currentPositions);
+            observation
+                    .gyroAngle()
+                    .ifPresent(angle -> gyroOffset = odometryPose.getRotation().minus(angle));
+            odometryBuffer.addSample(timestampSeconds, odometryPose);
+            pendingPositionReset = false;
+            return;
+        }
+
+        Twist2d twist =
+                computeTwist(lastModulePositions, currentPositions, observation.badWheels());
+
+        // Copy positions so callers can't accidentally mutate our history.
+        lastModulePositions = copyPositions(currentPositions);
 
         // Integrate twist into odometry pose
-        odometryPose = odometryPose.exp(twist);
+        Pose2d candidatePose = odometryPose.exp(twist);
 
         // If gyro angle is available, correct heading drift
-        observation.gyroAngle().ifPresent(
-            angle -> odometryPose =
-                new Pose2d(odometryPose.getTranslation(), angle.plus(gyroOffset)));
+        if (observation.gyroAngle().isPresent()) {
+            Rotation2d angle = observation.gyroAngle().get();
+            candidatePose = new Pose2d(candidatePose.getTranslation(), angle.plus(gyroOffset));
+        }
+
+        odometryPose = resolveValidatedPose(candidatePose, observation.gyroAngle());
 
         // Store pose for later interpolation (e.g., vision sync)
         odometryBuffer.addSample(timestampSeconds, odometryPose);
     }
 
     /**
-     * Resets the internal odometry state to a known pose.
+     * Adds an odometry observation to the integrator, ignoring everything except gyro.
      *
-     * <p>
-     * This method should be called when the robot's absolute position on the field is known, such
-     * as after autonomous initialization or when a vision-based correction is applied. It updates
-     * the internal odometry pose, timestamp, and gyro offset to align with the provided
-     * {@link Pose2d}.
+     * @param observation an {@link OdometryObservation} containing an optional gyro angle
+     */
+    public void addGyroObservation(OdometryObservation observation) {
+        double timestampSeconds = observation.timestamp().in(Seconds);
+
+        if (pendingPositionReset) {
+            // While awaiting a position reset, still apply gyro heading updates to the pose
+            observation
+                    .gyroAngle()
+                    .ifPresent(
+                            angle ->
+                                    odometryPose =
+                                            new Pose2d(
+                                                    odometryPose.getTranslation(),
+                                                    angle.plus(gyroOffset)));
+            odometryBuffer.addSample(timestampSeconds, odometryPose);
+            return;
+        }
+
+        // If gyro angle is available, correct heading drift
+        observation
+                .gyroAngle()
+                .ifPresent(
+                        angle ->
+                                odometryPose =
+                                        new Pose2d(
+                                                odometryPose.getTranslation(),
+                                                angle.plus(gyroOffset)));
+
+        // Store pose for later interpolation (e.g., vision sync)
+        odometryBuffer.addSample(timestampSeconds, odometryPose);
+    }
+
+    /**
+     * Sets a validator for candidate odometry poses. When the validator returns {@code false},
+     * translation updates are rejected (heading may still update if gyro data is present).
+     *
+     * @param poseValidator predicate that returns {@code true} for acceptable poses
+     */
+    public void setPoseValidator(Predicate<Pose2d> poseValidator) {
+        this.poseValidator = poseValidator == null ? pose -> true : poseValidator;
+    }
+
+    private Pose2d resolveValidatedPose(Pose2d candidatePose, Optional<Rotation2d> gyroAngle) {
+        if (poseValidator.test(candidatePose)) {
+            return candidatePose;
+        }
+        if (gyroAngle.isPresent()) {
+            // Keep translation stable but allow heading to track the gyro.
+            return new Pose2d(odometryPose.getTranslation(), gyroAngle.get().plus(gyroOffset));
+        }
+        return odometryPose;
+    }
+
+    private Twist2d computeTwist(
+            SwerveModulePosition[] last, SwerveModulePosition[] current, boolean[] badWheels) {
+
+        if (!canUseBadWheelMask(badWheels)) {
+            return kinematics.toTwist2d(last, current);
+        }
+
+        int moduleCount = current.length;
+
+        // Build bitmask and count good modules
+        int mask = 0;
+        int goodCount = 0;
+
+        for (int i = 0; i < moduleCount; i++) {
+            if (badWheels[i]) {
+                mask |= (1 << i);
+            } else {
+                goodCount++;
+            }
+        }
+
+        // If too few good wheels, fall back
+        if (goodCount < 3) {
+            return kinematics.toTwist2d(last, current);
+        }
+
+        // Fill scratch arrays
+        int j = 0;
+        for (int i = 0; i < moduleCount; i++) {
+            if ((mask & (1 << i)) != 0) {
+                continue;
+            }
+
+            scratchTranslations[j] = moduleTranslationsOrNull[i];
+            scratchLast[j] = last[i];
+            scratchCurrent[j] = current[i];
+            j++;
+        }
+
+        SwerveDriveKinematics subsetKinematics = getOrCreateSubsetKinematics(mask, goodCount);
+
+        return subsetKinematics.toTwist2d(
+                Arrays.copyOf(scratchLast, goodCount), Arrays.copyOf(scratchCurrent, goodCount));
+    }
+
+    private boolean canUseBadWheelMask(boolean[] badWheels) {
+        if (moduleTranslationsOrNull == null) {
+            return false;
+        }
+        if (badWheels == null) {
+            return false;
+        }
+        return badWheels.length == moduleTranslationsOrNull.length;
+    }
+
+    private SwerveDriveKinematics getOrCreateSubsetKinematics(int mask, int goodCount) {
+
+        return subsetKinematicsCache.computeIfAbsent(
+                mask,
+                m -> {
+                    Translation2d[] translations = new Translation2d[goodCount];
+
+                    int j = 0;
+                    for (int i = 0; i < moduleTranslationsOrNull.length; i++) {
+                        if ((m & (1 << i)) == 0) {
+                            translations[j++] = moduleTranslationsOrNull[i];
+                        }
+                    }
+
+                    return new SwerveDriveKinematics(translations);
+                });
+    }
+
+    private static SwerveModulePosition[] copyPositions(SwerveModulePosition[] positions) {
+        SwerveModulePosition[] copy = new SwerveModulePosition[positions.length];
+        System.arraycopy(positions, 0, copy, 0, positions.length);
+        return copy;
+    }
+
+    /**
+     * Resets the internal odometry state to a known pose.
      *
      * @param pose the new field-relative {@link Pose2d} representing the robot's known position
      */
-    public void resetPose(Pose2d pose)
-    {
+    public void resetPose(Pose2d pose) {
         gyroOffset = pose.getRotation().minus(odometryPose.getRotation().minus(gyroOffset));
         odometryPose = pose;
         odometryBuffer.clear();
+        pendingPositionReset = true;
     }
 }

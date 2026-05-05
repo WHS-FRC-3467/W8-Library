@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -21,16 +21,20 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 /**
  * Standardized interface for ObjectDetection-IO used in FRC. This interface is often implemented
- * through an ML pipeline.
+ * through an ML or HSV Color pipeline. Currently factored for PhotonVision only.
  */
 public interface ObjectDetectionIO {
 
-    /*
-     * Class defining data type for updateInputs method.
+    /**
+     * Class defining data type for Object Detection updateInputs method (i.e. data structure the
+     * camera will place its results into). Fields of this class will be populated downstream by the
+     * implemented IO layer (e.g. ObjectDetectionIOPhotonVision), used in calculations at the device
+     * layer, and used for decisions at the subsystem layer.
      */
     public class ObjectDetectionIOInputs implements LoggableInputs {
         /** Whether the camera is connected. */
         public boolean connected = false;
+
         /**
          * Each index of latestPhotonTrackedTargets is a single {@link PhotonTrackedTarget} with all
          * the data needed for each target
@@ -38,8 +42,7 @@ public interface ObjectDetectionIO {
         public PhotonTrackedTarget[] latestTargets = new PhotonTrackedTarget[0];
 
         @Override
-        public void toLog(LogTable table)
-        {
+        public void toLog(LogTable table) {
             int targetsLength = latestTargets.length;
             table.put("TargetsLength", targetsLength);
 
@@ -51,8 +54,7 @@ public interface ObjectDetectionIO {
         }
 
         @Override
-        public void fromLog(LogTable table)
-        {
+        public void fromLog(LogTable table) {
             int targetsLength = table.get("TargetsLength", 0);
             latestTargets = new PhotonTrackedTarget[targetsLength];
 
@@ -64,18 +66,11 @@ public interface ObjectDetectionIO {
         }
     }
 
-    /*
-     * Name of the camera capturing optical data.
+    /**
+     * Updates the provided ObjectDetectionIOInputs with the latest camera readings. If the camera
+     * is not connected, the ObjectDetectionIOInput fields remain empty.
+     *
+     * @param inputs The structure to populate with updated target detection data
      */
-    public default String getCamera()
-    {
-        return "";
-    }
-
-    /*
-     * Updates the provided ObjectDetectionIOInputs object using the latest camera readings. If the
-     * camera is not connected, the ObjectDetectionIOInput fields remain empty.
-     */
-    public default void updateInputs(ObjectDetectionIOInputs inputs)
-    {}
+    public default void updateInputs(ObjectDetectionIOInputs inputs) {}
 }

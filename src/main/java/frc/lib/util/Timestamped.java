@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -15,8 +15,8 @@
 
 package frc.lib.util;
 
-import java.util.function.Supplier;
 import edu.wpi.first.units.measure.Time;
 
-public record Timestamped<T>(Time timestamp, T get) implements Supplier<T> {
-}
+import java.util.function.Supplier;
+
+public record Timestamped<T>(Time timestamp, T get) implements Supplier<T> {}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -15,16 +15,23 @@
 
 package frc.lib.io.motor;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.CANBus;
+import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -33,17 +40,22 @@ import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-import frc.lib.util.Device;
+
 import frc.lib.util.CANUpdateThread;
+import frc.lib.util.Device;
+import frc.lib.util.PID;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Abstraction for a CTRE TalonFX motor implementing the {@link MotorIO} interface. Wraps motor
  * setup, control modes, telemetry polling, and error handling.
  */
 public class MotorIOTalonFX implements MotorIO {
+    private static final Logger LOGGER = Logger.getLogger(MotorIOTalonFX.class.getName());
 
-    public record TalonFXFollower(Device.CAN id, boolean opposesMain) {
-    }
+    public record TalonFXFollower(Device.CAN id, boolean opposesMain) {}
 
     protected final TalonFX motor;
     protected final TalonFX[] followers;
@@ -66,14 +78,27 @@ public class MotorIOTalonFX implements MotorIO {
     protected final TorqueCurrentFOC currentControl = new TorqueCurrentFOC(0);
     protected final DutyCycleOut dutyCycleControl = new DutyCycleOut(0).withEnableFOC(true);
     protected final MotionMagicTorqueCurrentFOC positionControl =
-        new MotionMagicTorqueCurrentFOC(0);
+            new MotionMagicTorqueCurrentFOC(0);
+    protected final PositionTorqueCurrentFOC unprofiledPositionControl =
+            new PositionTorqueCurrentFOC(0);
     protected final VelocityTorqueCurrentFOC velocityControl = new VelocityTorqueCurrentFOC(0);
+    protected final MotionMagicVelocityTorqueCurrentFOC mmVelocityControl =
+            new MotionMagicVelocityTorqueCurrentFOC(0);
 
     private final CANUpdateThread updateThread = new CANUpdateThread();
-
     private final Alert[] followerOnWrongBusAlert;
+    private final Alert[] disconnectAlerts;
+    private final Debouncer[] disconnectDebouncers;
 
-    protected Angle goalPosition = Rotations.of(0.0);
+    private volatile TalonFXConfiguration currentConfig;
+    protected volatile Angle goalPosition = Rotations.of(0.0);
+    protected volatile AngularVelocity goalVelocity = RotationsPerSecond.zero();
+
+    // Caches for last-applied Motion Magic parameters (NaN = never applied)
+    private double lastAppliedMmCruiseVelocity = Double.NaN;
+    private double lastAppliedMmAcceleration = Double.NaN;
+    private double lastRequestedMmCruiseVelocity = Double.NaN;
+    private double lastRequestedMmAcceleration = Double.NaN;
 
     /**
      * Constructs and initializes a TalonFX motor.
@@ -83,32 +108,67 @@ public class MotorIOTalonFX implements MotorIO {
      * @param main CAN ID of the main motor
      * @param followerData Configuration data for the follower(s)
      */
-    public MotorIOTalonFX(String name, TalonFXConfiguration config, Device.CAN main,
-        TalonFXFollower... followerData)
-    {
+    public MotorIOTalonFX(
+            String name,
+            TalonFXConfiguration config,
+            Device.CAN main,
+            TalonFXFollower... followerData) {
+        currentConfig = config;
+        lastAppliedMmCruiseVelocity = config.MotionMagic.MotionMagicCruiseVelocity;
+        lastAppliedMmAcceleration = config.MotionMagic.MotionMagicAcceleration;
+        lastRequestedMmCruiseVelocity = lastAppliedMmCruiseVelocity;
+        lastRequestedMmAcceleration = lastAppliedMmAcceleration;
 
-        motor = new TalonFX(main.id(), main.bus());
-        updateThread.CTRECheckErrorAndRetry(() -> motor.getConfigurator().apply(config));
+        motor = new TalonFX(main.id(), new CANBus(main.bus()));
+        updateThread
+                .ctreCheckErrorAndRetry(() -> motor.getConfigurator().apply(config))
+                .exceptionally(
+                        ex -> {
+                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            return null;
+                        });
 
         // Initialize lists
+        disconnectAlerts = new Alert[followerData.length + 1];
+        disconnectAlerts[0] = new Alert(name + " is disconnected!", AlertType.kError);
+
+        disconnectDebouncers = new Debouncer[followerData.length + 1];
+        disconnectDebouncers[0] = new Debouncer(0.5);
+
         followerOnWrongBusAlert = new Alert[followerData.length];
         followers = new TalonFX[followerData.length];
 
         for (int i = 0; i < followerData.length; i++) {
+            disconnectAlerts[i + 1] =
+                    new Alert(name + " follower " + i + " is disconnected!", AlertType.kError);
+            disconnectDebouncers[i + 1] = new Debouncer(0.5);
+
             Device.CAN id = followerData[i].id();
 
             if (!id.bus().equals(main.bus())) {
                 followerOnWrongBusAlert[i] =
-                    new Alert(name + " follower " + i + " is on a different CAN bus than main!",
-                        AlertType.kError);
+                        new Alert(
+                                name + " follower " + i + " is on a different CAN bus than main!",
+                                AlertType.kError);
                 followerOnWrongBusAlert[i].set(true);
             }
 
-            followers[i] = new TalonFX(id.id(), id.bus());
+            followers[i] = new TalonFX(id.id(), new CANBus(id.bus()));
 
             TalonFX follower = followers[i];
-            updateThread.CTRECheckErrorAndRetry(() -> follower.getConfigurator().apply(config));
-            follower.setControl(new Follower(main.id(), followerData[i].opposesMain()));
+            updateThread
+                    .ctreCheckErrorAndRetry(() -> follower.getConfigurator().apply(config))
+                    .exceptionally(
+                            ex -> {
+                                LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                                return null;
+                            });
+            follower.setControl(
+                    new Follower(
+                            main.id(),
+                            followerData[i].opposesMain()
+                                    ? MotorAlignmentValue.Opposed
+                                    : MotorAlignmentValue.Aligned));
         }
 
         position = motor.getPosition();
@@ -121,20 +181,25 @@ public class MotorIOTalonFX implements MotorIO {
         closedLoopReference = motor.getClosedLoopReference();
         closedLoopReferenceSlope = motor.getClosedLoopReferenceSlope();
 
-        updateThread.CTRECheckErrorAndRetry(() -> BaseStatusSignal.setUpdateFrequencyForAll(
-            100,
-            position,
-            velocity,
-            supplyCurrent,
-            supplyCurrent,
-            torqueCurrent,
-            temperature));
-
-        updateThread.CTRECheckErrorAndRetry(() -> BaseStatusSignal.setUpdateFrequencyForAll(
-            200,
-            closedLoopError,
-            closedLoopReference,
-            closedLoopReferenceSlope));
+        updateThread
+                .ctreCheckErrorAndRetry(
+                        () ->
+                                BaseStatusSignal.setUpdateFrequencyForAll(
+                                        100.0,
+                                        position,
+                                        velocity,
+                                        supplyVoltage,
+                                        supplyCurrent,
+                                        torqueCurrent,
+                                        temperature,
+                                        closedLoopError,
+                                        closedLoopReference,
+                                        closedLoopReferenceSlope))
+                .exceptionally(
+                        ex -> {
+                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            return null;
+                        });
 
         motor.optimizeBusUtilization(0, 1.0);
     }
@@ -144,14 +209,13 @@ public class MotorIOTalonFX implements MotorIO {
      *
      * @return True if the motor is using a position control mode.
      */
-    protected boolean isRunningPositionControl()
-    {
+    protected boolean isRunningPositionControl() {
         var control = motor.getAppliedControl();
         return (control instanceof PositionTorqueCurrentFOC)
-            || (control instanceof PositionVoltage)
-            || (control instanceof MotionMagicTorqueCurrentFOC)
-            || (control instanceof DynamicMotionMagicTorqueCurrentFOC)
-            || (control instanceof MotionMagicVoltage);
+                || (control instanceof PositionVoltage)
+                || (control instanceof MotionMagicTorqueCurrentFOC)
+                || (control instanceof DynamicMotionMagicTorqueCurrentFOC)
+                || (control instanceof MotionMagicVoltage);
     }
 
     /**
@@ -159,13 +223,12 @@ public class MotorIOTalonFX implements MotorIO {
      *
      * @return True if the motor is using a velocity control mode.
      */
-    protected boolean isRunningVelocityControl()
-    {
+    protected boolean isRunningVelocityControl() {
         var control = motor.getAppliedControl();
         return (control instanceof VelocityTorqueCurrentFOC)
-            || (control instanceof VelocityVoltage)
-            || (control instanceof MotionMagicVelocityTorqueCurrentFOC)
-            || (control instanceof MotionMagicVelocityVoltage);
+                || (control instanceof VelocityVoltage)
+                || (control instanceof MotionMagicVelocityTorqueCurrentFOC)
+                || (control instanceof MotionMagicVelocityVoltage);
     }
 
     /**
@@ -173,14 +236,13 @@ public class MotorIOTalonFX implements MotorIO {
      *
      * @return True if the motor is using a Motion Magic mode.
      */
-    protected boolean isRunningMotionMagic()
-    {
+    protected boolean isRunningMotionMagic() {
         var control = motor.getAppliedControl();
         return (control instanceof MotionMagicTorqueCurrentFOC)
-            || (control instanceof DynamicMotionMagicTorqueCurrentFOC)
-            || (control instanceof MotionMagicVelocityTorqueCurrentFOC)
-            || (control instanceof MotionMagicVoltage)
-            || (control instanceof MotionMagicVelocityVoltage);
+                || (control instanceof DynamicMotionMagicTorqueCurrentFOC)
+                || (control instanceof MotionMagicVelocityTorqueCurrentFOC)
+                || (control instanceof MotionMagicVoltage)
+                || (control instanceof MotionMagicVelocityVoltage);
     }
 
     /**
@@ -188,8 +250,7 @@ public class MotorIOTalonFX implements MotorIO {
      *
      * @return The current control type.
      */
-    protected ControlType getCurrentControlType()
-    {
+    protected ControlType getCurrentControlType() {
         var control = motor.getAppliedControl();
 
         if (control instanceof StaticBrake) {
@@ -215,19 +276,25 @@ public class MotorIOTalonFX implements MotorIO {
      * @param inputs Motor input structure to populate.
      */
     @Override
-    public void updateInputs(MotorInputs inputs)
-    {
-        inputs.connected = BaseStatusSignal.refreshAll(
-            position,
-            velocity,
-            supplyVoltage,
-            supplyCurrent,
-            torqueCurrent,
-            temperature,
-            closedLoopError,
-            closedLoopReference,
-            closedLoopReferenceSlope)
-            .isOK();
+    public void updateInputs(MotorInputs inputs) {
+        inputs.connected =
+                BaseStatusSignal.refreshAll(
+                                position,
+                                velocity,
+                                supplyVoltage,
+                                supplyCurrent,
+                                torqueCurrent,
+                                temperature,
+                                closedLoopError,
+                                closedLoopReference,
+                                closedLoopReferenceSlope)
+                        .isOK();
+
+        disconnectAlerts[0].set(disconnectDebouncers[0].calculate(!inputs.connected));
+        for (int i = 0; i < followers.length; i++) {
+            disconnectAlerts[i + 1].set(
+                    disconnectDebouncers[i + 1].calculate(!followers[i].isConnected()));
+        }
 
         inputs.position = position.getValue();
         inputs.velocity = velocity.getValue();
@@ -244,26 +311,24 @@ public class MotorIOTalonFX implements MotorIO {
         boolean isRunningMotionMagic = isRunningMotionMagic();
         boolean isRunningVelocityControl = isRunningVelocityControl();
 
-        inputs.positionError = isRunningPositionControl
-            ? Rotations.of(closedLoopErrorValue)
-            : Rotations.zero();
+        inputs.positionError =
+                isRunningPositionControl ? Rotations.of(closedLoopErrorValue) : Rotations.zero();
 
         inputs.activeTrajectoryPosition =
-            isRunningPositionControl && isRunningMotionMagic
-                ? Rotations.of(closedLoopTargetValue)
-                : Rotations.zero();
+                isRunningPositionControl && isRunningMotionMagic
+                        ? Rotations.of(closedLoopTargetValue)
+                        : Rotations.zero();
 
-        inputs.goalPosition = isRunningPositionControl
-            ? goalPosition
-            : Rotations.zero();
+        inputs.goalPosition = isRunningPositionControl ? goalPosition : Rotations.zero();
+        inputs.goalVelocity = isRunningVelocityControl ? goalVelocity : RotationsPerSecond.zero();
 
         if (isRunningVelocityControl) {
             inputs.velocityError = RotationsPerSecond.of(closedLoopErrorValue);
             inputs.activeTrajectoryVelocity = RotationsPerSecond.of(closedLoopTargetValue);
         } else if (isRunningPositionControl && isRunningMotionMagic) {
             var targetVelocity = closedLoopReferenceSlope.getValue();
-            inputs.velocityError = RotationsPerSecond.of(
-                targetVelocity - inputs.velocity.in(RotationsPerSecond));
+            inputs.velocityError =
+                    RotationsPerSecond.of(targetVelocity - inputs.velocity.in(RotationsPerSecond));
             inputs.activeTrajectoryVelocity = RotationsPerSecond.of(targetVelocity);
         } else {
             inputs.velocityError = RotationsPerSecond.zero();
@@ -273,21 +338,15 @@ public class MotorIOTalonFX implements MotorIO {
         inputs.controlType = getCurrentControlType();
     }
 
-    /**
-     * Sets the motor to coast mode.
-     */
+    /** Sets the motor to coast mode. */
     @Override
-    public void runCoast()
-    {
+    public void runCoast() {
         motor.setControl(coastControl);
     }
 
-    /**
-     * Sets the motor to brake mode.
-     */
+    /** Sets the motor to brake mode. */
     @Override
-    public void runBrake()
-    {
+    public void runBrake() {
         motor.setControl(brakeControl);
     }
 
@@ -297,8 +356,7 @@ public class MotorIOTalonFX implements MotorIO {
      * @param voltage Desired voltage output.
      */
     @Override
-    public void runVoltage(Voltage voltage)
-    {
+    public void runVoltage(Voltage voltage) {
         motor.setControl(voltageControl.withOutput(voltage));
     }
 
@@ -308,8 +366,7 @@ public class MotorIOTalonFX implements MotorIO {
      * @param current Desired torque-producing current.
      */
     @Override
-    public void runCurrent(Current current)
-    {
+    public void runCurrent(Current current) {
         motor.setControl(currentControl.withOutput(current).withMaxAbsDutyCycle(1.0));
     }
 
@@ -320,8 +377,7 @@ public class MotorIOTalonFX implements MotorIO {
      * @param dutyCycle Desired dutycycle of current output, limiting top speed
      */
     @Override
-    public void runCurrent(Current current, double dutyCycle)
-    {
+    public void runCurrent(Current current, double dutyCycle) {
         double dutyCyclePercent = MathUtil.clamp(dutyCycle, 0.0, 1.0);
         motor.setControl(currentControl.withOutput(current).withMaxAbsDutyCycle(dutyCyclePercent));
     }
@@ -332,10 +388,12 @@ public class MotorIOTalonFX implements MotorIO {
      * @param dutyCycle Fractional output between -1 and 1.
      */
     @Override
-    public void runDutyCycle(double dutyCycle)
-    {
+    public void runDutyCycle(double dutyCycle, boolean ignoringSoftLimits) {
         double dutyCyclePercent = MathUtil.clamp(dutyCycle, -1.0, 1.0);
-        motor.setControl(dutyCycleControl.withOutput(dutyCyclePercent));
+        motor.setControl(
+                dutyCycleControl
+                        .withOutput(dutyCyclePercent)
+                        .withIgnoreSoftwareLimits(ignoringSoftLimits));
     }
 
     /**
@@ -345,41 +403,227 @@ public class MotorIOTalonFX implements MotorIO {
      * @param slot PID slot index.
      */
     @Override
-    public void runPosition(Angle position, PIDSlot slot)
-    {
+    public void runPosition(Angle position, PIDSlot slot) {
         this.goalPosition = position;
         motor.setControl(positionControl.withPosition(position).withSlot(slot.getNum()));
+    }
+
+    /**
+     * Runs the motor to a specific position using a Motion Magic request with cruise velocity and
+     * acceleration.
+     *
+     * @param position Target position.
+     * @param slot PID slot index.
+     * @param cruiseVelocity Motion Magic cruise velocity.
+     * @param acceleration Motion Magic acceleration.
+     */
+    @Override
+    public void runPosition(
+            Angle position,
+            PIDSlot slot,
+            AngularVelocity cruiseVelocity,
+            AngularAcceleration acceleration) {
+        double newCruise = cruiseVelocity.in(RotationsPerSecond);
+        double newAccel = acceleration.in(RotationsPerSecondPerSecond);
+
+        queueMotionMagicConfigUpdate(newCruise, newAccel);
+
+        this.goalPosition = position;
+        motor.setControl(positionControl.withPosition(position).withSlot(slot.getNum()));
+    }
+
+    /**
+     * Runs the motor to a specific position without a motion profile.
+     *
+     * @param position Target position.
+     * @param slot PID slot index.
+     */
+    @Override
+    public void runUnprofiledPosition(Angle position, PIDSlot slot) {
+        this.goalPosition = position;
+        motor.setControl(unprofiledPositionControl.withPosition(position).withSlot(slot.getNum()));
     }
 
     /**
      * Runs the motor at a target velocity.
      *
      * @param velocity Desired velocity.
-     * @param acceleration Max acceleration.
      * @param slot PID slot index.
      */
     @Override
-    public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration,
-        PIDSlot slot)
-    {
-        motor.setControl(
-            velocityControl.withVelocity(velocity).withAcceleration(acceleration)
-                .withSlot(slot.getNum()));
+    public void runVelocity(AngularVelocity velocity, PIDSlot slot) {
+        goalVelocity = velocity;
+        motor.setControl(velocityControl.withVelocity(velocity).withSlot(slot.getNum()));
+    }
+
+    /**
+     * Runs the motor at a target velocity using a Motion Magic velocity request that ramps to the
+     * target velocity using the provided Motion Magic acceleration.
+     *
+     * @param velocity Desired velocity.
+     * @param acceleration Motion Magic acceleration used to ramp to target velocity.
+     * @param slot PID slot index.
+     */
+    @Override
+    public void runVelocity(
+            AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot) {
+        double newAccel = acceleration.in(RotationsPerSecondPerSecond);
+
+        queueMotionMagicConfigUpdate(lastRequestedMmCruiseVelocity, newAccel);
+
+        goalVelocity = velocity;
+        motor.setControl(mmVelocityControl.withVelocity(velocity).withSlot(slot.getNum()));
     }
 
     @Override
-    public void setEncoderPosition(Angle position)
-    {
+    public void setEncoderPosition(Angle position) {
         motor.setPosition(position);
     }
 
     @Override
-    public void close()
-    {
+    public void setSupplyCurrentLimit(Current currentLimit) {
+        double currentLimitAmps = Math.abs(currentLimit.in(Amps));
+        currentConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        currentConfig.CurrentLimits.SupplyCurrentLimit = currentLimitAmps;
+        currentConfig.CurrentLimits.SupplyCurrentLowerLimit = currentLimitAmps;
+
+        updateThread
+                .ctreCheckErrorAndRetry(
+                        () -> {
+                            StatusCode status = motor.getConfigurator().apply(currentConfig);
+                            if (!status.isOK()) {
+                                return status;
+                            }
+
+                            for (TalonFX follower : followers) {
+                                status = follower.getConfigurator().apply(currentConfig);
+                                if (!status.isOK()) {
+                                    return status;
+                                }
+                            }
+
+                            return StatusCode.OK;
+                        })
+                .exceptionally(
+                        ex -> {
+                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            return null;
+                        });
+    }
+
+    @Override
+    public int getNumberOfMotors() {
+        return followers.length + 1;
+    }
+
+    private void queueMotionMagicConfigUpdate(double cruiseVelocity, double acceleration) {
+        if (cruiseVelocity == lastRequestedMmCruiseVelocity
+                && acceleration == lastRequestedMmAcceleration) {
+            return;
+        }
+
+        lastRequestedMmCruiseVelocity = cruiseVelocity;
+        lastRequestedMmAcceleration = acceleration;
+        currentConfig.MotionMagic.MotionMagicCruiseVelocity = cruiseVelocity;
+        currentConfig.MotionMagic.MotionMagicAcceleration = acceleration;
+
+        MotionMagicConfigs mmConfig = new MotionMagicConfigs();
+        mmConfig.MotionMagicCruiseVelocity = cruiseVelocity;
+        mmConfig.MotionMagicAcceleration = acceleration;
+
+        updateThread
+                .ctreCheckErrorAndRetry(() -> motor.getConfigurator().apply(mmConfig, 0.05))
+                .thenRun(
+                        () -> {
+                            lastAppliedMmCruiseVelocity = cruiseVelocity;
+                            lastAppliedMmAcceleration = acceleration;
+                        })
+                .exceptionally(
+                        ex -> {
+                            LOGGER.log(
+                                    Level.WARNING,
+                                    "Failed to apply MotionMagic config asynchronously",
+                                    ex);
+                            return null;
+                        });
+    }
+
+    private void setPIDSlot0(PID pid) {
+        currentConfig
+                .Slot0
+                .withKP(pid.P())
+                .withKI(pid.I())
+                .withKD(pid.D())
+                .withKA(pid.A())
+                .withKV(pid.V())
+                .withKG(pid.G())
+                .withKS(pid.S());
+
+        updateThread
+                .ctreCheckErrorAndRetry(() -> motor.getConfigurator().apply(currentConfig))
+                .exceptionally(
+                        ex -> {
+                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            return null;
+                        });
+    }
+
+    private void setPIDSlot1(PID pid) {
+        currentConfig
+                .Slot1
+                .withKP(pid.P())
+                .withKI(pid.I())
+                .withKD(pid.D())
+                .withKA(pid.A())
+                .withKV(pid.V())
+                .withKG(pid.G())
+                .withKS(pid.S());
+
+        updateThread
+                .ctreCheckErrorAndRetry(() -> motor.getConfigurator().apply(currentConfig))
+                .exceptionally(
+                        ex -> {
+                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            return null;
+                        });
+    }
+
+    private void setPIDSlot2(PID pid) {
+        currentConfig
+                .Slot2
+                .withKP(pid.P())
+                .withKI(pid.I())
+                .withKD(pid.D())
+                .withKA(pid.A())
+                .withKV(pid.V())
+                .withKG(pid.G())
+                .withKS(pid.S());
+
+        updateThread
+                .ctreCheckErrorAndRetry(() -> motor.getConfigurator().apply(currentConfig))
+                .exceptionally(
+                        ex -> {
+                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            return null;
+                        });
+    }
+
+    @Override
+    public void setPID(PIDSlot slot, PID pid) {
+        switch (slot) {
+            case SLOT_0 -> setPIDSlot0(pid);
+            case SLOT_1 -> setPIDSlot1(pid);
+            case SLOT_2 -> setPIDSlot2(pid);
+        }
+    }
+
+    @Override
+    public void close() {
         motor.close();
         for (TalonFX follower : followers) {
             follower.close();
         }
+
         updateThread.close();
     }
 }
