@@ -23,17 +23,15 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
- * This class defines the runtime mode used by AdvantageKit. The mode is always
- * "real" when running
- * on a roboRIO. Change the value of "simMode" to switch between "sim" (physics
- * sim) and "replay"
+ * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
+ * on a roboRIO. Change the value of "simMode" to switch between "sim" (physics sim) and "replay"
  * (log replay from a file).
  */
 public final class Constants {
     public static final Mode simMode = Mode.SIM;
     public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
-    public static final boolean tuningMode = false;
+    public static final boolean tuningMode = true;
     public static final boolean disableHAL = false;
 
     public static enum Mode {
@@ -45,8 +43,7 @@ public final class Constants {
         REPLAY
     }
 
-    public static final class PathConstants {
-    }
+    public static final class PathConstants {}
 
     public static final Distance STARTING_POSE_DRIVE_TOLERANCE = Inches.of(3.0); // For auto
     public static final Angle STARTING_POSE_ROT_TOLERANCE_DEGREES = Degrees.of(5.0);
