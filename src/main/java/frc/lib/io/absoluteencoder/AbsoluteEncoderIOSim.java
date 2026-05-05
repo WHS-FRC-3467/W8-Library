@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -16,12 +16,19 @@
 package frc.lib.io.absoluteencoder;
 
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
 
+/**
+ * Simulation extension of AbsoluteEncoderIO for testing and simulation.
+ *
+ * <p>Adds methods to programmatically set the encoder's simulated angle and velocity, allowing
+ * physics simulation and test code to inject realistic encoder values without needing real
+ * hardware.
+ */
 public interface AbsoluteEncoderIOSim extends AbsoluteEncoderIO {
-    public default void setAngle(Angle angle)
-    {}
-
-    public default void setAngularVelocity(AngularVelocity velocity)
-    {}
+    /**
+     * Sets the simulated encoder angle.
+     *
+     * @param angle The angle to simulate
+     */
+    public default void setAngle(Angle angle) {}
 }

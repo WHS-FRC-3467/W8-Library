@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -16,6 +16,9 @@
 package frc.robot.subsystems.drive;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+
+import frc.lib.util.PID;
+
 import org.littletonrobotics.junction.AutoLog;
 
 public interface ModuleIO {
@@ -41,22 +44,66 @@ public interface ModuleIO {
     }
 
     /** Updates the set of loggable inputs. */
-    public default void updateInputs(ModuleIOInputs inputs)
-    {}
+    public default void updateInputs(ModuleIOInputs inputs) {
+    }
 
-    /** Run the drive motor at the specified open loop value. */
-    public default void setDriveOpenLoop(double output)
-    {}
+    /**
+     * Run the drive motor at the specified open loop value.
+     *
+     * @param output Open loop output value (-12 to 12 volts)
+     */
+    public default void setDriveOpenLoop(double output) {
+    }
 
-    /** Run the turn motor at the specified open loop value. */
-    public default void setTurnOpenLoop(double output)
-    {}
+    /**
+     * Run the turn motor at the specified open loop value.
+     *
+     * @param output Open loop output value (-12 to 12 volts)
+     */
+    public default void setTurnOpenLoop(double output) {
+    }
 
-    /** Run the drive motor at the specified velocity. */
-    public default void setDriveVelocity(double velocityRadPerSec)
-    {}
+    /**
+     * Run the drive motor at the specified velocity.
+     *
+     * @param velocityRadPerSec Target velocity in radians per second
+     */
+    public default void setDriveVelocity(double velocityRadPerSec) {
+    }
 
-    /** Run the turn motor to the specified rotation. */
-    public default void setTurnPosition(Rotation2d rotation)
-    {}
+    /**
+     * Run the turn motor to the specified rotation.
+     *
+     * @param rotation Target rotation angle
+     */
+    public default void setTurnPosition(Rotation2d rotation) {
+    }
+
+    /**
+     * Updates the main PID slot on the drive motor
+     *
+     * @param pid The PID to set
+     */
+    public default void setDrivePID(PID pid) {
+    }
+
+    /**
+     * Updates the main PID slot on the turn motor
+     *
+     * @param pid The PID to set
+     */
+    public default void setTurnPID(PID pid) {
+    }
+
+    /**
+     * Updates the drive motor current limit for brownout protection.
+     *
+     * @param brownedOut True when the robot is actively browned out
+     */
+    public default void setBrownedOut(boolean brownedOut) {
+    }
+
+    /** Toggles the drive motor current limit for brownout protection. */
+    public default void toggleBrownedOut() {
+    }
 }

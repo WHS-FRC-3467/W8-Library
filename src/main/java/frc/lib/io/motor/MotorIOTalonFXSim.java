@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -17,13 +17,16 @@ package frc.lib.io.motor;
 
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.sim.TalonFXSimState;
+
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.RobotController;
+
 import frc.lib.util.Device.CAN;
 
 /**
@@ -44,68 +47,59 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
      * @param main CAN ID of the main motor
      * @param followerData Configuration data for the follower(s)
      */
-    public MotorIOTalonFXSim(String name, TalonFXConfiguration config, CAN main,
-        TalonFXFollower... followerData)
-    {
+    public MotorIOTalonFXSim(
+            String name, TalonFXConfiguration config, CAN main, TalonFXFollower... followerData) {
         super(name, config, main, followerData);
 
-        rotorToSensorRatio =
-            config.Feedback.RotorToSensorRatio;
-        sensorToMechanismRatio =
-            config.Feedback.SensorToMechanismRatio;
+        rotorToSensorRatio = config.Feedback.RotorToSensorRatio;
+        sensorToMechanismRatio = config.Feedback.SensorToMechanismRatio;
         simState = super.motor.getSimState();
     }
 
     @Override
-    public void setPosition(Angle position)
-    {
+    public void setPosition(Angle position) {
         simState.setRawRotorPosition(position.times(rotorToSensorRatio * sensorToMechanismRatio));
     }
 
     @Override
-    public void setRotorVelocity(AngularVelocity velocity)
-    {
+    public void setRotorVelocity(AngularVelocity velocity) {
         simState.setRotorVelocity(velocity);
     }
 
     @Override
-    public void setRotorAcceleration(AngularAcceleration acceleration)
-    {
+    public void setRotorAcceleration(AngularAcceleration acceleration) {
         simState.setRotorAcceleration(acceleration);
     }
 
     @Override
-    public double getRotorToSensorRatio()
-    {
+    public double getRotorToSensorRatio() {
         return rotorToSensorRatio;
     }
 
     @Override
-    public double getSensorToMechanismRatio()
-    {
+    public double getSensorToMechanismRatio() {
         return sensorToMechanismRatio;
     }
 
     @Override
-    public void setEncoderPosition(Angle position)
-    {
+    public void setEncoderPosition(Angle position) {
         super.setEncoderPosition(position.times(rotorToSensorRatio * sensorToMechanismRatio));
     }
 
     @Override
-    public void updateInputs(MotorInputs inputs)
-    {
-        inputs.connected = BaseStatusSignal.refreshAll(
-            super.position,
-            super.velocity,
-            super.supplyVoltage,
-            super.supplyCurrent,
-            super.torqueCurrent,
-            super.temperature,
-            super.closedLoopError,
-            super.closedLoopReference,
-            super.closedLoopReferenceSlope)
-            .isOK();
+    public void updateInputs(MotorInputs inputs) {
+        inputs.connected =
+                BaseStatusSignal.refreshAll(
+                                super.position,
+                                super.velocity,
+                                super.supplyVoltage,
+                                super.supplyCurrent,
+                                super.torqueCurrent,
+                                super.temperature,
+                                super.closedLoopError,
+                                super.closedLoopReference,
+                                super.closedLoopReferenceSlope)
+                        .isOK();
 
         simState.setSupplyVoltage(RobotController.getBatteryVoltage());
 
@@ -124,26 +118,24 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         boolean isRunningMotionMagic = super.isRunningMotionMagic();
         boolean isRunningVelocityControl = super.isRunningVelocityControl();
 
-        inputs.positionError = isRunningPositionControl
-            ? Rotations.of(closedLoopErrorValue)
-            : Rotations.zero();
+        inputs.positionError =
+                isRunningPositionControl ? Rotations.of(closedLoopErrorValue) : Rotations.zero();
 
         inputs.activeTrajectoryPosition =
-            isRunningPositionControl && isRunningMotionMagic
-                ? Rotations.of(closedLoopTargetValue)
-                : Rotations.zero();
+                isRunningPositionControl && isRunningMotionMagic
+                        ? Rotations.of(closedLoopTargetValue)
+                        : Rotations.zero();
 
-        inputs.goalPosition = isRunningPositionControl
-            ? goalPosition
-            : Rotations.zero();
+        inputs.goalPosition = isRunningPositionControl ? goalPosition : Rotations.zero();
+        inputs.goalVelocity = isRunningVelocityControl ? goalVelocity : RotationsPerSecond.zero();
 
         if (isRunningVelocityControl) {
             inputs.velocityError = RotationsPerSecond.of(closedLoopErrorValue);
             inputs.activeTrajectoryVelocity = RotationsPerSecond.of(closedLoopTargetValue);
         } else if (isRunningPositionControl && isRunningMotionMagic) {
             var targetVelocity = closedLoopReferenceSlope.getValue();
-            inputs.velocityError = RotationsPerSecond.of(
-                targetVelocity - inputs.velocity.in(RotationsPerSecond));
+            inputs.velocityError =
+                    RotationsPerSecond.of(targetVelocity - inputs.velocity.in(RotationsPerSecond));
             inputs.activeTrajectoryVelocity = RotationsPerSecond.of(targetVelocity);
         } else {
             inputs.velocityError = RotationsPerSecond.zero();

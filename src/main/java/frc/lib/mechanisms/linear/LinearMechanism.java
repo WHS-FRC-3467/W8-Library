@@ -4,106 +4,130 @@
 
 package frc.lib.mechanisms.linear;
 
-import java.util.Optional;
-import java.util.function.Supplier;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
+
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.BaseUnits;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+
+import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.ControlType;
-import frc.lib.io.motor.MotorInputsAutoLogged;
 import frc.lib.mechanisms.Mechanism;
-import frc.lib.util.MechanismUtil.DistanceAngleConverter;
+
+import java.util.Optional;
 
 /**
- * Abstract class for linear mechanisms, which are mechanisms that move in a straight line. This
- * class implements the Mechanism interface and provides characteristics specific to linear
- * mechanisms. Supports mechanisms at any orientation angle, including dynamic angle updates for
+ * Abstract class for linear mechanisms, which are mechanisms that move in a
+ * straight line. This
+ * class extends Mechanism and provides characteristics specific to linear
+ * mechanisms. Supports
+ * mechanisms at any orientation angle, including dynamic angle updates for
  * pivoting mechanisms.
  */
-public abstract class LinearMechanism implements Mechanism {
+public abstract class LinearMechanism<T extends MotorIO> extends Mechanism<T> {
 
     /**
      * Characteristics for a linear mechanism.
      *
-     * @param minDistance Minimum extension distance
-     * @param maxDistance Maximum extension distance
+     * @param minDistance      Minimum extension distance
+     * @param maxDistance      Maximum extension distance
      * @param startingDistance Starting extension distance
-     * @param converter Converts between rotational and linear units
-     * @param orientation The 3D orientation of the linear mechanism's axis of motion. The mechanism
-     *        extends along the positive X-axis in its local frame, then rotated by this
-     *        orientation. Uses WPILib's counter-clockwise positive convention around Y-axis:
-     *        <ul>
-     *        <li>Pitch of 0° = horizontal mechanism extending forward</li>
-     *        <li>Pitch of -90° (-π/2 radians) = vertical mechanism extending upward (elevator)</li>
-     *        <li>Pitch of 90° (π/2 radians) = vertical mechanism extending downward</li>
-     *        </ul>
+     * @param drumRadius       The radius of the drum causing linear motion
+     * @param orientation      The 3D orientation of the linear mechanism's axis of
+     *                         motion. The mechanism
+     *                         extends along the positive X-axis in its local frame,
+     *                         then rotated by this orientation.
+     *                         Uses WPILib's counter-clockwise positive convention
+     *                         around Y-axis:
+     *                         <ul>
+     *                         <li>Pitch of 0° = horizontal mechanism extending
+     *                         forward
+     *                         <li>Pitch of -90° (-π/2 radians) = vertical mechanism
+     *                         extending upward (elevator)
+     *                         <li>Pitch of 90° (π/2 radians) = vertical mechanism
+     *                         extending downward
+     *                         </ul>
      */
     public record LinearMechCharacteristics(
-        Distance minDistance,
-        Distance maxDistance,
-        Distance startingDistance,
-        DistanceAngleConverter converter,
-        Rotation3d orientation) {
+            Distance minDistance,
+            Distance maxDistance,
+            Distance startingDistance,
+            Distance drumRadius,
+            Rotation3d orientation) {
     }
 
-    protected final String name;
-    protected final MotorInputsAutoLogged inputs = new MotorInputsAutoLogged();
-    protected final DistanceAngleConverter converter;
-
+    private final double drumRadiusMeters;
     private final LinearMechanismVisualizer visualizer;
 
-    public LinearMechanism(String name, LinearMechCharacteristics characteristics)
-    {
-        this.name = name;
+    public LinearMechanism(String name, LinearMechCharacteristics characteristics, T io) {
+        super(name, io);
         visualizer = new LinearMechanismVisualizer(name, characteristics);
-        converter = characteristics.converter();
+        drumRadiusMeters = characteristics.drumRadius().in(Meters);
     }
 
-    private Optional<Distance> getTrajectoryDistance()
-    {
+    protected Distance toDistance(Angle angle) {
+        return Meters.of(angle.in(Radians) * drumRadiusMeters);
+    }
+
+    protected Angle toAngle(Distance distance) {
+        return Radians.of(distance.in(Meters) / drumRadiusMeters);
+    }
+
+    private Optional<Distance> getTrajectoryDistance() {
         if (inputs.controlType != ControlType.POSITION || inputs.positionError == null) {
             return Optional.empty();
         }
 
-        return Optional.of(converter.toDistance(inputs.activeTrajectoryPosition));
+        return Optional.of(toDistance(inputs.activeTrajectoryPosition));
     }
 
-    private Optional<Distance> getGoalDistance()
-    {
+    private Optional<Distance> getGoalDistance() {
         if (inputs.controlType != ControlType.POSITION || inputs.positionError == null) {
             return Optional.empty();
         }
 
-        return Optional.of(converter.toDistance(inputs.goalPosition));
+        return Optional.of(toDistance(inputs.goalPosition));
+    }
+
+    /**
+     * Gets the current goal linear position of the mechanism, as set by the last
+     * position control
+     * request. Returns 0 m if not in position control mode.
+     *
+     * @return Goal linear position
+     */
+    public Distance getGoalLinearPosition() {
+        return getGoalDistance().orElse(Meters.zero());
     }
 
     // Checks if mechanism is near a goal position within a specified tolerance
-    public boolean nearGoal(Distance goalPosition, Distance tolerance)
-    {
+    public boolean nearGoal(Distance goalPosition, Distance tolerance) {
         return MathUtil.isNear(
-            converter.toDistance(getPosition()).in(BaseUnits.DistanceUnit),
-            goalPosition.in(BaseUnits.DistanceUnit),
-            tolerance.in(BaseUnits.DistanceUnit));
+                toDistance(getPosition()).in(BaseUnits.DistanceUnit),
+                goalPosition.in(BaseUnits.DistanceUnit),
+                tolerance.in(BaseUnits.DistanceUnit));
     }
 
     @Override
-    public void periodic()
-    {
-        visualizer.setMeasuredDistance(converter.toDistance(inputs.position));
+    public void periodic() {
+        super.periodic();
+
+        visualizer.setMeasuredDistance(toDistance(inputs.position));
         visualizer.setTrajectoryDistance(getTrajectoryDistance());
         visualizer.setGoalDistance(getGoalDistance());
     }
 
     /**
-     * Updates the orientation of the linear mechanism. This is useful for pivoting linear
+     * Updates the orientation of the linear mechanism. This is useful for pivoting
+     * linear
      * mechanisms where the angle changes dynamically.
      *
      * @param orientation The new orientation of the mechanism
      */
-    public void setOrientation(Rotation3d orientation)
-    {
+    public void setOrientation(Rotation3d orientation) {
         visualizer.setOrientation(orientation);
     }
 
@@ -112,14 +136,7 @@ public abstract class LinearMechanism implements Mechanism {
      *
      * @return The current orientation
      */
-    public Rotation3d getOrientation()
-    {
+    public Rotation3d getOrientation() {
         return visualizer.getOrientation();
-    }
-
-    @Override
-    public Supplier<Pose3d> getPoseSupplier()
-    {
-        return visualizer.getPoseSupplier();
     }
 }

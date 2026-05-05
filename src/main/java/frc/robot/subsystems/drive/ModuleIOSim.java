@@ -23,12 +23,12 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 /**
- * Physics sim implementation of module IO. The sim models are configured using a set of module
+ * Physics sim implementation of module IO. The sim models are configured using
+ * a set of module
  * constants from Phoenix. Simulation is always based on voltage control.
  */
 public class ModuleIOSim implements ModuleIO {
@@ -37,9 +37,6 @@ public class ModuleIOSim implements ModuleIO {
     private static final double DRIVE_KP = 0.05;
     private static final double DRIVE_KD = 0.0;
     private static final double DRIVE_KS = 0.0;
-    private static final double DRIVE_KV_ROT = 0.91035; // Same units as TunerConstants: (volt *
-                                                        // secs) / rotation
-    private static final double DRIVE_KV = 1.0 / Units.rotationsToRadians(1.0 / DRIVE_KV_ROT);
     private static final double TURN_KP = 8.0;
     private static final double TURN_KD = 0.0;
     private static final DCMotor DRIVE_GEARBOX = DCMotor.getKrakenX60Foc(1);
@@ -47,6 +44,11 @@ public class ModuleIOSim implements ModuleIO {
 
     private final DCMotorSim driveSim;
     private final DCMotorSim turnSim;
+    // Feedforward V per (rad/s) of wheel shaft; derived from motor Kv and gear
+    // ratio
+    // so the simulation converges to the exact commanded velocity with no
+    // steady-state error.
+    private final double driveKv;
 
     private boolean driveClosedLoop = false;
     private boolean turnClosedLoop = false;
@@ -57,29 +59,31 @@ public class ModuleIOSim implements ModuleIO {
     private double turnAppliedVolts = 0.0;
 
     public ModuleIOSim(
-        SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants)
-    {
+            SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         // Create drive and turn sim models
         driveSim = new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(
-                DRIVE_GEARBOX, constants.DriveInertia, constants.DriveMotorGearRatio),
-            DRIVE_GEARBOX);
+                LinearSystemId.createDCMotorSystem(
+                        DRIVE_GEARBOX, constants.DriveInertia, constants.DriveMotorGearRatio),
+                DRIVE_GEARBOX);
         turnSim = new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(
-                TURN_GEARBOX, constants.SteerInertia, constants.SteerMotorGearRatio),
-            TURN_GEARBOX);
+                LinearSystemId.createDCMotorSystem(
+                        TURN_GEARBOX, constants.SteerInertia, constants.SteerMotorGearRatio),
+                TURN_GEARBOX);
+
+        // Compute drive FF from the actual motor model: V/(rad/s at wheel) = gearRatio
+        // / Kv_motor
+        // This eliminates steady-state velocity error in the simulation.
+        driveKv = constants.DriveMotorGearRatio / DRIVE_GEARBOX.KvRadPerSecPerVolt;
 
         // Enable wrapping for turn PID
         turnController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     @Override
-    public void updateInputs(ModuleIOInputs inputs)
-    {
+    public void updateInputs(ModuleIOInputs inputs) {
         // Run closed-loop control
         if (driveClosedLoop) {
-            driveAppliedVolts =
-                driveFFVolts + driveController.calculate(driveSim.getAngularVelocityRadPerSec());
+            driveAppliedVolts = driveFFVolts + driveController.calculate(driveSim.getAngularVelocityRadPerSec());
         } else {
             driveController.reset();
         }
@@ -113,36 +117,32 @@ public class ModuleIOSim implements ModuleIO {
 
         // Update odometry inputs (50Hz because high-frequency odometry in sim doesn't
         // matter)
-        inputs.odometryTimestamps = new double[] {Timer.getFPGATimestamp()};
-        inputs.odometryDrivePositionsRad = new double[] {inputs.drivePositionRad};
-        inputs.odometryTurnPositions = new Rotation2d[] {inputs.turnPosition};
+        inputs.odometryTimestamps = new double[] { Timer.getFPGATimestamp() };
+        inputs.odometryDrivePositionsRad = new double[] { inputs.drivePositionRad };
+        inputs.odometryTurnPositions = new Rotation2d[] { inputs.turnPosition };
     }
 
     @Override
-    public void setDriveOpenLoop(double output)
-    {
+    public void setDriveOpenLoop(double output) {
         driveClosedLoop = false;
         driveAppliedVolts = output;
     }
 
     @Override
-    public void setTurnOpenLoop(double output)
-    {
+    public void setTurnOpenLoop(double output) {
         turnClosedLoop = false;
         turnAppliedVolts = output;
     }
 
     @Override
-    public void setDriveVelocity(double velocityRadPerSec)
-    {
+    public void setDriveVelocity(double velocityRadPerSec) {
         driveClosedLoop = true;
-        driveFFVolts = DRIVE_KS * Math.signum(velocityRadPerSec) + DRIVE_KV * velocityRadPerSec;
+        driveFFVolts = DRIVE_KS * Math.signum(velocityRadPerSec) + driveKv * velocityRadPerSec;
         driveController.setSetpoint(velocityRadPerSec);
     }
 
     @Override
-    public void setTurnPosition(Rotation2d rotation)
-    {
+    public void setTurnPosition(Rotation2d rotation) {
         turnClosedLoop = true;
         turnController.setSetpoint(rotation.getRadians());
     }

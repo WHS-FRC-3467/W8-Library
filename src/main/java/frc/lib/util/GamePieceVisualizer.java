@@ -4,42 +4,66 @@
 
 package frc.lib.util;
 
-import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
+
 import lombok.Getter;
 
-/** Util for tracking pose of a simulated gamepiece, used for visualization in AScope */
+import org.littletonrobotics.junction.Logger;
+
+/**
+ * Utility for tracking and visualizing game piece positions in simulation.
+ *
+ * <p>This class helps visualize game pieces (balls, cones, cubes) in AdvantageScope during
+ * simulation and testing. It tracks a 3D pose and logs it for visualization, making it easier to
+ * debug intake, scoring, and game piece manipulation mechanisms.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * // Create a visualizer for a note
+ * GamePieceVisualizer note = new GamePieceVisualizer(
+ *     "Note",
+ *     new Pose3d(5.0, 3.0, 0.5, new Rotation3d()));
+ *
+ * // Update position when intaked
+ * note.setPose(robot.getIntakePose());
+ *
+ * // Hide when scored
+ * note.hide();
+ * }</pre>
+ */
 public class GamePieceVisualizer {
 
     private final String name;
 
-    @Getter
-    Pose3d gamePiecePose = new Pose3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0));
+    @Getter Pose3d gamePiecePose = new Pose3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0));
 
     /**
-     * Instance of virtual gamepiece
-     * 
-     * @param name Name of instance
-     * @param pose3d Pose3d of instance
+     * Creates a new game piece visualizer at the specified pose.
+     *
+     * @param name Unique identifier for this game piece (used in logging)
+     * @param pose3d Initial 3D pose of the game piece
      */
-    public GamePieceVisualizer(String name, Pose3d pose3d)
-    {
+    public GamePieceVisualizer(String name, Pose3d pose3d) {
         this.name = name;
         this.gamePiecePose = pose3d;
         Logger.recordOutput(name + " Visualizer", this.gamePiecePose);
-
     }
 
-    public void setPose(Pose3d pose)
-    {
+    /**
+     * Sets the pose of the game piece and updates the visualization.
+     *
+     * @param pose The new 3D pose of the game piece
+     */
+    public void setPose(Pose3d pose) {
         this.gamePiecePose = pose;
         Logger.recordOutput(name + " Visualizer", this.gamePiecePose);
     }
 
-    public void hide()
-    {
+    /** Hides the game piece by setting its pose to the origin. */
+    public void hide() {
         this.gamePiecePose = new Pose3d();
         Logger.recordOutput(name + " Visualizer", this.gamePiecePose);
     }

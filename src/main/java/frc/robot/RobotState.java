@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -15,233 +15,149 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
-import java.util.HashMap;
-import java.util.Optional;
-import org.littletonrobotics.junction.AutoLogOutput;
-import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.units.measure.LinearVelocity;
 import frc.lib.posestimator.PoseEstimator;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.robot.subsystems.drive.Drive;
+
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import org.littletonrobotics.junction.AutoLogOutput;
+
+import java.util.Optional;
+
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RobotState {
-    public static record TrigPoseRecord(Pose2d pose, double distance, double timestamp) {
-    }
 
-    private static final double LINEAR_ODOMETRY_STD_DEV = 0.01;
-    private static final double ANGULAR_ODOMETRY_STD_DEV = 0.01;
-    private static final double TRIG_POSE_STALE_SECS = 0.2;
+    private static final double LINEAR_ODOMETRY_STD_DEV = 0.3;
+    private static final double ANGULAR_ODOMETRY_STD_DEV = 0.15;
 
     @Getter(lazy = true)
     private static final RobotState instance = new RobotState();
 
-    private HashMap<Integer, TrigPoseRecord> trigPoses = new HashMap<>();
+    @AutoLogOutput(key = "Drive/ActiveTrajectoryPose")
+    @Getter
+    @Setter
+    private Pose2d activeTrajPose = new Pose2d();
+
+    // -------- POSE ESTIMATION --------
 
     private final PoseEstimator poseEstimator = new PoseEstimator(
-        new SwerveDriveKinematics(Drive.getModuleTranslations()),
-        Seconds.of(2),
-        LINEAR_ODOMETRY_STD_DEV,
-        ANGULAR_ODOMETRY_STD_DEV);
+            new SwerveDriveKinematics(
+                    Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new)),
+            Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new),
+            Seconds.of(2),
+            LINEAR_ODOMETRY_STD_DEV,
+            ANGULAR_ODOMETRY_STD_DEV);
 
     @Getter
     @Setter
-    private ChassisSpeeds velocity = new ChassisSpeeds();
+    private ChassisSpeeds robotRelativeVelocity = new ChassisSpeeds();
 
+    /**
+     * Returns the robot's odometry-only pose (without vision corrections).
+     *
+     * @return the odometry-only pose
+     */
     @AutoLogOutput(key = "Odometry/OdometryPose")
-    public Pose2d getOdometryPose()
-    {
+    public Pose2d getOdometryPose() {
         return poseEstimator.odometryPose();
     }
 
+    /**
+     * Returns the robot's estimated pose with vision corrections applied.
+     *
+     * @return the estimated pose
+     */
     @AutoLogOutput(key = "Odometry/EstimatedPose")
-    public Pose2d getEstimatedPose()
-    {
+    public Pose2d getEstimatedPose() {
         return poseEstimator.estimatedPose();
     }
 
-    @AutoLogOutput(key = "Odometry/TrigTestPose")
-    public Pose2d getTrigTestPose()
-    {
-        return getTrigPose(10).orElse(Pose2d.kZero);
-    }
+    /**
+     * Adds a new odometry observation to the pose estimator.
+     *
+     * @param observation the odometry observation to add
+     */
+    public void addOdometryObservation(OdometryObservation observation) {
+        // if (DriverStation.isDisabled()) return;
 
-    public void addOdometryObservation(OdometryObservation observation)
-    {
         poseEstimator.addOdometryObservation(observation);
     }
 
-    public void addVisionObservation(VisionPoseObservation observation)
-    {
+    /**
+     * Adds a new vision observation to the pose estimator.
+     *
+     * @param observation the vision observation to add
+     */
+    public void addVisionObservation(VisionPoseObservation observation) {
         poseEstimator.addVisionObservation(observation);
     }
 
-    public void addTrigPose(int tagId, TrigPoseRecord trigPose)
-    {
-        trigPoses.put(tagId, trigPose);
-    }
-
-    public Optional<Pose2d> getPoseAtTime(double timestampSeconds)
-    {
+    /**
+     * Returns the robot's estimated pose at a specific timestamp.
+     *
+     * @param timestampSeconds the timestamp in seconds
+     * @return the estimated pose at the given timestamp, or empty if unavailable
+     */
+    public Optional<Pose2d> getPoseAtTime(double timestampSeconds) {
         return poseEstimator.getPoseAtTime(timestampSeconds);
     }
 
-    public Optional<Pose2d> getTrigPose(int tagId)
-    {
-        if (!trigPoses.containsKey(tagId)) {
-            return Optional.empty();
-        }
-        var data = trigPoses.get(tagId);
-
-        if (Timer.getTimestamp() - data.timestamp() >= TRIG_POSE_STALE_SECS) {
-            return Optional.empty();
-        }
-
-        return poseEstimator.getPoseDeltaThenToNow(data.timestamp())
-            .map(delta -> data.pose().transformBy(delta));
+    /**
+     * Returns the robot's field-relative velocity.
+     *
+     * @return the field-relative chassis speeds
+     */
+    public ChassisSpeeds getFieldRelativeVelocity() {
+        return ChassisSpeeds.fromRobotRelativeSpeeds(
+                robotRelativeVelocity.vxMetersPerSecond,
+                robotRelativeVelocity.vyMetersPerSecond,
+                robotRelativeVelocity.omegaRadiansPerSecond,
+                getEstimatedPose().getRotation());
     }
-
-    /** Returns the current odometry rotation. */
-    public Rotation2d getRotation()
-    {
-        return getEstimatedPose().getRotation();
-    }
-
-    public ChassisSpeeds getFieldRelativeVelocity()
-    {
-        return ChassisSpeeds.fromFieldRelativeSpeeds(
-            velocity.vxMetersPerSecond,
-            velocity.vyMetersPerSecond,
-            velocity.omegaRadiansPerSecond,
-            getRotation());
-    }
-
-    @Getter
-    @Setter
-    private Pose3d rotaryPose = new Pose3d();
-
-    @Getter
-    @Setter
-    private Pose3d linearPose = new Pose3d();
 
     /**
-     * Publishes the mechanism poses to the logger for 3d visualization. This should be changed to
-     * match the mechanical kinematics of the robot.
+     * Returns the robot's linear velocity.
+     *
+     * @return the linear velocity of the robot
      */
-
-    public void publishMechanismPoses()
-    {
-        Logger.recordOutput("Odometry/LinearPose", linearPose);
-        Logger.recordOutput("Odometry/RotaryPose", new Pose3d(
-            getRotaryPose().getX(),
-            getRotaryPose().getY(),
-            getRotaryPose().getZ() + getLinearPose().getZ(),
-            getRotaryPose().getRotation()));
+    public LinearVelocity getLinearVelocity() {
+        var speeds = getFieldRelativeVelocity();
+        return MetersPerSecond.of(Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond));
     }
 
-    public void resetPose(Pose2d pose)
-    {
+    /**
+     * Resets the robot's pose to the specified position.
+     *
+     * @param pose the new pose to set
+     */
+    public void resetPose(Pose2d pose) {
         poseEstimator.resetPose(pose);
     }
 
-    @AllArgsConstructor
-    public enum Target {
-        // NAME(BLUE, RED, HEIGHT)
-        ONE(new Pose2d(Meters.of(0), Meters.of(0), Rotation2d.kZero),
-            new Pose2d(FieldConstants.FIELD_LENGTH, FieldConstants.FIELD_WIDTH,
-                Rotation2d.k180deg),
-            Meters.of(2.64)),
-        TWO(new Pose2d(), new Pose2d(), Meters.of(0.0));
-
-        @Getter
-        private final Pose2d bluePose;
-
-        @Getter
-        private final Pose2d redPose;
-
-        @Getter
-        private final Distance height;
-
-    }
-
-    /** Keeps track of current target to aim for */
-    @AutoLogOutput(key = "Robot/CurrentTarget")
-    @Setter
-    public static Target target = Target.ONE;
-
-    /** Returns 2d distance from robot to target in meters */
-    public Distance getDistanceToTarget(Pose2d robotPose)
-    {
-        Translation2d robotTranslation = robotPose.getTranslation();
-        Translation2d targetTranslation =
-            (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue
-                ? target.bluePose.getTranslation()
-                : target.redPose.getTranslation());
-        return Meters.of(robotTranslation.getDistance(targetTranslation));
-    }
-
-    /** Returns 2d distance from robot to target in meters */
-    public static Distance getDistanceToTarget(Translation2d robotPose)
-    {
-        Translation2d targetTranslation =
-            (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue
-                ? target.bluePose.getTranslation()
-                : target.redPose.getTranslation());
-        return Meters.of(robotPose.getDistance(targetTranslation));
-    }
-
-    /** Returns angle from robot to target */
-    public static Rotation2d getAngleToTarget(Translation2d robotPose)
-    {
-        return (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue
-            ? target.bluePose.getTranslation()
-            : target.redPose.getTranslation()).minus(robotPose).getAngle();
-    }
-
-    /** Returns target pose based on alliance color */
-    public static Pose2d getTargetPose(Target target)
-    {
-        return (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue
-            ? target.getBluePose()
-            : target.getRedPose());
-    }
-
     /**
-     * Computes the vertical distance from the robot's current mechanism position to the target
-     * using the robot's rotary and linear poses.
+     * Returns the robot's estimated position {@code seconds} in the future
      *
-     * @return height difference from mechanism to target, in meters
+     * @param seconds amount of time to predict
+     * @return the robot's estimated position {@code seconds} in the future
      */
-    public Distance getHeightToTarget()
-    {
-        double mechanismHeight = getRotaryPose().getZ() + getLinearPose().getZ();
-        return target.getHeight().minus(Meters.of(mechanismHeight));
-    }
-
-    /**
-     * 
-     * @param mechanismHeight height of the mechanism from which the projectile is launched
-     * @return height difference from mechanism to target, in meters
-     */
-    public static Distance getHeightToTarget(Distance mechanismHeight)
-    {
-        return target.getHeight().minus(mechanismHeight);
-    }
+    // public Pose2d getFuturePose(double seconds) {
+    // Transform2d velocity = new Transform2d(
+    // robotRelativeVelocity.vxMetersPerSecond,
+    // robotRelativeVelocity.vyMetersPerSecond,
+    // Rotation2d.fromRadians(robotRelativeVelocity.omegaRadiansPerSecond));
+    // return getEstimatedPose().plus(velocity.times(feedLookaheadSeconds.get()));
+    // }
 }

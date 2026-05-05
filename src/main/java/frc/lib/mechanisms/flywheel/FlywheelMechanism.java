@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -15,7 +15,18 @@
 
 package frc.lib.mechanisms.flywheel;
 
+import frc.lib.io.motor.MotorIO;
 import frc.lib.mechanisms.Mechanism;
 
-public interface FlywheelMechanism extends Mechanism {
+/**
+ * Abstract base class for flywheel mechanisms. Flywheels are rotating mechanisms used for intakes,
+ * indexers, and shooters. Provides velocity control for spinning wheels at specific speeds.
+ *
+ * @param <T> the type of MotorIO implementation used by this flywheel
+ */
+public abstract class FlywheelMechanism<T extends MotorIO> extends Mechanism<T> {
+
+    public FlywheelMechanism(String name, T io) {
+        super(name, io);
+    }
 }

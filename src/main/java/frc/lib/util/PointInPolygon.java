@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -16,14 +16,24 @@
 package frc.lib.util;
 
 import edu.wpi.first.math.geometry.Translation2d;
+
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.List;
 
+/**
+ * Utility class for checking if a point lies within a polygon boundary. Uses the ray casting
+ * algorithm for point-in-polygon testing.
+ */
 public class PointInPolygon {
-    // Checking if a point is inside a polygon
-    public static boolean pointInPolygon(Translation2d point, List<Translation2d> polygon)
-    {
+    /**
+     * Checks if a point is inside a polygon using ray casting algorithm.
+     *
+     * @param point The point to test
+     * @param polygon List of vertices defining the polygon
+     * @return True if the point is inside the polygon, false otherwise
+     */
+    public static boolean pointInPolygon(Translation2d point, List<Translation2d> polygon) {
         Path2D path = new Path2D.Double();
 
         // Move to the first point in the polygon

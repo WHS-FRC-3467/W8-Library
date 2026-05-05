@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -16,20 +16,23 @@
 package frc.lib.io.distancesensor;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANrangeConfiguration;
 import com.ctre.phoenix6.hardware.CANrange;
-import edu.wpi.first.units.measure.Distance;
-import frc.lib.util.Device;
-import frc.lib.util.CANUpdateThread;
-import lombok.Getter;
 
-/**
- * A distance sensor implementation that uses a CANRange
- */
+import edu.wpi.first.units.measure.Distance;
+
+import frc.lib.util.CANUpdateThread;
+import frc.lib.util.Device;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/** A distance sensor implementation that uses a CANRange */
 public class DistanceSensorIOCANRange implements DistanceSensorIO {
-    @Getter
-    private final String name;
+    private static final Logger LOGGER = Logger.getLogger(DistanceSensorIOCANRange.class.getName());
+
     private final CANrange CANRange;
 
     private final CANUpdateThread updateThread = new CANUpdateThread();
@@ -42,24 +45,25 @@ public class DistanceSensorIOCANRange implements DistanceSensorIO {
      * configuration.
      *
      * @param id The CANDevice identifying the bus and device ID for this sensor.
-     * @param name A human-readable name for this sensor instance.
      * @param config The CANrangeConfiguration to apply to the sensor upon initialization.
      */
-    public DistanceSensorIOCANRange(Device.CAN id, String name, CANrangeConfiguration config)
-    {
-        this.name = name;
+    public DistanceSensorIOCANRange(Device.CAN id, CANrangeConfiguration config) {
+        CANRange = new CANrange(id.id(), new CANBus(id.bus()));
 
-        CANRange = new CANrange(id.id(), id.bus());
-
-        updateThread.CTRECheckErrorAndRetry(() -> CANRange.getConfigurator().apply(config));
+        updateThread
+                .ctreCheckErrorAndRetry(() -> CANRange.getConfigurator().apply(config))
+                .exceptionally(
+                        ex -> {
+                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            return null;
+                        });
 
         ambientSignal = CANRange.getAmbientSignal();
         distance = CANRange.getDistance();
     }
 
     @Override
-    public void updateInputs(DistanceSensorInputs inputs)
-    {
+    public void updateInputs(DistanceSensorInputs inputs) {
         inputs.connected = BaseStatusSignal.refreshAll(ambientSignal, distance).isOK();
 
         if (!inputs.connected) {
@@ -71,5 +75,4 @@ public class DistanceSensorIOCANRange implements DistanceSensorIO {
         inputs.ambientSignal = ambientSignal.getValue();
         inputs.distance = distance.getValue();
     }
-
 }

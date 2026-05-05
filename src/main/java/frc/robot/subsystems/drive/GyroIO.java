@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -15,7 +15,11 @@
 
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
+
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.LinearAcceleration;
+
 import org.littletonrobotics.junction.AutoLog;
 
 public interface GyroIO {
@@ -24,20 +28,19 @@ public interface GyroIO {
         public boolean connected = false;
         public Rotation2d yawPosition = new Rotation2d();
         public double yawVelocityRadPerSec = 0.0;
+        public Rotation2d pitchPosition = new Rotation2d();
+        public Rotation2d rollPosition = new Rotation2d();
         public double[] odometryYawTimestamps = new double[] {};
         public Rotation2d[] odometryYawPositions = new Rotation2d[] {};
+        public LinearAcceleration xAcceleration = MetersPerSecondPerSecond.zero();
+        public LinearAcceleration yAcceleration = MetersPerSecondPerSecond.zero();
     }
 
-    public default void updateInputs(GyroIOInputs inputs)
-    {}
-
-    public default double getAccelerationX()
-    {
-        return 0.0;
-    }
-
-    public default double getAccelerationY()
-    {
-        return 0.0;
+    /**
+     * Updates the set of loggable inputs.
+     *
+     * @param inputs Logged inputs object to update with current sensor readings
+     */
+    public default void updateInputs(GyroIOInputs inputs) {
     }
 }

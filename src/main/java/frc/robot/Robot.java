@@ -19,25 +19,24 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
 import au.grapplerobotics.CanBridge;
-import com.pathplanner.lib.commands.PathfindingCommand;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.drive.DriveConstants;
-import frc.robot.util.BallSimulator;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.inputs.LoggedPowerDistribution;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 /**
- * The VM is configured to automatically run this class, and to call the functions corresponding to
- * each mode, as described in the TimedRobot documentation. If you change the name of this class or
- * the package after creating this project, you must also update the build.gradle file in the
+ * The VM is configured to automatically run this class, and to call the
+ * functions corresponding to
+ * each mode, as described in the TimedRobot documentation. If you change the
+ * name of this class or
+ * the package after creating this project, you must also update the
+ * build.gradle file in the
  * project.
  */
 public class Robot extends LoggedRobot {
@@ -46,8 +45,7 @@ public class Robot extends LoggedRobot {
     private Command autonomousCommand;
     private RobotContainer robotContainer;
 
-    public Robot()
-    {
+    public Robot() {
         CanBridge.runTCP(); // Used for configuring LaserCANs via Grapplehook
 
         // Record metadata
@@ -68,7 +66,6 @@ public class Robot extends LoggedRobot {
                 // Running on a real robot, log to a USB stick ("/U/logs")
                 Logger.addDataReceiver(new WPILOGWriter());
                 Logger.addDataReceiver(new NT4Publisher());
-                LoggedPowerDistribution.getInstance(Ports.pdh.id(), ModuleType.kRev);
             }
 
             case SIM -> {
@@ -81,10 +78,10 @@ public class Robot extends LoggedRobot {
                 setUseTiming(false); // Run as fast as possible
                 String logPath = LogFileUtil.findReplayLog();
                 Logger
-                    .setReplaySource(new WPILOGReader(logPath));
+                        .setReplaySource(new WPILOGReader(logPath));
                 Logger
-                    .addDataReceiver(
-                        new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+                        .addDataReceiver(
+                                new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
             }
         }
 
@@ -100,9 +97,9 @@ public class Robot extends LoggedRobot {
         };
         for (var constants : modules) {
             if (constants.DriveMotorType != DriveMotorArrangement.TalonFX_Integrated
-                || constants.SteerMotorType != SteerMotorArrangement.TalonFX_Integrated) {
+                    || constants.SteerMotorType != SteerMotorArrangement.TalonFX_Integrated) {
                 throw new RuntimeException(
-                    "You are using an unsupported swerve configuration, which this template does not support without manual customization. The 2025 release of Phoenix supports some swerve configurations which were not available during 2025 beta testing, preventing any development and support from the AdvantageKit developers.");
+                        "You are using an unsupported swerve configuration");
             }
         }
 
@@ -114,32 +111,16 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void robotInit()
-    {
-        /*
-         * Due to the nature of how Java works, the first run of a pathfinding command could have a
-         * significantly higher delay compared with subsequent runs. To help alleviate this issue,
-         * run this warmup command in the background when code starts. This command will not control
-         * the robot, it will simply run through a full pathfinding command to warm up the library.
-         * public void robotInit() { /* Due to the nature of how Java works, the first run of a
-         * pathfinding command could have a significantly higher delay compared with subsequent
-         * runs. To help alleviate this issue, run this warmup command in the background when code
-         * starts. This command will not control the robot, it will simply run through a full
-         * pathfinding command to warm up the library. Source: PathPlanner Docs
-         */
-        // DO THIS AFTER CONFIGURATION OF YOUR DESIRED PATHFINDER
-        PathfindingCommand.warmupCommand().schedule();
-
+    public void robotInit() {
         // Log first 8 character of robot serial
-        Logger.recordOutput("Robot Serial",
-            Robot.isReal() ? Constants.RobotConstants.serial.subSequence(0, 8).toString()
-                : Constants.RobotConstants.serial);
+        // Logger.recordOutput("Robot Serial",
+        // Robot.isReal() ? Constants.RobotConstants.serial.subSequence(0, 8).toString()
+        // : Constants.RobotConstants.serial);
     }
 
     /** This function is called periodically during all modes. */
     @Override
-    public void robotPeriodic()
-    {
+    public void robotPeriodic() {
         // Optionally switch the thread to high priority to improve loop
         // timing (see the template project documentation for details)
         // Threads.setCurrentThreadPriority(true, 99);
@@ -153,48 +134,42 @@ public class Robot extends LoggedRobot {
 
         // Return to non-RT thread priority (do not modify the first argument)
         // Threads.setCurrentThreadPriority(false, 10);
-
-        BallSimulator.update();
-        RobotState.getInstance().publishMechanismPoses();
     }
 
     /** This function is called once when the robot is disabled. */
     @Override
-    public void disabledInit()
-    {}
+    public void disabledInit() {
+    }
 
     /** This function is called periodically when disabled. */
     @Override
-    public void disabledPeriodic()
-    {
+    public void disabledPeriodic() {
         robotContainer.checkStartPose();
     }
 
     /**
-     * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
+     * This autonomous runs the autonomous command selected by your
+     * {@link RobotContainer} class.
      */
     @Override
-    public void autonomousInit()
-    {
+    public void autonomousInit() {
         autonomousCommand = robotContainer.getAutonomousCommand();
 
         // schedule the autonomous command (example)
         if (autonomousCommand != null) {
-            autonomousCommand.schedule();
+            CommandScheduler.getInstance().schedule(autonomousCommand);
         }
     }
 
     /** This function is called periodically during autonomous. */
     @Override
-    public void autonomousPeriodic()
-    {
+    public void autonomousPeriodic() {
         RobotContainer.autoPreviewField.setRobotPose(robotState.getEstimatedPose());
     }
 
     /** This function is called once when teleop is enabled. */
     @Override
-    public void teleopInit()
-    {
+    public void teleopInit() {
         // This makes sure that the autonomous stops running when
         // teleop starts running. If you want the autonomous to
         // continue until interrupted by another command, remove
@@ -206,29 +181,28 @@ public class Robot extends LoggedRobot {
 
     /** This function is called periodically during operator control. */
     @Override
-    public void teleopPeriodic()
-    {}
+    public void teleopPeriodic() {
+    }
 
     /** This function is called once when test mode is enabled. */
     @Override
-    public void testInit()
-    {
+    public void testInit() {
         // Cancels all running commands at the start of test mode.
         CommandScheduler.getInstance().cancelAll();
     }
 
     /** This function is called periodically during test mode. */
     @Override
-    public void testPeriodic()
-    {}
+    public void testPeriodic() {
+    }
 
     /** This function is called once when the robot is first started up. */
     @Override
-    public void simulationInit()
-    {}
+    public void simulationInit() {
+    }
 
     /** This function is called periodically whilst in simulation. */
     @Override
-    public void simulationPeriodic()
-    {}
+    public void simulationPeriodic() {
+    }
 }

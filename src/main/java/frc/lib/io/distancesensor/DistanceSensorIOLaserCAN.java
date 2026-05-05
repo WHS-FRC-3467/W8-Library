@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -16,24 +16,27 @@
 package frc.lib.io.distancesensor;
 
 import static edu.wpi.first.units.Units.Millimeters;
+
 import au.grapplerobotics.interfaces.LaserCanInterface;
 import au.grapplerobotics.interfaces.LaserCanInterface.Measurement;
 import au.grapplerobotics.interfaces.LaserCanInterface.RangingMode;
 import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
 import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
+
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-import frc.lib.util.Device;
-import frc.lib.util.CANUpdateThread;
-import frc.lib.util.LaserCANConfigurator;
-import lombok.Getter;
 
-/**
- * A distance sensor implementation that uses a LaserCAN
- */
+import frc.lib.util.CANUpdateThread;
+import frc.lib.util.Device;
+import frc.lib.util.LaserCANConfigurator;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/** A distance sensor implementation that uses a LaserCAN */
 public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
-    @Getter
-    private final String name;
+    private static final Logger LOGGER = Logger.getLogger(DistanceSensorIOLaserCAN.class.getName());
+
     private final LaserCANConfigurator laserCAN;
 
     private final CANUpdateThread updateThread = new CANUpdateThread();
@@ -52,17 +55,19 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
      * @param regionOfInterest The region of interest setting for the sensor.
      * @param timingBudget The timing budget setting that controls measurement speed/accuracy.
      */
-    public DistanceSensorIOLaserCAN(Device.CAN id, String name, RangingMode rangingMode,
-        RegionOfInterest regionOfInterest, TimingBudget timingBudget)
-    {
-        this.name = name;
-
+    public DistanceSensorIOLaserCAN(
+            Device.CAN id,
+            String name,
+            RangingMode rangingMode,
+            RegionOfInterest regionOfInterest,
+            TimingBudget timingBudget) {
         laserCANOnWrongBusAlert =
-            new Alert("LaserCAN " + name + " must be wired to the RIO's CAN bus",
-                AlertType.kError);
+                new Alert(
+                        "LaserCAN " + name + " must be wired to the RIO's CAN bus",
+                        AlertType.kError);
         disconnectedAlert = new Alert("LaserCAN " + name + " is not connected", AlertType.kError);
         invalidReadingAlert =
-            new Alert("LaserCAN " + name + " reading is invalid", AlertType.kWarning);
+                new Alert("LaserCAN " + name + " reading is invalid", AlertType.kWarning);
 
         if (!id.bus().equals("rio")) {
             laserCANOnWrongBusAlert.set(true);
@@ -70,15 +75,33 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
 
         laserCAN = new LaserCANConfigurator(id.id());
 
-        updateThread.LaserCANCheckErrorAndRetry(() -> laserCAN.setRangingMode(rangingMode));
         updateThread
-            .LaserCANCheckErrorAndRetry(() -> laserCAN.setRegionOfInterest(regionOfInterest));
-        updateThread.LaserCANCheckErrorAndRetry(() -> laserCAN.setTimingBudget(timingBudget));
+                .laserCANCheckErrorAndRetry(() -> laserCAN.setRangingMode(rangingMode))
+                .exceptionally(
+                        ex -> {
+                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            return null;
+                        });
+
+        updateThread
+                .laserCANCheckErrorAndRetry(() -> laserCAN.setRegionOfInterest(regionOfInterest))
+                .exceptionally(
+                        ex -> {
+                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            return null;
+                        });
+
+        updateThread
+                .laserCANCheckErrorAndRetry(() -> laserCAN.setTimingBudget(timingBudget))
+                .exceptionally(
+                        ex -> {
+                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            return null;
+                        });
     }
 
     @Override
-    public void updateInputs(DistanceSensorInputs inputs)
-    {
+    public void updateInputs(DistanceSensorInputs inputs) {
         Measurement measure = laserCAN.getMeasurement();
 
         if (measure == null) {
@@ -100,6 +123,7 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
             return;
         }
 
+        invalidReadingAlert.set(false);
         inputs.ambientSignal = measure.ambient;
         inputs.distance = Millimeters.of(measure.distance_mm);
     }

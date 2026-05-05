@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -16,6 +16,7 @@
 package frc.lib.io.distancesensor;
 
 import edu.wpi.first.units.measure.Distance;
+
 import org.littletonrobotics.junction.AutoLog;
 
 /** Standardized interface for distance sensors used in FRC. */
@@ -25,20 +26,12 @@ public interface DistanceSensorIO {
     abstract class DistanceSensorInputs {
         /** Whether the sensor is connected. */
         public boolean connected = false;
+
         /** Distance from the sensor to the nearest object */
         public Distance distance = null;
+
         /** The amount of ambient infrared light detected by the sensor. */
         public double ambientSignal = 0.0;
-    }
-
-    /**
-     * Getter for the name of the sensor
-     * 
-     * @return The name of the sensor
-     */
-    public default String getName()
-    {
-        return "";
     }
 
     /**
@@ -47,6 +40,5 @@ public interface DistanceSensorIO {
      *
      * @param inputs The structure to populate with updated sensor values.
      */
-    public default void updateInputs(DistanceSensorInputs inputs)
-    {}
+    public default void updateInputs(DistanceSensorInputs inputs) {}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -22,57 +22,80 @@ import au.grapplerobotics.interfaces.LaserCanInterface.RangingMode;
 import au.grapplerobotics.interfaces.LaserCanInterface.RegionOfInterest;
 import au.grapplerobotics.interfaces.LaserCanInterface.TimingBudget;
 
+/**
+ * Configuration wrapper for Grapple Robotics LaserCAN distance sensors.
+ *
+ * <p>Provides a simplified interface for configuring LaserCAN sensors, including ranging mode,
+ * timing budget, and region of interest. LaserCANs use time-of-flight sensing to measure distances
+ * accurately from 10mm to 4000mm.
+ *
+ * <p>Example usage:
+ *
+ * <pre>{@code
+ * try (LaserCANConfigurator laser = new LaserCANConfigurator(10)) {
+ *     laser.setRangingMode(RangingMode.SHORT);
+ *     laser.setTimingBudget(TimingBudget.TIMING_BUDGET_33MS);
+ *
+ *     Measurement m = laser.getMeasurement();
+ *     System.out.println("Distance: " + m.distance_mm + "mm");
+ * } catch (Exception e) {
+ *     e.printStackTrace();
+ * }
+ * }</pre>
+ */
 public class LaserCANConfigurator implements AutoCloseable {
-    public enum ConfigurationStatus {
-        SUCCESS,
-        FAILURE;
-    }
-
     private final LaserCan laserCAN;
 
-    public LaserCANConfigurator(int can_id)
-    {
+    /**
+     * Constructs a LaserCAN configurator.
+     *
+     * @param can_id CAN ID of the LaserCAN device
+     */
+    public LaserCANConfigurator(int can_id) {
         laserCAN = new LaserCan(can_id);
     }
 
-    public Measurement getMeasurement()
-    {
+    /**
+     * Gets the latest measurement from the sensor.
+     *
+     * @return The most recent measurement
+     */
+    public Measurement getMeasurement() {
         return laserCAN.getMeasurement();
     }
 
-    public ConfigurationStatus setRangingMode(RangingMode mode)
-    {
-        try {
-            laserCAN.setRangingMode(mode);
-            return ConfigurationStatus.SUCCESS;
-        } catch (ConfigurationFailedException exception) {
-            return ConfigurationStatus.FAILURE;
-        }
+    /**
+     * Sets the ranging mode of the sensor.
+     *
+     * @param mode The ranging mode to use
+     * @throws ConfigurationFailedException if configuration fails
+     */
+    public void setRangingMode(RangingMode mode) throws ConfigurationFailedException {
+        laserCAN.setRangingMode(mode);
     }
 
-    public ConfigurationStatus setTimingBudget(TimingBudget budget)
-    {
-        try {
-            laserCAN.setTimingBudget(budget);
-            return ConfigurationStatus.SUCCESS;
-        } catch (ConfigurationFailedException exception) {
-            return ConfigurationStatus.FAILURE;
-        }
+    /**
+     * Sets the timing budget of the sensor.
+     *
+     * @param budget The timing budget to use
+     * @throws ConfigurationFailedException if configuration fails
+     */
+    public void setTimingBudget(TimingBudget budget) throws ConfigurationFailedException {
+        laserCAN.setTimingBudget(budget);
     }
 
-    public ConfigurationStatus setRegionOfInterest(RegionOfInterest roi)
-    {
-        try {
-            laserCAN.setRegionOfInterest(roi);
-            return ConfigurationStatus.SUCCESS;
-        } catch (ConfigurationFailedException exception) {
-            return ConfigurationStatus.FAILURE;
-        }
+    /**
+     * Sets the region of interest for the sensor.
+     *
+     * @param roi The region of interest to use
+     * @throws ConfigurationFailedException if configuration fails
+     */
+    public void setRegionOfInterest(RegionOfInterest roi) throws ConfigurationFailedException {
+        laserCAN.setRegionOfInterest(roi);
     }
 
     @Override
-    public void close() throws Exception
-    {
+    public void close() throws Exception {
         laserCAN.close();
     }
 }
