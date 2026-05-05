@@ -5,13 +5,20 @@ on:
 
 jobs:
   build:
-    name: Build
-    runs-on: ubuntu-latest
-    container: wpilib/roborio-cross-ubuntu:2024-22.04
+    # The type of runner that the job will run on
+    runs-on: ubuntu-22.04
+    # This grabs the WPILib docker container
+    container: wpilib/roborio-cross-ubuntu:2026-22.04
+    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Grant execute permission
-        run: chmod +x gradlew
-      - name: Build robot code
-        run: ./gradlew build
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v6
+    # Declares the repository safe and not under dubious ownership.
+    - name: Add repository to git safe directories
+      run: git config --global --add safe.directory $GITHUB_WORKSPACE
+    # Grant execute permission for gradlew
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    # Runs a single command using the runners shell
+    - name: Compile and run tests on robot code
+      run: ./gradlew build
