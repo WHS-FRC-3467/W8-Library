@@ -116,7 +116,6 @@ public class RobotContainer {
         controller.povLeft().whileTrue(arm.moveLower(Degrees.of(5.0), true));
         controller.povRight().whileTrue(arm.moveLower(Degrees.of(5.0), false));
 
-        controller.a().onTrue(arm.testCommand());
         // Lock to 0° when A button is held
         // controller
         // .a()

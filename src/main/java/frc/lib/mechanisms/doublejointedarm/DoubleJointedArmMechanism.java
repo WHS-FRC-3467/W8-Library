@@ -14,20 +14,10 @@
  */
 package frc.lib.mechanisms.doublejointedarm;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Feet;
-
-import edu.wpi.first.units.measure.Angle;
-
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIO;
 import frc.lib.io.motor.MotorIO;
-import frc.lib.util.caliko.FabrikBone2D;
-import frc.lib.util.caliko.FabrikChain2D;
-import frc.lib.util.caliko.utils.Vec2f;
 
 import lombok.Getter;
-
-import java.util.List;
 
 public abstract class DoubleJointedArmMechanism<
         A extends MotorIO,
@@ -38,39 +28,14 @@ public abstract class DoubleJointedArmMechanism<
     @Getter private final ArmJointMechanism<C, D> lowerArm;
     private final DoubleJointedArmVisualizer visualizer;
 
-    private final double upperLength;
-    private final double lowerLength;
-
-    private static final Vec2f RIGHT = new Vec2f(1, 0);
-
     public DoubleJointedArmMechanism(
             ArmJointMechanism<A, B> upperArm, ArmJointMechanism<C, D> lowerArm, String name) {
         this.upperArm = upperArm;
         this.lowerArm = lowerArm;
-        this.upperLength = upperArm.characteristics.armLength().in(Feet);
-        this.lowerLength = lowerArm.characteristics.armLength().in(Feet);
+
         visualizer =
                 new DoubleJointedArmVisualizer(
                         name, upperArm.characteristics, lowerArm.characteristics);
-    }
-
-    public Angle chain2deg(FabrikChain2D chain, int num) {
-        var end = chain.getBone(num).getEndLocation();
-        var start = chain.getBone(num).getStartLocation();
-        var run = end.x - start.x;
-        var rise = end.y - start.y;
-        System.out.println(Integer.toString(num) + ": " + Double.toString(Math.atan(rise / run)));
-        return Degrees.of(Math.atan(rise / run));
-    }
-
-    public List<Angle> inverseKimatics(Vec2f target) {
-        FabrikChain2D chain = new FabrikChain2D();
-        FabrikBone2D base = new FabrikBone2D(new Vec2f(), RIGHT, (float) lowerLength);
-        chain.addBone(base);
-        chain.addConsecutiveBone(RIGHT, (float) upperLength);
-
-        chain.solveForTarget(target);
-        return List.of(chain2deg(chain, 0), chain2deg(chain, 1));
     }
 
     public void periodic() {

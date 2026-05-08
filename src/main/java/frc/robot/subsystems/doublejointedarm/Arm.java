@@ -20,29 +20,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.doublejointedarm.DoubleJointedArmMechanism;
-import frc.lib.util.caliko.utils.Vec2f;
 
 public class Arm extends SubsystemBase implements AutoCloseable {
     private final DoubleJointedArmMechanism<?, ?, ?, ?> io;
 
     public Arm(DoubleJointedArmMechanism<?, ?, ?, ?> io) {
         this.io = io;
-    }
-
-    public Command kimaticsMotion(float x, float y) {
-        var vec = new Vec2f(x, y);
-        var list = io.inverseKimatics(vec);
-        return this.runOnce(
-                () -> {
-                    io.getLowerArm().runUnprofiledPosition(list.get(0), PIDSlot.SLOT_0);
-                    io.getUpperArm().runUnprofiledPosition(list.get(1), PIDSlot.SLOT_0);
-                });
-    }
-
-    public Command testCommand() {
-        var list = io.inverseKimatics(new Vec2f(8, 7));
-        System.out.println(list.get(0));
-        return this.moveUpper(list.get(1), true).andThen(this.moveLower(list.get(0), true));
     }
 
     public Command moveUpper(Angle pos, boolean up) {

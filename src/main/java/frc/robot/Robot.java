@@ -22,19 +22,14 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
 
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
-import frc.lib.util.AlwaysTunableNumber;
 import frc.robot.subsystems.drive.DriveConstants;
 
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
-import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
-import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
@@ -113,14 +108,6 @@ public class Robot extends LoggedRobot {
         DriverStation.silenceJoystickConnectionWarning(!Robot.isReal());
     }
 
-    AlwaysTunableNumber bottomNum = new AlwaysTunableNumber("bottomNum", 90);
-    AlwaysTunableNumber topNum = new AlwaysTunableNumber("topNum", 77);
-
-    LoggedMechanism2d mech = new LoggedMechanism2d(90, 90);
-    LoggedMechanismRoot2d root = mech.getRoot("mechRoot", 2, 0);
-    LoggedMechanismLigament2d bottom = root.append(new LoggedMechanismLigament2d("null", 20, 77));
-    LoggedMechanismLigament2d top = bottom.append(new LoggedMechanismLigament2d("null", 20, 90));
-
     @Override
     public void robotInit() {
 
@@ -134,11 +121,6 @@ public class Robot extends LoggedRobot {
     @Override
     public void robotPeriodic() {
 
-        bottom.setAngle(bottomNum.get());
-
-        top.setAngle(topNum.get());
-
-        SmartDashboard.putData("Mechanism Visualizers/" + "test" + " Visualizer", mech);
         // Optionally switch the thread to high priority to improve loop
         // timing (see the template project documentation for details)
         // Threads.setCurrentThreadPriority(true, 99);
