@@ -35,8 +35,6 @@ public class DoubleJointedArmVisualizer {
     private final LoggedMechanismLigament2d upperMeasured;
     private final LoggedMechanismLigament2d lowerMeasured;
 
-    private final LoggedMechanismLigament2d airStrike;
-
     private final String name;
 
     private final double upperArmLength;
@@ -49,7 +47,6 @@ public class DoubleJointedArmVisualizer {
         this.name = name;
         upperArmLength = upperCharacteristics.armLength().in(Feet);
         lowerArmLength = lowerCharacteristics.armLength().in(Feet);
-        double averageLength = (upperArmLength + lowerArmLength) / 2;
         mechanism = new LoggedMechanism2d(90, 90, new Color8Bit(Color.kBlack));
         LoggedMechanismRoot2d root = mechanism.getRoot(name + " root", 45, 45);
 
@@ -69,10 +66,6 @@ public class DoubleJointedArmVisualizer {
                         2.5,
                         new Color8Bit(Color.kOrange));
 
-        airStrike =
-                new LoggedMechanismLigament2d("CoolAssThang", 0, 0, 5, new Color8Bit(Color.kRed));
-
-        root.append(airStrike);
         root.append(lowerMeasured);
 
         lowerMeasured.append(upperMeasured);
@@ -92,14 +85,6 @@ public class DoubleJointedArmVisualizer {
         upperMeasured.setAngle(Rotation2d.fromRadians(upperAngle.in(Radians)));
         lowerMeasured.setAngle(Rotation2d.fromRadians(lowerAngle.in(Radians)));
 
-        update();
-    }
-
-    public void setAirStrike(double x, double y) {
-        Angle slope = Radians.of(Math.atan2(y, x));
-        double length = Math.sqrt(y * y + x * x) * 20;
-        airStrike.setAngle(slope);
-        airStrike.setLength(length);
         update();
     }
 }

@@ -17,16 +17,15 @@ package frc.lib.mechanisms.doublejointedarm;
 import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Radians;
 
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
 
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIO;
 import frc.lib.io.motor.MotorIO;
+import frc.lib.io.motor.MotorIO.PIDSlot;
 
 import lombok.Getter;
-import lombok.Setter;
-
-import java.util.List;
 
 public abstract class DoubleJointedArmMechanism<
         A extends MotorIO,
@@ -36,9 +35,6 @@ public abstract class DoubleJointedArmMechanism<
     @Getter private final ArmJointMechanism<A, B> upperArm;
     @Getter private final ArmJointMechanism<C, D> lowerArm;
     private final DoubleJointedArmVisualizer visualizer;
-    @Getter @Setter private Translation2d targetTranslation = new Translation2d(0.0, 0.0);
-    @Getter private double xAxis = 0.0;
-    @Getter private double yAxis = 0.0;
 
     public DoubleJointedArmMechanism(
             ArmJointMechanism<A, B> upperArm, ArmJointMechanism<C, D> lowerArm, String name) {
@@ -50,36 +46,20 @@ public abstract class DoubleJointedArmMechanism<
                         name, upperArm.characteristics, lowerArm.characteristics);
     }
 
-    public void addToX(double add) {
+    public void runTranslation(Translation2d translation, Pair<PIDSlot, PIDSlot> pid) {
+        var kinematicsResults = inverseKinematics(translation.getX(), translation.getY());
 
-        xAxis += add;
+        lowerArm.runPosition(kinematicsResults.getFirst(), pid.getFirst());
+        upperArm.runPosition(kinematicsResults.getSecond(), pid.getSecond());
     }
 
-    public void addToY(double add) {
-        yAxis += add;
+    public void runTranslation(Translation2d translation, PIDSlot pid) {
+        runTranslation(translation, Pair.of(pid, pid));
     }
 
-    public List<Angle> inverseKinematics(double xin, double yinz) {
+    private Pair<Angle, Angle> inverseKinematics(double xin, double yin) {
         double x = (xin / 10) % 10;
-        double y = (yinz / 10) % 10;
-        double len1 = (lowerArm.characteristics.armLength().in(Feet) / 10) % 10;
-        double len2 = (upperArm.characteristics.armLength().in(Feet) / 10) % 10;
-        System.out.println(x);
-        System.out.println(y);
-        double q2 =
-                -(Math.acos(
-                        ((x * x) + (y * y) - (len1 * len1) - (len2 * len2)) / ((len1 * 2) * len2)));
-        double q1 =
-                Math.atan(y / x)
-                        + Math.atan((len2 * Math.sin(q2)) / (len1 + (len2 * Math.cos(q2))));
-
-        List<Angle> list = List.of(Radians.of(q1 * Math.PI + Math.PI / 2), Radians.of(q2 - q1));
-        return list;
-    }
-
-    public List<Angle> inverseKinematics2() {
-        double x = (xAxis / 10) % 10;
-        double y = (yAxis / 10) % 10;
+        double y = (yin / 10) % 10;
         double len1 = (lowerArm.characteristics.armLength().in(Feet) / 10) % 10;
         double len2 = (upperArm.characteristics.armLength().in(Feet) / 10) % 10;
 
@@ -90,8 +70,7 @@ public abstract class DoubleJointedArmMechanism<
                 Math.atan(y / x)
                         + Math.atan((len2 * Math.sin(q2)) / (len1 + (len2 * Math.cos(q2))));
 
-        List<Angle> list = List.of(Radians.of(-q2 + q1), Radians.of(-((-q2 + q1) - q1)));
-        return list;
+        return Pair.of(Radians.of(-q2 + q1), Radians.of(-((-q2 + q1) - q1)));
     }
 
     public void periodic() {
@@ -99,8 +78,6 @@ public abstract class DoubleJointedArmMechanism<
         upperArm.periodic();
 
         lowerArm.periodic();
-        // System.out.println(Double.toString(xAxis) + ", " + Double.toString(yAxis));
-        visualizer.setAirStrike(xAxis, yAxis);
         visualizer.setCurrentAngle(upperArm.getPosition(), lowerArm.getPosition());
     }
 

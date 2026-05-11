@@ -31,8 +31,6 @@ import frc.lib.commands.SteppableCommandGroup;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.lib.util.GamePieceVisualizer;
 import frc.lib.util.LoggedDashboardChooser;
-import frc.robot.subsystems.doublejointedarm.Arm;
-import frc.robot.subsystems.doublejointedarm.ArmConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
@@ -52,7 +50,6 @@ public class RobotContainer {
     // Subsystems
     public final Drive drive;
     private final LaserCAN1 laserCAN1;
-    private final Arm arm;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
@@ -66,7 +63,7 @@ public class RobotContainer {
     public RobotContainer() {
         drive = DriveConstants.get();
         laserCAN1 = LaserCAN1Constants.get();
-        arm = ArmConstants.get();
+
         VisionConstants.create();
 
         conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
@@ -94,7 +91,6 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
-        arm.inverseKinematics(2, 1);
 
         GamePieceVisualizer algae =
                 new GamePieceVisualizer(
@@ -109,15 +105,6 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         // Default command, normal field-relative drive
-        controller.povUp().whileTrue(arm.yAxis(0.01));
-        controller.povDown().whileTrue(arm.yAxis(-0.01));
-
-        controller.povLeft().whileTrue(arm.xAxis(-0.01));
-        controller.povRight().whileTrue(arm.xAxis(0.01));
-
-        controller.a().onTrue(Commands.runOnce(() -> arm.moveArms()));
-
-        controller.b().onTrue(arm.setAnglesCommand());
 
         // Lock to 0° when A button is held
         // controller
