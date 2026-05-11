@@ -17,17 +17,24 @@ package frc.lib.util;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import java.util.function.DoubleSupplier;
+
 /**
  * Class for a tunable number. Gets value from dashboard regardless of tuning mode, returns default
  * if not or value not in dashboard.
  */
-public class AlwaysTunableNumber {
+public class AlwaysTunableNumber implements DoubleSupplier {
 
     private static final String tableKey = "TunableNumbers";
 
     private String key;
     private double defaultValue;
     private boolean hasDefault = false;
+
+    @Override
+    public double getAsDouble() {
+        return get();
+    }
 
     /**
      * Create a new TunableNumber

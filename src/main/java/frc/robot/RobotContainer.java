@@ -15,8 +15,6 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -96,6 +94,7 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
+        arm.inverseKinematics(2, 1);
 
         GamePieceVisualizer algae =
                 new GamePieceVisualizer(
@@ -110,11 +109,15 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         // Default command, normal field-relative drive
-        controller.povUp().whileTrue(arm.moveUpper(Degrees.of(5.0), true));
-        controller.povDown().whileTrue(arm.moveUpper(Degrees.of(5.0), false));
+        controller.povUp().whileTrue(arm.yAxis(0.01));
+        controller.povDown().whileTrue(arm.yAxis(-0.01));
 
-        controller.povLeft().whileTrue(arm.moveLower(Degrees.of(5.0), true));
-        controller.povRight().whileTrue(arm.moveLower(Degrees.of(5.0), false));
+        controller.povLeft().whileTrue(arm.xAxis(-0.01));
+        controller.povRight().whileTrue(arm.xAxis(0.01));
+
+        controller.a().onTrue(Commands.runOnce(() -> arm.moveArms()));
+
+        controller.b().onTrue(arm.setAnglesCommand());
 
         // Lock to 0° when A button is held
         // controller

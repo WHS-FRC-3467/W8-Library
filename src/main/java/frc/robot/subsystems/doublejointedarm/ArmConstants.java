@@ -17,6 +17,7 @@ package frc.robot.subsystems.doublejointedarm;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
+import static edu.wpi.first.units.Units.Radians;
 
 import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.signals.GravityTypeValue;
@@ -62,18 +63,18 @@ public class ArmConstants {
     // Actual arm angle from horizontal is 15 to 39 deg
     public static final Angle MIN_ANGLE_OFFSET = Degrees.of(15.0);
 
-    public static final Angle MIN_ANGLE = Degrees.of(0.0);
-    public static final Angle MAX_ANGLE = Degrees.of(27.0);
+    public static final Angle MIN_ANGLE = Radians.of(-2000);
+    public static final Angle MAX_ANGLE = Degrees.of(1000);
     public static final Angle STARTING_ANGLE = Degrees.of(0.0);
     public static final Distance ARM_LENGTH = Feet.of(6.9);
 
     public static final ArmJointMechanism.JointCharacteristics LOWER_CONSTANTS =
             new ArmJointMechanism.JointCharacteristics(
-                    ARM_LENGTH, MIN_ANGLE, Degrees.of(360.0), STARTING_ANGLE);
+                    Feet.of(1), MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
 
     public static final ArmJointMechanism.JointCharacteristics UPPER_CONSTANTS =
             new ArmJointMechanism.JointCharacteristics(
-                    Feet.of(3.0), Degrees.of(0.0), Degrees.of(360.0), STARTING_ANGLE);
+                    Feet.of(1), MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
 
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
     public static final MomentOfInertia MOI =
@@ -147,7 +148,7 @@ public class ArmConstants {
                                         NAME, getFXConfig(), Ports.RotarySubsystemMotorFollower),
                                 DCMOTOR,
                                 MOI,
-                                true,
+                                false,
                                 UPPER_CONSTANTS,
                                 Optional.empty(),
                                 ""),
@@ -157,7 +158,7 @@ public class ArmConstants {
                                         NAME, getFXConfig(), Ports.RotarySubsystemEncoder),
                                 DCMOTOR,
                                 MOI,
-                                true,
+                                false,
                                 LOWER_CONSTANTS,
                                 Optional.empty(),
                                 ""),
