@@ -75,7 +75,7 @@ public class ArmConstants {
 
     public static final ArmJointMechanism.JointCharacteristics UPPER_CONSTANTS =
             new ArmJointMechanism.JointCharacteristics(
-                    ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, Degrees.of(0.0));
+                    ARM_LENGTH, Degrees.of(-180), Degrees.of(180), Degrees.of(0.0));
 
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(2);
     public static final MomentOfInertia MOI =

@@ -89,7 +89,7 @@ public class ArmJointMechanismSim extends ArmJointMechanism<MotorIOSim, Absolute
 
         io.setPosition(Radians.of(sim.getAngleRads()));
         io.setRotorVelocity(
-                RadiansPerSecond.of(sim.getVelocityRadPerSec())
+                RadiansPerSecond.of(sim.getVelocityRadPerSec() * 0.8)
                         .times(io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()));
 
         absoluteEncoder.ifPresent(
