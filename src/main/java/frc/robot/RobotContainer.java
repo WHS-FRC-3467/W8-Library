@@ -15,6 +15,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -31,6 +33,8 @@ import frc.lib.commands.SteppableCommandGroup;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.lib.util.GamePieceVisualizer;
 import frc.lib.util.LoggedDashboardChooser;
+import frc.robot.subsystems.arm.Arm;
+import frc.robot.subsystems.arm.ArmConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
@@ -50,7 +54,7 @@ public class RobotContainer {
     // Subsystems
     public final Drive drive;
     private final LaserCAN1 laserCAN1;
-
+    private final Arm arm;
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
 
@@ -63,6 +67,7 @@ public class RobotContainer {
     public RobotContainer() {
         drive = DriveConstants.get();
         laserCAN1 = LaserCAN1Constants.get();
+        arm = ArmConstants.get();
 
         VisionConstants.create();
 
@@ -104,6 +109,14 @@ public class RobotContainer {
      * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
      */
     private void configureButtonBindings() {
+        controller.povUp().onTrue(arm.moveUpperBy(RadiansPerSecond.of(5.0), true));
+        controller.povDown().onTrue(arm.moveUpperBy(RadiansPerSecond.of(-5.0), false));
+        controller.povRight().onTrue(arm.moveLowerBy(RadiansPerSecond.of(5.0), true));
+        controller.povLeft().onTrue(arm.moveLowerBy(RadiansPerSecond.of(-5.0), false));
+
+        controller.a().onTrue(arm.stopUpper());
+        controller.b().onTrue(arm.stopLower());
+
         // Default command, normal field-relative drive
 
         // Lock to 0° when A button is held

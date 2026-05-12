@@ -14,6 +14,8 @@
  */
 package frc.lib.mechanisms.doublejointedarm;
 
+import static edu.wpi.first.units.Units.Radians;
+
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIOSim;
 import frc.lib.io.motor.MotorIOSim;
 
@@ -28,5 +30,12 @@ public class DoubleJointedArmMechanismSim
     @Override
     public void periodic() {
         super.periodic();
+        ArmJointMechanismSim.class
+                .cast(this.getLowerArm())
+                .updateSimTopVelocity(this.getUpperArm().getVelocity());
+
+        ArmJointMechanismSim.class
+                .cast(this.getUpperArm())
+                .updateSimLowerAngle(this.getLowerArm().getPosition().in(Radians));
     }
 }

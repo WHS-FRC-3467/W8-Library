@@ -22,12 +22,12 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
-import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIOSim;
 import frc.lib.io.motor.MotorIOSim;
@@ -35,7 +35,7 @@ import frc.lib.io.motor.MotorIOSim;
 import java.util.Optional;
 
 public class ArmJointMechanismSim extends ArmJointMechanism<MotorIOSim, AbsoluteEncoderIOSim> {
-    private final SingleJointedArmSim sim;
+    private final ArmJointSim sim;
 
     private Time lastTime = RobotController.getMeasureTime();
 
@@ -54,7 +54,7 @@ public class ArmJointMechanismSim extends ArmJointMechanism<MotorIOSim, Absolute
             throw new IllegalArgumentException("momentOfInertia must be greater than zero!");
 
         sim =
-                new SingleJointedArmSim(
+                new ArmJointSim(
                         motor,
                         io.getRotorToSensorRatio() * io.getSensorToMechanismRatio(),
                         momentOfInertia.in(KilogramSquareMeters),
@@ -65,12 +65,22 @@ public class ArmJointMechanismSim extends ArmJointMechanism<MotorIOSim, Absolute
                         characteristics.startingAngle().in(Radians));
     }
 
+    public void updateSimTopVelocity(AngularVelocity vel) {
+        sim.setTopVelocity(Optional.of(vel));
+    }
+
+    public void updateSimLowerAngle(double angle) {
+
+        sim.setBottomAngle(Optional.of(angle));
+    }
+
     @Override
     public void periodic() {
         Time currentTime = RobotController.getMeasureTime();
         double deltaTime = currentTime.minus(lastTime).in(Seconds);
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
+
         sim.update(deltaTime);
         RoboRioSim.setVInVoltage(
                 BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));

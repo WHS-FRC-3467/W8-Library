@@ -54,7 +54,8 @@ public class DoubleJointedArmVisualizer {
                 new LoggedMechanismLigament2d(
                         "Upper" + name + "Measured",
                         upperArmLength * 20,
-                        upperCharacteristics.startingAngle().in(Degrees),
+                        upperCharacteristics.startingAngle().in(Degrees)
+                                + lowerCharacteristics.startingAngle().in(Degrees),
                         2.5,
                         new Color8Bit(Color.kAquamarine));
 
