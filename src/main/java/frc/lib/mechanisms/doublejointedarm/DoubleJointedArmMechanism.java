@@ -26,6 +26,7 @@ import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 
 import lombok.Getter;
+import lombok.Setter;
 
 public abstract class DoubleJointedArmMechanism<
         A extends MotorIO,
@@ -35,6 +36,11 @@ public abstract class DoubleJointedArmMechanism<
     @Getter private final ArmJointMechanism<A, B> upperArm;
     @Getter private final ArmJointMechanism<C, D> lowerArm;
     private final DoubleJointedArmVisualizer visualizer;
+    @Getter @Setter private Translation2d target = new Translation2d(1.295, 1.0);
+
+    public void addToTarget(double x, double y) {
+        this.target = this.target.plus(new Translation2d(x, y));
+    }
 
     public DoubleJointedArmMechanism(
             ArmJointMechanism<A, B> upperArm, ArmJointMechanism<C, D> lowerArm, String name) {
@@ -79,6 +85,8 @@ public abstract class DoubleJointedArmMechanism<
 
         lowerArm.periodic();
         visualizer.setCurrentAngle(upperArm.getPosition(), lowerArm.getPosition());
+        visualizer.setTargetPosition(target);
+        //  System.out.println(target);
     }
 
     public void close() {

@@ -20,9 +20,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.doublejointedarm.DoubleJointedArmMechanism;
+import frc.lib.util.LoggerHelper;
+
+import java.util.function.DoubleSupplier;
 
 public class Arm extends SubsystemBase implements AutoCloseable {
-    private final DoubleJointedArmMechanism<?, ?, ?, ?> io;
+    public final DoubleJointedArmMechanism<?, ?, ?, ?> io;
 
     public Arm(DoubleJointedArmMechanism<?, ?, ?, ?> io) {
         this.io = io;
@@ -36,6 +39,7 @@ public class Arm extends SubsystemBase implements AutoCloseable {
 
         io.periodic();
         super.periodic();
+        LoggerHelper.recordCurrentCommand(this.getName(), this);
     }
 
     @Override
@@ -59,5 +63,9 @@ public class Arm extends SubsystemBase implements AutoCloseable {
 
     public Command stopLower() {
         return this.runOnce(() -> io.getLowerArm().runBrake());
+    }
+
+    public Command changeTarget(DoubleSupplier x, DoubleSupplier y) {
+        return this.run(() -> io.addToTarget(x.getAsDouble(), y.getAsDouble()));
     }
 }

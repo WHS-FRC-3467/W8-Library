@@ -14,16 +14,12 @@
  */
 package frc.lib.mechanisms.doublejointedarm;
 
-
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.units.BaseUnits;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIO;
 import frc.lib.io.absoluteencoder.AbsoluteEncoderInputsAutoLogged;
 import frc.lib.io.motor.MotorIO;
-import frc.lib.io.motor.MotorIO.ControlType;
 import frc.lib.mechanisms.Mechanism;
 
 import org.littletonrobotics.junction.Logger;
@@ -51,30 +47,6 @@ public abstract class ArmJointMechanism<T extends MotorIO, E extends AbsoluteEnc
         this.absoluteEncoder = absoluteEncoder;
         this.encoderName = encoderName;
         this.characteristics = characteristics;
-    }
-
-    public Optional<Angle> getTrajectoryAngle() {
-        if (inputs.controlType != ControlType.POSITION || inputs.positionError == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(inputs.activeTrajectoryPosition);
-    }
-
-    public Optional<Angle> getGoalAngle() {
-        if (inputs.controlType != ControlType.POSITION || inputs.positionError == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(inputs.goalPosition);
-    }
-
-    // Checks if mechanism is near a goal position within a specified tolerance
-    public boolean nearGoal(Angle goalAngle, Angle tolerance) {
-        return MathUtil.isNear(
-                getPosition().in(BaseUnits.AngleUnit),
-                goalAngle.in(BaseUnits.AngleUnit),
-                tolerance.in(BaseUnits.AngleUnit));
     }
 
     public Angle getPosition() {

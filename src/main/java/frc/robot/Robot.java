@@ -179,7 +179,14 @@ public class Robot extends LoggedRobot {
 
     /** This function is called periodically during operator control. */
     @Override
-    public void teleopPeriodic() {}
+    public void teleopPeriodic() {
+        CommandScheduler.getInstance()
+                .setDefaultCommand(
+                        robotContainer.arm,
+                        robotContainer.arm.changeTarget(
+                                () -> (robotContainer.controller.getLeftX() / 10) % 10,
+                                () -> -(robotContainer.controller.getLeftY() / 10) % 10));
+    }
 
     /** This function is called once when test mode is enabled. */
     @Override

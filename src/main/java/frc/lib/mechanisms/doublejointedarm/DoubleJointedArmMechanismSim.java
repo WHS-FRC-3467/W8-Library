@@ -32,10 +32,10 @@ public class DoubleJointedArmMechanismSim
         super.periodic();
         ArmJointMechanismSim.class
                 .cast(this.getLowerArm())
-                .updateSimTopVelocity(this.getUpperArm().getVelocity());
+                .updateSimAttachedVelocity(this.getUpperArm().getVelocity());
 
         ArmJointMechanismSim.class
                 .cast(this.getUpperArm())
-                .updateSimLowerAngle(this.getLowerArm().getPosition().in(Radians));
+                .updateSimAttachedAngle(this.getLowerArm().getPosition().in(Radians));
     }
 }

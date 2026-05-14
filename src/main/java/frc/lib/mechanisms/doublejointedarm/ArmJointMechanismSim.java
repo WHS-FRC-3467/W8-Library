@@ -65,13 +65,13 @@ public class ArmJointMechanismSim extends ArmJointMechanism<MotorIOSim, Absolute
                         characteristics.startingAngle().in(Radians));
     }
 
-    public void updateSimTopVelocity(AngularVelocity vel) {
-        sim.setTopVelocity(Optional.of(vel));
+    public void updateSimAttachedVelocity(AngularVelocity velocity) {
+        sim.setAttachedVelocity(Optional.of(velocity));
     }
 
-    public void updateSimLowerAngle(double angle) {
+    public void updateSimAttachedAngle(double angle) {
 
-        sim.setBottomAngle(Optional.of(angle));
+        sim.setAttachedAngle(Optional.of(angle));
     }
 
     @Override

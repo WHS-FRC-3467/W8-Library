@@ -54,9 +54,9 @@ public class RobotContainer {
     // Subsystems
     public final Drive drive;
     private final LaserCAN1 laserCAN1;
-    private final Arm arm;
+    public final Arm arm;
     // Controller
-    private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
+    public final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
 
     // Dashboard inputs
     // private final LoggedDashboardChooser<AutoCommand> autoChooser;
