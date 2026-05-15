@@ -56,12 +56,7 @@ import java.util.Optional;
 public class ArmConstants {
     public static final String NAME = "Arm";
 
-    public static final Angle TOLERANCE = Degrees.of(0.0);
-
-    private static final double GEARING = 2;
-
-    // Actual arm angle from horizontal is 15 to 39 deg
-    public static final Angle MIN_ANGLE_OFFSET = Degrees.of(15.0);
+    private static final double GEARING = 10;
 
     public static final Angle MIN_ANGLE = Degrees.of(-1800);
     public static final Angle MAX_ANGLE = Degrees.of(1800);
@@ -81,10 +76,11 @@ public class ArmConstants {
             KilogramSquareMeters.of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), 1.0));
     public static final MomentOfInertia MOI_LOWER =
             KilogramSquareMeters.of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), 2.0));
+    private static final double kG = 20;
 
     private static PID getPID() {
         if (RobotBase.isReal()) {
-            return new PID(1000.0, 0.0, 60.0).withS(2.0).withG(12.0);
+            return new PID(1000.0, 0.0, 60.0).withS(2.0).withG(kG);
         } else {
             return new PID(100.0, 0.0, 80.0);
         }
@@ -92,9 +88,9 @@ public class ArmConstants {
 
     private static PID getPID2() {
         if (RobotBase.isReal()) {
-            return new PID(1000.0, 0.0, 60.0).withS(2.0).withG(12.0);
+            return new PID(1000.0, 0.0, 60.0).withS(2.0).withG(kG);
         } else {
-            return new PID(100.0, 0.0, 80.0);
+            return new PID(100.0, 0.0, 80.0).withG(20.7);
         }
     }
 

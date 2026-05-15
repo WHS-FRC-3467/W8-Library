@@ -15,7 +15,6 @@
 package frc.lib.mechanisms.doublejointedarm;
 
 import static edu.wpi.first.units.Units.Feet;
-import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
@@ -106,13 +105,6 @@ public abstract class DoubleJointedArmMechanism<
     public void periodic() {
         lowerArm.periodic();
         upperArm.periodic();
-
-        double alphaGrav =
-                3.0
-                        / 2.0
-                        * -9.8
-                        * Math.cos(lowerArm.getPosition().in(Radians))
-                        / lowerArm.characteristics.armLength().in(Meters);
 
         visualizer.setCurrentAngle(upperArm.getPosition(), lowerArm.getPosition());
         visualizer.setTargetPosition(target);

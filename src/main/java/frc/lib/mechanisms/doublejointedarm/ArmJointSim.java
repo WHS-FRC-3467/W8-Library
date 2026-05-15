@@ -112,7 +112,7 @@ public class ArmJointSim extends SingleJointedArmSim {
                         (Matrix<N2, N1> x, Matrix<N1, N1> _u) -> {
                             Matrix<N2, N1> xdot =
                                     m_plant.getA().times(x).plus(m_plant.getB().times(_u));
-                            if (simulateGravity && controlType != ControlType.POSITION) {
+                            if (simulateGravity) {
                                 double alphaGrav =
                                         3.0
                                                 / 2.0
