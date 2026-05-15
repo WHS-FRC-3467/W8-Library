@@ -205,8 +205,8 @@ public class VisionSubsystem extends SubsystemBase {
                 }
 
                 // Compute robot pose directly from the standardized CameraResult
-                Optional<Pose3d> fieldToRobotOpt = computeRobotPose(camera, result);
-                if (fieldToRobotOpt.isEmpty()) {
+                Optional<Pose3d> fieldToRobotPose = computeRobotPose(camera, result);
+                if (fieldToRobotPose.isEmpty()) {
                     rejectedResults.add(result);
                     continue;
                 }
@@ -214,7 +214,7 @@ public class VisionSubsystem extends SubsystemBase {
                 List<Integer> tagsUsed = getTagsUsed(result);
                 double avgDistanceMeters = getAvgDistanceMeters(result);
                 VisionPoseRecord poseRecord =
-                        new VisionPoseRecord(fieldToRobotOpt.get(), tagsUsed, avgDistanceMeters);
+                        new VisionPoseRecord(fieldToRobotPose.get(), tagsUsed, avgDistanceMeters);
 
                 if (!postFilter(poseRecord.pose())) {
                     rejectedResults.add(result);
