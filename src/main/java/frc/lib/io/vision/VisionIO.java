@@ -15,7 +15,11 @@
 
 package frc.lib.io.vision;
 
+import edu.wpi.first.math.geometry.Pose3d;
+
 import org.littletonrobotics.junction.AutoLog;
+
+import java.util.Optional;
 
 /**
  * Hardware interface for vision cameras that detect AprilTags for robot localization.
@@ -29,6 +33,24 @@ public interface VisionIO {
      * Container for vision camera sensor readings. Logged automatically by AdvantageKit for replay
      * and analysis.
      */
+    public static record TagObservation(
+            int fiducialId,
+            Pose3d fieldToCameraPose, // Field to camera
+            Pose3d altPose,
+            double area,
+            double ambiguity) {}
+
+    public static record MultiTagObservation(
+            int[] fiducialIds,
+            Pose3d fieldToCameraPose, // Field to camera
+            double error) {}
+
+    public static record CameraResult(
+            TagObservation[] tagObservations,
+            Optional<MultiTagObservation> multiTagObservation,
+            double captureLatencyUs,
+            double publishTimestampUs) {}
+
     @AutoLog
     public static class VisionIOInputs {
         /** Whether the camera is connected and responding */

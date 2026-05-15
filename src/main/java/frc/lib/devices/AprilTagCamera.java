@@ -36,6 +36,9 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 
 import frc.lib.io.vision.VisionIO;
+import frc.lib.io.vision.VisionIO.CameraResult;
+import frc.lib.io.vision.VisionIO.MultiTagObservation;
+import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.io.vision.VisionIOInputsAutoLogged;
 import frc.lib.io.vision.VisionIOPhotonVision;
 
@@ -158,7 +161,7 @@ public class AprilTagCamera {
      * @return an {@link Optional} containing an array of {@link PhotonPipelineResult} if available,
      *     or {@link Optional#empty()} if the camera is disconnected
      */
-    public Optional<PhotonPipelineResult[]> getUnreadResults() {
+    public Optional<CameraResult[]> getUnreadResults() {
         io.updateInputs(inputs);
         Logger.processInputs(properties.name(), inputs);
 
@@ -169,21 +172,88 @@ public class AprilTagCamera {
         return Optional.of(decodeUnreadResults());
     }
 
-    private PhotonPipelineResult[] decodeUnreadResults() {
-        ArrayList<PhotonPipelineResult> decodedResults = new ArrayList<>(inputs.rawResults.length);
+    private CameraResult[] decodeUnreadResults() {
+        ArrayList<CameraResult> decodedResults = new ArrayList<>(inputs.rawResults.length);
         for (int i = 0; i < inputs.rawResults.length; i++) {
             byte[] rawResult = inputs.rawResults[i];
             long captureTimestampUs =
                     i < inputs.captureTimestampsUs.length ? inputs.captureTimestampsUs[i] : 0;
             long publishTimestampUs =
                     i < inputs.publishTimestampsUs.length ? inputs.publishTimestampsUs[i] : 0;
-            PhotonPipelineResult decodedResult =
+            PhotonPipelineResult photonResult =
                     decodeResult(rawResult, captureTimestampUs, publishTimestampUs);
-            if (decodedResult != null) {
-                decodedResults.add(decodedResult);
+            if (photonResult != null) {
+                decodedResults.add(
+                        toCameraResult(photonResult, captureTimestampUs, publishTimestampUs));
             }
         }
-        return decodedResults.toArray(PhotonPipelineResult[]::new);
+        return decodedResults.toArray(CameraResult[]::new);
+    }
+
+    /**
+     * Converts a decoded {@link PhotonPipelineResult} into the standardized {@link CameraResult}
+     * record. For each tracked target, the field-to-camera pose is reconstructed by combining the
+     * known tag field pose with the camera-to-target transform from the pipeline result.
+     *
+     * @param photonResult the decoded photon pipeline result
+     * @param captureTimestampUs absolute capture timestamp in microseconds
+     * @param publishTimestampUs absolute publish timestamp in microseconds
+     * @return the standardized CameraResult
+     */
+    private CameraResult toCameraResult(
+            PhotonPipelineResult photonResult, long captureTimestampUs, long publishTimestampUs) {
+
+        // Build a TagObservation for each tracked target
+        ArrayList<TagObservation> tagObservations =
+                new ArrayList<>(photonResult.getTargets().size());
+        for (PhotonTrackedTarget target : photonResult.getTargets()) {
+            int tagId = target.getFiducialId();
+            if (tagLayout == null) continue;
+            Optional<Pose3d> tagPoseOpt = tagLayout.getTagPose(tagId);
+            if (tagPoseOpt.isEmpty()) continue;
+            Pose3d tagPose = tagPoseOpt.get();
+
+            // fieldToCamera = fieldToTag * inverse(cameraToTag)
+            Pose3d fieldToCamera = tagPose.transformBy(target.getBestCameraToTarget().inverse());
+            Pose3d altFieldToCamera =
+                    tagPose.transformBy(target.getAlternateCameraToTarget().inverse());
+
+            tagObservations.add(
+                    new TagObservation(
+                            tagId,
+                            fieldToCamera,
+                            altFieldToCamera,
+                            target.getArea(),
+                            target.getPoseAmbiguity()));
+        }
+
+        // Build MultiTagObservation if the pipeline produced a multi-tag solve
+        Optional<MultiTagObservation> multiTag =
+                photonResult
+                        .getMultiTagResult()
+                        .map(
+                                mt -> {
+                                    // mt.estimatedPose.best is a Transform3d representing
+                                    // field-to-camera
+                                    Pose3d fieldToCamPose =
+                                            new Pose3d(
+                                                    mt.estimatedPose.best.getTranslation(),
+                                                    mt.estimatedPose.best.getRotation());
+                                    int[] fiducialIds =
+                                            mt.fiducialIDsUsed.stream()
+                                                    .mapToInt(Short::intValue)
+                                                    .toArray();
+                                    return new MultiTagObservation(
+                                            fiducialIds,
+                                            fieldToCamPose,
+                                            mt.estimatedPose.bestReprojErr);
+                                });
+
+        return new CameraResult(
+                tagObservations.toArray(TagObservation[]::new),
+                multiTag,
+                (double) captureTimestampUs,
+                (double) publishTimestampUs);
     }
 
     private PhotonPipelineResult decodeResult(
