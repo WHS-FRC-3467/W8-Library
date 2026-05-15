@@ -29,9 +29,6 @@ public class Arm extends SubsystemBase implements AutoCloseable {
 
     public Arm(DoubleJointedArmMechanism<?, ?, ?, ?> io) {
         this.io = io;
-
-        //  io.getLowerArm().runCoast();
-        //     io.getUpperArm().runCoast();
     }
 
     @Override
@@ -67,5 +64,9 @@ public class Arm extends SubsystemBase implements AutoCloseable {
 
     public Command changeTarget(DoubleSupplier x, DoubleSupplier y) {
         return this.run(() -> io.addToTarget(x.getAsDouble(), y.getAsDouble()));
+    }
+
+    public Command runIK() {
+        return this.runOnce(() -> io.runTranslation(PIDSlot.SLOT_0));
     }
 }

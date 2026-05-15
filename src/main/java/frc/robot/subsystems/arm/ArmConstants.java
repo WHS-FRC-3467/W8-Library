@@ -18,7 +18,6 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Radians;
 
 import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.signals.GravityTypeValue;
@@ -59,25 +58,25 @@ public class ArmConstants {
 
     public static final Angle TOLERANCE = Degrees.of(0.0);
 
-    private static final double GEARING = 32.0 / 24.0;
+    private static final double GEARING = 2;
 
     // Actual arm angle from horizontal is 15 to 39 deg
     public static final Angle MIN_ANGLE_OFFSET = Degrees.of(15.0);
 
-    public static final Angle MIN_ANGLE = Radians.of(-8000);
-    public static final Angle MAX_ANGLE = Radians.of(8000);
+    public static final Angle MIN_ANGLE = Degrees.of(-1800);
+    public static final Angle MAX_ANGLE = Degrees.of(1800);
     public static final Angle STARTING_ANGLE = Degrees.of(90.0);
     public static final Distance ARM_LENGTH = Feet.of(1.0);
 
     public static final ArmJointMechanism.JointCharacteristics LOWER_CONSTANTS =
             new ArmJointMechanism.JointCharacteristics(
-                    ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE);
+                    ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, Degrees.of(0.0));
 
     public static final ArmJointMechanism.JointCharacteristics UPPER_CONSTANTS =
             new ArmJointMechanism.JointCharacteristics(
-                    ARM_LENGTH, Degrees.of(-180), Degrees.of(180), Degrees.of(0.0));
+                    ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, Degrees.of(0.0));
 
-    public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(2);
+    public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
     public static final MomentOfInertia MOI =
             KilogramSquareMeters.of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), 1.0));
     public static final MomentOfInertia MOI_LOWER =
@@ -119,12 +118,12 @@ public class ArmConstants {
         config.CurrentLimits.SupplyCurrentLowerTime = 0.1;
 
         if (Robot.isReal()) {
-            config.TorqueCurrent.PeakForwardTorqueCurrent = 80.0;
-            config.TorqueCurrent.PeakReverseTorqueCurrent = -80.0;
+            config.TorqueCurrent.PeakForwardTorqueCurrent = 800.0;
+            config.TorqueCurrent.PeakReverseTorqueCurrent = -800.0;
         }
 
-        config.Voltage.PeakForwardVoltage = 12.0;
-        config.Voltage.PeakReverseVoltage = -12.0;
+        config.Voltage.PeakForwardVoltage = 24.0;
+        config.Voltage.PeakReverseVoltage = -24.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
@@ -136,6 +135,8 @@ public class ArmConstants {
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_ANGLE.in(Units.Rotations);
 
         config.Feedback.SensorToMechanismRatio = GEARING;
+
+        config.Feedback.RotorToSensorRatio = GEARING;
 
         config.Slot0 =
                 Slot0Configs.from(SLOT0_PID.toSlotConfigs())
@@ -155,18 +156,13 @@ public class ArmConstants {
     public static TalonFXConfiguration getFXConfig2() {
         TalonFXConfiguration config = new TalonFXConfiguration();
 
-        config.CurrentLimits.SupplyCurrentLimitEnable = false;
-        config.CurrentLimits.SupplyCurrentLimit = 40.0;
-        config.CurrentLimits.SupplyCurrentLowerLimit = 40.0;
-        config.CurrentLimits.SupplyCurrentLowerTime = 0.1;
-
         if (Robot.isReal()) {
-            config.TorqueCurrent.PeakForwardTorqueCurrent = 80.0;
-            config.TorqueCurrent.PeakReverseTorqueCurrent = -80.0;
+            config.TorqueCurrent.PeakForwardTorqueCurrent = 800.0;
+            config.TorqueCurrent.PeakReverseTorqueCurrent = -800.0;
         }
 
-        config.Voltage.PeakForwardVoltage = 12.0;
-        config.Voltage.PeakReverseVoltage = -12.0;
+        config.Voltage.PeakForwardVoltage = 24.0;
+        config.Voltage.PeakReverseVoltage = -24.0;
 
         config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;

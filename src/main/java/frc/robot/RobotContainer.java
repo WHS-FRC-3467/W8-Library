@@ -116,6 +116,7 @@ public class RobotContainer {
 
         controller.a().onTrue(arm.stopUpper());
         controller.b().onTrue(arm.stopLower());
+        controller.x().onTrue(arm.runIK());
 
         // Default command, normal field-relative drive
 

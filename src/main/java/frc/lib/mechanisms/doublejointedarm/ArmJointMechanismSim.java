@@ -79,6 +79,7 @@ public class ArmJointMechanismSim extends ArmJointMechanism<MotorIOSim, Absolute
         Time currentTime = RobotController.getMeasureTime();
         double deltaTime = currentTime.minus(lastTime).in(Seconds);
 
+        sim.setControlType(this.inputs.controlType);
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
 
         sim.update(deltaTime);

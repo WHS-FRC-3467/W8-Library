@@ -15,18 +15,22 @@
 package frc.lib.mechanisms.doublejointedarm;
 
 import static edu.wpi.first.units.Units.Feet;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.measure.AngularVelocity;
 
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIO;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 
 import lombok.Getter;
-import lombok.Setter;
 
 public abstract class DoubleJointedArmMechanism<
         A extends MotorIO,
@@ -36,7 +40,8 @@ public abstract class DoubleJointedArmMechanism<
     @Getter private final ArmJointMechanism<A, B> upperArm;
     @Getter private final ArmJointMechanism<C, D> lowerArm;
     private final DoubleJointedArmVisualizer visualizer;
-    @Getter @Setter private Translation2d target = new Translation2d(1.295, 1.0);
+
+    private Translation2d target = new Translation2d(0.0, 0.0);
 
     public void addToTarget(double x, double y) {
         this.target = this.target.plus(new Translation2d(x, y));
@@ -55,16 +60,27 @@ public abstract class DoubleJointedArmMechanism<
     public void runTranslation(Translation2d translation, Pair<PIDSlot, PIDSlot> pid) {
         var kinematicsResults = inverseKinematics(translation.getX(), translation.getY());
 
-        lowerArm.runPosition(kinematicsResults.getFirst(), pid.getFirst());
-        upperArm.runPosition(kinematicsResults.getSecond(), pid.getSecond());
+        AngularVelocity cruiseVelocity = RadiansPerSecond.of(1.0);
+        AngularAcceleration acceleration = RadiansPerSecondPerSecond.of(1.0);
+        lowerArm.runPosition(
+                kinematicsResults.getFirst(), pid.getFirst(), cruiseVelocity, acceleration);
+        upperArm.runPosition(
+                kinematicsResults.getSecond(), pid.getSecond(), cruiseVelocity, acceleration);
     }
 
     public void runTranslation(Translation2d translation, PIDSlot pid) {
         runTranslation(translation, Pair.of(pid, pid));
     }
 
+    public void runTranslation(PIDSlot pid) {
+        runTranslation(target, Pair.of(pid, pid));
+    }
+
+    private static final double PI2 = Math.PI / 2;
+
     private Pair<Angle, Angle> inverseKinematics(double xin, double yin) {
-        double x = (xin / 10) % 10;
+
+        double x = (Math.abs(xin) / 10) % 10;
         double y = (yin / 10) % 10;
         double len1 = (lowerArm.characteristics.armLength().in(Feet) / 10) % 10;
         double len2 = (upperArm.characteristics.armLength().in(Feet) / 10) % 10;
@@ -76,17 +92,30 @@ public abstract class DoubleJointedArmMechanism<
                 Math.atan(y / x)
                         + Math.atan((len2 * Math.sin(q2)) / (len1 + (len2 * Math.cos(q2))));
 
-        return Pair.of(Radians.of(-q2 + q1), Radians.of(-((-q2 + q1) - q1)));
+        double q1out = -q2 + q1;
+        double q2out = -((-q2 + q1) - q1);
+
+        if (xin < 0.0) {
+            q1out = (PI2 - q1out) + PI2;
+            q2out = -q2out;
+        }
+
+        return Pair.of(Radians.of(q1out), Radians.of(q2out));
     }
 
     public void periodic() {
-
+        lowerArm.periodic();
         upperArm.periodic();
 
-        lowerArm.periodic();
+        double alphaGrav =
+                3.0
+                        / 2.0
+                        * -9.8
+                        * Math.cos(lowerArm.getPosition().in(Radians))
+                        / lowerArm.characteristics.armLength().in(Meters);
+
         visualizer.setCurrentAngle(upperArm.getPosition(), lowerArm.getPosition());
         visualizer.setTargetPosition(target);
-        //  System.out.println(target);
     }
 
     public void close() {

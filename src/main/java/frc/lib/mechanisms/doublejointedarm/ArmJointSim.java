@@ -25,6 +25,8 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 
+import frc.lib.io.motor.MotorIO.ControlType;
+
 import lombok.Setter;
 
 import java.util.Optional;
@@ -38,6 +40,8 @@ public class ArmJointSim extends SingleJointedArmSim {
 
     private @Setter Optional<AngularVelocity> attachedVelocity = Optional.empty();
     private @Setter Optional<Double> attachedAngle = Optional.empty();
+
+    @Setter private ControlType controlType;
 
     public ArmJointSim(
             DCMotor gearbox,
@@ -80,13 +84,13 @@ public class ArmJointSim extends SingleJointedArmSim {
             if (velocity - 0.025 > 0.0) {
                 friction = velocity - 0.025;
             } else {
-                friction = velocity / 10;
+                friction = velocity / 2;
             }
         } else {
             if (velocity + 0.025 < 0.0) {
                 friction = velocity + 0.025;
             } else {
-                friction = velocity / 10;
+                friction = velocity / 2;
             }
         }
         return friction;
@@ -96,7 +100,7 @@ public class ArmJointSim extends SingleJointedArmSim {
     public void update(double dtSeconds) {
         super.update(dtSeconds);
 
-        m_y.set(1, 0, calculateFriction(m_y.get(1, 0)));
+        //  m_y.set(1, 0, calculateFriction(m_y.get(1, 0)));
     }
 
     @Override
@@ -108,7 +112,7 @@ public class ArmJointSim extends SingleJointedArmSim {
                         (Matrix<N2, N1> x, Matrix<N1, N1> _u) -> {
                             Matrix<N2, N1> xdot =
                                     m_plant.getA().times(x).plus(m_plant.getB().times(_u));
-                            if (simulateGravity) {
+                            if (simulateGravity && controlType != ControlType.POSITION) {
                                 double alphaGrav =
                                         3.0
                                                 / 2.0
