@@ -29,8 +29,6 @@ import frc.lib.io.motor.MotorIO.ControlType;
 
 import lombok.Setter;
 
-import org.littletonrobotics.junction.Logger;
-
 import java.util.Optional;
 
 public class ArmJointSim extends SingleJointedArmSim {
@@ -124,16 +122,6 @@ public class ArmJointSim extends SingleJointedArmSim {
                                                                 ? x.get(0, 0) + attachedAngle.get()
                                                                 : x.get(0, 0)))
                                                 / armLengthMeters;
-                                if (attachedAngle.isPresent()) {
-                                    Logger.recordOutput("alphaGrav", alphaGrav);
-                                    Logger.recordOutput(
-                                            "xabs",
-                                            Math.abs(x.get(0, 0))
-                                                    % Math.PI
-                                                    * Math.signum(x.get(0, 0)));
-
-                                    Logger.recordOutput("attachedAngle", attachedAngle.get());
-                                }
 
                                 if (attachedVelocity.isPresent()) {
 

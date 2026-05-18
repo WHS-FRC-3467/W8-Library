@@ -48,8 +48,6 @@ public class DoubleJointedArmVisualizer {
 
     private DistanceUnit visualizerUnit;
 
-    private static final Color8Bit BACKROUND_COLOR = new Color8Bit(173, 167, 186);
-
     private static final Color8Bit LINE_COLOR = new Color8Bit(15, 12, 22);
 
     public DoubleJointedArmVisualizer(
