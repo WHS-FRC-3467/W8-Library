@@ -28,6 +28,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIO;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
+import frc.lib.util.AlwaysTunableNumber;
 
 import lombok.Getter;
 
@@ -40,7 +41,9 @@ public abstract class DoubleJointedArmMechanism<
     @Getter private final ArmJointMechanism<C, D> lowerArm;
     private final DoubleJointedArmVisualizer visualizer;
 
-    private Translation2d target = new Translation2d(0.0, 0.0);
+    private Translation2d target = new Translation2d(1.0, 1.0);
+
+    private AlwaysTunableNumber num = new AlwaysTunableNumber("i dunno", 0);
 
     public void addToTarget(double x, double y) {
         this.target = this.target.plus(new Translation2d(x, y));
@@ -103,8 +106,8 @@ public abstract class DoubleJointedArmMechanism<
     }
 
     public void periodic() {
-        lowerArm.periodic();
         upperArm.periodic();
+        lowerArm.periodic();
 
         visualizer.setCurrentAngle(upperArm.getPosition(), lowerArm.getPosition());
         visualizer.setTargetPosition(target);

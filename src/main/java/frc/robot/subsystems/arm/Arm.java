@@ -14,6 +14,8 @@
  */
 package frc.robot.subsystems.arm;
 
+import static edu.wpi.first.units.Units.Radians;
+
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -52,6 +54,11 @@ public class Arm extends SubsystemBase implements AutoCloseable {
     public Command moveUpperBy(AngularVelocity pos, boolean up) {
 
         return this.runOnce(() -> io.getUpperArm().runVelocity(pos, PIDSlot.SLOT_0));
+    }
+
+    public Command testUpper() {
+        return this.runOnce(
+                () -> io.getUpperArm().runUnprofiledPosition(Radians.of(1.0), PIDSlot.SLOT_0));
     }
 
     public Command stopUpper() {

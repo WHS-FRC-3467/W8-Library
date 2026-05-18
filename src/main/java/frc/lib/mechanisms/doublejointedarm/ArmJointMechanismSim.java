@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIOSim;
 import frc.lib.io.motor.MotorIOSim;
+import frc.lib.util.PID;
 
 import java.util.Optional;
 
@@ -47,8 +48,9 @@ public class ArmJointMechanismSim extends ArmJointMechanism<MotorIOSim, Absolute
             Boolean useGravity,
             ArmJointMechanism.JointCharacteristics characteristics,
             Optional<AbsoluteEncoderIOSim> absoluteEncoder,
-            String encoderName) {
-        super(name, characteristics, io, absoluteEncoder, encoderName);
+            String encoderName,
+            PID pid) {
+        super(name, characteristics, io, absoluteEncoder, encoderName, pid);
 
         if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
             throw new IllegalArgumentException("momentOfInertia must be greater than zero!");

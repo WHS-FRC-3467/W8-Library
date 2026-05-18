@@ -56,10 +56,11 @@ import java.util.Optional;
 public class ArmConstants {
     public static final String NAME = "Arm";
 
-    private static final double GEARING = 10;
+    private static final double GEARING = 3.5;
+    private static final double GEARING_UPPER = 10;
 
-    public static final Angle MIN_ANGLE = Degrees.of(-1800);
-    public static final Angle MAX_ANGLE = Degrees.of(1800);
+    public static final Angle MIN_ANGLE = Degrees.of(-180000);
+    public static final Angle MAX_ANGLE = Degrees.of(180000);
     public static final Angle STARTING_ANGLE = Degrees.of(90.0);
     public static final Distance ARM_LENGTH = Feet.of(1.0);
 
@@ -69,11 +70,11 @@ public class ArmConstants {
 
     public static final ArmJointMechanism.JointCharacteristics UPPER_CONSTANTS =
             new ArmJointMechanism.JointCharacteristics(
-                    ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, Degrees.of(0.0));
+                    ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, Degrees.of(90.0));
 
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
     public static final MomentOfInertia MOI =
-            KilogramSquareMeters.of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), 1.0));
+            KilogramSquareMeters.of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), 2.0));
     public static final MomentOfInertia MOI_LOWER =
             KilogramSquareMeters.of(SingleJointedArmSim.estimateMOI(ARM_LENGTH.in(Meters), 2.0));
     private static final double kG = 20;
@@ -82,7 +83,7 @@ public class ArmConstants {
         if (RobotBase.isReal()) {
             return new PID(1000.0, 0.0, 60.0).withS(2.0).withG(kG);
         } else {
-            return new PID(100.0, 0.0, 80.0);
+            return new PID(100.0, 0.0, 80.0).withG(58);
         }
     }
 
@@ -90,7 +91,7 @@ public class ArmConstants {
         if (RobotBase.isReal()) {
             return new PID(1000.0, 0.0, 60.0).withS(2.0).withG(kG);
         } else {
-            return new PID(100.0, 0.0, 80.0).withG(20.7);
+            return new PID(100.0, 0.0, 80.0).withG(58).withP(3500);
         }
     }
 
@@ -130,9 +131,7 @@ public class ArmConstants {
         config.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
         config.SoftwareLimitSwitch.ReverseSoftLimitThreshold = MIN_ANGLE.in(Units.Rotations);
 
-        config.Feedback.SensorToMechanismRatio = GEARING;
-
-        config.Feedback.RotorToSensorRatio = GEARING;
+        config.Feedback.SensorToMechanismRatio = GEARING_UPPER;
 
         config.Slot0 =
                 Slot0Configs.from(SLOT0_PID.toSlotConfigs())
@@ -199,7 +198,8 @@ public class ArmConstants {
                                 true,
                                 UPPER_CONSTANTS,
                                 Optional.empty(),
-                                ""),
+                                "",
+                                getPID()),
                         new ArmJointMechanismSim(
                                 "lower",
                                 new MotorIOTalonFXSim(
@@ -211,7 +211,8 @@ public class ArmConstants {
                                 true,
                                 LOWER_CONSTANTS,
                                 Optional.empty(),
-                                ""),
+                                "",
+                                getPID2()),
                         NAME);
 
         return new Arm(mech);

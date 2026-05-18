@@ -16,6 +16,7 @@ package frc.lib.mechanisms.doublejointedarm;
 
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIO;
 import frc.lib.io.motor.MotorIO;
+import frc.lib.util.PID;
 
 import java.util.Optional;
 
@@ -26,7 +27,8 @@ public class ArmJointMechanismReal extends ArmJointMechanism<MotorIO, AbsoluteEn
             MotorIO io,
             ArmJointMechanism.JointCharacteristics characteristics,
             Optional<AbsoluteEncoderIO> absoluteEncoder,
-            String encoderName) {
-        super(name, characteristics, io, absoluteEncoder, encoderName);
+            String encoderName,
+            PID pid) {
+        super(name, characteristics, io, absoluteEncoder, encoderName, pid);
     }
 }

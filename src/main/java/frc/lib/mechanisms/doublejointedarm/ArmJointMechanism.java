@@ -20,7 +20,9 @@ import edu.wpi.first.units.measure.Distance;
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIO;
 import frc.lib.io.absoluteencoder.AbsoluteEncoderInputsAutoLogged;
 import frc.lib.io.motor.MotorIO;
+import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.mechanisms.Mechanism;
+import frc.lib.util.PID;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -36,21 +38,28 @@ public abstract class ArmJointMechanism<T extends MotorIO, E extends AbsoluteEnc
     protected final Optional<E> absoluteEncoder;
     private final String encoderName;
     public final JointCharacteristics characteristics;
+    private final PID pid;
 
     public ArmJointMechanism(
             String name,
             JointCharacteristics characteristics,
             T io,
             Optional<E> absoluteEncoder,
-            String encoderName) {
+            String encoderName,
+            PID pid) {
         super(name, io);
         this.absoluteEncoder = absoluteEncoder;
         this.encoderName = encoderName;
         this.characteristics = characteristics;
+        this.pid = pid;
     }
 
     public Angle getPosition() {
         return inputs.position;
+    }
+
+    public void updatekg(double kg) {
+        io.setPID(PIDSlot.SLOT_0, this.pid.withG(kg));
     }
 
     @Override

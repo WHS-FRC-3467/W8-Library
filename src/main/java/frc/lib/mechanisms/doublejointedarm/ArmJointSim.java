@@ -29,6 +29,8 @@ import frc.lib.io.motor.MotorIO.ControlType;
 
 import lombok.Setter;
 
+import org.littletonrobotics.junction.Logger;
+
 import java.util.Optional;
 
 public class ArmJointSim extends SingleJointedArmSim {
@@ -100,7 +102,7 @@ public class ArmJointSim extends SingleJointedArmSim {
     public void update(double dtSeconds) {
         super.update(dtSeconds);
 
-        //  m_y.set(1, 0, calculateFriction(m_y.get(1, 0)));
+        m_y.set(1, 0, calculateFriction(m_y.get(1, 0)));
     }
 
     @Override
@@ -118,10 +120,20 @@ public class ArmJointSim extends SingleJointedArmSim {
                                                 / 2.0
                                                 * -9.8
                                                 * Math.cos(
-                                                        attachedAngle.isPresent()
+                                                        (attachedAngle.isPresent()
                                                                 ? x.get(0, 0) + attachedAngle.get()
-                                                                : x.get(0, 0))
+                                                                : x.get(0, 0)))
                                                 / armLengthMeters;
+                                if (attachedAngle.isPresent()) {
+                                    Logger.recordOutput("alphaGrav", alphaGrav);
+                                    Logger.recordOutput(
+                                            "xabs",
+                                            Math.abs(x.get(0, 0))
+                                                    % Math.PI
+                                                    * Math.signum(x.get(0, 0)));
+
+                                    Logger.recordOutput("attachedAngle", attachedAngle.get());
+                                }
 
                                 if (attachedVelocity.isPresent()) {
 
