@@ -43,7 +43,6 @@ import frc.robot.RobotState;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import org.littletonrobotics.junction.Logger;
 import org.photonvision.simulation.VisionSystemSim;
 
 import java.util.Optional;
@@ -381,90 +380,26 @@ public class VisionConstants {
      * mode. Instantiates cameras with appropriate IO implementations (real, sim, or replay).
      */
     public static void create() {
-        // Logger.recordOutput("zero", Pose2d.kZero);
-        Logger.recordOutput("frontleft", FRONT_LEFT_TRANSFORM);
-        Logger.recordOutput("frontright", FRONT_RIGHT_TRANSFORM);
-
         switch (Constants.currentMode) {
             case REAL -> {
-                var frontLeftCamera =
-                        new AprilTagCamera(
-                                FRONT_LEFT,
-                                getFrontLeftIOReal(),
-                                FRONT_LEFT_C2_CONFIG.cameraIndex(),
-                                FRONT_LEFT_C2_CONFIG.tagLayout());
-                var leftCamera =
-                        new AprilTagCamera(
-                                LEFT,
-                                getLeftIOReal(),
-                                LEFT_C2_CONFIG.cameraIndex(),
-                                LEFT_C2_CONFIG.tagLayout());
-                var rightCamera =
-                        new AprilTagCamera(
-                                RIGHT,
-                                getRightIOReal(),
-                                RIGHT_C2_CONFIG.cameraIndex(),
-                                RIGHT_C2_CONFIG.tagLayout());
-                var frontRightCamera =
-                        new AprilTagCamera(
-                                FRONT_RIGHT,
-                                getFrontRightIOReal(),
-                                FRONT_RIGHT_C2_CONFIG.cameraIndex(),
-                                FRONT_RIGHT_C2_CONFIG.tagLayout());
+                var frontLeftCamera = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOReal());
+                var leftCamera = new AprilTagCamera(LEFT, getLeftIOReal());
+                var rightCamera = new AprilTagCamera(RIGHT, getRightIOReal());
+                var frontRightCamera = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOReal());
                 new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
             }
             case SIM -> {
-                var frontLeftCamera =
-                        new AprilTagCamera(
-                                FRONT_LEFT,
-                                getFrontLeftIOSim(),
-                                FRONT_LEFT_C2_CONFIG.cameraIndex(),
-                                FRONT_LEFT_C2_CONFIG.tagLayout());
-                var leftCamera =
-                        new AprilTagCamera(
-                                LEFT,
-                                getLeftIOSim(),
-                                LEFT_C2_CONFIG.cameraIndex(),
-                                LEFT_C2_CONFIG.tagLayout());
-                var rightCamera =
-                        new AprilTagCamera(
-                                RIGHT,
-                                getRightIOSim(),
-                                RIGHT_C2_CONFIG.cameraIndex(),
-                                RIGHT_C2_CONFIG.tagLayout());
-                var frontRightCamera =
-                        new AprilTagCamera(
-                                FRONT_RIGHT,
-                                getFrontRightIOSim(),
-                                FRONT_RIGHT_C2_CONFIG.cameraIndex(),
-                                FRONT_RIGHT_C2_CONFIG.tagLayout());
+                var frontLeftCamera = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim());
+                var leftCamera = new AprilTagCamera(LEFT, getLeftIOSim());
+                var rightCamera = new AprilTagCamera(RIGHT, getRightIOSim());
+                var frontRightCamera = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim());
                 new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
             }
             case REPLAY -> {
-                var frontLeftCamera =
-                        new AprilTagCamera(
-                                FRONT_LEFT,
-                                new VisionIO() {},
-                                FRONT_LEFT_C2_CONFIG.cameraIndex(),
-                                FRONT_LEFT_C2_CONFIG.tagLayout());
-                var leftCamera =
-                        new AprilTagCamera(
-                                LEFT,
-                                new VisionIO() {},
-                                LEFT_C2_CONFIG.cameraIndex(),
-                                LEFT_C2_CONFIG.tagLayout());
-                var rightCamera =
-                        new AprilTagCamera(
-                                RIGHT,
-                                new VisionIO() {},
-                                RIGHT_C2_CONFIG.cameraIndex(),
-                                RIGHT_C2_CONFIG.tagLayout());
-                var frontRightCamera =
-                        new AprilTagCamera(
-                                FRONT_RIGHT,
-                                new VisionIO() {},
-                                FRONT_RIGHT_C2_CONFIG.cameraIndex(),
-                                FRONT_RIGHT_C2_CONFIG.tagLayout());
+                var frontLeftCamera = new AprilTagCamera(FRONT_LEFT, new VisionIO() {});
+                var leftCamera = new AprilTagCamera(LEFT, new VisionIO() {});
+                var rightCamera = new AprilTagCamera(RIGHT, new VisionIO() {});
+                var frontRightCamera = new AprilTagCamera(FRONT_RIGHT, new VisionIO() {});
                 new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
             }
         }
