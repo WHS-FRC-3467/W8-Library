@@ -15,6 +15,8 @@
 
 package frc.robot.subsystems.vision;
 
+import static edu.wpi.first.units.Units.Meters;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -24,6 +26,7 @@ import frc.lib.devices.AprilTagCamera;
 import frc.lib.io.vision.VisionIO.CameraResult;
 import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
+import frc.lib.util.FieldUtil;
 import frc.lib.util.LoggedTunableNumber;
 import frc.robot.FieldConstants;
 import frc.robot.FieldConstants.AprilTagLayoutType;
@@ -103,8 +106,7 @@ public class VisionSubsystem extends SubsystemBase {
     private final AprilTagCamera[] cameras;
 
     /**
-     * Quickly checks whether a {@link PhotonPipelineResult} is likely to be useful before full
-     * processing.
+     * Quickly checks whether a result is likely to be useful before full processing.
      *
      * <p>Rejects results with no targets, ambiguous poses above 0.2, or targets farther than 4
      * meters.
@@ -133,14 +135,8 @@ public class VisionSubsystem extends SubsystemBase {
 
         // Reject multi-tag results if the average distance to observed tags is greater than
         // MAX_DISTANCE_METERS
-        if (result.multiTagObservation().isPresent()) {
-            if (Arrays.stream(result.tagObservations())
-                            .mapToDouble(t -> t.fieldToCameraPose().getTranslation().getNorm())
-                            .average()
-                            .getAsDouble()
-                    > MAX_DISTANCE_METERS) {
-                return false;
-            }
+        if (result.multiTagObservation().isPresent()
+                && getAvgDistanceMeters(result) < MAX_DISTANCE_METERS) {
             return true;
         }
 
@@ -157,9 +153,18 @@ public class VisionSubsystem extends SubsystemBase {
      * @return {@code true} if the pose is valid, {@code false} otherwise
      */
     public static boolean postFilter(Pose3d pose) {
-        double z = pose.getZ();
-        // Pose2d pose2d = pose.toPose2d();
-        return !(z > MAX_Z_METERS);
+
+        // Reject if pose is too high in Z
+        if (pose.getZ() > MAX_Z_METERS) {
+            return false;
+        }
+
+        // Reject if pose is outside boundary
+        if (!FieldUtil.isPoseInField(pose.getTranslation().toTranslation2d(), Meters.zero())) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -323,7 +328,7 @@ public class VisionSubsystem extends SubsystemBase {
      *
      * <p>Uses the norm of the camera's field position derived from each {@link TagObservation}.
      */
-    private double getAvgDistanceMeters(CameraResult result) {
+    private static double getAvgDistanceMeters(CameraResult result) {
         if (result.tagObservations().length == 0) return 0.0;
         return Arrays.stream(result.tagObservations())
                 .mapToDouble(obs -> obs.fieldToCameraPose().getTranslation().getNorm())
