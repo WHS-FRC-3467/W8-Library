@@ -48,7 +48,7 @@ public interface VisionIO {
     public static record CameraResult(
             TagObservation[] tagObservations,
             Optional<MultiTagObservation> multiTagObservation,
-            double captureLatencyUs,
+            double captureTimestampUs,
             double publishTimestampUs) {}
 
     @AutoLog

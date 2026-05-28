@@ -127,20 +127,26 @@ public class VisionSubsystem extends SubsystemBase {
             if (target.ambiguity() > MAX_AMBIGUITY) {
                 return false;
             }
-            if (target.fieldToCameraPose().getTranslation().getNorm() > MAX_DISTANCE_METERS) {
+            if (cameraToTagDistance(target) > MAX_DISTANCE_METERS) {
                 return false;
             }
             return true;
         }
 
-        // Reject multi-tag results if the average distance to observed tags is greater than
-        // MAX_DISTANCE_METERS
-        if (result.multiTagObservation().isPresent()
-                && getAvgDistanceMeters(result) < MAX_DISTANCE_METERS) {
-            return true;
+        // Accept multi-tag results when a multi-tag solution is present and close enough
+        if (result.multiTagObservation().isPresent()) {
+            return getAvgDistanceMeters(result) < MAX_DISTANCE_METERS;
         }
 
-        return false;
+        // Multi-tag frame but no multi-tag solve (e.g., solver disabled/unavailable):
+        // fall back to the lowest-ambiguity single tag so usable frames aren't dropped
+        TagObservation best =
+                Arrays.stream(result.tagObservations())
+                        .min(Comparator.comparingDouble(TagObservation::ambiguity))
+                        .orElse(null);
+        if (best == null) return false;
+        if (best.ambiguity() > MAX_AMBIGUITY) return false;
+        return cameraToTagDistance(best) <= MAX_DISTANCE_METERS;
     }
 
     /**
@@ -235,9 +241,9 @@ public class VisionSubsystem extends SubsystemBase {
                                 ? SINGLE_TAG_ANGULAR_STDDEV
                                 : ANGULAR_STDDEV_BASELINE * stdDevFactor;
 
-                // captureLatencyUs holds the absolute capture timestamp in microseconds
+                // captureTimestampUs holds the absolute capture timestamp in microseconds
                 double timestampSeconds =
-                        result.captureLatencyUs() / 1_000_000.0 + TIMESTAMP_OFFSET.get();
+                        result.captureTimestampUs() / 1_000_000.0 + TIMESTAMP_OFFSET.get();
                 robotState.addVisionObservation(
                         new VisionPoseObservation(
                                 timestampSeconds,
@@ -324,14 +330,32 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     /**
+     * Returns the distance in meters from the camera to an observed tag.
+     *
+     * <p>Looks up the tag's known field position from the AprilTag layout and computes the 3D
+     * distance between the tag and the camera (both in field coordinates). Falls back to the
+     * camera's distance from the field origin if the tag ID is not in the layout.
+     */
+    private static double cameraToTagDistance(TagObservation obs) {
+        Optional<Pose3d> tagPoseOpt =
+                AprilTagLayoutType.NO_TRENCH.getLayout().getTagPose(obs.fiducialId());
+        if (tagPoseOpt.isEmpty()) {
+            return obs.fieldToCameraPose().getTranslation().getNorm();
+        }
+        return tagPoseOpt.get().getTranslation().getDistance(
+                obs.fieldToCameraPose().getTranslation());
+    }
+
+    /**
      * Returns the average distance (meters) from the camera to each observed tag.
      *
-     * <p>Uses the norm of the camera's field position derived from each {@link TagObservation}.
+     * <p>Computes the 3D camera↔tag distance using each tag's known field pose from the AprilTag
+     * layout, falling back to the camera's distance from the field origin if a tag is not found.
      */
     private static double getAvgDistanceMeters(CameraResult result) {
         if (result.tagObservations().length == 0) return 0.0;
         return Arrays.stream(result.tagObservations())
-                .mapToDouble(obs -> obs.fieldToCameraPose().getTranslation().getNorm())
+                .mapToDouble(VisionSubsystem::cameraToTagDistance)
                 .average()
                 .orElse(0.0);
     }
