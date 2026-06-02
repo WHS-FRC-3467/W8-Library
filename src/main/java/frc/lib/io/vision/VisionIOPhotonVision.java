@@ -133,9 +133,15 @@ public class VisionIOPhotonVision implements VisionIO {
     // -------------------------------------------------------------------------
 
     private static boolean isPhotonResult(byte[] raw) {
-        return raw.length > PHOTON_RESULT_MAGIC.length
-                && Arrays.equals(
-                        PHOTON_RESULT_MAGIC, Arrays.copyOf(raw, PHOTON_RESULT_MAGIC.length));
+        if (raw.length < PHOTON_RESULT_MAGIC.length) {
+            return false;
+        }
+        for (int i = 0; i < PHOTON_RESULT_MAGIC.length; i++) {
+            if (raw[i] != PHOTON_RESULT_MAGIC[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static PhotonPipelineResult unpackPhotonResult(byte[] raw) {
