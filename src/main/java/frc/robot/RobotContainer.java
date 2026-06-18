@@ -30,10 +30,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
+import frc.lib.autos.Auto;
 import frc.lib.commands.SteppableCommandGroup;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.lib.util.GamePieceVisualizer;
 import frc.lib.util.LoggedDashboardChooser;
+import frc.robot.autos.AutoFactory;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveToPose;
 import frc.robot.subsystems.drive.Drive;
@@ -55,12 +57,13 @@ public class RobotContainer {
     // Subsystems
     public final Drive drive;
     private final LaserCAN1 laserCAN1;
+    public final AutoFactory autoFactory;
 
     // Controller
     private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
 
     // Dashboard inputs
-    // private final LoggedDashboardChooser<AutoCommand> autoChooser;
+    private final LoggedDashboardChooser<Auto> autoChooser;
     private final LoggedDashboardChooser<Boolean> conditionalChooser;
     public static Field2d autoPreviewField = new Field2d();
 
@@ -69,16 +72,20 @@ public class RobotContainer {
         drive = DriveConstants.get();
         laserCAN1 = LaserCAN1Constants.get();
         VisionConstants.create();
+        autoFactory = new AutoFactory(drive);
 
         conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
         conditionalChooser.addOption("True", true);
         conditionalChooser.addOption("False", false);
 
         // Set up auto routines
-        // autoChooser = new LoggedDashboardChooser<>("Auto Choices");
+        autoChooser = new LoggedDashboardChooser<>("Auto Choices");
         // SmartDashboard.putData("Auto Preview", autoPreviewField);
 
         // autoChooser.addDefaultOption("None", new NoneAuto());
+        autoChooser.addDefaultOption(autoFactory.noneAuto().getName(), autoFactory.noneAuto());
+        autoChooser.addOption(
+                autoFactory.leftNeutralSweep().getName(), autoFactory.leftNeutralSweep());
         // autoChooser.addOption("ExampleAuto", new ExampleAuto(drive));
         // autoChooser.addOption("BranchingAuto",
         // new BranchingAuto(drive, () -> conditionalChooser.get()));

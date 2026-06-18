@@ -17,9 +17,6 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
-import choreo.trajectory.SwerveSample;
-import choreo.trajectory.Trajectory;
-
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.SlotConfigs;
 
@@ -28,7 +25,6 @@ import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -40,9 +36,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
@@ -55,13 +49,11 @@ import frc.lib.util.PID;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotState;
-import frc.robot.commands.ResilientTrajectoryFollower;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
@@ -392,135 +384,11 @@ public class Drive extends SubsystemBase {
         runVelocity(new ChassisSpeeds());
     }
 
-    /** Returns a command that follows the supplied Choreo trajectory. */
-    public Command followTrajectory(Trajectory<SwerveSample> trajectory) {
-        return Commands.sequence(
-                        runOnce(
-                                () -> {
-                                    autoXController.reset();
-                                    autoYController.reset();
-                                    autoThetaController.reset();
-                                    Logger.recordOutput(
-                                            "Odometry/Trajectory", trajectory.getPoses());
-                                }),
-                        createTrajectoryFollower(trajectory))
-                .finallyDo(
-                        () -> {
-                            stop();
-                            Logger.recordOutput("Odometry/Trajectory", new Pose2d[] {});
-                            Logger.recordOutput("Odometry/TrajectorySetpoint", new Pose2d());
-                        })
-                .withName("FollowTrajectory_" + trajectory.name());
-    }
-
-    /** Follows a single Choreo sample using the drive's autonomous controllers. */
-    public void followTrajectorySample(SwerveSample sample) {
-        Pose2d currentPose = robotState.getEstimatedPose();
-        Pose2d targetPose = sample.getPose();
-
-        ChassisSpeeds targetSpeeds =
-                new ChassisSpeeds(
-                        sample.vx + autoXController.calculate(currentPose.getX(), sample.x),
-                        sample.vy + autoYController.calculate(currentPose.getY(), sample.y),
-                        sample.omega
-                                + autoThetaController.calculate(
-                                        currentPose.getRotation().getRadians(), sample.heading));
-
-        runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(targetSpeeds, currentPose.getRotation()));
-        robotState.setActiveTrajPose(targetPose);
-        Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
-    }
-
-    /**
-     * Returns a command that follows the supplied Choreo trajectory with built-in pause/resume
-     * recovery. If the robot is pushed off-path, the trajectory timer freezes and the robot drives
-     * back to the paused target before resuming.
-     *
-     * @param trajectory the trajectory to follow
-     * @param eventBindings map of event name to Command scheduled when that event's timestamp is
-     *     reached in trajectory-time
-     * @return a command that resiliently follows the trajectory
-     */
-    public ResilientTrajectoryFollower followTrajectoryResilient(
-            Trajectory<SwerveSample> trajectory, Map<String, Command> eventBindings) {
-        return new ResilientTrajectoryFollower(
-                this,
-                trajectory,
-                autoXController,
-                autoYController,
-                autoThetaController,
-                eventBindings);
-    }
-
-    /**
-     * Returns a command that follows the supplied Choreo trajectory with built-in pause/resume
-     * recovery and no event bindings.
-     *
-     * @param trajectory the trajectory to follow
-     * @return a command that resiliently follows the trajectory
-     */
-    public ResilientTrajectoryFollower followTrajectoryResilient(
-            Trajectory<SwerveSample> trajectory) {
-        return followTrajectoryResilient(trajectory, Map.of());
-    }
-
     /** Resets the internal PID state used for trajectory following. */
     public void resetTrajectoryControllers() {
         autoXController.reset();
         autoYController.reset();
         autoThetaController.reset();
-    }
-
-    private Command createTrajectoryFollower(Trajectory<SwerveSample> trajectory) {
-        final double[] startTime = new double[1];
-        return Commands.runEnd(
-                        () -> {
-                            if (startTime[0] == 0.0) {
-                                startTime[0] = Timer.getTimestamp();
-                            }
-                            double elapsedTime = Timer.getTimestamp() - startTime[0];
-                            SwerveSample sample =
-                                    trajectory
-                                            .sampleAt(elapsedTime, false)
-                                            .orElseGet(
-                                                    () ->
-                                                            trajectory
-                                                                    .getFinalSample(false)
-                                                                    .orElse(null));
-                            if (sample == null) {
-                                stop();
-                                return;
-                            }
-
-                            Pose2d currentPose = robotState.getEstimatedPose();
-                            Pose2d targetPose = sample.getPose();
-
-                            ChassisSpeeds targetSpeeds =
-                                    new ChassisSpeeds(
-                                            sample.vx
-                                                    + autoXController.calculate(
-                                                            currentPose.getX(), sample.x),
-                                            sample.vy
-                                                    + autoYController.calculate(
-                                                            currentPose.getY(), sample.y),
-                                            sample.omega
-                                                    + autoThetaController.calculate(
-                                                            currentPose.getRotation().getRadians(),
-                                                            sample.heading));
-
-                            runVelocity(
-                                    ChassisSpeeds.fromFieldRelativeSpeeds(
-                                            targetSpeeds, currentPose.getRotation()));
-                            robotState.setActiveTrajPose(targetPose);
-                            Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
-                        },
-                        this::stop,
-                        this)
-                .until(
-                        () ->
-                                startTime[0] != 0.0
-                                        && Timer.getTimestamp() - startTime[0]
-                                                > trajectory.getTotalTime());
     }
 
     /**
