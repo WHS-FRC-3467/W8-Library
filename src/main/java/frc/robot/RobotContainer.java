@@ -191,8 +191,7 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        // return autoChooser.get();
-        return Commands.none();
+        return autoChooser.get().getCommand();
     }
 
     /** This function is called periodically by Robot.java when disabled. */
