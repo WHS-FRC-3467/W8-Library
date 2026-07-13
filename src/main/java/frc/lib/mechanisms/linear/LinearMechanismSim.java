@@ -98,11 +98,10 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
 
         lastTime = currentTime;
 
-        io.setPosition(toAngle(Meters.of(sim.getPositionMeters())));
-        io.setRotorVelocity(
+        io.setMechanismPosition(toAngle(Meters.of(sim.getPositionMeters())));
+        io.setMechanismVelocity(
                 toAngle(Meters.of(sim.getVelocityMetersPerSecond()))
-                        .per(Seconds)
-                        .times(io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()));
+                        .per(Seconds));
 
         super.periodic();
     }

@@ -244,6 +244,33 @@ public interface MotorIO extends AutoCloseable {
         return 1;
     }
 
+    /** 
+     * Return the ratio of rotor rotations to measured encoder rotations
+     * 
+     * @return The ratio of rotor rotations to measured encoder rotations
+     */
+    public default double getRotorToSensorRatio() {
+        return 1.0;
+    }
+
+    /**  
+     * Returns the ratio of measured encoder rotations to mechanism rotations
+     * 
+     * @return The ratio of measured encoder rotations to mechanism rotations
+     */
+    public default double getSensorToMechanismRatio() {
+        return 1.0;
+    }
+
+    /** 
+     * Returns the ratio of rotor rotations to mechanism rotations
+     * 
+     * @return The ratio of rotor rotations to mechanism rotations
+     */
+    public default double getRotorToMechanismRatio() {
+        return getRotorToSensorRatio() * getSensorToMechanismRatio();
+    }
+
     @Override
     public default void close() {}
 }

@@ -93,6 +93,8 @@ public class MotorIOTalonFX implements MotorIO {
     private volatile TalonFXConfiguration currentConfig;
     protected volatile Angle goalPosition = Rotations.of(0.0);
     protected volatile AngularVelocity goalVelocity = RotationsPerSecond.zero();
+    private final double rotorToSensorRatio;
+    private final double sensorToMechanismRatio;
 
     // Caches for last-applied Motion Magic parameters (NaN = never applied)
     private double lastAppliedMmCruiseVelocity = Double.NaN;
@@ -114,6 +116,8 @@ public class MotorIOTalonFX implements MotorIO {
             Device.CAN main,
             TalonFXFollower... followerData) {
         currentConfig = config;
+        rotorToSensorRatio = config.Feedback.RotorToSensorRatio;
+        sensorToMechanismRatio = config.Feedback.SensorToMechanismRatio;
         lastAppliedMmCruiseVelocity = config.MotionMagic.MotionMagicCruiseVelocity;
         lastAppliedMmAcceleration = config.MotionMagic.MotionMagicAcceleration;
         lastRequestedMmCruiseVelocity = lastAppliedMmCruiseVelocity;
@@ -514,6 +518,16 @@ public class MotorIOTalonFX implements MotorIO {
     @Override
     public int getNumberOfMotors() {
         return followers.length + 1;
+    }
+
+    @Override
+    public double getRotorToSensorRatio() {
+        return rotorToSensorRatio;
+    }
+
+    @Override
+    public double getSensorToMechanismRatio() {
+        return sensorToMechanismRatio;
     }
 
     private void queueMotionMagicConfigUpdate(double cruiseVelocity, double acceleration) {

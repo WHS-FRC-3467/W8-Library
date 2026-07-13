@@ -17,6 +17,7 @@ package frc.lib.mechanisms.flywheel;
 
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
@@ -44,6 +45,7 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
     private final AngularVelocity tolerance;
 
     private Time lastTime = RobotController.getMeasureTime();
+    private AngularVelocity lastVelocity = RadiansPerSecond.zero();
 
     public FlywheelMechanismSim(
             String name,
@@ -80,18 +82,19 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
 
         lastTime = currentTime;
 
-        io.setRotorVelocity(sim.getAngularVelocity());
-        io.setRotorAcceleration(sim.getAngularAcceleration());
+        io.setMechanismVelocity(sim.getAngularVelocity());
+        io.setMechanismAcceleration(sim.getAngularAcceleration());
 
-        // Angular displacement kinematic equation (θ = ω₀t + (1/2)αt²)'
+        // Angular displacement kinematic equation (θ = ω₀t + (1/2)αt²)
+        // TO-DO: update w new equation
         Angle positionChange =
                 Radians.of(
                         sim.getAngularVelocityRadPerSec() * deltaTime
                                 + 0.5
                                         * sim.getAngularAccelerationRadPerSecSq()
                                         * Math.pow(deltaTime, 2));
-
-        io.setPosition(inputs.position.plus(positionChange));
+        lastVelocity = sim.getAngularVelocity();
+        io.setMechanismPosition(inputs.position.plus(positionChange));
 
         super.periodic();
 

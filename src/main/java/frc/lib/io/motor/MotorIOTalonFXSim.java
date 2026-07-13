@@ -34,9 +34,6 @@ import frc.lib.util.Device.CAN;
  * Wraps motor setup, control modes, telemetry polling, and error handling.
  */
 public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
-
-    private double rotorToSensorRatio;
-    private double sensorToMechanismRatio;
     private TalonFXSimState simState;
 
     /**
@@ -51,39 +48,46 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
             String name, TalonFXConfiguration config, CAN main, TalonFXFollower... followerData) {
         super(name, config, main, followerData);
 
-        rotorToSensorRatio = config.Feedback.RotorToSensorRatio;
-        sensorToMechanismRatio = config.Feedback.SensorToMechanismRatio;
         simState = super.motor.getSimState();
     }
 
+    /** Setter for the position of the mechanism associated with this motor group, typically taken from a WPILib mechanism
+     * simulation
+     * 
+     * @param position The new mechanism position (in mechanism-space)
+     */
     @Override
-    public void setPosition(Angle position) {
-        simState.setRawRotorPosition(position.times(rotorToSensorRatio * sensorToMechanismRatio));
+    public void setMechanismPosition(Angle position) {
+        simState.setRawRotorPosition(position.times(getRotorToMechanismRatio()));
     }
 
-    @Override
-    public void setRotorVelocity(AngularVelocity velocity) {
-        simState.setRotorVelocity(velocity);
+    /** Setter for the velocity of the mechanism associated with this motor group, typically taken from a WPILib mechanism
+     * simulation
+     * 
+     * @param velocity The new mechanism velocity (in mechanism-space)
+     */
+    @Override 
+    public void setMechanismVelocity(AngularVelocity velocity) {
+        simState.setRotorVelocity(velocity.times(getRotorToMechanismRatio()));
     }
 
+    /** Setter for the acceleration of the mechanism associated with this motor group, typically taken from a WPILib mechanism
+     * simulation
+     * 
+     * @param acceleration The new mechanism acceleration (in mechanism-space)
+     */
     @Override
-    public void setRotorAcceleration(AngularAcceleration acceleration) {
-        simState.setRotorAcceleration(acceleration);
+    public void setMechanismAcceleration(AngularAcceleration acceleration) {
+        simState.setRotorAcceleration(acceleration.times(getRotorToMechanismRatio()));
     }
 
-    @Override
-    public double getRotorToSensorRatio() {
-        return rotorToSensorRatio;
-    }
-
-    @Override
-    public double getSensorToMechanismRatio() {
-        return sensorToMechanismRatio;
-    }
-
+    /** Sets the mechanism-space position of the motor's internal encoder.
+     * 
+     * @param position The new encoder position (in mechanism-space).
+    */
     @Override
     public void setEncoderPosition(Angle position) {
-        super.setEncoderPosition(position.times(rotorToSensorRatio * sensorToMechanismRatio));
+        super.setEncoderPosition(position.times(getRotorToMechanismRatio()));
     }
 
     @Override
