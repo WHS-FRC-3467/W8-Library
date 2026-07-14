@@ -83,7 +83,7 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
 
     /** Sets the mechanism-space position of the motor's internal encoder.
      * 
-     * @param position The new encoder position (in mechanism-space).
+     * @param position The new encoder position (in mechanism-space)
     */
     @Override
     public void setEncoderPosition(Angle position) {

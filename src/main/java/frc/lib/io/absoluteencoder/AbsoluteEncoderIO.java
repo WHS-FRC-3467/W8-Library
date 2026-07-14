@@ -27,7 +27,7 @@ public interface AbsoluteEncoderIO extends AutoCloseable {
         /** Whether the sensor is connected. */
         public boolean connected = false;
 
-        /** Angle the encoder reads. 0 &lt;= r &lt; 1 where r = angle in rotations */
+        /** Measured angle in mechanism-space. 0 &lt;= r &lt; 1/encoderToMechanismRatio with r = angle in rotations */
         public Angle angle = null;
     }
 
@@ -38,6 +38,15 @@ public interface AbsoluteEncoderIO extends AutoCloseable {
      * @param inputs The structure to populate with updated sensor values.
      */
     public default void updateInputs(AbsoluteEncoderInputs inputs) {}
+
+    /**
+     * Returns the ratio of measured encoder rotations to mechanism rotations. 1.0 means the encoder is mounted directly onto the output shaft of the mechanism. 
+     * 
+     * @return Returns the ratio of measured encoder rotations to mechanism rotations
+     */
+    public default double getEncoderToMechanismRatio() {
+        return 1.0;
+    }
 
     @Override
     public default void close() {}
