@@ -479,6 +479,12 @@ public class MotorIOTalonFX implements MotorIO {
         motor.setControl(mmVelocityControl.withVelocity(velocity).withSlot(slot.getNum()));
     }
 
+    /** Sets the motor's internal encoder to interpret the current mechanism position as "position". 
+     * For example, if you call MotorIOTalonFX.setEncoderPosition(Rotations.of(0.0)), the motor's 
+     * internal encoder will read the current mechanism position as zero.
+     * 
+     * @param position The new encoder reading for the current mechanism position.
+    */
     @Override
     public void setEncoderPosition(Angle position) {
         motor.setPosition(position);

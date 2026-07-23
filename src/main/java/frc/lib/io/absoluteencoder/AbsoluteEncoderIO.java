@@ -27,7 +27,7 @@ public interface AbsoluteEncoderIO extends AutoCloseable {
         /** Whether the sensor is connected. */
         public boolean connected = false;
 
-        /** Measured angle in mechanism-space. 0 &lt;= r &lt; 1/encoderToMechanismRatio with r = angle in rotations */
+        /** Measured angle in mechanism-space. 0 &lt;= r &lt; 1/encoderToMechanismRatio with r = angle (in rotations) */
         public Angle angle = null;
     }
 

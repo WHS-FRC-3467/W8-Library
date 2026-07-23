@@ -81,15 +81,6 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         simState.setRotorAcceleration(acceleration.times(getRotorToMechanismRatio()));
     }
 
-    /** Sets the mechanism-space position of the motor's internal encoder.
-     * 
-     * @param position The new encoder position (in mechanism-space)
-    */
-    @Override
-    public void setEncoderPosition(Angle position) {
-        super.setEncoderPosition(position.times(getRotorToMechanismRatio()));
-    }
-
     @Override
     public void updateInputs(MotorInputs inputs) {
         inputs.connected =

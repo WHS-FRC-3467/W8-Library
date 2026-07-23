@@ -106,8 +106,17 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
         super.periodic();
     }
 
+    /** Commands a linear elevator position in sim given a drum angle. Limited to be within the characteristic minimum and maximum heights of the mechanism. */
+    private void setLinearPosition(Angle position) {
+        sim.setState(toDistance(position).in(Meters), 0);
+    }
+
+    /**
+     * 
+     */
     @Override
     public void setEncoderPosition(Angle position) {
-        sim.setState(toDistance(position).in(Meters), 0);
+        setLinearPosition(position);
+        super.setEncoderPosition(position);
     }
 }

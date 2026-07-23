@@ -54,7 +54,7 @@ public class AbsoluteEncoderIOCANCoderSim extends AbsoluteEncoderIOCANCoder
     }
 
     /**
-     * Setter for the encoder's simulated measurement of the mechanism angle
+     * Setter for the mechanism angle from which the encoder reading is simulated.
      *
      * @param angle The mechanism-space angle to simulate an encoder reading for
      */
