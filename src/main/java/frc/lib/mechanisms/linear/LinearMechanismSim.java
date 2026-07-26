@@ -18,11 +18,15 @@ package frc.lib.mechanisms.linear;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Time;
@@ -42,6 +46,7 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
     private final ElevatorSim sim;
 
     private Time lastTime = RobotController.getMeasureTime();
+    private AngularVelocity lastVelocity = RadiansPerSecond.zero();
 
     /**
      * Creates a new LinearMechanismSim.
@@ -98,12 +103,21 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
         RoboRioSim.setVInVoltage(
                 BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
 
+        AngularVelocity currentVelocity = toAngle(Meters.of(sim.getVelocityMetersPerSecond())).per(Seconds);
+        AngularAcceleration currentAcceleration;
+        if (deltaTime > 0) {
+            currentAcceleration = currentVelocity.minus(lastVelocity).div(Seconds.of(deltaTime));
+        }
+        else {
+            currentAcceleration = RadiansPerSecondPerSecond.zero();
+        }
+
         lastTime = currentTime;
+        lastVelocity = currentVelocity;
 
         io.setMechanismPosition(toAngle(Meters.of(sim.getPositionMeters())));
-        io.setMechanismVelocity(
-                toAngle(Meters.of(sim.getVelocityMetersPerSecond()))
-                        .per(Seconds));
+        io.setMechanismVelocity(currentVelocity);
+        io.setMechanismAcceleration(currentAcceleration);
 
         super.periodic();
     }
