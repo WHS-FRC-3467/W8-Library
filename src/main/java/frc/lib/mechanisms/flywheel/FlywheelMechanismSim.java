@@ -46,6 +46,7 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
 
     private Time lastTime = RobotController.getMeasureTime();
     private AngularVelocity lastVelocity = RadiansPerSecond.zero();
+    private Angle simPosition = Radians.zero();
 
     public FlywheelMechanismSim(
             String name,
@@ -80,11 +81,6 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
         RoboRioSim.setVInVoltage(
                 BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
 
-        lastTime = currentTime;
-
-        io.setMechanismVelocity(sim.getAngularVelocity());
-        io.setMechanismAcceleration(sim.getAngularAcceleration());
-
         // Angular displacement kinematic equation (θ = ω₀t + (1/2)αt²)
         Angle positionChange =
                 Radians.of(
@@ -92,9 +88,14 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
                                 + 0.5
                                         * sim.getAngularAccelerationRadPerSecSq()
                                         * Math.pow(deltaTime, 2));
-        io.setMechanismPosition(inputs.position.plus(positionChange));
-        
+
+        lastTime = currentTime;
+        simPosition = simPosition.plus(positionChange);
         lastVelocity = sim.getAngularVelocity();
+        
+        io.setMechanismPosition(simPosition);
+        io.setMechanismVelocity(sim.getAngularVelocity());
+        io.setMechanismAcceleration(sim.getAngularAcceleration());
 
         super.periodic();
 
