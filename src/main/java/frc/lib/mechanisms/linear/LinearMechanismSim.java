@@ -17,11 +17,13 @@ package frc.lib.mechanisms.linear;
 
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotController;
@@ -106,17 +108,14 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
         super.periodic();
     }
 
-    /** Commands a linear elevator position in sim given a drum angle. Limited to be within the characteristic minimum and maximum heights of the mechanism. */
-    private void setLinearPosition(Angle position) {
-        sim.setState(toDistance(position).in(Meters), 0);
-    }
-
-    /**
+    /** Commands a linear elevator position and velocity in sim given a drum angle and linear carriage speed. 
+     * Limited to be within the characteristic minimum and maximum heights of the mechanism.
+     *  
+     * @param position The desired drum angle position
+     * @param velocity The desired linear carriage speed
      * 
      */
-    @Override
-    public void setEncoderPosition(Angle position) {
-        setLinearPosition(position);
-        super.setEncoderPosition(position);
+    public void setSimState(Angle position, LinearVelocity velocity) {
+        sim.setState(toDistance(position).in(Meters), velocity.in(MetersPerSecond));
     }
 }

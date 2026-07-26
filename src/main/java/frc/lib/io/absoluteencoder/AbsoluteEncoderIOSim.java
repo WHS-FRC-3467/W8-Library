@@ -25,6 +25,7 @@ import edu.wpi.first.units.measure.Angle;
  * hardware.
  */
 public interface AbsoluteEncoderIOSim extends AbsoluteEncoderIO {
+
     /**
      * Setter for the mechanism angle from which the encoder reading is simulated.
      *

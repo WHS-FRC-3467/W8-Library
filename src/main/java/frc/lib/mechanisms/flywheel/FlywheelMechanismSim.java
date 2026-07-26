@@ -86,7 +86,6 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
         io.setMechanismAcceleration(sim.getAngularAcceleration());
 
         // Angular displacement kinematic equation (θ = ω₀t + (1/2)αt²)
-        // TODO re-check ALL other mechanism sim classes, then re-check MotorIO ecosystem, then add motor type (DCMotor?) to MotorIO ecosystem
         Angle positionChange =
                 Radians.of(
                         lastVelocity.in(RadiansPerSecond) * deltaTime
