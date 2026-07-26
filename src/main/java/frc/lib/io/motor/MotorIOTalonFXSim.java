@@ -17,6 +17,7 @@ package frc.lib.io.motor;
 
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -25,6 +26,7 @@ import com.ctre.phoenix6.sim.TalonFXSimState;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 
 import frc.lib.util.Device.CAN;
@@ -88,6 +90,7 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
                                 super.position,
                                 super.velocity,
                                 super.supplyVoltage,
+                                super.appliedVoltage,
                                 super.supplyCurrent,
                                 super.torqueCurrent,
                                 super.temperature,
@@ -96,10 +99,13 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
                                 super.closedLoopReferenceSlope)
                         .isOK();
 
-        simState.setSupplyVoltage(RobotController.getBatteryVoltage());
+        Voltage supplyVoltage = Volts.of(RobotController.getBatteryVoltage());
+         
+        simState.setSupplyVoltage(supplyVoltage.in(Volts));
 
         inputs.position = super.position.getValue();
         inputs.velocity = super.velocity.getValue();
+        inputs.supplyVoltage = supplyVoltage;
         inputs.appliedVoltage = simState.getMotorVoltageMeasure();
         inputs.supplyCurrent = simState.getSupplyCurrentMeasure();
         inputs.torqueCurrent = simState.getTorqueCurrentMeasure();

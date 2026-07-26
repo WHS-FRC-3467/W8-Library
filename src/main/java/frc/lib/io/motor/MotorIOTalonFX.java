@@ -64,6 +64,7 @@ public class MotorIOTalonFX implements MotorIO {
     protected final StatusSignal<Angle> position;
     protected final StatusSignal<AngularVelocity> velocity;
     protected final StatusSignal<Voltage> supplyVoltage;
+    protected final StatusSignal<Voltage> appliedVoltage;
     protected final StatusSignal<Current> supplyCurrent;
     protected final StatusSignal<Current> torqueCurrent;
     protected final StatusSignal<Temperature> temperature;
@@ -178,6 +179,7 @@ public class MotorIOTalonFX implements MotorIO {
         position = motor.getPosition();
         velocity = motor.getVelocity();
         supplyVoltage = motor.getSupplyVoltage();
+        appliedVoltage = motor.getMotorVoltage();
         supplyCurrent = motor.getSupplyCurrent();
         torqueCurrent = motor.getTorqueCurrent();
         temperature = motor.getDeviceTemp();
@@ -302,7 +304,8 @@ public class MotorIOTalonFX implements MotorIO {
 
         inputs.position = position.getValue();
         inputs.velocity = velocity.getValue();
-        inputs.appliedVoltage = supplyVoltage.getValue();
+        inputs.supplyVoltage = supplyVoltage.getValue();
+        inputs.appliedVoltage = appliedVoltage.getValue();
         inputs.supplyCurrent = supplyCurrent.getValue();
         inputs.torqueCurrent = torqueCurrent.getValue();
         inputs.temperature = temperature.getValue();

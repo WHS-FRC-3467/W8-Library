@@ -74,6 +74,9 @@ public interface MotorIO extends AutoCloseable {
         /** Mechanism velocity. */
         public AngularVelocity velocity = RadiansPerSecond.of(0.0);
 
+        /** Motor supply (bus) voltage. */
+        public Voltage supplyVoltage = Volts.of(0.0);
+
         /** Voltage applied to the motor. */
         public Voltage appliedVoltage = Volts.of(0.0);
 
