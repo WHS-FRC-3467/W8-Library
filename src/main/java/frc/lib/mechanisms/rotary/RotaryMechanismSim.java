@@ -8,10 +8,13 @@ import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotController;
@@ -32,6 +35,7 @@ public class RotaryMechanismSim extends RotaryMechanism<MotorIOSim, AbsoluteEnco
     private final SingleJointedArmSim sim;
 
     private Time lastTime = RobotController.getMeasureTime();
+    private AngularVelocity lastVelocity = RadiansPerSecond.zero();
 
     public RotaryMechanismSim(
             String name,
@@ -69,11 +73,22 @@ public class RotaryMechanismSim extends RotaryMechanism<MotorIOSim, AbsoluteEnco
         RoboRioSim.setVInVoltage(
                 BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
 
+        AngularVelocity currentVelocity = RadiansPerSecond.of(sim.getVelocityRadPerSec());
+        AngularAcceleration currentAcceleration;
+
+        if (deltaTime > 0) {
+            currentAcceleration = currentVelocity.minus(lastVelocity).div(Seconds.of(deltaTime));
+        }
+        else {
+            currentAcceleration = RadiansPerSecondPerSecond.zero();
+        }
+
         lastTime = currentTime;
+        lastVelocity = currentVelocity; 
 
         io.setMechanismPosition(Radians.of(sim.getAngleRads()));
-        io.setMechanismVelocity(
-                RadiansPerSecond.of(sim.getVelocityRadPerSec()));
+        io.setMechanismVelocity(currentVelocity);
+        io.setMechanismAcceleration(currentAcceleration);
 
         absoluteEncoder.ifPresent(
                 encoderSim -> {
