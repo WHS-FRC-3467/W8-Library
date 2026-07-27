@@ -16,7 +16,7 @@
 package frc.lib.io.motor;
 
 import static edu.wpi.first.units.Units.Rotations;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond; 
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -85,6 +85,9 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
 
     @Override
     public void updateInputs(MotorInputs inputs) {
+        Voltage supplyVoltage = Volts.of(RobotController.getBatteryVoltage()); 
+        simState.setSupplyVoltage(supplyVoltage.in(Volts));
+
         inputs.connected =
                 BaseStatusSignal.refreshAll(
                                 super.position,
@@ -98,10 +101,6 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
                                 super.closedLoopReference,
                                 super.closedLoopReferenceSlope)
                         .isOK();
-
-        Voltage supplyVoltage = Volts.of(RobotController.getBatteryVoltage());
-         
-        simState.setSupplyVoltage(supplyVoltage.in(Volts));
 
         inputs.position = super.position.getValue();
         inputs.velocity = super.velocity.getValue();

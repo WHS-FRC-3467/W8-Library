@@ -15,6 +15,7 @@
 
 package frc.lib.mechanisms.linear;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
@@ -31,11 +32,10 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
-import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 
 import frc.lib.io.motor.MotorIOSim;
+import frc.lib.util.BatterySimCurrentAccumulator;
 
 /**
  * A simulated implementation of the LinearMechanism interface that uses ElevatorSim to simulate the
@@ -100,8 +100,7 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
         // For accurate physics at arbitrary angles, consider using a custom LinearSystemSim.
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        RoboRioSim.setVInVoltage(
-                BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
+        BatterySimCurrentAccumulator.addCurrentLoad(Amps.of(sim.getCurrentDrawAmps()));
 
         AngularVelocity currentVelocity = toAngle(Meters.of(sim.getVelocityMetersPerSecond())).per(Seconds);
         AngularAcceleration currentAcceleration;

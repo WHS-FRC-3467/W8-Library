@@ -77,7 +77,7 @@ public interface MotorIO extends AutoCloseable {
         /** Motor supply (bus) voltage. */
         public Voltage supplyVoltage = Volts.of(0.0);
 
-        /** Voltage applied to the motor. */
+        /** Motor applied (output) voltage. */
         public Voltage appliedVoltage = Volts.of(0.0);
 
         /** Total supply current to the motor. */
