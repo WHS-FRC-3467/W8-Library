@@ -40,10 +40,11 @@ public class AbsoluteEncoderIOCANCoderSim extends AbsoluteEncoderIOCANCoder
      *
      * @param id CAN device identifier (ID and bus name)
      * @param configuration CANcoder configuration including magnet offset and sensor direction
-     * @param encoderToMechanismRatio Returns the ratio of measured encoder rotations to mechanism rotations. 1.0 means the encoder is mounted directly onto the output shaft of the mechanism. 
+     * @param encoderToMechanismRatio Returns the ratio of measured encoder rotations to mechanism rotations. 
+     * 1.0 means the encoder is mounted directly onto the output shaft of the mechanism. 
      */
-    public AbsoluteEncoderIOCANCoderSim(CAN id, CANcoderConfiguration configuration, double sensorToMechanismRatio) {
-        super(id, configuration, sensorToMechanismRatio);
+    public AbsoluteEncoderIOCANCoderSim(CAN id, CANcoderConfiguration configuration, double encoderToMechanismRatio) {
+        super(id, configuration, encoderToMechanismRatio);
         simState = CANCoder.getSimState();
     }
 

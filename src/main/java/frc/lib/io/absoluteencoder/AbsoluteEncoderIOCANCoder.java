@@ -54,7 +54,8 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
      *
      * @param id CAN device identifier (ID and bus name)
      * @param configuration CANcoder configuration including magnet offset and sensor direction
-     * @param encoderToMechanismRatio Ratio of sensor rotations to mechanism rotations. 1.0 means the encoder is mounted directly onto the output shaft of the mechanism.
+     * @param encoderToMechanismRatio Ratio of sensor rotations to mechanism rotations. 
+     * 1.0 means the encoder is mounted directly onto the output shaft of the mechanism.
      */
     public AbsoluteEncoderIOCANCoder(Device.CAN id, CANcoderConfiguration configuration, double encoderToMechanismRatio) {
         CANCoder = new CANcoder(id.id(), new CANBus(id.bus()));
@@ -88,7 +89,8 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
     }
 
     /**
-     * Returns the ratio of measured encoder rotations to mechanism rotations. 1.0 means the encoder is mounted directly onto the output shaft of the mechanism. 
+     * Returns the ratio of measured encoder rotations to mechanism rotations. 
+     * 1.0 means the encoder is mounted directly onto the output shaft of the mechanism. 
      * 
      * @return Returns the ratio of measured encoder rotations to mechanism rotations
      */
