@@ -32,6 +32,7 @@ import com.ctre.phoenix6.signals.MotorAlignmentValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -45,6 +46,8 @@ import frc.lib.util.CANUpdateThread;
 import frc.lib.util.Device;
 import frc.lib.util.PID;
 
+import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -96,6 +99,7 @@ public class MotorIOTalonFX implements MotorIO {
     protected volatile AngularVelocity goalVelocity = RotationsPerSecond.zero();
     private final double rotorToSensorRatio;
     private final double sensorToMechanismRatio;
+    private final OptionalDouble motorTorqueConstant;
 
     // Caches for last-applied Motion Magic parameters (NaN = never applied)
     private double lastAppliedMmCruiseVelocity = Double.NaN;
@@ -104,15 +108,46 @@ public class MotorIOTalonFX implements MotorIO {
     private double lastRequestedMmAcceleration = Double.NaN;
 
     /**
-     * Constructs and initializes a TalonFX motor.
+     * Constructs and initializes a real TalonFX motor without a motor model, 
+     * thereby disabling certain diagnostics afforded by {@link frc.lib.util.PowerProfiler}.
      *
      * @param name The name of the motor(s)
      * @param config Configuration to apply to the motor(s)
      * @param main CAN ID of the main motor
-     * @param followerData Configuration data for the follower(s)
+     * @param followerData Configuration data for the follower(s), with numMotors = followerLength
+     * + 1
      */
-    public MotorIOTalonFX(
+    public MotorIOTalonFX(String name,
+            TalonFXConfiguration config,
+            Device.CAN main,
+            TalonFXFollower... followerData) {
+                this(name, Optional.empty(), config, main, followerData);
+            }
+    
+    /**
+     * Constructs and initializes a real TalonFX motor with a motor model, 
+     * thereby enabling diagnostics afforded by {@link frc.lib.util.PowerProfiler}.
+     *
+     * @param name The name of the motor(s)
+     * @param motorModel The bare (i.e. unreduced) qty 1 {@link DCMotor} object containing the 
+     * actuator's performance characteristics, often constructed through DCMotor.getX(1).
+     * For example, DCMotor.getKrakenX60Foc(1).
+     * @param config Configuration to apply to the motor(s)
+     * @param main CAN ID of the main motor
+     * @param followerData Configuration data for the follower(s), with numMotors = followerLength
+     * + 1
+     */
+    public MotorIOTalonFX(String name, 
+            DCMotor motorModel,
+            TalonFXConfiguration config,
+            Device.CAN main,
+            TalonFXFollower... followerData) {
+                this(name, Optional.of(motorModel), config, main, followerData);
+    }
+
+    private MotorIOTalonFX(
             String name,
+            Optional<DCMotor> motorModel,
             TalonFXConfiguration config,
             Device.CAN main,
             TalonFXFollower... followerData) {
@@ -123,6 +158,15 @@ public class MotorIOTalonFX implements MotorIO {
         lastAppliedMmAcceleration = config.MotionMagic.MotionMagicAcceleration;
         lastRequestedMmCruiseVelocity = lastAppliedMmCruiseVelocity;
         lastRequestedMmAcceleration = lastAppliedMmAcceleration;
+
+        if (motorModel.isPresent()) {
+            // DCMotor is constructed with numMotors, but the term cancels in the Kt 
+            // calculation such that this value is the single-motor value
+            motorTorqueConstant = OptionalDouble.of(motorModel.get().KtNMPerAmp);
+        }
+        else {
+            motorTorqueConstant = OptionalDouble.empty();
+        }
 
         motor = new TalonFX(main.id(), new CANBus(main.bus()));
         updateThread
@@ -539,6 +583,11 @@ public class MotorIOTalonFX implements MotorIO {
     @Override
     public double getSensorToMechanismRatio() {
         return sensorToMechanismRatio;
+    }
+
+    @Override
+    public OptionalDouble getMotorTorqueConstant() {
+        return motorTorqueConstant;
     }
 
     private void queueMotionMagicConfigUpdate(double cruiseVelocity, double acceleration) {

@@ -44,6 +44,7 @@ import org.littletonrobotics.junction.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalDouble;
 
 /**
  * Abstract base class for all robot mechanisms that use motors. Provides common functionality for
@@ -309,7 +310,7 @@ public abstract class Mechanism<T extends MotorIO> {
     /**
      * Updates the mechanism supply current limit.
      *
-     * @param currentLimit Desired supply current limit.
+     * @param currentLimit Desired supply current limit
      */
     public void setSupplyCurrentLimit(Current currentLimit) {
         io.setSupplyCurrentLimit(currentLimit);
@@ -319,7 +320,7 @@ public abstract class Mechanism<T extends MotorIO> {
      * For example, if you call MotorIOTalonFX.setEncoderPosition(Rotations.of(0.0)), the motor's 
      * internal encoder will read the current mechanism position as zero.
      * 
-     * @param position The new encoder reading for the current mechanism position.
+     * @param position The new encoder reading for the current mechanism position
     */
     public void setEncoderPosition(Angle position) {
         io.setEncoderPosition(position);
@@ -335,16 +336,44 @@ public abstract class Mechanism<T extends MotorIO> {
     }
 
     /**
-     * Gets the supply current draw of the mechanism.
+     * Returns the motor torque constant associated with any given motor in the 
+     * motor group, assuming all motors in the group have the same characteristics.
+     * 
+     * @return The motor's torque constant Kt ((N*m)/A)
+     */
+    public OptionalDouble getMotorTorqueConstant() {
+        return io.getMotorTorqueConstant();
+    }
+
+    /** 
+     * Return the ratio of rotor rotations to mechanism rotations.
+     * 
+     * @return The ratio of rotor rotations to mechanism rotations
+     */
+    public double getRotorToMechanismRatio() {
+        return io.getRotorToMechanismRatio();
+    }
+
+    /**
+     * Gets the supply current draw of the mechanism's leader motor.
      *
-     * @return The supply current
+     * @return The supply current of the mechanism's leader motor
      */
     public Current getSupplyCurrent() {
         return inputs.supplyCurrent;
     }
 
     /**
-     * Gets the applied voltage draw of the mechanism.
+     * Gets the bus voltage supplied to the mechanism.
+     * 
+     * @return The supply voltage
+     */
+    public Voltage getSupplyVoltage() { 
+        return inputs.supplyVoltage;
+    }
+
+    /**
+     * Gets the output voltage applied to the mechanism.
      *
      * @return The applied voltage
      */
@@ -353,9 +382,9 @@ public abstract class Mechanism<T extends MotorIO> {
     }
 
     /**
-     * Getter for angle of the motor
+     * Gets the mechanism position.
      *
-     * @return Angle of the motor or fused encoder
+     * @return The angle of the mechanism
      */
     public Angle getPosition() {
         return inputs.position;
@@ -371,9 +400,9 @@ public abstract class Mechanism<T extends MotorIO> {
     }
 
     /**
-     * Gets the torque-producing current of the mechanism.
+     * Gets the torque-producing current of the mechanism's leader motor.
      *
-     * @return The torque current
+     * @return The torque current of the mechanism's leader motor
      */
     public Current getTorqueCurrent() {
         return inputs.torqueCurrent;
@@ -382,7 +411,7 @@ public abstract class Mechanism<T extends MotorIO> {
     /**
      * Gets the velocity of the mechanism.
      *
-     * @return The angular velocity
+     * @return The angular velocity of the mechanism
      */
     public AngularVelocity getVelocity() {
         return inputs.velocity;
@@ -398,7 +427,7 @@ public abstract class Mechanism<T extends MotorIO> {
     }
 
     /**
-     * Gets the current velocity setpoint
+     * Gets the current velocity setpoint.
      *
      * @return The velocity setpoint
      */
@@ -408,7 +437,7 @@ public abstract class Mechanism<T extends MotorIO> {
 
     /**
      * Gets the current velocity goal. Equal to {@link Mechanism#getVelocitySetpoint} unless running
-     * Motion Magic
+     * Motion Magic.
      *
      * @return The velocity goal
      */
