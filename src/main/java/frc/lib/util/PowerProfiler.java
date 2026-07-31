@@ -16,11 +16,13 @@ package frc.lib.util;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.NewtonMeters;
+import static edu.wpi.first.units.Units.Newtons;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.Torque;
 import edu.wpi.first.wpilibj.Timer;
 
@@ -46,44 +48,47 @@ public class PowerProfiler {
     public record GenericRegistration(
             String key, DoubleSupplier currentAmpsSupplier, DoubleSupplier suppliedVoltSupplier) {}
 
-    private record MechanicalReport(double bEfficiency, AngularVelocity mSpeed, Torque mTorque, double mEfficiency,
-    AngularVelocity mechSpeed, Torque mechTorque, double mechEfficiency) {}
+    private record MechanicalReport(AngularVelocity mSpeed, Torque mTorque, double mEfficiency,
+    AngularVelocity mechSpeed, Torque mechTorque, Force mechForce) {}
 
     private final List<MechanismRegistration> mechanisms = new ArrayList<>();
     private final List<GenericRegistration> generics = new ArrayList<>();
 
-    // Per loop current draw from battery
+    // Per loop robot-level current draw from battery
     private double totalCurrentAmps = 0.0;
+    // Subsystem & mechanism level currents
     private final Map<String, Double> subsystemCurrents = new HashMap<>();
-    // Per loop power draw from battery
+    // Per loop robot-level power draw from battery
     private double totalPowerWatts = 0.0;
+    // Subsystem & mechanism level powers
     private final Map<String, Double> subsystemPowers = new HashMap<>();
-    // Accumulated energy draw from battery since boot
+    // Accumulated robot-level energy draw from battery since boot
     private double totalEnergyJoules = 0.0;
+    // Subsystem & mechanism level energies
     private final Map<String, Double> subsystemEnergies = new HashMap<>();
 
-    // Per loop bus -> motor efficiency
-    private double busEfficiency = 0.0;
-
-    // Per loop motor speed
+    // Per loop single motor raw rotor speed (i.e. before gear ratio)
     private double motorSpeedRadPerSec = 0.0;
-    private Map<String, Double> motorSpeeds = new HashMap<>();
-    // Per loop motor torque
+    private final Map<String, Double> motorSpeeds = new HashMap<>();
+    // Per loop single motor raw rotor torque (i.e. before gear ratio)
     private double motorTorqueNewtonMeters = 0.0;
-    private Map<String, Double> motorTorques = new HashMap<>();
-    // Per loop motor efficiency
+    private final Map<String, Double> motorTorques = new HashMap<>();
+    // Per loop single motor efficiency (i.e. raw rotor mechanical power 
+    // [before gear ratio] / battery power in)
     private double motorEfficiency = 0.0;
-    private Map<String, Double> motorEfficiencies = new HashMap<>();
+    private final Map<String, Double> motorEfficiencies = new HashMap<>();
 
-    // Per loop mechanism speed
+    // Per loop mechanism speed (after gear ratio)
     private double mechanismSpeedRadPerSec = 0.0;
-    private Map<String, Double> mechanismSpeeds = new HashMap<>();
-    // Per loop mechanism torque
+    private final Map<String, Double> mechanismSpeeds = new HashMap<>();
+    // Per loop mechanism torque (i.e. summation of after gear ratio
+    // torque of each motor in the motor group)
     private double mechanismTorqueNewtonMeters = 0.0;
-    private Map<String, Double> mechanismTorques = new HashMap<>();
-    // Per loop mechanism efficiency
-    private double mechanismEfficiency = 0.0;
-    private Map<String, Double> mechanismEfficiencies = new HashMap<>();
+    private final Map<String, Double> mechanismTorques = new HashMap<>();
+    // Per loop linear force exerted by the mechanism (i.e. summation 
+    // of after gear ratio linear force of each motor in the motor group)
+    private double mechanismForceNewtons = 0.0;
+    private final Map<String, Double> mechanismForces = new HashMap<>();
 
     private boolean isInitialized = false;
     private double lastTimestamp = 0.0;
@@ -92,7 +97,9 @@ public class PowerProfiler {
     private static final double MAX_LOOP_TIME_SECONDS = 0.1;
 
     /**
-     * Register a mechanism to the power profiler (e.g. rotary, linear)
+     * Register a subsystem's mechanism to the power profiler.
+     * For example, "Shooter/Hood", "Shooter/Flywheel", "Intake/Linear".
+     * Not intended to register subsystems, actuators, or general power channels.
      *
      * @param key a key to log under
      * @param mechanism a Mechanism to register
@@ -102,7 +109,9 @@ public class PowerProfiler {
     }
 
     /**
-     * Register a generic power channel to the power profiler (e.g. drive module, arducam)
+     * Register a generic power channel to the power profiler.
+     * For example, "Arducam", "Jetson".
+     * Not intended to register subsystems, actuators, or mechanisms.
      *
      * @param key a key to log under
      * @param currentAmpsSupplier supply current supplier in Amps
@@ -132,10 +141,8 @@ public class PowerProfiler {
             // Approximation: total mechanism supply current ~ leader supply current * total motor
             // count. Bus voltage ~ constant for all motors.
             double currentAmps = Math.abs(mechanism.getSupplyCurrent().in(Amps)) * numMotors;
-            // Power supplied to motor group from battery = supply voltage * current draw
+            // Battery supply voltage to motor controller
             double suppliedVolts = Math.abs(mechanism.getSupplyVoltage().in(Volts));
-            // Power supplied to mechanism from motor group = applied voltage * current draw
-            double appliedVolts = Math.abs(mechanism.getAppliedVoltage().in(Volts));
             // Battery totalizer
             reportElectricalUsage(reg.key(), currentAmps, suppliedVolts, loopTimeSeconds);
 
@@ -144,22 +151,20 @@ public class PowerProfiler {
             boolean valid = Kt.isPresent();
             double sentinel = Double.NaN;
             MechanicalReport mechanicalReport;
-            // Bus
-            busEfficiency = appliedVolts / suppliedVolts;
             // Motor
             motorSpeedRadPerSec = Math.abs(mechanism.getVelocity().times(mechanism.getRotorToMechanismRatio()).in(RadiansPerSecond));
             motorTorqueNewtonMeters = valid ? Math.abs(mechanism.getTorqueCurrent().in(Amps) * Kt.getAsDouble()) : sentinel;
             double motorPower = motorTorqueNewtonMeters * motorSpeedRadPerSec;
-            motorEfficiency = valid ? motorPower / ((currentAmps / numMotors) * appliedVolts) : sentinel;
+            double batteryPower = suppliedVolts * (currentAmps / numMotors);
+            motorEfficiency = valid ? motorPower / batteryPower : sentinel;
             // Mechanism
             mechanismSpeedRadPerSec = Math.abs(mechanism.getVelocity().in(RadiansPerSecond));
             mechanismTorqueNewtonMeters = valid ? motorTorqueNewtonMeters * (mechanism.getRotorToMechanismRatio() * numMotors) : sentinel;
-            double mechanismPower = mechanismTorqueNewtonMeters * mechanismSpeedRadPerSec;
-            mechanismEfficiency = valid ? mechanismPower / (motorPower * numMotors) : sentinel;
+            mechanismForceNewtons = mechanism.hasRadius() ? mechanismTorqueNewtonMeters / mechanism.getRadius() : sentinel;
             // Mechanical totalizer
-            mechanicalReport = new MechanicalReport(busEfficiency, RadiansPerSecond.of(motorSpeedRadPerSec), NewtonMeters.of
+            mechanicalReport = new MechanicalReport(RadiansPerSecond.of(motorSpeedRadPerSec), NewtonMeters.of
             (motorTorqueNewtonMeters), motorEfficiency, RadiansPerSecond.of(mechanismSpeedRadPerSec), NewtonMeters.of
-            (mechanismTorqueNewtonMeters), mechanismEfficiency);
+            (mechanismTorqueNewtonMeters), Newtons.of(mechanismForceNewtons));
             reportMechanicalUsage(reg.key(), mechanicalReport);
         }
 
@@ -185,6 +190,26 @@ public class PowerProfiler {
                     "PowerProfiler/EnergyWattHours/" + entry.getKey(),
                     energyToWattHours(entry.getValue()));
         }
+        for (var entry : motorSpeeds.entrySet()) {
+            Logger.recordOutput(
+                "PowerProfiler/MotorSpeedRPS/" + entry.getKey(), entry.getValue());
+        }
+        for (var entry : motorTorques.entrySet()) {
+            Logger.recordOutput("PowerProfiler/MotorTorquesNM" + entry.getKey(), entry.getValue());
+        }
+        for (var entry : motorEfficiencies.entrySet()) {
+            Logger.recordOutput("PowerProfiler/MotorEfficiencies" + entry.getKey(), entry.getValue());
+        }
+        for (var entry : mechanismSpeeds.entrySet()) {
+            Logger.recordOutput("PowerProfiler/MechanismSpeedsRPS" + entry.getKey(), entry.getValue());
+        }
+        for (var entry : mechanismTorques.entrySet()) {
+            Logger.recordOutput("PowerProfiler/MechanismTorquesNM" + entry.getKey(), entry.getValue());
+        }
+        for (var entry : mechanismForces.entrySet()) {
+            Logger.recordOutput("PowerProfiler/MechanismForcesN" + entry.getKey(), entry.getValue());
+        }
+
         resetLoopTotals();
     }
 
@@ -194,17 +219,17 @@ public class PowerProfiler {
         double batteryPowerWatts = currentAmps * suppliedVolts;
         double batteryEnergyJoules = batteryPowerWatts * loopTimeSeconds;
 
-        // New battery draw totals
+        // New robot-level battery draw totals
         totalCurrentAmps += currentAmps;
         totalPowerWatts += batteryPowerWatts;
         totalEnergyJoules += batteryEnergyJoules;
 
-        // New mechanism (e.g. PowerProfiler/shooter/hood, PowerProfiler/shooter/flywheel) totals
+        // New mechanism (e.g. Shooter/Hood, Shooter/Flywheel) totals
         subsystemCurrents.merge(key, currentAmps, Double::sum);
         subsystemPowers.merge(key, batteryPowerWatts, Double::sum);
         subsystemEnergies.merge(key, batteryEnergyJoules, Double::sum);
 
-        // New robot/subsystem totals (e.g. PowerProfiler/shooter)
+        // New subsystem totals (e.g. Shooter)
         rollUpSubsystemTotals(key, currentAmps, batteryPowerWatts, batteryEnergyJoules);
     }
 
@@ -215,17 +240,19 @@ public class PowerProfiler {
             motorEfficiencies.put(key + suffix, mechanicalReport.mEfficiency());
             mechanismSpeeds.put(key + suffix, mechanicalReport.mechSpeed().in(RotationsPerSecond));
             mechanismTorques.put(key + suffix, mechanicalReport.mechTorque().in(NewtonMeters));
-            mechanismEfficiencies.put(key + suffix, mechanicalReport.mechEfficiency());
+            mechanismForces.put(key + suffix, mechanicalReport.mechForce().in(Newtons));
         }
 
-    // Roll up the subsystem totals from the mechanism level
+    /** Roll up the subsystem totals from the mechanism level keys. For example, this method would sum the
+     * Shooter/Flywheel and Shooter/Hood mechanism-level currents, powers, and energies into the shooter 
+     * subsystem key. Individual mechanism keys are updated in {@link reportElectricalUsage}. */
     private void rollUpSubsystemTotals(
             String key, double currentAmps, double powerWatts, double energyJoules) {
         String[] parts = key.split("/");
         if (parts.length < 2) return; // might need to change to properly register generics
 
         String prefix = "";
-        for (int i = 0; i < parts.length - 1; i++) { // does this want to be parts.length - 2 because we're double counting mechanisms?
+        for (int i = 0; i < parts.length - 1; i++) { 
             prefix = prefix.isEmpty() ? parts[i] : prefix.concat("/").concat(parts[i]);
             subsystemCurrents.merge(prefix, currentAmps, Double::sum);
             subsystemPowers.merge(prefix, powerWatts, Double::sum);
@@ -258,12 +285,21 @@ public class PowerProfiler {
         return Math.min(dt, MAX_LOOP_TIME_SECONDS);
     }
 
-    // Reset loop totals but maintain accumulated values
+    // Reset loop totals (current, power, mechanical) but maintain accumulated values (energy)
     private void resetLoopTotals() {
         totalCurrentAmps = 0.0;
         totalPowerWatts = 0.0;
+
         subsystemCurrents.replaceAll((k, v) -> 0.0);
         subsystemPowers.replaceAll((k, v) -> 0.0);
+
+        motorSpeeds.replaceAll((k, v) -> 0.0);
+        motorTorques.replaceAll((k, v) -> 0.0);
+        motorEfficiencies.replaceAll((k, v) -> 0.0);
+
+        mechanismSpeeds.replaceAll((k, v) -> 0.0);
+        mechanismTorques.replaceAll((k, v) -> 0.0);
+        mechanismForces.replaceAll((k, v) -> 0.0);
     }
 
     // 1 W*h = 1 J/s * h = 1 J/s * 3600 s = 3600 J

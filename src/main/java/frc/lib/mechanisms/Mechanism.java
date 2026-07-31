@@ -354,6 +354,16 @@ public abstract class Mechanism<T extends MotorIO> {
         return io.getRotorToMechanismRatio();
     }
 
+    /** 
+     * Return the radius of the effective radius of the mechanism (meters).
+     * 
+     * @return The configured radius of the mechanism in meters (0.0 = radius not configured).
+     */
+    public double getRadius() {
+        double radius = this.hasRadius() ? this.radiusMeters : 0.0;
+        return radius;
+    }
+
     /**
      * Gets the supply current draw of the mechanism's leader motor.
      *
