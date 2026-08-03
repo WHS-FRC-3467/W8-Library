@@ -129,7 +129,7 @@ public class MotorIOTalonFX implements MotorIO {
      * thereby enabling diagnostics afforded by {@link frc.lib.util.PowerProfiler}.
      *
      * @param name The name of the motor(s)
-     * @param motorModel The bare (i.e. unreduced) qty 1 {@link DCMotor} object containing the 
+     * @param motorModel The bare (i.e. ungeared) qty 1 {@link DCMotor} object containing the 
      * actuator's performance characteristics, often constructed through DCMotor.getX(1).
      * For example, DCMotor.getKrakenX60Foc(1).
      * @param config Configuration to apply to the motor(s)
@@ -160,8 +160,8 @@ public class MotorIOTalonFX implements MotorIO {
         lastRequestedMmAcceleration = lastAppliedMmAcceleration;
 
         if (motorModel.isPresent()) {
-            // DCMotor is constructed with numMotors, but the term cancels in the Kt 
-            // calculation such that this value is the single-motor value
+            // Use the bare, unreduced motor Kt. Motor count and gearing are applied separately
+            // by the profiler using getNumberOfMotors() and getRotorToMechanismRatio()
             motorTorqueConstant = OptionalDouble.of(motorModel.get().KtNMPerAmp);
         }
         else {

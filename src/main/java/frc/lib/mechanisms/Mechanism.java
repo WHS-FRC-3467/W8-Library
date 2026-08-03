@@ -44,6 +44,7 @@ import org.littletonrobotics.junction.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalDouble;
 
 /**
@@ -359,8 +360,8 @@ public abstract class Mechanism<T extends MotorIO> {
      * 
      * @return The configured radius of the mechanism in meters (0.0 = radius not configured).
      */
-    public double getRadius() {
-        double radius = this.hasRadius() ? this.radiusMeters : 0.0;
+    public OptionalDouble getRadius() {
+        OptionalDouble radius = this.hasRadius() ? OptionalDouble.of(this.radiusMeters) : OptionalDouble.empty();
         return radius;
     }
 
