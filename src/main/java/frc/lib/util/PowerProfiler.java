@@ -26,7 +26,6 @@ import edu.wpi.first.units.measure.Force;
 import edu.wpi.first.units.measure.Torque;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
-
 import frc.lib.mechanisms.Mechanism;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -42,8 +41,22 @@ import java.util.OptionalDouble;
 import java.util.function.DoubleSupplier;
 
 /**
- * A power profiling utility used to estimate time-dependent current/power/energy draw from the
- * robot's battery as a function of subsystem and mechanism.
+ * A power profiling utility used to estimate the robot's time-dependent current/power/energy 
+ * draw and output as a function of subsystem, mechanism, motor group, and generic power channel.
+ * 
+ * Core assumptions:
+ * <ol>
+ *  <li>Follower motors draw roughly the same current as the leader.
+ *  <li>All motors in a mechanism have the same motor model / Kt.
+ *  <li>All motors contribute torque in the same mechanism direction.
+ *  <li>Rotor-to-mechanism ratio and Kt are configured correctly. Rotor-to-mechanism
+ *      ratio should be included in the TalonFX configuration and Kt should be included
+ *      through a motor model in the overloaded TalonFX constructor as outlined in the 
+ *      corresponding Javadoc. 
+ *  <li>Supply voltage is approximately common across controllers.
+ *  <li>Mechanism torque is ideal, with no gearbox/belt/chain losses.
+ * </ol>
+ * 
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class PowerProfiler {
@@ -81,7 +94,7 @@ public class PowerProfiler {
     private final Map<String, Double> subsystemEnergies = new HashMap<>();
 
     // Single motor raw rotor speed (i.e. before gear ratio)
-    private double motorGroupSpeedRadPerSec = 0.0;
+    private double motorSpeedRadPerSec = 0.0;
     private final Map<String, Double> motorSpeeds = new HashMap<>();
     // Single motor raw rotor torque (i.e. before gear ratio)
     private double singleMotorTorqueNewtonMeters = 0.0;
@@ -89,7 +102,7 @@ public class PowerProfiler {
     // Single motor efficiency (i.e. raw rotor mechanical power 
     // [before gear ratio] out / battery power in)
     private double batteryToRotorEfficiency = 0.0;
-    private final Map<String, Double> batteryToMotorEfficiencies = new HashMap<>();
+    private final Map<String, Double> batteryToRotorEfficiencies = new HashMap<>();
 
     // Mechanism speed (after gear ratio)
     private double mechanismSpeedRadPerSec = 0.0;
@@ -168,28 +181,32 @@ public class PowerProfiler {
             MechanicalReport mechanicalReport;
 
             // Motor
-            motorGroupSpeedRadPerSec = Math.abs(mechanism.getVelocity().times(mechanism.getRotorToMechanismRatio()).in(RadiansPerSecond));
-            singleMotorTorqueNewtonMeters = valid 
-            ? Math.abs(mechanism.getTorqueCurrent().in(Amps) * Kt.getAsDouble()) 
-            : sentinel;
-            double singleMotorPower = singleMotorTorqueNewtonMeters * motorGroupSpeedRadPerSec;
+            motorSpeedRadPerSec = Math.abs(mechanism.getVelocity().times(mechanism.getRotorToMechanismRatio()).in(RadiansPerSecond));
+            singleMotorTorqueNewtonMeters = 
+                valid 
+                    ? Math.abs(mechanism.getTorqueCurrent().in(Amps) * Kt.getAsDouble()) 
+                    : sentinel;
+            double singleMotorPower = singleMotorTorqueNewtonMeters * motorSpeedRadPerSec;
             double singleMotorBatteryPower = suppliedVolts * (currentAmps / numMotors);
-            batteryToRotorEfficiency = (valid && singleMotorBatteryPower > EPSILON) 
-            ? singleMotorPower / singleMotorBatteryPower 
-            : sentinel;
+            batteryToRotorEfficiency = 
+                valid && singleMotorBatteryPower > EPSILON
+                    ? singleMotorPower / singleMotorBatteryPower 
+                    : sentinel;
 
             // Mechanism
             mechanismSpeedRadPerSec = Math.abs(mechanism.getVelocity().in(RadiansPerSecond));
-            totalMechanismTorqueNewtonMeters = valid 
-            ? singleMotorTorqueNewtonMeters * (mechanism.getRotorToMechanismRatio() * numMotors) 
-            : sentinel;
+            totalMechanismTorqueNewtonMeters = 
+                valid 
+                    ? singleMotorTorqueNewtonMeters * (mechanism.getRotorToMechanismRatio() * numMotors) 
+                    : sentinel;
             OptionalDouble radius = mechanism.getRadius();
-            totalMechanismForceNewtons = (valid && radius.isPresent()) 
-            ? totalMechanismTorqueNewtonMeters / radius.getAsDouble() 
-            : sentinel;
+            totalMechanismForceNewtons = 
+                valid && radius.isPresent()
+                    ? totalMechanismTorqueNewtonMeters / radius.getAsDouble() 
+                    : sentinel;
 
             // Mechanical totalizer
-            mechanicalReport = new MechanicalReport(RadiansPerSecond.of(motorGroupSpeedRadPerSec), NewtonMeters.of
+            mechanicalReport = new MechanicalReport(RadiansPerSecond.of(motorSpeedRadPerSec), NewtonMeters.of
             (singleMotorTorqueNewtonMeters), batteryToRotorEfficiency, RadiansPerSecond.of(mechanismSpeedRadPerSec), NewtonMeters.of
             (totalMechanismTorqueNewtonMeters), Newtons.of(totalMechanismForceNewtons));
             reportMechanicalUsage(reg.key(), mechanicalReport);
@@ -228,19 +245,19 @@ public class PowerProfiler {
                 "PowerProfiler/MotorSpeedRPS/" + entry.getKey(), entry.getValue());
         }
         for (var entry : motorTorques.entrySet()) {
-            Logger.recordOutput("PowerProfiler/MotorTorquesNM/" + entry.getKey(), entry.getValue());
+            Logger.recordOutput("PowerProfiler/MotorTorqueNM/" + entry.getKey(), entry.getValue());
         }
-        for (var entry : batteryToMotorEfficiencies.entrySet()) {
-            Logger.recordOutput("PowerProfiler/MotorEfficiencies/" + entry.getKey(), entry.getValue());
+        for (var entry : batteryToRotorEfficiencies.entrySet()) {
+            Logger.recordOutput("PowerProfiler/BatteryToRotorEfficiency/" + entry.getKey(), entry.getValue());
         }
         for (var entry : mechanismSpeeds.entrySet()) {
-            Logger.recordOutput("PowerProfiler/MechanismSpeedsRPS/" + entry.getKey(), entry.getValue());
+            Logger.recordOutput("PowerProfiler/MechanismSpeedRPS/" + entry.getKey(), entry.getValue());
         }
         for (var entry : totalMechanismTorques.entrySet()) {
-            Logger.recordOutput("PowerProfiler/MechanismTorquesNM/" + entry.getKey(), entry.getValue());
+            Logger.recordOutput("PowerProfiler/MechanismTorqueNM/" + entry.getKey(), entry.getValue());
         }
         for (var entry : totalMechanismForces.entrySet()) {
-            Logger.recordOutput("PowerProfiler/MechanismForcesN/" + entry.getKey(), entry.getValue());
+            Logger.recordOutput("PowerProfiler/MechanismForceN/" + entry.getKey(), entry.getValue());
         }
 
         // Reset loop totals (current, power, mechanical) but maintain accumulated values (energy)
@@ -270,7 +287,7 @@ public class PowerProfiler {
     private void reportMechanicalUsage(String key, MechanicalReport mechanicalReport) {
             motorSpeeds.put(key, mechanicalReport.mSpeed().in(RotationsPerSecond));
             motorTorques.put(key, mechanicalReport.mTorque().in(NewtonMeters));
-            batteryToMotorEfficiencies.put(key, mechanicalReport.mEfficiency());
+            batteryToRotorEfficiencies.put(key, mechanicalReport.mEfficiency());
             mechanismSpeeds.put(key, mechanicalReport.mechSpeed().in(RotationsPerSecond));
             totalMechanismTorques.put(key, mechanicalReport.mechTorque().in(NewtonMeters));
             totalMechanismForces.put(key, mechanicalReport.mechForce().in(Newtons));
@@ -328,7 +345,7 @@ public class PowerProfiler {
 
         motorSpeeds.replaceAll((k, v) -> 0.0);
         motorTorques.replaceAll((k, v) -> 0.0);
-        batteryToMotorEfficiencies.replaceAll((k, v) -> 0.0);
+        batteryToRotorEfficiencies.replaceAll((k, v) -> 0.0);
 
         mechanismSpeeds.replaceAll((k, v) -> 0.0);
         totalMechanismTorques.replaceAll((k, v) -> 0.0);

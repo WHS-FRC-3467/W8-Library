@@ -112,7 +112,7 @@ public class MotorIOTalonFX implements MotorIO {
      * thereby disabling certain diagnostics afforded by {@link frc.lib.util.PowerProfiler}.
      *
      * @param name The name of the motor(s)
-     * @param config Configuration to apply to the motor(s)
+     * @param config Configuration to apply to the motor(s), including the rotor-to-mechanism ratio
      * @param main CAN ID of the main motor
      * @param followerData Configuration data for the follower(s), with numMotors = followerLength
      * + 1
@@ -132,7 +132,7 @@ public class MotorIOTalonFX implements MotorIO {
      * @param motorModel The bare (i.e. ungeared) qty 1 {@link DCMotor} object containing the 
      * actuator's performance characteristics, often constructed through DCMotor.getX(1).
      * For example, DCMotor.getKrakenX60Foc(1).
-     * @param config Configuration to apply to the motor(s)
+     * @param config Configuration to apply to the motor(s), including the rotor-to-mechanism ratio
      * @param main CAN ID of the main motor
      * @param followerData Configuration data for the follower(s), with numMotors = followerLength
      * + 1
