@@ -141,6 +141,7 @@ public class Robot extends LoggedRobot {
             BatterySimCurrentAccumulator.setSimulatedBatteryLoadedVoltage();
         }
 
+        // Update the robot's power profiler
         powerProfiler.periodicAfterScheduler();
 
         // Return to non-RT thread priority (do not modify the first argument)

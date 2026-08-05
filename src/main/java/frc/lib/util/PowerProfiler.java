@@ -141,7 +141,7 @@ public class PowerProfiler {
      *
      * @param key a key to log under
      * @param currentAmpsSupplier supply current supplier in Amps
-     * @param suppliedVoltSupplier supply voltage supplier in Volts
+     * @param suppliedVoltsSupplier supply voltage supplier in Volts
      */
     public void registerGeneric(
             String key, DoubleSupplier currentAmpsSupplier, DoubleSupplier suppliedVoltsSupplier) {
@@ -284,6 +284,9 @@ public class PowerProfiler {
         rollUpSubsystemTotals(key, currentAmps, batteryPowerWatts, batteryEnergyJoules);
     }
 
+    /** Record a mechanism update and tally new mechanism/motor totals -- rolling up keys 
+     * unnecessary because mechanical subsystem values are not required.
+     */
     private void reportMechanicalUsage(String key, MechanicalReport mechanicalReport) {
             motorSpeeds.put(key, mechanicalReport.mSpeed().in(RotationsPerSecond));
             motorTorques.put(key, mechanicalReport.mTorque().in(NewtonMeters));

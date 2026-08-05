@@ -52,6 +52,7 @@ import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggerHelper;
 import frc.lib.util.PID;
+import frc.lib.util.PowerProfiler;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotState;
@@ -683,4 +684,11 @@ public class Drive extends SubsystemBase {
     public Rotation2d getRawGyroAngle() {
         return gyroInputs.yawPosition;
     }
+
+    public void RegisterMechanisms(PowerProfiler powerProfiler) {
+        for (var module : modules) {
+            
+        }
+    }
+
 }

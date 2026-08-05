@@ -46,6 +46,7 @@ import frc.lib.posestimator.PoseEstimator;
 import frc.lib.util.LoggedDashboardChooser;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.PointInPolygon;
+import frc.lib.util.PowerProfiler;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.lib.util.GamePieceVisualizer;
 import frc.robot.Constants.Mode;
@@ -90,6 +91,7 @@ import org.photonvision.simulation.VisionSystemSim;
 @SuppressWarnings("unused")
 public class RobotContainer {
         private final RobotState robotState = RobotState.getInstance();
+        private final PowerProfiler powerProfiler = PowerProfiler.getInstance();
 
         // Subsystems
         public final Drive drive;
@@ -265,5 +267,10 @@ public class RobotContainer {
                 // + PathConstants.STARTING_POSE_ROT_TOLERANCE_DEGREES.in(Degrees) + " degrees",
                 // false);
 
+        }
+
+        /** Register all of the subsystems' mecahanisms and generic power channels.  */
+        private void registerMechanismsAndGenerics() {
+            
         }
 }

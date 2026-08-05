@@ -39,7 +39,7 @@ public final class BatterySimCurrentAccumulator {
     /** Set the simulated battery's loaded supply voltage by utilizing the total current load accumulated through {@link #addCurrentLoad}
      * calls within each existing mechanism subclass periodic. Uses {@link RoboRioSim#setVInVoltage(double)} to set the simulated battery 
      * voltage, which can then be retrieved with the {@link edu.wpi.first.wpilibj.RobotController#getBatteryVoltage()} method. This function 
-     * assumes a nominal voltage of 12V and a resistance of 20 milliohms (0.020 ohms)
+     * assumes a nominal voltage of 12V and a resistance of 20 milliohms (0.020 ohms).
      */
     public static void setSimulatedBatteryLoadedVoltage() {
         RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(simCurrentSum.in(Amps)));

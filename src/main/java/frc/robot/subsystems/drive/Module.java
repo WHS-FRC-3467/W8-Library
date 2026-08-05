@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 
 import frc.lib.util.PID;
+import frc.lib.util.PowerProfiler;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -221,4 +222,9 @@ public class Module {
     public void setTurnPID(PID pid) {
         io.setTurnPID(pid);
     }
+
+    // public void registerMechanisms(String key, PowerProfiler powerProfiler) {
+    //     powerProfiler.registerGeneric(key, () -> inputs.driveCurrentAmps, () -> inputs.driveAppliedVolts);
+    //     powerProfiler.registerGeneric(key, () -> inputs.turnCurrentAmps, () -> inputs.turnAppliedVolts);
+    // }
 }
