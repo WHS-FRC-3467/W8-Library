@@ -83,12 +83,12 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
         // Angular displacement kinematic equation (trapezoidal integration of theta)
         AngularVelocity currentVelocity = sim.getAngularVelocity();
         Angle positionChange =
-                    (lastVelocity.plus(currentVelocity).times(Seconds.of(deltaTime))).times(0.5);
+                (lastVelocity.plus(currentVelocity).times(Seconds.of(deltaTime))).times(0.5);
 
         lastTime = currentTime;
         simPosition = simPosition.plus(positionChange);
         lastVelocity = currentVelocity;
-        
+
         io.setMechanismPosition(simPosition);
         io.setMechanismVelocity(currentVelocity);
         io.setMechanismAcceleration(sim.getAngularAcceleration());
@@ -101,5 +101,10 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
         } else {
             visualizer.setColor(Color.kBlack);
         }
+    }
+
+    @Override
+    public void setEncoderPosition(Angle position) {
+        simPosition = position;
     }
 }

@@ -14,6 +14,7 @@ import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.MomentOfInertia;
@@ -77,13 +78,12 @@ public class RotaryMechanismSim extends RotaryMechanism<MotorIOSim, AbsoluteEnco
 
         if (deltaTime > 0) {
             currentAcceleration = currentVelocity.minus(lastVelocity).div(Seconds.of(deltaTime));
-        }
-        else {
+        } else {
             currentAcceleration = RadiansPerSecondPerSecond.zero();
         }
 
         lastTime = currentTime;
-        lastVelocity = currentVelocity; 
+        lastVelocity = currentVelocity;
 
         io.setMechanismPosition(Radians.of(sim.getAngleRads()));
         io.setMechanismVelocity(currentVelocity);
@@ -91,10 +91,14 @@ public class RotaryMechanismSim extends RotaryMechanism<MotorIOSim, AbsoluteEnco
 
         absoluteEncoder.ifPresent(
                 encoderSim -> {
-                    encoderSim.setMechanismAngle(
-                            Radians.of(sim.getAngleRads()));
+                    encoderSim.setMechanismAngle(Radians.of(sim.getAngleRads()));
                 });
 
         super.periodic();
+    }
+
+    @Override
+    public void setEncoderPosition(Angle position) {
+        sim.setState(position.in(Radians), sim.getVelocityRadPerSec());
     }
 }

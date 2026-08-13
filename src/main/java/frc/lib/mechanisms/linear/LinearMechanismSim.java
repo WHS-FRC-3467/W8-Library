@@ -18,7 +18,6 @@ package frc.lib.mechanisms.linear;
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
@@ -28,7 +27,6 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotController;
@@ -102,12 +100,12 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
         sim.update(deltaTime);
         BatterySimCurrentAccumulator.addCurrentLoad(Amps.of(sim.getCurrentDrawAmps()));
 
-        AngularVelocity currentVelocity = toAngle(Meters.of(sim.getVelocityMetersPerSecond())).per(Seconds);
+        AngularVelocity currentVelocity =
+                toAngle(Meters.of(sim.getVelocityMetersPerSecond())).per(Seconds);
         AngularAcceleration currentAcceleration;
         if (deltaTime > 0) {
             currentAcceleration = currentVelocity.minus(lastVelocity).div(Seconds.of(deltaTime));
-        }
-        else {
+        } else {
             currentAcceleration = RadiansPerSecondPerSecond.zero();
         }
 
@@ -121,14 +119,8 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
         super.periodic();
     }
 
-    /** Commands a linear elevator position and velocity in sim given a drum angle and linear carriage speed. 
-     * Limited to be within the characteristic minimum and maximum heights of the mechanism.
-     *  
-     * @param position The desired drum angle position
-     * @param velocity The desired linear carriage speed
-     * 
-     */
-    public void setSimState(Angle position, LinearVelocity velocity) {
-        sim.setState(toDistance(position).in(Meters), velocity.in(MetersPerSecond));
+    @Override
+    public void setEncoderPosition(Angle position) {
+        sim.setState(toDistance(position).in(Meters), sim.getVelocityMetersPerSecond());
     }
 }
