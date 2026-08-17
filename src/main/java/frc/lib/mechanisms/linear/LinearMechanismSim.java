@@ -15,21 +15,25 @@
 
 package frc.lib.mechanisms.linear;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
-import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 
 import frc.lib.io.motor.MotorIOSim;
+import frc.lib.util.BatterySimCurrentAccumulator;
 
 /**
  * A simulated implementation of the LinearMechanism interface that uses ElevatorSim to simulate the
@@ -40,6 +44,7 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
     private final ElevatorSim sim;
 
     private Time lastTime = RobotController.getMeasureTime();
+    private AngularVelocity lastVelocity = RadiansPerSecond.zero();
 
     /**
      * Creates a new LinearMechanismSim.
@@ -93,22 +98,29 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
         // For accurate physics at arbitrary angles, consider using a custom LinearSystemSim.
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        RoboRioSim.setVInVoltage(
-                BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
+        BatterySimCurrentAccumulator.addCurrentLoad(Amps.of(sim.getCurrentDrawAmps()));
+
+        AngularVelocity currentVelocity =
+                toAngle(Meters.of(sim.getVelocityMetersPerSecond())).per(Seconds);
+        AngularAcceleration currentAcceleration;
+        if (deltaTime > 0) {
+            currentAcceleration = currentVelocity.minus(lastVelocity).div(Seconds.of(deltaTime));
+        } else {
+            currentAcceleration = RadiansPerSecondPerSecond.zero();
+        }
 
         lastTime = currentTime;
+        lastVelocity = currentVelocity;
 
-        io.setPosition(toAngle(Meters.of(sim.getPositionMeters())));
-        io.setRotorVelocity(
-                toAngle(Meters.of(sim.getVelocityMetersPerSecond()))
-                        .per(Seconds)
-                        .times(io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()));
+        io.setMechanismPosition(toAngle(Meters.of(sim.getPositionMeters())));
+        io.setMechanismVelocity(currentVelocity);
+        io.setMechanismAcceleration(currentAcceleration);
 
         super.periodic();
     }
 
     @Override
     public void setEncoderPosition(Angle position) {
-        sim.setState(toDistance(position).in(Meters), 0);
+        sim.setState(toDistance(position).in(Meters), sim.getVelocityMetersPerSecond());
     }
 }

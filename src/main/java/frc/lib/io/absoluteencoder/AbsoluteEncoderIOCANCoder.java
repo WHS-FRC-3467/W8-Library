@@ -42,17 +42,22 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
 
     protected final CANcoder CANCoder;
 
+    /** Measured angle in encoder-space. 0 <= r < 1 with r in rotations. */
     private final StatusSignal<Angle> angle;
 
     private final CANUpdateThread updateThread = new CANUpdateThread();
+
+    private final double encoderToMechanismRatio;
 
     /**
      * Constructs a CANcoder interface with the specified configuration.
      *
      * @param id CAN device identifier (ID and bus name)
      * @param configuration CANcoder configuration including magnet offset and sensor direction
+     * @param encoderToMechanismRatio Ratio of sensor rotations to mechanism rotations. 
+     * 1.0 means the encoder is mounted directly onto the output shaft of the mechanism.
      */
-    public AbsoluteEncoderIOCANCoder(Device.CAN id, CANcoderConfiguration configuration) {
+    public AbsoluteEncoderIOCANCoder(Device.CAN id, CANcoderConfiguration configuration, double encoderToMechanismRatio) {
         CANCoder = new CANcoder(id.id(), new CANBus(id.bus()));
 
         updateThread
@@ -62,6 +67,8 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
                             LOGGER.log(Level.SEVERE, ex.toString(), ex);
                             return null;
                         });
+
+        this.encoderToMechanismRatio = encoderToMechanismRatio;
 
         angle = CANCoder.getAbsolutePosition();
 
@@ -77,8 +84,19 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
     @Override
     public void updateInputs(AbsoluteEncoderInputs inputs) {
         inputs.connected = BaseStatusSignal.refreshAll(angle).isOK();
+        
+        inputs.angle = angle.getValue().div(encoderToMechanismRatio);
+    }
 
-        inputs.angle = angle.getValue();
+    /**
+     * Returns the ratio of measured encoder rotations to mechanism rotations. 
+     * 1.0 means the encoder is mounted directly onto the output shaft of the mechanism. 
+     * 
+     * @return Returns the ratio of measured encoder rotations to mechanism rotations
+     */
+    @Override
+    public double getEncoderToMechanismRatio() {
+        return encoderToMechanismRatio;
     }
 
     @Override

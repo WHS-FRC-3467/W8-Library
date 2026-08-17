@@ -21,44 +21,26 @@ import edu.wpi.first.units.measure.AngularVelocity;
 
 public interface MotorIOSim extends MotorIO {
     /**
-     * Setter for the simulated mechanism position, typically taken from a WPILib mechanism
+     * Setter for the position of the mechanism associated with this motor group, typically taken from a WPILib mechanism
      * simulation
      *
-     * @param position The new mechanism position
+     * @param position The new mechanism position (in mechanism-space)
      */
-    public default void setPosition(Angle position) {}
+    public default void setMechanismPosition(Angle position) {}
 
     /**
-     * Setter for the simulated mechanism velocity, typically taken from a WPILib mechanism
+     * Setter for the velocity of the mechanism associated with this motor group, typically taken from a WPILib mechanism
      * simulation
      *
-     * @param velocity The new mechanism velocity
+     * @param velocity The new mechanism velocity (in mechanism-space)
      */
-    public default void setRotorVelocity(AngularVelocity velocity) {}
+    public default void setMechanismVelocity(AngularVelocity velocity) {}
 
     /**
-     * Setter for the simulated mechanism acceleration, typically taken from a WPILib mechanism
+     * Setter for the acceleration of the mechanism associated with this motor group, typically taken from a WPILib mechanism
      * simulation
      *
-     * @param acceleration The new mechanism acceleration
+     * @param acceleration The new mechanism acceleration (in mechanism-space)
      */
-    public default void setRotorAcceleration(AngularAcceleration acceleration) {}
-
-    /**
-     * Getter for the gear ratio to the sensor
-     *
-     * @return The gear ratio to the sensor
-     */
-    public default double getRotorToSensorRatio() {
-        return 0.0;
-    }
-
-    /**
-     * Getter for the gear ratio from the sensor to the mechanism
-     *
-     * @return The gear ratio from the sensor to the mechanism
-     */
-    public default double getSensorToMechanismRatio() {
-        return 0.0;
-    }
+    public default void setMechanismAcceleration(AngularAcceleration acceleration) {}
 }
