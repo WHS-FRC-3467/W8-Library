@@ -109,7 +109,8 @@ public class DriveConstants {
 
     // These are only used for simulation
     private static final MomentOfInertia kSteerInertia = KilogramSquareMeters.of(0.004);
-    private static final MomentOfInertia kDriveInertia = KilogramSquareMeters.of(0.025);
+    private static final MomentOfInertia kDriveInertia = calculateDriveTrainInertia();
+    private static final Mass kWheelMass = Kilograms.of(0.25);
     // Simulated voltage necessary to overcome friction
     private static final Voltage kSteerFrictionVoltage = Volts.of(0.2);
     private static final Voltage kDriveFrictionVoltage = Volts.of(0.2);
@@ -379,6 +380,21 @@ public class DriveConstants {
             default:
                 throw new IllegalStateException("Unrecognized Robot Mode");
         }
+    }
+
+    /** Contains a simple model for simulated drivetrain inertia and returns the result. */
+    private static MomentOfInertia calculateDriveTrainInertia() {
+        // MOI of solid center-driven wheel
+        MomentOfInertia wheelInertia = KilogramSquareMeters.of(0.5 * kWheelMass.in(Kilograms) * Math.pow(kWheelRadius.in(Meters),2));
+        /** 
+         * MOI of robot "point load"
+         * 
+         * F_traction = m_eff_robo * a_robo & a_robo = alpha_wheel * r, so F_traction = m_eff_robo * alpha_wheel * r. 
+         * but t_wheel = F_traction * r, so t_wheel = (m_eff_robo * r^2) * alpha ~ J_robo * alpha w/ m_eff_robo = m_total_robo / 4.
+         */
+        MomentOfInertia robotInertia = KilogramSquareMeters.of(Constants.FULL_ROBOT_MASS.in(Kilograms) / 4.0 * Math.pow(kWheelRadius.in(Meters), 2));
+        // MOI's referencing same axis of rotation are additive 
+        return wheelInertia.plus(robotInertia);
     }
 
     /**
