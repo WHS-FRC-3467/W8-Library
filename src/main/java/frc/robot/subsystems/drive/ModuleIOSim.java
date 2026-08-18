@@ -44,7 +44,7 @@ public class ModuleIOSim implements ModuleIO {
     private static final double TURN_KP = 8.0;
     private static final double TURN_KD = 0.0;
     /** 
-    * DC motor models (qty 1 ea) for the drive and turn motor simulations. 
+    * Bare, unreduced DC motor models for the drive and turn motor simulations (qty 1 ea). 
     * The gear ratio is not applied to these models; it is instead applied in the 
     * {@link LinearSystemId#createDCMotorSystem(DCMotor, double, double)} call. 
     */
@@ -55,8 +55,7 @@ public class ModuleIOSim implements ModuleIO {
     private final DCMotorSim driveSim;
     private final DCMotorSim turnSim;
     // Feedforward V per (rad/s) of wheel shaft; derived from motor Kv and gear
-    // ratio
-    // so the simulation converges to the exact commanded velocity with no
+    // ratio so the simulation converges to the exact commanded velocity with no
     // steady-state error.
     private final double driveKv;
 

@@ -17,9 +17,11 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Kilograms;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -53,5 +55,6 @@ public final class Constants {
 
     public static final Distance FULL_ROBOT_WIDTH = Inches.of(27.0 + 3.25);
     public static final Distance FULL_ROBOT_LENGTH = Inches.of(27.0 + 3.25);
+    public static final Mass FULL_ROBOT_MASS = Kilograms.of(65.0);
     public static final Distance BUMPER_HEIGHT = Inches.of(4.0);
 }
