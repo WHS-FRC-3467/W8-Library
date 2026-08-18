@@ -64,6 +64,7 @@ public class MotorIOTalonFX implements MotorIO {
     protected final StatusSignal<Angle> position;
     protected final StatusSignal<AngularVelocity> velocity;
     protected final StatusSignal<Voltage> supplyVoltage;
+    protected final StatusSignal<Voltage> appliedVoltage;
     protected final StatusSignal<Current> supplyCurrent;
     protected final StatusSignal<Current> torqueCurrent;
     protected final StatusSignal<Temperature> temperature;
@@ -93,6 +94,8 @@ public class MotorIOTalonFX implements MotorIO {
     private volatile TalonFXConfiguration currentConfig;
     protected volatile Angle goalPosition = Rotations.of(0.0);
     protected volatile AngularVelocity goalVelocity = RotationsPerSecond.zero();
+    private final double rotorToSensorRatio;
+    private final double sensorToMechanismRatio;
 
     // Caches for last-applied Motion Magic parameters (NaN = never applied)
     private double lastAppliedMmCruiseVelocity = Double.NaN;
@@ -114,6 +117,8 @@ public class MotorIOTalonFX implements MotorIO {
             Device.CAN main,
             TalonFXFollower... followerData) {
         currentConfig = config;
+        rotorToSensorRatio = config.Feedback.RotorToSensorRatio;
+        sensorToMechanismRatio = config.Feedback.SensorToMechanismRatio;
         lastAppliedMmCruiseVelocity = config.MotionMagic.MotionMagicCruiseVelocity;
         lastAppliedMmAcceleration = config.MotionMagic.MotionMagicAcceleration;
         lastRequestedMmCruiseVelocity = lastAppliedMmCruiseVelocity;
@@ -174,6 +179,7 @@ public class MotorIOTalonFX implements MotorIO {
         position = motor.getPosition();
         velocity = motor.getVelocity();
         supplyVoltage = motor.getSupplyVoltage();
+        appliedVoltage = motor.getMotorVoltage();
         supplyCurrent = motor.getSupplyCurrent();
         torqueCurrent = motor.getTorqueCurrent();
         temperature = motor.getDeviceTemp();
@@ -189,6 +195,7 @@ public class MotorIOTalonFX implements MotorIO {
                                         position,
                                         velocity,
                                         supplyVoltage,
+                                        appliedVoltage,
                                         supplyCurrent,
                                         torqueCurrent,
                                         temperature,
@@ -282,6 +289,7 @@ public class MotorIOTalonFX implements MotorIO {
                                 position,
                                 velocity,
                                 supplyVoltage,
+                                appliedVoltage,
                                 supplyCurrent,
                                 torqueCurrent,
                                 temperature,
@@ -298,7 +306,8 @@ public class MotorIOTalonFX implements MotorIO {
 
         inputs.position = position.getValue();
         inputs.velocity = velocity.getValue();
-        inputs.appliedVoltage = supplyVoltage.getValue();
+        inputs.supplyVoltage = supplyVoltage.getValue();
+        inputs.appliedVoltage = appliedVoltage.getValue();
         inputs.supplyCurrent = supplyCurrent.getValue();
         inputs.torqueCurrent = torqueCurrent.getValue();
         inputs.temperature = temperature.getValue();
@@ -475,6 +484,12 @@ public class MotorIOTalonFX implements MotorIO {
         motor.setControl(mmVelocityControl.withVelocity(velocity).withSlot(slot.getNum()));
     }
 
+    /** Sets the motor's internal encoder to interpret the current mechanism position as "position". 
+     * For example, if you call MotorIOTalonFX.setEncoderPosition(Rotations.of(0.0)), the motor's 
+     * internal encoder will read the current mechanism position as zero.
+     * 
+     * @param position The new encoder reading for the current mechanism position.
+    */
     @Override
     public void setEncoderPosition(Angle position) {
         motor.setPosition(position);
@@ -514,6 +529,16 @@ public class MotorIOTalonFX implements MotorIO {
     @Override
     public int getNumberOfMotors() {
         return followers.length + 1;
+    }
+
+    @Override
+    public double getRotorToSensorRatio() {
+        return rotorToSensorRatio;
+    }
+
+    @Override
+    public double getSensorToMechanismRatio() {
+        return sensorToMechanismRatio;
     }
 
     private void queueMotionMagicConfigUpdate(double cruiseVelocity, double acceleration) {

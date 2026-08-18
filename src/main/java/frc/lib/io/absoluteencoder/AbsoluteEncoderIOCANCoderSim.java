@@ -23,13 +23,28 @@ import edu.wpi.first.wpilibj.RobotController;
 
 import frc.lib.util.Device.CAN;
 
+/**
+ * Simulated hardware implementation of AbsoluteEncoderIO using CTRE CANcoder.
+ *
+ * <p>Interfaces with a CTRE CANcoder absolute magnetic encoder over the CAN bus. Provides
+ * high-resolution absolute position sensing for mechanisms like swerve modules, arms, and turrets.
+ * Uses Phoenix 6 API with signal-based updates.
+ */
 public class AbsoluteEncoderIOCANCoderSim extends AbsoluteEncoderIOCANCoder
         implements AbsoluteEncoderIOSim {
 
     private final CANcoderSimState simState;
 
-    public AbsoluteEncoderIOCANCoderSim(CAN id, CANcoderConfiguration configuration) {
-        super(id, configuration);
+    /**
+     * Constructs a CANcoder interface with the specified configuration.
+     *
+     * @param id CAN device identifier (ID and bus name)
+     * @param configuration CANcoder configuration including magnet offset and sensor direction
+     * @param encoderToMechanismRatio Returns the ratio of measured encoder rotations to mechanism rotations. 
+     * 1.0 means the encoder is mounted directly onto the output shaft of the mechanism. 
+     */
+    public AbsoluteEncoderIOCANCoderSim(CAN id, CANcoderConfiguration configuration, double encoderToMechanismRatio) {
+        super(id, configuration, encoderToMechanismRatio);
         simState = CANCoder.getSimState();
     }
 
@@ -39,8 +54,13 @@ public class AbsoluteEncoderIOCANCoderSim extends AbsoluteEncoderIOCANCoder
         super.updateInputs(inputs);
     }
 
+    /**
+     * Setter for the mechanism angle from which the encoder reading is simulated.
+     *
+     * @param angle The mechanism-space angle to simulate an encoder reading for
+     */
     @Override
-    public void setAngle(Angle angle) {
-        simState.setRawPosition(angle);
+    public void setMechanismAngle(Angle angle) {
+        simState.setRawPosition(angle.times(getEncoderToMechanismRatio()));
     }
 }

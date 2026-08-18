@@ -15,8 +15,10 @@
 
 package frc.lib.mechanisms.flywheel;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
@@ -27,12 +29,11 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.util.Color;
 
 import frc.lib.io.motor.MotorIOSim;
+import frc.lib.util.BatterySimCurrentAccumulator;
 
 /**
  * A simulated implementation of the FlywheelMechanism abstract class that uses FlywheelSim to
@@ -44,6 +45,8 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
     private final AngularVelocity tolerance;
 
     private Time lastTime = RobotController.getMeasureTime();
+    private AngularVelocity lastVelocity = RadiansPerSecond.zero();
+    private Angle simPosition = Radians.zero();
 
     public FlywheelMechanismSim(
             String name,
@@ -75,23 +78,20 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        RoboRioSim.setVInVoltage(
-                BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
+        BatterySimCurrentAccumulator.addCurrentLoad(Amps.of(sim.getCurrentDrawAmps()));
+
+        // Angular displacement kinematic equation (trapezoidal integration of theta)
+        AngularVelocity currentVelocity = sim.getAngularVelocity();
+        Angle positionChange =
+                (lastVelocity.plus(currentVelocity).times(Seconds.of(deltaTime))).times(0.5);
 
         lastTime = currentTime;
+        simPosition = simPosition.plus(positionChange);
+        lastVelocity = currentVelocity;
 
-        io.setRotorVelocity(sim.getAngularVelocity());
-        io.setRotorAcceleration(sim.getAngularAcceleration());
-
-        // Angular displacement kinematic equation (θ = ω₀t + (1/2)αt²)'
-        Angle positionChange =
-                Radians.of(
-                        sim.getAngularVelocityRadPerSec() * deltaTime
-                                + 0.5
-                                        * sim.getAngularAccelerationRadPerSecSq()
-                                        * Math.pow(deltaTime, 2));
-
-        io.setPosition(inputs.position.plus(positionChange));
+        io.setMechanismPosition(simPosition);
+        io.setMechanismVelocity(currentVelocity);
+        io.setMechanismAcceleration(sim.getAngularAcceleration());
 
         super.periodic();
 
@@ -101,5 +101,10 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
         } else {
             visualizer.setColor(Color.kBlack);
         }
+    }
+
+    @Override
+    public void setEncoderPosition(Angle position) {
+        simPosition = position;
     }
 }

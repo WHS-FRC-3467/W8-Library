@@ -68,43 +68,46 @@ public interface MotorIO extends AutoCloseable {
         /** Whether the motor is connected. */
         public boolean connected = false;
 
-        /** Motor position. */
+        /** Mechanism position. */
         public Angle position = Radians.of(0.0);
 
-        /** Motor velocity. */
+        /** Mechanism velocity. */
         public AngularVelocity velocity = RadiansPerSecond.of(0.0);
 
-        /** Voltage applied to the motor. */
+        /** Motor supply (bus) voltage. */
+        public Voltage supplyVoltage = Volts.of(0.0);
+
+        /** Motor applied (output) voltage. */
         public Voltage appliedVoltage = Volts.of(0.0);
 
         /** Total supply current to the motor. */
         public Current supplyCurrent = Amps.of(0.0);
 
-        /** Torque-producing current. */
+        /** Torque-producing (stator) current through the motor. */
         public Current torqueCurrent = Amps.of(0.0);
 
         /** Motor temperature in degrees. */
         public Temperature temperature = Celsius.of(0.0);
 
-        /** Error in position */
+        /** Error in mechanism position. */
         public Angle positionError = Rotations.zero();
 
-        /** Error in velocity */
+        /** Error in mechanism velocity. */
         public AngularVelocity velocityError = RotationsPerSecond.zero();
 
-        /** Active trajectory position in rotations */
+        /** Active trajectory mechanism position in rotations */
         public Angle activeTrajectoryPosition = Rotations.zero();
 
-        /** Active trajectory velocity in rotations per second. */
+        /** Active trajectory mechanism velocity in rotations per second. */
         public AngularVelocity activeTrajectoryVelocity = RotationsPerSecond.zero();
 
-        /** Goal position */
+        /** Goal mechanism position. */
         public Angle goalPosition = Rotations.zero();
 
-        /** Goal velocity */
+        /** Goal mechanism velocity. */
         public AngularVelocity goalVelocity = RotationsPerSecond.zero();
 
-        /** Current control type */
+        /** Current control type. */
         public ControlType controlType = ControlType.BRAKE;
     }
 
@@ -213,11 +216,12 @@ public interface MotorIO extends AutoCloseable {
     public default void runVelocity(
             AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot) {}
 
-    /**
-     * Sets the position of the motor's internal encoder
-     *
-     * @param position Desired position to set encoder to
-     */
+    /** Sets the motor's internal encoder to interpret the current mechanism position as "position". 
+     * For example, if you call MotorIO.setEncoderPosition(Rotations.of(0.0)), the motor's internal 
+     * encoder will read the current mechanism position as zero.
+     * 
+     * @param position The new encoder reading for the current mechanism position.
+    */
     public default void setEncoderPosition(Angle position) {}
 
     /**
@@ -242,6 +246,33 @@ public interface MotorIO extends AutoCloseable {
      */
     public default int getNumberOfMotors() {
         return 1;
+    }
+
+    /** 
+     * Return the ratio of rotor rotations to the motor's internal encoder rotations
+     * 
+     * @return The ratio of rotor rotations to motor's internal encoder rotations
+     */
+    public default double getRotorToSensorRatio() {
+        return 1.0;
+    }
+
+    /**  
+     * Return the ratio of the motor's internal encoder rotations to mechanism rotations
+     * 
+     * @return The ratio of the motor's internal encoder rotations to mechanism rotations
+     */
+    public default double getSensorToMechanismRatio() {
+        return 1.0;
+    }
+
+    /** 
+     * Return the ratio of rotor rotations to mechanism rotations
+     * 
+     * @return The ratio of rotor rotations to mechanism rotations
+     */
+    public default double getRotorToMechanismRatio() {
+        return getRotorToSensorRatio() * getSensorToMechanismRatio();
     }
 
     @Override
