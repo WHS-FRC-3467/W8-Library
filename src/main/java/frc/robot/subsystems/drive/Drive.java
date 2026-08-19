@@ -685,10 +685,16 @@ public class Drive extends SubsystemBase {
         return gyroInputs.yawPosition;
     }
 
-    public void RegisterMechanisms(PowerProfiler powerProfiler) {
-        for (var module : modules) {
-            
+    /**
+     * Registers the module's drive and turn current and voltage to the power profiler.
+     * 
+     * @param powerProfiler The power profiler to register the module's current and voltage to
+     */
+    public void RegisterModules(PowerProfiler powerProfiler) {
+        String[] moduleNames = {"FrontLeft", "FrontRight", "BackLeft", "BackRight"};
+        for (int i = 0; i < modules.length; i++) {
+            // FL, FR, BL, BR
+            modules[i].registerModules("DriveBase/" + moduleNames[i], powerProfiler);
         }
     }
-
 }

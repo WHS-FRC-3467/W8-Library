@@ -223,8 +223,14 @@ public class Module {
         io.setTurnPID(pid);
     }
 
-    // public void registerMechanisms(String key, PowerProfiler powerProfiler) {
-    //     powerProfiler.registerGeneric(key, () -> inputs.driveCurrentAmps, () -> inputs.driveAppliedVolts);
-    //     powerProfiler.registerGeneric(key, () -> inputs.turnCurrentAmps, () -> inputs.turnAppliedVolts);
-    // }
+    /**
+     * Registers the module's drive and turn current and voltage to the power profiler.
+     * 
+     * @param key The key to use for the module in the power profiler
+     * @param powerProfiler The power profiler to register the module's current and voltage to
+     */
+    public void registerModules(String key, PowerProfiler powerProfiler) {
+        powerProfiler.registerGeneric(key + "/Drive", () -> inputs.driveSupplyCurrentAmps, () -> inputs.driveSupplyVoltageVolts);
+        powerProfiler.registerGeneric(key + "/Turn", () -> inputs.turnSupplyCurrentAmps, () -> inputs.turnSupplyVoltageVolts);
+    }
 }

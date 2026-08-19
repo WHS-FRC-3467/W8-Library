@@ -44,10 +44,10 @@ import frc.robot.Constants.Mode;
  */
 public class Robot extends LoggedRobot {
     private final RobotState robotState = RobotState.getInstance();
+    private final PowerProfiler powerProfiler = PowerProfiler.getInstance();
 
     private Command autonomousCommand;
     private RobotContainer robotContainer;
-    private final PowerProfiler powerProfiler = PowerProfiler.getInstance();
 
     public Robot() {
         CanBridge.runTCP(); // Used for configuring LaserCANs via Grapplehook

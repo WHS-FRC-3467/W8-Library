@@ -139,6 +139,9 @@ public class RobotContainer {
                 // Configure the button bindings
                 configureButtonBindings();
 
+                // Register robot's mechanisms and generic power channels to the power profiler
+                registerMechanismsAndGenerics();
+
                 GamePieceVisualizer algae = new GamePieceVisualizer("Algae",
                                 new Pose3d(new Translation3d(3, 3, 1), new Rotation3d(0, 0, 0)));
 
@@ -271,6 +274,6 @@ public class RobotContainer {
 
         /** Register all of the subsystems' mecahanisms and generic power channels.  */
         private void registerMechanismsAndGenerics() {
-            
+            drive.RegisterModules(powerProfiler);
         }
 }

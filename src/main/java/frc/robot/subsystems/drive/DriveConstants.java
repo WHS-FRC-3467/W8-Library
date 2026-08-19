@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.*;
 
 import frc.robot.Constants;
 import frc.robot.Ports;
+import lombok.Getter;
 
 /**
  * Configuration constants for the swerve drivetrain.
@@ -72,7 +73,10 @@ public class DriveConstants {
 
     // The stator current at which the wheels start to slip;
     // This needs to be tuned to your individual robot
+    @Getter
     private static final Current kSlipCurrent = Amps.of(94.0);
+    @Getter 
+    private static final Current turnCurrentMax = Amps.of(60.0);
 
     private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration();
     private static final TalonFXConfiguration steerInitialConfigs = new TalonFXConfiguration()
@@ -84,7 +88,7 @@ public class DriveConstants {
                             // low
                             // stator current limit to help avoid brownouts without
                             // impacting performance.
-                            .withStatorCurrentLimit(Amps.of(60))
+                            .withStatorCurrentLimit(turnCurrentMax)
                             .withStatorCurrentLimitEnable(true));
     private static final CANcoderConfiguration encoderInitialConfigs = new CANcoderConfiguration();
     // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs
@@ -108,9 +112,9 @@ public class DriveConstants {
     private static final int kPigeonId = 14;
 
     // These are only used for simulation
-    private static final MomentOfInertia kSteerInertia = KilogramSquareMeters.of(0.004);
-    private static final MomentOfInertia kDriveInertia = calculateDriveTrainInertia();
     private static final Mass kWheelMass = Kilograms.of(0.25);
+    private static final MomentOfInertia kSteerInertia = KilogramSquareMeters.of(0.004);
+    private static final MomentOfInertia kDriveInertia = calculateDriveOutputInertia();
     // Simulated voltage necessary to overcome friction
     private static final Voltage kSteerFrictionVoltage = Volts.of(0.2);
     private static final Voltage kDriveFrictionVoltage = Volts.of(0.2);
@@ -382,18 +386,26 @@ public class DriveConstants {
         }
     }
 
-    /** Contains a simple model for simulated drivetrain inertia and returns the result. */
-    private static MomentOfInertia calculateDriveTrainInertia() {
+    /** 
+     * Returns the approximate output-side inertia seen by one drive motor at the wheel shaft.
+     *       
+     * <p>This includes the wheel's own spin inertia plus the equivalent rotational inertia
+     * needed to accelerate one quarter of the robot mass through the wheel radius:
+     * 
+     * <pre>
+     * a = alpha * r
+     * F = m_eff * a
+     * tau = F * r
+     * tau = m_eff * r^2 * alpha
+     * J_equiv = m_eff * r^2 ~ reflected translational inertia onto the wheel
+     * </pre>
+    */
+    private static MomentOfInertia calculateDriveOutputInertia() {
         // MOI of solid center-driven wheel
-        MomentOfInertia wheelInertia = KilogramSquareMeters.of(0.5 * kWheelMass.in(Kilograms) * Math.pow(kWheelRadius.in(Meters),2));
-        /** 
-         * MOI of robot "point load"
-         * 
-         * F_traction = m_eff_robo * a_robo & a_robo = alpha_wheel * r, so F_traction = m_eff_robo * alpha_wheel * r. 
-         * but t_wheel = F_traction * r, so t_wheel = (m_eff_robo * r^2) * alpha ~ J_robo * alpha w/ m_eff_robo = m_total_robo / 4.
-         */
+        MomentOfInertia wheelInertia = KilogramSquareMeters.of(0.5 * kWheelMass.in(Kilograms) * Math.pow(kWheelRadius.in(Meters), 2));
+        // Equivalent MOI of robot mass seen at wheel shaft (1/4 of robot mass per wheel)
         MomentOfInertia robotInertia = KilogramSquareMeters.of(Constants.FULL_ROBOT_MASS.in(Kilograms) / 4.0 * Math.pow(kWheelRadius.in(Meters), 2));
-        // MOI's referencing same axis of rotation are additive 
+        // MOIs referencing same axis of rotation are additive 
         return wheelInertia.plus(robotInertia);
     }
 

@@ -32,7 +32,7 @@ import frc.lib.util.BatterySimCurrentAccumulator;
 
 /**
  * Physics sim implementation of module IO. The sim models are configured using
- * a set of module onstants from Phoenix. Simulation is always based on voltage 
+ * a set of module constants from Phoenix. Simulation is always based on voltage 
  * control.
  */
 public class ModuleIOSim implements ModuleIO {
@@ -69,7 +69,22 @@ public class ModuleIOSim implements ModuleIO {
 
     public ModuleIOSim(
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
-        // Create drive and turn sim models
+        /* 
+         * Create drive and turn sim models. 
+         * 
+         * DCMotorSim extends LinearSystemSim and together, given a LinearSystem, provide a state space 
+         * model and associated API of a DC motor gearbox which produces mechanism-space positions, velocities, 
+         * accelerations, and torques. LinearSystem provides the state space computation machinery, LinearSystemSim 
+         * provides the update functionality / basic API, and DCMotorSim provides the final simulation API and uses 
+         * the results from the state space model in some additional modeling helpers, including electrical modeling 
+         * through the DCMotor class.
+         * 
+         * Along with mechanism / output load MOI, the system factory expects either:
+         * 
+         * A) bare motor model if actual gearing is passed, or
+         * B) pre-reduced motor model with 1.0 passed into gearing. 
+         *
+         */
         driveSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
                         DRIVE_MOTOR_MODEL, constants.DriveInertia, constants.DriveMotorGearRatio),
@@ -102,12 +117,24 @@ public class ModuleIOSim implements ModuleIO {
             turnController.reset();
         }
 
-        // Update simulation state
-        // Apply controller-commanded clamped voltage to the sim models; values are internally clamped to 
-        // be within the currently available loaded battery supply voltage
+        // Apply controller-commanded voltage to the sim models. The request is first limited
+        // to approximate motor current limits, then DCMotorSim clamps it to the available
+        // battery voltage.
         double supplyVoltageVolts = RobotController.getBatteryVoltage();
-        driveSim.setInputVoltage(driveAppliedVolts);
-        turnSim.setInputVoltage(turnAppliedVolts);
+        double currentLimitedDriveVolts = clampVoltageToCurrentLimit(
+            driveAppliedVolts, 
+            driveSim.getAngularVelocityRadPerSec(),
+            driveSim.getGearing(), 
+            DRIVE_MOTOR_MODEL, 
+            DriveConstants.getKSlipCurrent().in(Amps));
+        driveSim.setInputVoltage(currentLimitedDriveVolts);
+        double currentLimitedTurnVolts = clampVoltageToCurrentLimit(
+            turnAppliedVolts, 
+            turnSim.getAngularVelocityRadPerSec(),
+            turnSim.getGearing(), 
+            TURN_MOTOR_MODEL, 
+            DriveConstants.getTurnCurrentMax().in(Amps));
+        turnSim.setInputVoltage(currentLimitedTurnVolts);
         driveSim.update(0.02);
         turnSim.update(0.02);
         // Update the battery load accumulator with the current draw from both motors
@@ -170,4 +197,43 @@ public class ModuleIOSim implements ModuleIO {
         turnClosedLoop = true;
         turnController.setSetpoint(rotation.getRadians());
     }
+
+    /**
+     * Clamp the requested voltage to the current limit of the motor. If the requested voltage would cause the motor to draw 
+     * more than the current limit, scale it down to meet the limit.
+     * 
+     * @param requestedVolts Applied volts requested by the controller (properly signed)
+     * @param mechanismVelocityRadPerSec Current mechanism-space velocity in rad/s (drive wheel or azimuth yoke) 
+     * (properly signed)
+     * @param gearing Gear ratio from motor to mechanism (drive wheel or azimuth yoke)
+     * @param motor DCMotor model of the motor being simulated (bare, unreduced, qty 1)
+     * @param currentLimitAmps Torque / stator current limit for the motor in amps (positive only)
+     * @return An updated applied voltage request, clamped to the current limit if necessary
+     */
+    private static double clampVoltageToCurrentLimit(
+        double requestedVolts,
+        double mechanismVelocityRadPerSec,
+        double gearing,
+        DCMotor motor,
+        double currentLimitAmps) {
+            double currentLimitMagnitudeAmps = Math.abs(currentLimitAmps);
+            double motorSpeedRadPerSec = mechanismVelocityRadPerSec * gearing; 
+
+            // Estimated torque/stator current from speed and applied voltage. Signed.
+            double requestedMotorCurrentAmps = motor.getCurrent(motorSpeedRadPerSec, requestedVolts);
+
+            if (Math.abs(requestedMotorCurrentAmps) <= currentLimitMagnitudeAmps) {
+                return requestedVolts;
+            }
+
+            // Signed current limit
+            double limitedMotorCurrentAmps = Math.copySign(currentLimitMagnitudeAmps, requestedMotorCurrentAmps);
+
+            // Torque corresponding to the signed current limit
+            double limitedMotorTorqueNm = motor.getTorque(limitedMotorCurrentAmps);
+
+            /* The maximum voltage that can be applied to the motor at the current speed without exceeding the current 
+             * limit. Includes voltage required to overcome back-EMF and provide maxTorqueNm. Signed. */
+            return motor.getVoltage(limitedMotorTorqueNm, motorSpeedRadPerSec);
+        }
 }

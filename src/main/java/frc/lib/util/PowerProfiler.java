@@ -284,8 +284,9 @@ public class PowerProfiler {
         rollUpSubsystemTotals(key, currentAmps, batteryPowerWatts, batteryEnergyJoules);
     }
 
-    /** Record a mechanism update and tally new mechanism/motor totals -- rolling up keys 
-     * unnecessary because mechanical subsystem values are not required.
+    /** 
+     * Record a mechanism update and tally new mechanism/motor totals -- rolling up keys 
+     * is unnecessary because mechanical subsystem values are not required.
      */
     private void reportMechanicalUsage(String key, MechanicalReport mechanicalReport) {
             motorSpeeds.put(key, mechanicalReport.mSpeed().in(RotationsPerSecond));
@@ -296,9 +297,11 @@ public class PowerProfiler {
             totalMechanismForces.put(key, mechanicalReport.mechForce().in(Newtons));
         }
 
-    /** Roll up the subsystem totals from the mechanism level keys. For example, this method would sum the
+    /** 
+     * Roll up the subsystem totals from the mechanism level keys. For example, this method would sum the
      * Shooter/Flywheel and Shooter/Hood mechanism-level currents, powers, and energies into the shooter 
-     * subsystem key. Individual mechanism keys are updated in {@link reportElectricalUsage}. */
+     * subsystem key. Individual mechanism keys are updated in {@link reportElectricalUsage}. 
+     */
     private void rollUpSubsystemTotals(
             String key, double currentAmps, double powerWatts, double energyJoules) {
         String[] parts = key.split("/");
