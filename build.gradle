@@ -117,6 +117,8 @@ jar {
     from('build.gradle') { into 'backup' }
     manifest edu.wpi.first.gradlerio.GradleRIOPlugin.javaManifest(ROBOT_MAIN_CLASS)
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    
 }
 
 // Configure jar and deploy tasks
@@ -126,6 +128,8 @@ wpi.java.configureTestTasks(test)
 
 tasks.withType(JavaCompile) {
     options.compilerArgs.add '-XDstringConcat=inline'
+
+   
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -136,4 +140,15 @@ tasks.withType(JavaCompile).configureEach {
     // Errorprone bug workaround
     options.errorprone.disable("UnusedVariable")
     options.errorprone.disable("Unused")
+}
+
+simulateExternalJavaRelease.configure {
+
+doLast {
+         copy {
+    from '/Users/jkistler28/halsim_lib/target/debug/libhalsim_gui.dylib'
+    into './build/jni/release'
+  
+}
+    }
 }
