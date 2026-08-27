@@ -20,6 +20,8 @@ import static edu.wpi.first.units.Units.Amps;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
+
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -126,14 +128,16 @@ public class ModuleIOSim implements ModuleIO {
             driveSim.getAngularVelocityRadPerSec(),
             driveSim.getGearing(), 
             DRIVE_MOTOR_MODEL, 
-            DriveConstants.getKSlipCurrent().in(Amps));
+            DriveConstants.getKSlipCurrent().in(Amps),
+            supplyVoltageVolts);
         driveSim.setInputVoltage(currentLimitedDriveVolts);
         double currentLimitedTurnVolts = clampVoltageToCurrentLimit(
             turnAppliedVolts, 
             turnSim.getAngularVelocityRadPerSec(),
             turnSim.getGearing(), 
             TURN_MOTOR_MODEL, 
-            DriveConstants.getTurnCurrentMax().in(Amps));
+            DriveConstants.getTurnCurrentMax().in(Amps),
+            supplyVoltageVolts);
         turnSim.setInputVoltage(currentLimitedTurnVolts);
         driveSim.update(0.02);
         turnSim.update(0.02);
@@ -199,15 +203,16 @@ public class ModuleIOSim implements ModuleIO {
     }
 
     /**
-     * Clamp the requested voltage to the current limit of the motor. If the requested voltage would cause the motor to draw 
-     * more than the current limit, scale it down to meet the limit.
+     * Attempt to clamp the requested voltage to the current limit of the motor, if the presently available battery 
+     * voltage allows. Clamps both draining and regenerative currents.
      * 
-     * @param requestedVolts Applied volts requested by the controller (properly signed)
+     * @param requestedVolts Applied volts requested by the controller (with proper sign to indicate polarity)
      * @param mechanismVelocityRadPerSec Current mechanism-space velocity in rad/s (drive wheel or azimuth yoke) 
-     * (properly signed)
+     * (with proper sign to indicate direction)
      * @param gearing Gear ratio from motor to mechanism (drive wheel or azimuth yoke)
      * @param motor DCMotor model of the motor being simulated (bare, unreduced, qty 1)
      * @param currentLimitAmps Torque / stator current limit for the motor in amps (positive only)
+     * @param batteryVoltageVolts The current available battery voltage magnitude, assumed usable bidirectionally
      * @return An updated applied voltage request, clamped to the current limit if necessary
      */
     private static double clampVoltageToCurrentLimit(
@@ -215,25 +220,44 @@ public class ModuleIOSim implements ModuleIO {
         double mechanismVelocityRadPerSec,
         double gearing,
         DCMotor motor,
-        double currentLimitAmps) {
+        double currentLimitAmps,
+        double batteryVoltageVolts) {
+            // Cache
+            double motorSpeedRadPerSec = mechanismVelocityRadPerSec * gearing;
             double currentLimitMagnitudeAmps = Math.abs(currentLimitAmps);
-            double motorSpeedRadPerSec = mechanismVelocityRadPerSec * gearing; 
+            double batteryVoltageMagnitudeVolts = Math.abs(batteryVoltageVolts);
 
-            // Estimated torque/stator current from speed and applied voltage. Signed.
-            double requestedMotorCurrentAmps = motor.getCurrent(motorSpeedRadPerSec, requestedVolts);
+            /* 
+             * Simple current model: I = (V_applied - w / Kv) / R 
+             * Therefore, for | I | <= I_magnitude_limit,
+             * | V_applied - w / Kv | <= I_magnitude_limit * R
+             * -I_magnitude_limit * R <= V_applied - w / Kv <= I_magnitude_limit * R
+             * w / Kv - I_magnitude_limit * R <= V_applied <= I_magnitude_limit * R + w / Kv
+             */
+            double zeroCurrentVolts = motorSpeedRadPerSec / motor.KvRadPerSecPerVolt;
+            double voltageMarginVolts = currentLimitMagnitudeAmps * motor.rOhms;
+            double currentLimitedMinVolts = zeroCurrentVolts - voltageMarginVolts;
+            double currentLimitedMaxVolts = zeroCurrentVolts + voltageMarginVolts;
+            // Similarly, -V_battery <= V_applied <= V_battery.
+            double batteryLimitedMinVolts = -batteryVoltageMagnitudeVolts;
+            double batteryLimitedMaxVolts = batteryVoltageMagnitudeVolts;
+            /*
+             * Therefore, max(w / Kv - I_magnitude_limit * R, - V_battery) <= V_applied 
+             * <= min(I_magnitude_limit * R + w / Kv, V_battery)
+             */
+            double feasibleMinVolts = Math.max(currentLimitedMinVolts, batteryLimitedMinVolts);
+            double feasibleMaxVolts = Math.min(currentLimitedMaxVolts, batteryLimitedMaxVolts);
 
-            if (Math.abs(requestedMotorCurrentAmps) <= currentLimitMagnitudeAmps) {
-                return requestedVolts;
+            // If the intervals overlap, there is a voltage within the presently available
+            // battery voltage range that can satisfy the current limit. Clamp the requested
+            // voltage into that feasible interval.
+            if (feasibleMinVolts <= feasibleMaxVolts) {
+                return MathUtil.clamp(requestedVolts, feasibleMinVolts, feasibleMaxVolts);
             }
-
-            // Signed current limit
-            double limitedMotorCurrentAmps = Math.copySign(currentLimitMagnitudeAmps, requestedMotorCurrentAmps);
-
-            // Torque corresponding to the signed current limit
-            double limitedMotorTorqueNm = motor.getTorque(limitedMotorCurrentAmps);
-
-            /* The maximum voltage that can be applied to the motor at the current speed without exceeding the current 
-             * limit. Includes voltage required to overcome back-EMF and provide maxTorqueNm. Signed. */
-            return motor.getVoltage(limitedMotorTorqueNm, motorSpeedRadPerSec);
+            // If the intervals do not overlap, no available battery voltage can satisfy the
+            // current limit. Apply the available voltage closest to the zero-current voltage,
+            // which minimizes current magnitude. Due to voltage saturation, the current limit
+            // may still be exceeded.
+            return MathUtil.clamp(zeroCurrentVolts, batteryLimitedMinVolts, batteryLimitedMaxVolts);
         }
 }
