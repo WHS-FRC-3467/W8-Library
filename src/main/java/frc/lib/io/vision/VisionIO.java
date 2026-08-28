@@ -15,7 +15,11 @@
 
 package frc.lib.io.vision;
 
+import edu.wpi.first.math.geometry.Pose3d;
+
 import org.littletonrobotics.junction.AutoLog;
+
+import java.util.Optional;
 
 /**
  * Hardware interface for vision cameras that detect AprilTags for robot localization.
@@ -29,6 +33,24 @@ public interface VisionIO {
      * Container for vision camera sensor readings. Logged automatically by AdvantageKit for replay
      * and analysis.
      */
+    public static record TagObservation(
+            int fiducialId,
+            Pose3d fieldToCameraPose, // Field to camera
+            Pose3d altPose,
+            double area,
+            double ambiguity) {}
+
+    public static record MultiTagObservation(
+            int[] fiducialIds,
+            Pose3d fieldToCameraPose, // Field to camera
+            double error) {}
+
+    public static record CameraResult(
+            TagObservation[] tagObservations,
+            Optional<MultiTagObservation> multiTagObservation,
+            double captureTimestampUs,
+            double publishTimestampUs) {}
+
     @AutoLog
     public static class VisionIOInputs {
         /** Whether the camera is connected and responding */
@@ -51,4 +73,19 @@ public interface VisionIO {
      * @param inputs The input object to populate with sensor data
      */
     public default void updateInputs(VisionIOInputs inputs) {}
+
+    /**
+     * Decodes raw bytes stored in the provided {@link VisionIOInputs} into standardized {@link
+     * CameraResult} records.
+     *
+     * <p>Each IO implementation is responsible for interpreting its own wire format (e.g.,
+     * PhotonVision packed structs, C2 flatbuffers) and converting results to the common {@link
+     * CameraResult} type. This keeps format-specific decoding encapsulated in the IO layer.
+     *
+     * @param inputs the inputs populated by the most recent {@link #updateInputs} call
+     * @return array of decoded results; empty if the camera is disconnected or no new frames
+     */
+    public default CameraResult[] decodeResults(VisionIOInputs inputs) {
+        return new CameraResult[0];
+    }
 }

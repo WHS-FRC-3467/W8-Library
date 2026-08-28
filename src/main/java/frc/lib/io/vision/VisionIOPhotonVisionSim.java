@@ -31,17 +31,12 @@ import org.photonvision.simulation.VisionSystemSim;
 import java.util.function.Supplier;
 
 /**
- * Simulated implementation of {@link VisionIOPhotonVision} using the
- * PhotonVision simulation
+ * Simulated implementation of {@link VisionIOPhotonVision} using the PhotonVision simulation
  * framework.
  *
- * <p>
- * This class connects a {@link PhotonCameraSim} to a {@link VisionSystemSim} to
- * simulate the
- * behavior of a real PhotonVision camera in a physics-based environment. It
- * allows the robot code
- * to receive realistic vision data based on the robot's simulated pose and the
- * field's AprilTag
+ * <p>This class connects a {@link PhotonCameraSim} to a {@link VisionSystemSim} to simulate the
+ * behavior of a real PhotonVision camera in a physics-based environment. It allows the robot code
+ * to receive realistic vision data based on the robot's simulated pose and the field's AprilTag
  * layout.
  */
 public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
@@ -54,7 +49,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
             VisionSystemSim system,
             Supplier<Pose2d> poseSupplier,
             AprilTagFieldLayout fieldLayout) {
-        super(cameraProperties);
+        super(cameraProperties, fieldLayout);
         this.poseSupplier = poseSupplier;
         this.system = system;
 

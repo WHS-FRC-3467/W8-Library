@@ -15,25 +15,28 @@
 
 package frc.robot.subsystems.vision;
 
+import static edu.wpi.first.units.Units.Meters;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.lib.devices.AprilTagCamera;
+import frc.lib.io.vision.VisionIO.CameraResult;
+import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
+import frc.lib.util.FieldUtil;
 import frc.lib.util.LoggedTunableNumber;
 import frc.robot.FieldConstants;
 import frc.robot.FieldConstants.AprilTagLayoutType;
 import frc.robot.RobotState;
 
 import org.littletonrobotics.junction.Logger;
-import org.photonvision.EstimatedRobotPose;
-import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -51,8 +54,6 @@ import java.util.Set;
  * vision observations.
  */
 public class VisionSubsystem extends SubsystemBase {
-
-    public static final String LOG_PREFIX = "VisionProcessor/";
 
     /** Baseline linear standard deviation used for vision observations. */
     public static final double LINEAR_STDDEV_BASELINE = 0.03;
@@ -101,9 +102,11 @@ public class VisionSubsystem extends SubsystemBase {
     private static final LoggedTunableNumber TIMESTAMP_OFFSET =
             new LoggedTunableNumber("VisionSubsystem/TimestampOffset", -(1.0 / 45.0));
 
+    private final RobotState robotState = RobotState.getInstance();
+    private final AprilTagCamera[] cameras;
+
     /**
-     * Quickly checks whether a {@link PhotonPipelineResult} is likely to be useful before full
-     * processing.
+     * Quickly checks whether a result is likely to be useful before full processing.
      *
      * <p>Rejects results with no targets, ambiguous poses above 0.2, or targets farther than 4
      * meters.
@@ -111,29 +114,39 @@ public class VisionSubsystem extends SubsystemBase {
      * @param result the pipeline result to pre-filter
      * @return {@code true} if the result passes preliminary checks, {@code false} otherwise
      */
-    public static boolean preFilter(PhotonPipelineResult result) {
-        if (!result.hasTargets()) {
+    public static boolean preFilter(CameraResult result) {
+
+        // Reject results with no tag observations
+        if (result.tagObservations().length == 0) {
             return false;
         }
 
-        if (result.getMultiTagResult().isPresent()) {
-            if (result.getTargets().stream()
-                            .mapToDouble(t -> t.getBestCameraToTarget().getTranslation().getNorm())
-                            .average()
-                            .getAsDouble()
-                    > MAX_DISTANCE_METERS) {
+        // Reject single tag results over MAX_AMBIGUITY or MAX_DISTANCE_METERS
+        if (result.tagObservations().length == 1) {
+            TagObservation target = result.tagObservations()[0];
+            if (target.ambiguity() > MAX_AMBIGUITY) {
                 return false;
             }
-
+            if (cameraToTagDistance(target) > MAX_DISTANCE_METERS) {
+                return false;
+            }
             return true;
         }
 
-        PhotonTrackedTarget bestTarget = result.getBestTarget();
-        if (bestTarget.getBestCameraToTarget().getTranslation().getNorm() > MAX_DISTANCE_METERS) {
-            return false;
+        // Accept multi-tag results when a multi-tag solution is present and close enough
+        if (result.multiTagObservation().isPresent()) {
+            return getAvgDistanceMeters(result) < MAX_DISTANCE_METERS;
         }
 
-        return bestTarget.getPoseAmbiguity() <= MAX_AMBIGUITY;
+        // Multi-tag frame but no multi-tag solve (e.g., solver disabled/unavailable):
+        // fall back to the lowest-ambiguity single tag so usable frames aren't dropped
+        TagObservation best =
+                Arrays.stream(result.tagObservations())
+                        .min(Comparator.comparingDouble(TagObservation::ambiguity))
+                        .orElse(null);
+        if (best == null) return false;
+        if (best.ambiguity() > MAX_AMBIGUITY) return false;
+        return cameraToTagDistance(best) <= MAX_DISTANCE_METERS;
     }
 
     /**
@@ -146,14 +159,19 @@ public class VisionSubsystem extends SubsystemBase {
      * @return {@code true} if the pose is valid, {@code false} otherwise
      */
     public static boolean postFilter(Pose3d pose) {
-        double z = pose.getZ();
-        // Pose2d pose2d = pose.toPose2d();
-        return !(z > MAX_Z_METERS);
-    }
 
-    private final RobotState robotState = RobotState.getInstance();
-    private final AprilTagCamera[] cameras;
-    private final PhotonPoseEstimator[] poseEstimators;
+        // Reject if pose is too high in Z
+        if (pose.getZ() > MAX_Z_METERS) {
+            return false;
+        }
+
+        // Reject if pose is outside boundary
+        if (!FieldUtil.isPoseInField(pose.getTranslation().toTranslation2d(), Meters.zero())) {
+            return false;
+        }
+
+        return true;
+    }
 
     /**
      * Constructs a new {@code VisionSubsystem} with the specified cameras.
@@ -162,13 +180,6 @@ public class VisionSubsystem extends SubsystemBase {
      */
     public VisionSubsystem(AprilTagCamera... cameras) {
         this.cameras = cameras;
-        this.poseEstimators = new PhotonPoseEstimator[cameras.length];
-        for (int i = 0; i < cameras.length; i++) {
-            this.poseEstimators[i] =
-                    new PhotonPoseEstimator(
-                            AprilTagLayoutType.NO_TRENCH.getLayout(),
-                            cameras[i].getProperties().robotToCamera());
-        }
     }
 
     /**
@@ -179,10 +190,10 @@ public class VisionSubsystem extends SubsystemBase {
     public void periodic() {
         for (int c = 0; c < cameras.length; c++) {
             AprilTagCamera camera = cameras[c];
-            PhotonPoseEstimator poseEstimator = poseEstimators[c];
-            String cameraLogPrefix = LOG_PREFIX + camera.getProperties().name() + "/";
+            String cameraLogPrefix =
+                    VisionConstants.NAME + "/" + camera.getProperties().name() + "/";
 
-            PhotonPipelineResult[] results = camera.getUnreadResults().orElse(null);
+            CameraResult[] results = camera.getUnreadResults().orElse(null);
             if (results == null) {
                 continue;
             }
@@ -192,38 +203,29 @@ public class VisionSubsystem extends SubsystemBase {
                                 results, results.length - MAX_UNREAD_RESULTS, results.length);
             }
 
-            ArrayList<PhotonPipelineResult> acceptedResults = new ArrayList<>();
-            ArrayList<PhotonPipelineResult> rejectedResults = new ArrayList<>();
+            ArrayList<CameraResult> acceptedResults = new ArrayList<>();
+            ArrayList<CameraResult> rejectedResults = new ArrayList<>();
             ArrayList<Pose3d> acceptedPoses = new ArrayList<>();
             ArrayList<Pose3d> rejectedPoses = new ArrayList<>();
-            for (var result : results) {
+
+            for (CameraResult result : results) {
 
                 if (!preFilter(result)) {
                     rejectedResults.add(result);
                     continue;
                 }
 
-                Optional<EstimatedRobotPose> estPose = Optional.empty();
-
-                if (result.multitagResult.isPresent()) {
-                    estPose = poseEstimator.estimateCoprocMultiTagPose(result);
-                    if (estPose.isEmpty()) {
-                        estPose = poseEstimator.estimateLowestAmbiguityPose(result);
-                    }
-                } else {
-                    estPose = poseEstimator.estimateLowestAmbiguityPose(result);
-                }
-
-                if (estPose.isEmpty()) {
+                // Compute robot pose directly from the standardized CameraResult
+                Optional<Pose3d> fieldToRobotPose = computeRobotPose(camera, result);
+                if (fieldToRobotPose.isEmpty()) {
                     rejectedResults.add(result);
                     continue;
                 }
 
+                List<Integer> tagsUsed = getTagsUsed(result);
+                double avgDistanceMeters = getAvgDistanceMeters(result);
                 VisionPoseRecord poseRecord =
-                        new VisionPoseRecord(
-                                estPose.get().estimatedPose,
-                                getTagsUsed(estPose.get().targetsUsed),
-                                getAvgDistanceMeters(estPose.get().targetsUsed));
+                        new VisionPoseRecord(fieldToRobotPose.get(), tagsUsed, avgDistanceMeters);
 
                 if (!postFilter(poseRecord.pose())) {
                     rejectedResults.add(result);
@@ -239,9 +241,12 @@ public class VisionSubsystem extends SubsystemBase {
                                 ? SINGLE_TAG_ANGULAR_STDDEV
                                 : ANGULAR_STDDEV_BASELINE * stdDevFactor;
 
+                // captureTimestampUs holds the absolute capture timestamp in microseconds
+                double timestampSeconds =
+                        result.captureTimestampUs() / 1_000_000.0 + TIMESTAMP_OFFSET.get();
                 robotState.addVisionObservation(
                         new VisionPoseObservation(
-                                result.getTimestampSeconds() + TIMESTAMP_OFFSET.get(),
+                                timestampSeconds,
                                 poseRecord.pose().toPose2d(),
                                 poseRecord.averageDistanceMeters(),
                                 poseRecord.tagsUsed(),
@@ -255,29 +260,20 @@ public class VisionSubsystem extends SubsystemBase {
             Set<Integer> tagsAccepted = new HashSet<>();
             Set<Integer> tagsRejected = new HashSet<>();
 
-            Logger.recordOutput(
-                    cameraLogPrefix + "/Results/AcceptedLength", acceptedResults.size());
-            for (int i = 0; i < acceptedResults.size(); i++) {
-                Logger.recordOutput(
-                        cameraLogPrefix + "/Results/Accepted/" + i, acceptedResults.get(i));
+            Logger.recordOutput(cameraLogPrefix + "Results/AcceptedLength", acceptedResults.size());
+            for (CameraResult accepted : acceptedResults) {
+                tagsAccepted.addAll(getTagsUsed(accepted));
+            }
 
-                tagsAccepted.addAll(getTagsUsed(acceptedResults.get(i).targets));
+            Logger.recordOutput(cameraLogPrefix + "Results/RejectedLength", rejectedResults.size());
+            for (CameraResult rejected : rejectedResults) {
+                tagsRejected.addAll(getTagsUsed(rejected));
             }
 
             Logger.recordOutput(
-                    cameraLogPrefix + "/Results/RejectedLength", rejectedResults.size());
-            for (int i = 0; i < rejectedResults.size(); i++) {
-                Logger.recordOutput(
-                        cameraLogPrefix + "/Results/Rejected/" + i, rejectedResults.get(i));
-
-                tagsRejected.addAll(getTagsUsed(rejectedResults.get(i).targets));
-            }
-
+                    cameraLogPrefix + "Poses/Accepted", acceptedPoses.toArray(Pose3d[]::new));
             Logger.recordOutput(
-                    cameraLogPrefix + "/Poses/Accepted", acceptedPoses.toArray(Pose3d[]::new));
-
-            Logger.recordOutput(
-                    cameraLogPrefix + "/Poses/Rejected", rejectedPoses.toArray(Pose3d[]::new));
+                    cameraLogPrefix + "Poses/Rejected", rejectedPoses.toArray(Pose3d[]::new));
 
             List<Pose3d> tagPosesAccepted =
                     tagsAccepted.stream()
@@ -294,32 +290,72 @@ public class VisionSubsystem extends SubsystemBase {
                             .toList();
 
             Logger.recordOutput(
-                    cameraLogPrefix + "/TagPoses/Accepted",
-                    tagPosesAccepted.toArray(Pose3d[]::new));
-
+                    cameraLogPrefix + "TagPoses/Accepted", tagPosesAccepted.toArray(Pose3d[]::new));
             Logger.recordOutput(
-                    cameraLogPrefix + "/TagPoses/Rejected",
-                    tagPosesRejected.toArray(Pose3d[]::new));
+                    cameraLogPrefix + "TagPoses/Rejected", tagPosesRejected.toArray(Pose3d[]::new));
         }
-
-        // VisionOdometryCharacterizer.printResults();
-        // SmartDashboard.putNumber(
-        // "Vision Characterization Sample Count",
-        // VisionOdometryCharacterizer.getVisionSampleSize());
-        // SmartDashboard.putBoolean(
-        // "Vision Characterization Sufficient Samples",
-        // VisionOdometryCharacterizer.hasSufficientVisionSamples());
-        // SmartDashboard.putNumber(
-        // "Odometry Characterization Sample Count",
-        // VisionOdometryCharacterizer.getOdoSampleSize());
-        // SmartDashboard.putBoolean(
-        // "Odometry Characterization Sufficient Samples",
-        // VisionOdometryCharacterizer.hasSufficientOdoSamples());
     }
 
-    private double getAvgDistanceMeters(List<PhotonTrackedTarget> targets) {
-        return targets.stream()
-                .mapToDouble(target -> target.getBestCameraToTarget().getTranslation().getNorm())
+    /**
+     * Computes the robot pose in field coordinates from a {@link CameraResult}.
+     *
+     * <p>Prefers the multi-tag observation when available (more accurate). Falls back to the
+     * single-tag observation with the lowest ambiguity. The camera-to-robot transform from the
+     * camera properties is applied to convert the field-to-camera pose into a field-to-robot pose.
+     *
+     * @param camera the camera that produced the result
+     * @param result the standardized camera result
+     * @return the robot pose in field coordinates, or empty if it cannot be computed
+     */
+    private Optional<Pose3d> computeRobotPose(AprilTagCamera camera, CameraResult result) {
+        // The camera-to-robot transform: invert robotToCamera to go camera→robot
+        Transform3d cameraToRobot = camera.getProperties().robotToCamera().inverse();
+
+        if (result.multiTagObservation().isPresent()) {
+            Pose3d fieldToCamera = result.multiTagObservation().get().fieldToCameraPose();
+            return Optional.of(fieldToCamera.transformBy(cameraToRobot));
+        }
+
+        if (result.tagObservations().length > 0) {
+            // Pick the single tag with the lowest pose ambiguity
+            TagObservation best =
+                    Arrays.stream(result.tagObservations())
+                            .min(Comparator.comparingDouble(TagObservation::ambiguity))
+                            .orElse(null);
+            if (best == null) return Optional.empty();
+            return Optional.of(best.fieldToCameraPose().transformBy(cameraToRobot));
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Returns the distance in meters from the camera to an observed tag.
+     *
+     * <p>Looks up the tag's known field position from the AprilTag layout and computes the 3D
+     * distance between the tag and the camera (both in field coordinates). Falls back to the
+     * camera's distance from the field origin if the tag ID is not in the layout.
+     */
+    private static double cameraToTagDistance(TagObservation obs) {
+        Optional<Pose3d> tagPoseOpt =
+                AprilTagLayoutType.NO_TRENCH.getLayout().getTagPose(obs.fiducialId());
+        if (tagPoseOpt.isEmpty()) {
+            return obs.fieldToCameraPose().getTranslation().getNorm();
+        }
+        return tagPoseOpt.get().getTranslation().getDistance(
+                obs.fieldToCameraPose().getTranslation());
+    }
+
+    /**
+     * Returns the average distance (meters) from the camera to each observed tag.
+     *
+     * <p>Computes the 3D camera↔tag distance using each tag's known field pose from the AprilTag
+     * layout, falling back to the camera's distance from the field origin if a tag is not found.
+     */
+    private static double getAvgDistanceMeters(CameraResult result) {
+        if (result.tagObservations().length == 0) return 0.0;
+        return Arrays.stream(result.tagObservations())
+                .mapToDouble(VisionSubsystem::cameraToTagDistance)
                 .average()
                 .orElse(0.0);
     }
@@ -328,19 +364,19 @@ public class VisionSubsystem extends SubsystemBase {
      * Computes a standard deviation scaling heuristic for a vision measurement.
      *
      * @param camera camera used to produce the measurement
-     * @param result pipeline result
+     * @param result standardized camera result
      * @param poseRecord estimated pose record
      * @return clamped standard deviation scaling factor
      */
     private double computeStdDevFactor(
-            AprilTagCamera camera, PhotonPipelineResult result, VisionPoseRecord poseRecord) {
+            AprilTagCamera camera, CameraResult result, VisionPoseRecord poseRecord) {
         double distanceMeters =
                 Math.max(poseRecord.averageDistanceMeters(), MIN_STDDEV_DISTANCE_METERS);
         int tagCount = Math.max(1, poseRecord.tagsUsed().size());
-        boolean hasMultiTag = result.getMultiTagResult().isPresent();
+        boolean hasMultiTag = result.multiTagObservation().isPresent();
         double ambiguity = 0.0;
-        if (!hasMultiTag && result.getTargets().size() == 1) {
-            double rawAmbiguity = result.getBestTarget().getPoseAmbiguity();
+        if (!hasMultiTag && result.tagObservations().length == 1) {
+            double rawAmbiguity = result.tagObservations()[0].ambiguity();
             ambiguity = rawAmbiguity < 0.0 ? 0.0 : rawAmbiguity;
         }
 
@@ -357,12 +393,24 @@ public class VisionSubsystem extends SubsystemBase {
         return MathUtil.clamp(stdDevFactor, STDDEV_FACTOR_MIN, STDDEV_FACTOR_MAX);
     }
 
-    private List<Integer> getTagsUsed(List<PhotonTrackedTarget> targets) {
-        List<Integer> tagsUsed = new ArrayList<>(targets.size());
-        for (var target : targets) {
-            tagsUsed.add(target.getFiducialId());
+    /**
+     * Returns the list of fiducial IDs observed in a {@link CameraResult}.
+     *
+     * <p>Uses the multi-tag observation's ID list when available, otherwise collects IDs from
+     * individual tag observations.
+     */
+    private List<Integer> getTagsUsed(CameraResult result) {
+        if (result.multiTagObservation().isPresent()) {
+            int[] ids = result.multiTagObservation().get().fiducialIds();
+            List<Integer> tagList = new ArrayList<>(ids.length);
+            for (int id : ids) tagList.add(id);
+            return tagList;
         }
-        return tagsUsed;
+        List<Integer> tagList = new ArrayList<>(result.tagObservations().length);
+        for (TagObservation obs : result.tagObservations()) {
+            tagList.add(obs.fiducialId());
+        }
+        return tagList;
     }
 
     private Optional<Pose3d> getTagPose(int id) {
