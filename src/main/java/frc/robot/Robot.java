@@ -25,6 +25,8 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
+import frc.lib.util.BatterySimCurrentAccumulator;
+import frc.robot.Constants.Mode;
 import frc.robot.subsystems.drive.DriveConstants;
 
 import org.littletonrobotics.junction.LogFileUtil;
@@ -130,6 +132,12 @@ public class Robot extends LoggedRobot {
         // This must be called from the robot's periodic block in order for anything in
         // the Command-based framework to work.
         CommandScheduler.getInstance().run();
+
+        // Simulate the loaded battery voltage after all subsystems have contributed their current
+        // draws
+        if (Constants.currentMode == Mode.SIM) {
+            BatterySimCurrentAccumulator.setSimulatedBatteryLoadedVoltage();
+        }
 
         // Return to non-RT thread priority (do not modify the first argument)
         // Threads.setCurrentThreadPriority(false, 10);

@@ -4,23 +4,27 @@
 
 package frc.lib.mechanisms.rotary;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.simulation.BatterySim;
-import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIOSim;
 import frc.lib.io.motor.MotorIOSim;
+import frc.lib.util.BatterySimCurrentAccumulator;
 
 import java.util.Optional;
 
@@ -32,6 +36,7 @@ public class RotaryMechanismSim extends RotaryMechanism<MotorIOSim, AbsoluteEnco
     private final SingleJointedArmSim sim;
 
     private Time lastTime = RobotController.getMeasureTime();
+    private AngularVelocity lastVelocity = RadiansPerSecond.zero();
 
     public RotaryMechanismSim(
             String name,
@@ -66,22 +71,34 @@ public class RotaryMechanismSim extends RotaryMechanism<MotorIOSim, AbsoluteEnco
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        RoboRioSim.setVInVoltage(
-                BatterySim.calculateDefaultBatteryLoadedVoltage(sim.getCurrentDrawAmps()));
+        BatterySimCurrentAccumulator.addCurrentLoad(Amps.of(sim.getCurrentDrawAmps()));
+
+        AngularVelocity currentVelocity = RadiansPerSecond.of(sim.getVelocityRadPerSec());
+        AngularAcceleration currentAcceleration;
+
+        if (deltaTime > 0) {
+            currentAcceleration = currentVelocity.minus(lastVelocity).div(Seconds.of(deltaTime));
+        } else {
+            currentAcceleration = RadiansPerSecondPerSecond.zero();
+        }
 
         lastTime = currentTime;
+        lastVelocity = currentVelocity;
 
-        io.setPosition(Radians.of(sim.getAngleRads()));
-        io.setRotorVelocity(
-                RadiansPerSecond.of(sim.getVelocityRadPerSec())
-                        .times(io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()));
+        io.setMechanismPosition(Radians.of(sim.getAngleRads()));
+        io.setMechanismVelocity(currentVelocity);
+        io.setMechanismAcceleration(currentAcceleration);
 
         absoluteEncoder.ifPresent(
                 encoderSim -> {
-                    encoderSim.setAngle(
-                            Radians.of(sim.getAngleRads()).times(io.getSensorToMechanismRatio()));
+                    encoderSim.setMechanismAngle(Radians.of(sim.getAngleRads()));
                 });
 
         super.periodic();
+    }
+
+    @Override
+    public void setEncoderPosition(Angle position) {
+        sim.setState(position.in(Radians), sim.getVelocityRadPerSec());
     }
 }
