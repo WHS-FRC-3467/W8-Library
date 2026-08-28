@@ -29,24 +29,21 @@ import java.util.function.Supplier;
 /**
  * Command to autonomously drive the robot to a target pose on the field.
  *
- * <p>
- * Uses profiled PID controllers for both linear (x, y) and angular (rotation)
- * motion. The
- * controllers have tunable gains that can be adjusted through NetworkTables for
- * optimization.
+ * <p>Uses profiled PID controllers for both linear (x, y) and angular (rotation) motion. The
+ * controllers have tunable gains that can be adjusted through NetworkTables for optimization.
  * Maximum velocities are also tunable.
  */
 public class DriveToPose extends Command {
 
-    private static final LoggedTunableProfiledPID linearController = new LoggedTunableProfiledPID(
-            "DriveToPose/LinearController", 3.0, 0, 0.1, 3.0, 0.0);
-    private static final LoggedTunableProfiledPID angularController = new LoggedTunableProfiledPID(
-            "DriveToPose/AngularController", 3.0, 0, 0, 0, 0);
+    private static final LoggedTunableProfiledPID linearController =
+            new LoggedTunableProfiledPID("DriveToPose/LinearController", 3.0, 0, 0.1, 3.0, 0.0);
+    private static final LoggedTunableProfiledPID angularController =
+            new LoggedTunableProfiledPID("DriveToPose/AngularController", 3.0, 0, 0, 0, 0);
 
-    private static final LoggedTunableNumber maxLinearVel = new LoggedTunableNumber(
-            "DriveToPose/MaxLinearVelocity (m s)", 3.0);
-    private static final LoggedTunableNumber maxAngularVel = new LoggedTunableNumber(
-            "DriveToPose/MaxAngularVelocity (rad s)", 9.0);
+    private static final LoggedTunableNumber maxLinearVel =
+            new LoggedTunableNumber("DriveToPose/MaxLinearVelocity (m s)", 3.0);
+    private static final LoggedTunableNumber maxAngularVel =
+            new LoggedTunableNumber("DriveToPose/MaxAngularVelocity (rad s)", 9.0);
 
     private final RobotState robotState = RobotState.getInstance();
 
@@ -59,7 +56,7 @@ public class DriveToPose extends Command {
     /**
      * Constructs a DriveToPoseBase command.
      *
-     * @param drive      The drive subsystem to control
+     * @param drive The drive subsystem to control
      * @param targetPose Supplier providing the target pose to drive to
      */
     public DriveToPose(Drive drive, Supplier<Pose2d> targetPose) {
@@ -94,7 +91,7 @@ public class DriveToPose extends Command {
      * Sets both distance and angular tolerances for the command to finish
      *
      * @param distanceTolerance Allowable distance to target pose
-     * @param angleTolerance    Allowable angle to target pose
+     * @param angleTolerance Allowable angle to target pose
      */
     public DriveToPose withTolerance(Distance distanceTolerance, Angle angleTolerance) {
         this.distanceTolerance = Optional.of(distanceTolerance.in(Meters));
@@ -104,8 +101,9 @@ public class DriveToPose extends Command {
 
     @Override
     public void initialize() {
-        ChassisSpeeds fieldVelocity = ChassisSpeeds.fromRobotRelativeSpeeds(
-                drive.getChassisSpeeds(), robotState.getEstimatedPose().getRotation());
+        ChassisSpeeds fieldVelocity =
+                ChassisSpeeds.fromRobotRelativeSpeeds(
+                        drive.getChassisSpeeds(), robotState.getEstimatedPose().getRotation());
 
         linearController.reset(0.0);
 
@@ -122,10 +120,11 @@ public class DriveToPose extends Command {
         angularController.updatePID();
 
         // Calculate translation and direction to target
-        Translation2d translationToTarget = targetPose
-                .get()
-                .getTranslation()
-                .minus(robotState.getEstimatedPose().getTranslation());
+        Translation2d translationToTarget =
+                targetPose
+                        .get()
+                        .getTranslation()
+                        .minus(robotState.getEstimatedPose().getTranslation());
 
         Rotation2d directionToTarget = translationToTarget.getAngle();
 
@@ -134,17 +133,19 @@ public class DriveToPose extends Command {
 
         linearOutput = MathUtil.clamp(linearOutput, -maxLinearVel.get(), maxLinearVel.get());
 
-        double angularOutput = angularController.calculate(
-                robotState.getEstimatedPose().getRotation().getRadians(),
-                targetPose.get().getRotation().getRadians());
+        double angularOutput =
+                angularController.calculate(
+                        robotState.getEstimatedPose().getRotation().getRadians(),
+                        targetPose.get().getRotation().getRadians());
 
         angularOutput = MathUtil.clamp(angularOutput, -maxAngularVel.get(), maxAngularVel.get());
 
         // Convert to robot-relative speeds and set request velocities
-        var fieldRelativeSpeed = new ChassisSpeeds(
-                linearOutput * Math.cos(directionToTarget.getRadians()),
-                linearOutput * Math.sin(directionToTarget.getRadians()),
-                angularOutput);
+        var fieldRelativeSpeed =
+                new ChassisSpeeds(
+                        linearOutput * Math.cos(directionToTarget.getRadians()),
+                        linearOutput * Math.sin(directionToTarget.getRadians()),
+                        angularOutput);
 
         drive.runVelocity(
                 ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -164,14 +165,17 @@ public class DriveToPose extends Command {
     // Returns true when the command should end.
     @Override
     public boolean isFinished() {
-        boolean withinDistanceTolerance = distanceTolerance
-                .map(tolerance -> Math.abs(linearController.getPositionError()) < tolerance)
-                .orElse(true);
+        boolean withinDistanceTolerance =
+                distanceTolerance
+                        .map(tolerance -> Math.abs(linearController.getPositionError()) < tolerance)
+                        .orElse(false);
 
-        boolean withinAngularTolerance = angleTolerance
-                .map(
-                        tolerance -> Math.abs(angularController.getPositionError()) < tolerance)
-                .orElse(true);
+        boolean withinAngularTolerance =
+                angleTolerance
+                        .map(
+                                tolerance ->
+                                        Math.abs(angularController.getPositionError()) < tolerance)
+                        .orElse(false);
 
         Logger.recordOutput(
                 "DriveToPose/Distance Tolerance Present", distanceTolerance.isPresent());
@@ -179,11 +183,17 @@ public class DriveToPose extends Command {
         Logger.recordOutput("DriveToPose/Angular Tolerance Present", angleTolerance.isPresent());
         Logger.recordOutput("DriveToPose/Within Angular Tolerance", withinAngularTolerance);
 
-        boolean bothTolerancesSupplied = distanceTolerance.isPresent() && angleTolerance.isPresent();
+        boolean bothTolerancesSupplied =
+                distanceTolerance.isPresent() && angleTolerance.isPresent();
 
         return bothTolerancesSupplied
                 ? (withinDistanceTolerance && withinAngularTolerance)
                 : (withinDistanceTolerance || withinAngularTolerance);
+    }
+
+    @Override
+    public void end(boolean interrupted) {
+        drive.runVelocity(new ChassisSpeeds());
     }
 
     /**
