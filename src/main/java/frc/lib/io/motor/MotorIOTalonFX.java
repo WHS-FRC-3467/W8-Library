@@ -126,7 +126,7 @@ public class MotorIOTalonFX implements MotorIO {
     
     /**
      * Constructs and initializes a real TalonFX motor with a motor model, 
-     * thereby enabling diagnostics afforded by {@link frc.lib.util.PowerProfiler}.
+     * thereby enabling certain diagnostics afforded by {@link frc.lib.util.PowerProfiler}.
      *
      * @param name The name of the motor(s)
      * @param motorModel The bare (i.e. ungeared) qty 1 {@link DCMotor} object containing the 
