@@ -16,6 +16,7 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -27,6 +28,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -85,7 +87,6 @@ public class ModuleIOSim implements ModuleIO {
          * 
          * A) bare motor model if actual gearing is passed, or
          * B) pre-reduced motor model with 1.0 passed into gearing. 
-         *
          */
         driveSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(
@@ -119,9 +120,11 @@ public class ModuleIOSim implements ModuleIO {
             turnController.reset();
         }
 
-        // Apply controller-commanded voltage to the sim models. The request is first limited
-        // to approximate motor current limits, then DCMotorSim clamps it to the available
-        // battery voltage.
+        /*  
+         * Apply controller-commanded voltage to the sim models. The request is first limited
+         * to approximate motor current limits, then DCMotorSim clamps it to the available
+         * battery voltage. 
+         */
         double supplyVoltageVolts = RobotController.getBatteryVoltage();
         double currentLimitedDriveVolts = clampVoltageToCurrentLimit(
             driveAppliedVolts, 
@@ -141,9 +144,20 @@ public class ModuleIOSim implements ModuleIO {
         turnSim.setInputVoltage(currentLimitedTurnVolts);
         driveSim.update(0.02);
         turnSim.update(0.02);
-        // Update the battery load accumulator with the current draw from both motors
-        Current driveSupplyCurrent = Amps.of(Math.abs(driveSim.getCurrentDrawAmps()));
-        Current turnSupplyCurrent = Amps.of(Math.abs(turnSim.getCurrentDrawAmps()));
+        /* Update the battery load accumulator with the current draw from both motors */
+        Current driveSupplyCurrent = Amps.of(driveSim.getCurrentDrawAmps());
+        Current driveTorqueCurrent = Amps.of(driveSim.getTorqueNewtonMeters() / (driveSim.getGearing() * 
+            DRIVE_MOTOR_MODEL.KtNMPerAmp));
+        Voltage driveAppliedVoltage = Volts.of(driveSim.getInputVoltage());
+
+        Current turnSupplyCurrent = Amps.of(turnSim.getCurrentDrawAmps());
+        Current turnTorqueCurrent = Amps.of(turnSim.getTorqueNewtonMeters() / (turnSim.getGearing() * 
+            TURN_MOTOR_MODEL.KtNMPerAmp));
+        Voltage turnAppliedVoltage = Volts.of(turnSim.getInputVoltage());
+        /* 
+         * getCurrentDrawAmps() returns torque current multiplied by applied voltage's sign -- therefore, a 
+         * positive supply current is a bus draw and a negative supply current is a bus regen.
+         */
         BatterySimCurrentAccumulator.addCurrentLoad(driveSupplyCurrent.plus(turnSupplyCurrent));
 
         // Update drive inputs
@@ -152,9 +166,9 @@ public class ModuleIOSim implements ModuleIO {
         inputs.drivePositionRad = driveSim.getAngularPositionRad(); 
         inputs.driveVelocityRadPerSec = driveSim.getAngularVelocityRadPerSec(); 
         inputs.driveSupplyVoltageVolts = supplyVoltageVolts;
-        inputs.driveAppliedVoltageVolts = driveSim.getInputVoltage(); 
+        inputs.driveAppliedVoltageVolts = driveAppliedVoltage.in(Volts);
         inputs.driveSupplyCurrentAmps = driveSupplyCurrent.in(Amps);
-        inputs.driveTorqueCurrentAmps = Math.abs(driveSim.getTorqueNewtonMeters() / (driveSim.getGearing() * DRIVE_MOTOR_MODEL.KtNMPerAmp)); 
+        inputs.driveTorqueCurrentAmps = driveTorqueCurrent.in(Amps);
 
         // Update turn inputs
         // Note: turn position, velocity, and torque are reported in mechanism units
@@ -165,9 +179,9 @@ public class ModuleIOSim implements ModuleIO {
         inputs.turnPosition = new Rotation2d(turnPositionRad); 
         inputs.turnVelocityRadPerSec = turnSim.getAngularVelocityRadPerSec(); 
         inputs.turnSupplyVoltageVolts = supplyVoltageVolts;
-        inputs.turnAppliedVoltageVolts = turnSim.getInputVoltage(); 
+        inputs.turnAppliedVoltageVolts = turnAppliedVoltage.in(Volts);
         inputs.turnSupplyCurrentAmps = turnSupplyCurrent.in(Amps);
-        inputs.turnTorqueCurrentAmps = Math.abs(turnSim.getTorqueNewtonMeters() / (turnSim.getGearing() * TURN_MOTOR_MODEL.KtNMPerAmp)); 
+        inputs.turnTorqueCurrentAmps = turnTorqueCurrent.in(Amps);
 
 
         // Update odometry inputs (50Hz because high-frequency odometry in sim doesn't
@@ -207,7 +221,7 @@ public class ModuleIOSim implements ModuleIO {
      * voltage allows. Clamps both draining and regenerative currents.
      * 
      * @param requestedVolts Applied volts requested by the controller (with proper sign to indicate polarity)
-     * @param mechanismVelocityRadPerSec Current mechanism-space velocity in rad/s (drive wheel or azimuth yoke) 
+     * @param mechanismVelocityRadPerSec Current mechanism-space (drive wheel or azimuth yoke) velocity in rad/s  
      * (with proper sign to indicate direction)
      * @param gearing Gear ratio from motor to mechanism (drive wheel or azimuth yoke)
      * @param motor DCMotor model of the motor being simulated (bare, unreduced, qty 1)
@@ -257,7 +271,7 @@ public class ModuleIOSim implements ModuleIO {
             // If the intervals do not overlap, no available battery voltage can satisfy the
             // current limit. Apply the available voltage closest to the zero-current voltage,
             // which minimizes current magnitude. Due to voltage saturation, the current limit
-            // may still be exceeded.
+            // will be exceeded.
             return MathUtil.clamp(zeroCurrentVolts, batteryLimitedMinVolts, batteryLimitedMaxVolts);
         }
 }
