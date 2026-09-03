@@ -110,13 +110,7 @@ public class Robot extends LoggedRobot {
         robotContainer = new RobotContainer();
 
         DriverStation.silenceJoystickConnectionWarning(!Robot.isReal());
-        NetworkTableInstance inst = NetworkTableInstance.getDefault();
-        var foo = inst.getTable("/AdvantageKit/DriverStation/Joystick0").getDoubleArrayTopic("AxisValues");
-        foo.setPersistent(true);
-        var fo = foo.publish();
-
-        double[] g=  {1.0,1.0};
-        fo.setDefault(g);
+     
 
 
                     /*  edu.wpi.first.hal.simulation.DriverStationDataJNI.setJoystick
@@ -146,6 +140,7 @@ public class Robot extends LoggedRobot {
         // This must be called from the robot's periodic block in order for anything in
         // the Command-based framework to work.
         CommandScheduler.getInstance().run();
+         
 
         // Return to non-RT thread priority (do not modify the first argument)
         // Threads.setCurrentThreadPriority(false, 10);
