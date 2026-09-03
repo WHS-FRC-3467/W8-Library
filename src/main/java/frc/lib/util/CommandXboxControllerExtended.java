@@ -135,6 +135,7 @@ public class CommandXboxControllerExtended extends CommandXboxController {
 
     @Override
     public double getLeftY() {
+
         return applyModifiers(super.getLeftY());
     }
 

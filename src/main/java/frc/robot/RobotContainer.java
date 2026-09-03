@@ -95,6 +95,7 @@ public class RobotContainer {
         public final Drive drive;
         private final LaserCAN1 laserCAN1;
 
+
         // Controller
         private final CommandXboxControllerExtended controller = new CommandXboxControllerExtended(0);
 

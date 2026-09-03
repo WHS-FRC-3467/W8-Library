@@ -118,8 +118,6 @@ public class Robot extends LoggedRobot {
         double[] g=  {1.0,1.0};
         fo.setDefault(g);
 
-        edu.wpi.first.hal.simulation.DriverStationDataJNI.setEnabled(true);
-        edu.wpi.first.hal.simulation.DriverStationDataJNI.setAutonomous(false);
 
                     /*  edu.wpi.first.hal.simulation.DriverStationDataJNI.setJoystick
                         float[] joystick = {1.0f,1.0f,1.0f,1.0f};
@@ -147,10 +145,18 @@ public class Robot extends LoggedRobot {
         // finished or interrupted commands, and running subsystem periodic() methods.
         // This must be called from the robot's periodic block in order for anything in
         // the Command-based framework to work.
-     //   CommandScheduler.getInstance().run();
+        CommandScheduler.getInstance().run();
 
         // Return to non-RT thread priority (do not modify the first argument)
         // Threads.setCurrentThreadPriority(false, 10);
+/* 
+       System.out.println("auto: " + Boolean.toString( edu.wpi.first.hal.simulation.DriverStationDataJNI.getAutonomous())); 
+       System.out.println("ds: " + Boolean.toString( edu.wpi.first.hal.simulation.DriverStationDataJNI.getDsAttached()));
+       System.out.println("estop: " + Boolean.toString( edu.wpi.first.hal.simulation.DriverStationDataJNI.getEStop()));
+       System.out.println("enabled: " + Boolean.toString( edu.wpi.first.hal.simulation.DriverStationDataJNI.getEnabled()));
+       System.out.println("fms: " + Boolean.toString( edu.wpi.first.hal.simulation.DriverStationDataJNI.getFmsAttached()));
+       System.out.println("test: " + Boolean.toString( edu.wpi.first.hal.simulation.DriverStationDataJNI.getTest())); */
+
     }
 
     /** This function is called once when the robot is disabled. */
