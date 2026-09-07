@@ -274,6 +274,6 @@ public class RobotContainer {
 
         /** Register all of the subsystems' mecahanisms and generic power channels.  */
         private void registerMechanismsAndGenerics() {
-            drive.RegisterModules(powerProfiler);
+            drive.registerModules(powerProfiler);
         }
 }

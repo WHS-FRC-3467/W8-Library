@@ -690,7 +690,7 @@ public class Drive extends SubsystemBase {
      * 
      * @param powerProfiler The power profiler to register the module's current and voltage to
      */
-    public void RegisterModules(PowerProfiler powerProfiler) {
+    public void registerModules(PowerProfiler powerProfiler) {
         String[] moduleNames = {"FrontLeft", "FrontRight", "BackLeft", "BackRight"};
         for (int i = 0; i < modules.length; i++) {
             // FL, FR, BL, BR

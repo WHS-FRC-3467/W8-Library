@@ -35,7 +35,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 
 import frc.lib.io.motor.MotorIOSim;
-import frc.lib.util.BatterySimCurrentAccumulator;
+import frc.lib.util.BatteryModel;
 
 /**
  * A simulated implementation of the LinearMechanism interface that uses ElevatorSim to simulate the
@@ -100,7 +100,7 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
         // For accurate physics at arbitrary angles, consider using a custom LinearSystemSim.
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        BatterySimCurrentAccumulator.addCurrentLoad(Amps.of(sim.getCurrentDrawAmps()));
+        BatteryModel.addCurrentLoad(sim.getCurrentDrawAmps());
 
         AngularVelocity currentVelocity = toAngle(Meters.of(sim.getVelocityMetersPerSecond())).per(Seconds);
         AngularAcceleration currentAcceleration;

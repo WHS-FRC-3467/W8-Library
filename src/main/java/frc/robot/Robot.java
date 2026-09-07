@@ -22,7 +22,7 @@ import au.grapplerobotics.CanBridge;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.lib.util.BatterySimCurrentAccumulator;
+import frc.lib.util.BatteryModel;
 import frc.lib.util.PowerProfiler;
 import frc.robot.subsystems.drive.DriveConstants;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -138,7 +138,7 @@ public class Robot extends LoggedRobot {
 
         // Simulate the loaded battery voltage after all subsystems have contributed their current draws
         if (Constants.currentMode == Mode.SIM) {
-            BatterySimCurrentAccumulator.setSimulatedBatteryLoadedVoltage();
+            BatteryModel.setSimulatedBatteryLoadedVoltage();
         }
 
         // Update the robot's power profiler
