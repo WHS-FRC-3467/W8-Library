@@ -1,3 +1,5 @@
+import org.gradle.internal.os.OperatingSystem
+
 plugins {
     id "java"
     id "edu.wpi.first.GradleRIO" version "2026.2.1"
@@ -145,8 +147,25 @@ tasks.withType(JavaCompile).configureEach {
 simulateExternalJavaRelease.configure {
 
 doLast {
+
+    def home = System.getProperty("user.home")
+
+   def dir =  OperatingSystem.current().isWindows() 
+   ? '\\AppData\\Local\\simegui\\libhalsim_gui.dll' 
+   : OperatingSystem.current().isMacOsX() 
+   ? '/Library/Application Support/simegui/libhalsim_gui.dylib' 
+   
+   : OperatingSystem.current().isLinux() 
+   ? '/.local/share/simegui/libhalsim_gui.so'
+   : ''
+
+   
+def halsim = home + dir
+
+println halsim
+
          copy {
-    from '/Users/jkistler28/halsim_lib/target/debug/libhalsim_gui.dylib'
+    from  halsim
     into './build/jni/release'
   
 }
