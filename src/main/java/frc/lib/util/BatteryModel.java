@@ -24,16 +24,34 @@ import lombok.NoArgsConstructor;
 /** A utility class simulating a battery. */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class BatteryModel {
-    /* Battery nominal voltage to simulate in Volts.
+    /* 
+     * Battery nominal voltage to simulate in Volts.
      * This is the voltage of a fully charged battery with no load.
      * Set this field manually as desired to simulate various electrical performances. 
      */
     private static final double batteryNominalVoltageVolts = 12.0;
-    /* Battery internal resistance to simulate in Ohms.
-     * This is the internal resistance of the battery between the battery terminals and the load.
+
+    /* 
+     * Battery internal resistance to simulate in Ohms.
+     * This is the internal resistance of the battery between the driving battery terminal and the load.
      * Set this field manually as desired to simulate various electrical performances. 
      */
     private static final double batteryInternalResistanceOhms = 0.011; 
+
+    /*
+     * Regeneration efficiency (unitless).
+     * This is the efficiency of bus regeneration, the remainder of power being dissipated as heat.
+     * Set this field manually as desired to simulate various electrical performances. 
+     */
+    private static final double busRegenerationEfficiency = 0.50;
+
+    /*
+     * The battery voltage's time constant.
+     * This is the time constant of the LPF applied to the sagged battery voltage, representing the inductive 
+     * inertia of the circuit. 
+     * Set this field manually as desired to simulate various electrical performances.
+     */
+    private static final double BATTERY_VOLTAGE_TIME_CONSTANT_SECONDS = 0.10;
 
     /** 
      * The accumulated signed supply-current load on the simulated battery.
@@ -41,9 +59,9 @@ public final class BatteryModel {
      */ 
     private static double simCurrentSumAmps = 0.0;
 
-    // Battery voltage LPF parameters
+    // Controller loop time
     private static final double LOOP_TIME_SECONDS = 0.02; 
-    private static final double BATTERY_VOLTAGE_TIME_CONSTANT_SECONDS = 0.10;
+ 
     
     /**
      * Adds a mechanism's signed battery/supply current to the accumulator.
@@ -55,25 +73,25 @@ public final class BatteryModel {
      * @param currentAmps signed supply current in Amps
      */
     public static void addCurrentLoad(double currentAmps) {
-        simCurrentSumAmps += currentAmps;
+        double correctedCurrentAmps = currentAmps < 0 ? busRegenerationEfficiency * currentAmps : currentAmps;
+        simCurrentSumAmps += correctedCurrentAmps;
     }
 
     /** 
      * Set the simulated battery's loaded supply voltage by utilizing the total current load accumulated through {@link #addCurrentLoad}
      * calls within each existing mechanism subclass periodic. Uses {@link RoboRioSim#setVInVoltage(double)} to set the simulated battery 
      * voltage, which can then be retrieved with the {@link edu.wpi.first.wpilibj.RobotController#getBatteryVoltage()} method. This function 
-     * assumes a nominal voltage of 12V and a resistance {@link #batteryInternalResistanceOhms}.
+     * assumes a nominal voltage of {@link #batteryNominalVoltageVolts} and a resistance {@link #batteryInternalResistanceOhms}.
      */
     public static void setSimulatedBatteryLoadedVoltage() {
         // Calculate the target loaded battery voltage based on the nominal voltage, internal resistance, and total current draw
         double targetLoadedBatteryVoltageVolts = calculateDefaultBatteryLoadedVoltage(batteryNominalVoltageVolts, batteryInternalResistanceOhms, 
             simCurrentSumAmps);
-        // LPF the battery voltage to avoid sudden jumps in voltage when the current draw changes
+        // LPF the battery voltage to avoid sudden jumps in voltage when the current draw changes 
         double alpha = LOOP_TIME_SECONDS / (LOOP_TIME_SECONDS + BATTERY_VOLTAGE_TIME_CONSTANT_SECONDS);
         double previousVoltageVolts = RobotController.getBatteryVoltage();
         double filteredVoltageVolts = previousVoltageVolts + alpha * (targetLoadedBatteryVoltageVolts - previousVoltageVolts);
-        // Don't allow the battery voltage to go below 0 V or above 12 V
-        RoboRioSim.setVInVoltage(MathUtil.clamp(filteredVoltageVolts, 0.0, batteryNominalVoltageVolts));
+        RoboRioSim.setVInVoltage(filteredVoltageVolts);
         zeroCurrents();
     }
 
@@ -88,7 +106,9 @@ public final class BatteryModel {
      */
     private static double calculateDefaultBatteryLoadedVoltage(double nominalVoltageVolts, double resistanceOhms, double currentAmps) {
         double voltageSagVolts = currentAmps * resistanceOhms;
-        return nominalVoltageVolts - voltageSagVolts;
+        double targetLoadedBatteryVoltage = nominalVoltageVolts - voltageSagVolts;
+        // Don't allow regen past nominal or decay past zero
+        return MathUtil.clamp(targetLoadedBatteryVoltage, 0.0, nominalVoltageVolts);
     }
 
     private static void zeroCurrents() {
