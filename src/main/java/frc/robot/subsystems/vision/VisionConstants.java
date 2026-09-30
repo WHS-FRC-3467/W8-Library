@@ -18,6 +18,7 @@ package frc.robot.subsystems.vision;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Milliseconds;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
@@ -65,6 +66,8 @@ import java.util.Optional;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class VisionConstants {
     public static final String NAME = "Vision";
+
+    public static final AprilTagFieldLayout fieldLayout = AprilTagLayoutType.NO_TRENCH.getLayout();
 
     // Extrinsics
     public static final String FRONT_LEFT_NAME = "front_left";
@@ -256,6 +259,7 @@ public class VisionConstants {
     public static final CameraProperties FRONT_LEFT =
             new CameraProperties(
                     FRONT_LEFT_NAME,
+                    FRONT_LEFT_CAMERA_INDEX,
                     FRONT_LEFT_TRANSFORM,
                     FRONT_LEFT_MATRIX,
                     FRONT_LEFT_DIST_COEFFS,
@@ -270,6 +274,7 @@ public class VisionConstants {
     public static final CameraProperties LEFT =
             new CameraProperties(
                     LEFT_NAME,
+                    LEFT_CTWO_CAMERA_INDEX,
                     LEFT_TRANSFORM,
                     LEFT_MATRIX,
                     LEFT_DIST_COEFFS,
@@ -284,6 +289,7 @@ public class VisionConstants {
     public static final CameraProperties RIGHT =
             new CameraProperties(
                     RIGHT_NAME,
+                    RIGHT_CTWO_CAMERA_INDEX,
                     RIGHT_TRANSFORM,
                     RIGHT_MATRIX,
                     RIGHT_DIST_COEFFS,
@@ -298,6 +304,7 @@ public class VisionConstants {
     public static final CameraProperties FRONT_RIGHT =
             new CameraProperties(
                     FRONT_RIGHT_NAME,
+                    FRONT_RIGHT_CAMERA_INDEX,
                     FRONT_RIGHT_TRANSFORM,
                     FRONT_RIGHT_MATRIX,
                     FRONT_RIGHT_DIST_COEFFS,
@@ -322,7 +329,7 @@ public class VisionConstants {
     private static VisionSystemSim getVisionSim() {
         if (visionSim.isEmpty()) {
             visionSim = Optional.of(new VisionSystemSim("main"));
-            visionSim.get().addAprilTags(AprilTagLayoutType.NO_TRENCH.getLayout());
+            visionSim.get().addAprilTags(fieldLayout);
         }
         return visionSim.get();
     }
@@ -336,7 +343,7 @@ public class VisionConstants {
                 FRONT_LEFT,
                 getVisionSim(),
                 () -> RobotState.getInstance().getOdometryPose(),
-                AprilTagLayoutType.NO_TRENCH.getLayout());
+                fieldLayout);
     }
 
     private static VisionIO getLeftIOReal() {
@@ -348,7 +355,7 @@ public class VisionConstants {
                 LEFT,
                 getVisionSim(),
                 () -> RobotState.getInstance().getOdometryPose(),
-                AprilTagLayoutType.NO_TRENCH.getLayout());
+                fieldLayout);
     }
 
     private static VisionIO getRightIOReal() {
@@ -360,7 +367,7 @@ public class VisionConstants {
                 RIGHT,
                 getVisionSim(),
                 () -> RobotState.getInstance().getOdometryPose(),
-                AprilTagLayoutType.NO_TRENCH.getLayout());
+                fieldLayout);
     }
 
     private static VisionIO getFrontRightIOReal() {
@@ -372,7 +379,7 @@ public class VisionConstants {
                 FRONT_RIGHT,
                 getVisionSim(),
                 () -> RobotState.getInstance().getOdometryPose(),
-                AprilTagLayoutType.NO_TRENCH.getLayout());
+                fieldLayout);
     }
 
     /**
@@ -382,24 +389,30 @@ public class VisionConstants {
     public static void create() {
         switch (Constants.currentMode) {
             case REAL -> {
-                var frontLeftCamera = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOReal());
-                var leftCamera = new AprilTagCamera(LEFT, getLeftIOReal());
-                var rightCamera = new AprilTagCamera(RIGHT, getRightIOReal());
-                var frontRightCamera = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOReal());
+                var frontLeftCamera =
+                        new AprilTagCamera(FRONT_LEFT, getFrontLeftIOReal(), fieldLayout);
+                var leftCamera = new AprilTagCamera(LEFT, getLeftIOReal(), fieldLayout);
+                var rightCamera = new AprilTagCamera(RIGHT, getRightIOReal(), fieldLayout);
+                var frontRightCamera =
+                        new AprilTagCamera(FRONT_RIGHT, getFrontRightIOReal(), fieldLayout);
                 new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
             }
             case SIM -> {
-                var frontLeftCamera = new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim());
-                var leftCamera = new AprilTagCamera(LEFT, getLeftIOSim());
-                var rightCamera = new AprilTagCamera(RIGHT, getRightIOSim());
-                var frontRightCamera = new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim());
+                var frontLeftCamera =
+                        new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim(), fieldLayout);
+                var leftCamera = new AprilTagCamera(LEFT, getLeftIOSim(), fieldLayout);
+                var rightCamera = new AprilTagCamera(RIGHT, getRightIOSim(), fieldLayout);
+                var frontRightCamera =
+                        new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim(), fieldLayout);
                 new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
             }
             case REPLAY -> {
-                var frontLeftCamera = new AprilTagCamera(FRONT_LEFT, new VisionIO() {});
-                var leftCamera = new AprilTagCamera(LEFT, new VisionIO() {});
-                var rightCamera = new AprilTagCamera(RIGHT, new VisionIO() {});
-                var frontRightCamera = new AprilTagCamera(FRONT_RIGHT, new VisionIO() {});
+                var frontLeftCamera =
+                        new AprilTagCamera(FRONT_LEFT, new VisionIO() {}, fieldLayout);
+                var leftCamera = new AprilTagCamera(LEFT, new VisionIO() {}, fieldLayout);
+                var rightCamera = new AprilTagCamera(RIGHT, new VisionIO() {}, fieldLayout);
+                var frontRightCamera =
+                        new AprilTagCamera(FRONT_RIGHT, new VisionIO() {}, fieldLayout);
                 new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
             }
         }

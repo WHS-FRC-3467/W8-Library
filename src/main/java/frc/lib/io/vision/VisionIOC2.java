@@ -294,6 +294,7 @@ public class VisionIOC2 implements VisionIO {
                         && observationSubscriber.exists()
                         && lastChangeUs > 0
                         && nowUs - lastChangeUs <= DISCONNECT_TIMEOUT_US;
+        inputs.rawPacketType = NativePacketType.C2.ordinal();
 
         TimestampedRaw[] unreadFrames = observationSubscriber.readQueue();
         if (unreadFrames.length == 0) {
@@ -407,11 +408,8 @@ public class VisionIOC2 implements VisionIO {
      * CameraResult} type without an intermediate {@code PhotonPipelineResult}, keeping the C2 wire
      * format fully encapsulated in this IO layer.
      */
-    @Override
-    public CameraResult[] decodeResults(VisionIOInputs inputs) {
-        AprilTagFieldLayout tagLayout = config.tagLayout();
-        int cameraIndex = config.cameraIndex();
-
+    public static CameraResult[] decodeResults(
+            VisionIOInputs inputs, AprilTagFieldLayout tagLayout, int cameraIndex) {
         ArrayList<CameraResult> results = new ArrayList<>(inputs.rawResults.length);
         for (int i = 0; i < inputs.rawResults.length; i++) {
             byte[] raw = inputs.rawResults[i];

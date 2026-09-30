@@ -29,6 +29,13 @@ import java.util.Optional;
  * (PhotonVision, Limelight, etc.) while the rest of the robot code remains hardware-agnostic.
  */
 public interface VisionIO {
+    /** Identifier for the type of raw packet we are recieving in {@link VisionIOInputs#} */
+    public static enum NativePacketType {
+        UNKNOWN,
+        C2,
+        PHOTON
+    }
+
     /**
      * Container for vision camera sensor readings. Logged automatically by AdvantageKit for replay
      * and analysis.
@@ -56,7 +63,14 @@ public interface VisionIO {
         /** Whether the camera is connected and responding */
         public boolean connected = false;
 
+        /** Ordinal value of type {@link NativePacketType} */
+        // Enums cannot be stored in @AutoLog classes
+        public int rawPacketType = NativePacketType.UNKNOWN.ordinal();
+
         /** Raw unread frame payloads from the camera since last update. */
+        // We send raw bytes as it is both faster and many more structured
+        // classes cannot be send in @AutoLog classes, such as records containing
+        // arrays
         public byte[][] rawResults = new byte[0][];
 
         /** NT-synced capture timestamps for each unread result, in microseconds. */
@@ -73,19 +87,4 @@ public interface VisionIO {
      * @param inputs The input object to populate with sensor data
      */
     public default void updateInputs(VisionIOInputs inputs) {}
-
-    /**
-     * Decodes raw bytes stored in the provided {@link VisionIOInputs} into standardized {@link
-     * CameraResult} records.
-     *
-     * <p>Each IO implementation is responsible for interpreting its own wire format (e.g.,
-     * PhotonVision packed structs, C2 flatbuffers) and converting results to the common {@link
-     * CameraResult} type. This keeps format-specific decoding encapsulated in the IO layer.
-     *
-     * @param inputs the inputs populated by the most recent {@link #updateInputs} call
-     * @return array of decoded results; empty if the camera is disconnected or no new frames
-     */
-    public default CameraResult[] decodeResults(VisionIOInputs inputs) {
-        return new CameraResult[0];
-    }
 }

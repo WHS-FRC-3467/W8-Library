@@ -41,16 +41,6 @@ import java.util.Optional;
  * converts them to standardized {@link CameraResult} records.
  */
 public class VisionIOPhotonVision implements VisionIO {
-    /** Magic prefix bytes prepended to every packed PhotonVision result. */
-    private static final byte[] PHOTON_RESULT_MAGIC = new byte[] {'P', 'H', 'O', 'T', 'O', 'N', 1};
-
-    /** Returns a defensive copy of the PhotonVision result magic prefix. */
-    public static byte[] getPhotonResultMagic() {
-        byte[] copy = new byte[PHOTON_RESULT_MAGIC.length];
-        System.arraycopy(PHOTON_RESULT_MAGIC, 0, copy, 0, PHOTON_RESULT_MAGIC.length);
-        return copy;
-    }
-
     protected final PhotonCamera photonCamera;
 
     /**
@@ -77,6 +67,7 @@ public class VisionIOPhotonVision implements VisionIO {
     @Override
     public void updateInputs(VisionIOInputs inputs) {
         inputs.connected = photonCamera.isConnected();
+        inputs.rawPacketType = NativePacketType.PHOTON.ordinal();
 
         if (!inputs.connected) {
             inputs.rawResults = new byte[0][];
@@ -107,13 +98,12 @@ public class VisionIOPhotonVision implements VisionIO {
      * <p>Each raw byte array is unpacked from the PhotonVision struct format, then each tracked
      * target's field-to-camera pose is reconstructed using the known tag field positions.
      */
-    @Override
-    public CameraResult[] decodeResults(VisionIOInputs inputs) {
+    public static CameraResult[] decodeResults(
+            VisionIOInputs inputs, AprilTagFieldLayout tagLayout) {
         ArrayList<CameraResult> results = new ArrayList<>(inputs.rawResults.length);
         for (int i = 0; i < inputs.rawResults.length; i++) {
             byte[] raw = inputs.rawResults[i];
             if (raw == null || raw.length == 0) continue;
-            if (!isPhotonResult(raw)) continue;
 
             PhotonPipelineResult photon = unpackPhotonResult(raw);
             if (photon == null) continue;
@@ -123,7 +113,7 @@ public class VisionIOPhotonVision implements VisionIO {
             long publishTs =
                     i < inputs.publishTimestampsUs.length ? inputs.publishTimestampsUs[i] : 0;
 
-            results.add(toCameraResult(photon, captureTs, publishTs));
+            results.add(toCameraResult(photon, captureTs, publishTs, tagLayout));
         }
         return results.toArray(CameraResult[]::new);
     }
@@ -132,21 +122,9 @@ public class VisionIOPhotonVision implements VisionIO {
     // Internal helpers
     // -------------------------------------------------------------------------
 
-    private static boolean isPhotonResult(byte[] raw) {
-        if (raw.length < PHOTON_RESULT_MAGIC.length) {
-            return false;
-        }
-        for (int i = 0; i < PHOTON_RESULT_MAGIC.length; i++) {
-            if (raw[i] != PHOTON_RESULT_MAGIC[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     private static PhotonPipelineResult unpackPhotonResult(byte[] raw) {
         try {
-            byte[] payload = Arrays.copyOfRange(raw, PHOTON_RESULT_MAGIC.length, raw.length);
+            byte[] payload = Arrays.copyOf(raw, raw.length);
             return PhotonPipelineResult.photonStruct.unpack(new Packet(payload));
         } catch (RuntimeException e) {
             return null;
@@ -159,13 +137,14 @@ public class VisionIOPhotonVision implements VisionIO {
      * <p>For each tracked target, the field-to-camera pose is reconstructed as: {@code
      * fieldToCamera = fieldToTag * inverse(cameraToTag)}.
      */
-    private CameraResult toCameraResult(
-            PhotonPipelineResult photon, long captureTimestampUs, long publishTimestampUs) {
-
+    private static CameraResult toCameraResult(
+            PhotonPipelineResult photon,
+            long captureTimestampUs,
+            long publishTimestampUs,
+            AprilTagFieldLayout tagLayout) {
         ArrayList<TagObservation> tagObs = new ArrayList<>(photon.getTargets().size());
         for (PhotonTrackedTarget target : photon.getTargets()) {
             int tagId = target.getFiducialId();
-            if (tagLayout == null) continue;
             Optional<Pose3d> tagPoseOpt = tagLayout.getTagPose(tagId);
             if (tagPoseOpt.isEmpty()) continue;
             Pose3d tagPose = tagPoseOpt.get();
@@ -211,9 +190,8 @@ public class VisionIOPhotonVision implements VisionIO {
         Packet packet = new Packet(512);
         PhotonPipelineResult.photonStruct.pack(packet, result);
         byte[] packed = packet.getWrittenDataCopy();
-        byte[] raw = new byte[PHOTON_RESULT_MAGIC.length + packed.length];
-        System.arraycopy(PHOTON_RESULT_MAGIC, 0, raw, 0, PHOTON_RESULT_MAGIC.length);
-        System.arraycopy(packed, 0, raw, PHOTON_RESULT_MAGIC.length, packed.length);
+        byte[] raw = new byte[packed.length];
+        System.arraycopy(packed, 0, raw, 0, packed.length);
         return raw;
     }
 }

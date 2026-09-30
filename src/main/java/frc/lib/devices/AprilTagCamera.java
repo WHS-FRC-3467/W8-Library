@@ -15,6 +15,7 @@
 
 package frc.lib.devices;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -25,10 +26,14 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
 
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIO.CameraResult;
+import frc.lib.io.vision.VisionIO.NativePacketType;
+import frc.lib.io.vision.VisionIOC2;
 import frc.lib.io.vision.VisionIOInputsAutoLogged;
+import frc.lib.io.vision.VisionIOPhotonVision;
 
 import lombok.Getter;
 
@@ -45,7 +50,6 @@ import java.util.Optional;
  * VisionIO#decodeResults} so that all format-specific logic stays in the IO layer.
  */
 public class AprilTagCamera {
-
     /**
      * Intrinsic &amp; observed properties describing the camera.
      *
@@ -63,6 +67,7 @@ public class AprilTagCamera {
      */
     public record CameraProperties(
             String name,
+            int index,
             Transform3d robotToCamera,
             Matrix<N3, N3> cameraMatrix,
             Matrix<N8, N1> distCoeffs,
@@ -77,6 +82,8 @@ public class AprilTagCamera {
     private final VisionIO io;
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
 
+    private final AprilTagFieldLayout fieldLayout;
+
     private final Alert disconnectAlert;
     private final Debouncer disconnectDebouncer = new Debouncer(0.25);
 
@@ -90,11 +97,13 @@ public class AprilTagCamera {
      * @param io the {@link VisionIO} implementation for this camera (handles both raw I/O and
      *     decoding)
      */
-    public AprilTagCamera(CameraProperties properties, VisionIO io) {
+    public AprilTagCamera(
+            CameraProperties properties, VisionIO io, AprilTagFieldLayout fieldLayout) {
         this.properties = properties;
         this.io = io;
         this.disconnectAlert =
                 new Alert("Camera " + properties.name() + " is Disconnected!", AlertType.kError);
+        this.fieldLayout = fieldLayout;
     }
 
     /**
@@ -114,6 +123,23 @@ public class AprilTagCamera {
         disconnectAlert.set(disconnectDebouncer.calculate(disconnected));
         if (disconnected) return Optional.empty();
 
-        return Optional.of(io.decodeResults(inputs));
+        NativePacketType type;
+        try {
+            type = NativePacketType.values()[inputs.rawPacketType];
+        } catch (IndexOutOfBoundsException e) {
+            DriverStation.reportError(
+                    "Unknown/Invalid Vision Packet Type Reported. Ignoring.", e.getStackTrace());
+            return Optional.empty();
+        }
+
+        return switch (type) {
+            case UNKNOWN -> {
+                DriverStation.reportError(
+                        "Unknown/Invalid Vision Packet Type Reported. Ignoring.", null);
+                yield Optional.empty();
+            }
+            case C2 -> Optional.of(VisionIOC2.decodeResults(inputs, fieldLayout, properties.index));
+            case PHOTON -> Optional.of(VisionIOPhotonVision.decodeResults(inputs, fieldLayout));
+        };
     }
 }
