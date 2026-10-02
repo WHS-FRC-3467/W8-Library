@@ -25,11 +25,12 @@ public class Auto {
     @Getter private final Command command;
 
     // List of points for visual display on the dashboard
-    @Getter private final List<Pose2d> points = List.of();
+    @Getter private final List<Pose2d> points;
 
     public Auto(String name, Command command, List<Pose2d> points) {
         this.name = name;
         this.command = command;
+        this.points = points;
 
         Logger.recordOutput("Autos/" + name, points.toArray(new Pose2d[0]));
     }
