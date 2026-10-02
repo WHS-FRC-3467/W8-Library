@@ -15,7 +15,11 @@
 
 package frc.lib.io.vision;
 
+import edu.wpi.first.math.geometry.Pose3d;
+
 import org.littletonrobotics.junction.AutoLog;
+
+import java.util.Optional;
 
 /**
  * Hardware interface for vision cameras that detect AprilTags for robot localization.
@@ -25,16 +29,48 @@ import org.littletonrobotics.junction.AutoLog;
  * (PhotonVision, Limelight, etc.) while the rest of the robot code remains hardware-agnostic.
  */
 public interface VisionIO {
+    /** Identifier for the type of raw packet we are recieving in {@link VisionIOInputs#} */
+    public static enum NativePacketType {
+        UNKNOWN,
+        C2,
+        PHOTON
+    }
+
     /**
      * Container for vision camera sensor readings. Logged automatically by AdvantageKit for replay
      * and analysis.
      */
+    public static record TagObservation(
+            int fiducialId,
+            Pose3d fieldToCameraPose, // Field to camera
+            Pose3d altPose,
+            double area,
+            double ambiguity) {}
+
+    public static record MultiTagObservation(
+            int[] fiducialIds,
+            Pose3d fieldToCameraPose, // Field to camera
+            double error) {}
+
+    public static record CameraResult(
+            TagObservation[] tagObservations,
+            Optional<MultiTagObservation> multiTagObservation,
+            double captureTimestampUs,
+            double publishTimestampUs) {}
+
     @AutoLog
     public static class VisionIOInputs {
         /** Whether the camera is connected and responding */
         public boolean connected = false;
 
+        /** Ordinal value of type {@link NativePacketType} */
+        // Enums cannot be stored in @AutoLog classes
+        public int rawPacketType = NativePacketType.UNKNOWN.ordinal();
+
         /** Raw unread frame payloads from the camera since last update. */
+        // We log raw bytes both because it is faster and many structured
+        // classes cannot be @AutoLog-ed, such as records containing
+        // arrays
         public byte[][] rawResults = new byte[0][];
 
         /** NT-synced capture timestamps for each unread result, in microseconds. */
