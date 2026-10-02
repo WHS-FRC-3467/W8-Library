@@ -68,8 +68,8 @@ public interface VisionIO {
         public int rawPacketType = NativePacketType.UNKNOWN.ordinal();
 
         /** Raw unread frame payloads from the camera since last update. */
-        // We send raw bytes as it is both faster and many more structured
-        // classes cannot be send in @AutoLog classes, such as records containing
+        // We log raw bytes both because it is faster and many structured
+        // classes cannot be @AutoLog-ed, such as records containing
         // arrays
         public byte[][] rawResults = new byte[0][];
 
