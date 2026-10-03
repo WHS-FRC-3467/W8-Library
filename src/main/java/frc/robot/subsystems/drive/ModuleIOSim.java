@@ -23,7 +23,6 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -31,7 +30,9 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import frc.lib.mechanisms.MotorSimCalcs;
 import frc.lib.util.BatteryModel;
+import lombok.Setter;
 
 /**
  * Physics sim implementation of module IO. The sim models are configured using
@@ -39,6 +40,9 @@ import frc.lib.util.BatteryModel;
  * control.
  */
 public class ModuleIOSim implements ModuleIO {
+    @Setter
+    private String moduleName = "";
+
     // TunerConstants doesn't support separate sim constants, so they are declared
     // locally
     private static final double DRIVE_KP = 0.05;
@@ -49,7 +53,7 @@ public class ModuleIOSim implements ModuleIO {
 
     /** 
     * Bare, unreduced DC motor models for the drive and turn motor simulations (qty 1 ea). 
-    * The gear ratio is not applied to these models; it is instead applied in the 
+    * The gear ratios are not applied to these objects; they are instead applied in the 
     * {@link LinearSystemId#createDCMotorSystem(DCMotor, double, double)} call. 
     */
     private static final DCMotor DRIVE_MOTOR_MODEL = DCMotor.getKrakenX60Foc(1);
@@ -69,12 +73,22 @@ public class ModuleIOSim implements ModuleIO {
     private final PIDController driveController = new PIDController(DRIVE_KP, 0, DRIVE_KD);
     private final PIDController turnController = new PIDController(TURN_KP, 0, TURN_KD);
     private double driveFFVolts = 0.0;
-    private double driveAppliedVolts = 0.0;
-    private double turnAppliedVolts = 0.0;
+
+    // Electrical
+    private double driveUnclampedAppliedVolts = 0.0;
+    private double turnUnclampedAppliedVolts = 0.0;
 
     // Simulation time-stepping parameters
     private static final double SIMULATION_STEP_SECONDS = 0.02;
     private static final int SIM_SUBSTEPS = 6;
+
+    // Boolean indicating whether regenerative braking is feeding the bus. Can vary from module to module.
+    public boolean isDriveRegenerating = false;
+    public boolean isTurnRegenerating = false;
+
+    // to-do docs
+    private double driveSupplyCurrentAverageAmps = 0.0;
+    private double turnSupplyCurrentAverageAmps = 0.0;
 
     public ModuleIOSim(
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
@@ -82,7 +96,7 @@ public class ModuleIOSim implements ModuleIO {
          * Create Drive and Turn sim models. 
          * 
          * DCMotorSim extends LinearSystemSim and together, given a LinearSystem, provide a state space 
-         * model and associated API of a DC motor gearbox which produces mechanism-space positions, velocities, 
+         * model and associated API for a DC motor gearbox which produces mechanism-space positions, velocities, 
          * accelerations, and torques. LinearSystem provides the state space computation machinery, LinearSystemSim 
          * provides the update functionality / basic API, and DCMotorSim provides the final simulation API and uses 
          * the results from the state space model in some additional modeling helpers, including electrical modeling 
@@ -115,12 +129,12 @@ public class ModuleIOSim implements ModuleIO {
     public void updateInputs(ModuleIOInputs inputs) {
         /* Run closed-loop control */
         if (driveClosedLoop) {
-            driveAppliedVolts = driveFFVolts + driveController.calculate(driveSim.getAngularVelocityRadPerSec());
+            driveUnclampedAppliedVolts = driveFFVolts + driveController.calculate(driveSim.getAngularVelocityRadPerSec());
         } else {
             driveController.reset();
         }
         if (turnClosedLoop) {
-            turnAppliedVolts = turnController.calculate(turnSim.getAngularPositionRad());
+            turnUnclampedAppliedVolts = turnController.calculate(turnSim.getAngularPositionRad());
         } else {
             turnController.reset();
         }
@@ -131,58 +145,70 @@ public class ModuleIOSim implements ModuleIO {
          */
         double supplyVoltageVolts = RobotController.getBatteryVoltage();
         /*
-         * Continue to simulate the robot controller at SIMULATION_STEP_SECONDS (e.g. 20 ms, 50 Hz), but current limit faster 
-         * by a factor of SIM_SUBSTEPS. This results in more precise current limiting. Note that actual motor controllers often
-         * limit at ~ 1000 Hz.
+         * Continue to simulate the robot controller as writing/reading at SIMULATION_STEP_SECONDS (e.g. 20 ms, 50 Hz), but current 
+         * limit faster by a factor of SIM_SUBSTEPS. This results in more precise current limiting. Note that actual motor controllers 
+         * often limit at ~ 1000 Hz.
          * 
          * Over 0.02 s, wheel speed tends to change drastically; current limiting off of 20 ms stale back-EMF often 
          * results in logged stator currents that are notably below established current limits.
          */
-        for (int i = 0; i < SIM_SUBSTEPS; i++) {
-            double currentLimitedDriveVolts = clampVoltageToCurrentLimit(
-                driveAppliedVolts, 
+
+        for (int i = 0; i < SIM_SUBSTEPS; i++) { 
+            double driveClampedAppliedVolts = MotorSimCalcs.clampVoltageToTorqueCurrentLimit(
+                driveUnclampedAppliedVolts, 
                 driveSim.getAngularVelocityRadPerSec(),
                 driveSim.getGearing(), 
                 DRIVE_MOTOR_MODEL, 
                 DriveConstants.getKSlipCurrent().in(Amps),
                 supplyVoltageVolts);
-            driveSim.setInputVoltage(currentLimitedDriveVolts);
+            driveSim.setInputVoltage(driveClampedAppliedVolts);
 
-            double currentLimitedTurnVolts = clampVoltageToCurrentLimit(
-                turnAppliedVolts, 
+            double turnClampedAppliedVolts = MotorSimCalcs.clampVoltageToTorqueCurrentLimit(
+                turnUnclampedAppliedVolts, 
                 turnSim.getAngularVelocityRadPerSec(),
                 turnSim.getGearing(), 
                 TURN_MOTOR_MODEL, 
                 DriveConstants.getTurnCurrentMax().in(Amps),
                 supplyVoltageVolts);
-            turnSim.setInputVoltage(currentLimitedTurnVolts);
+            turnSim.setInputVoltage(turnClampedAppliedVolts);
 
             // Update the sim
             driveSim.update(SIMULATION_STEP_SECONDS / SIM_SUBSTEPS);
             turnSim.update(SIMULATION_STEP_SECONDS / SIM_SUBSTEPS);
-        }
 
-        // TO-DO : average current over substeps
+            // Average supply currents over the substeps for more accurate battery load modeling, though note this will introduce a
+            // slight latency (~ 0.01s) in the battery load response
+            driveSupplyCurrentAverageAmps += MotorSimCalcs.getSupplyCurrentAmps(supplyVoltageVolts, driveClampedAppliedVolts, 
+            MotorSimCalcs.getTorqueCurrentAmps(driveSim, DRIVE_MOTOR_MODEL.KtNMPerAmp));
+            turnSupplyCurrentAverageAmps += MotorSimCalcs.getSupplyCurrentAmps(supplyVoltageVolts, turnClampedAppliedVolts, 
+            MotorSimCalcs.getTorqueCurrentAmps(turnSim, TURN_MOTOR_MODEL.KtNMPerAmp));
+            if (i == SIM_SUBSTEPS - 1) {
+                driveSupplyCurrentAverageAmps /= SIM_SUBSTEPS;
+                turnSupplyCurrentAverageAmps /= SIM_SUBSTEPS;
+            }
+        }
   
         /* 
          * Update the battery load accumulator with the current draw from both motors. A positive supply
          * current is a bus draw and a negative supply current is a bus regen.
          */
+        // Clamped applied volts
         double driveAppliedVoltageVolts = driveSim.getInputVoltage(); 
         // Can equivalently calculate torque current via getCurrent(speed, voltage)
-        double driveTorqueCurrentAmps = driveSim.getTorqueNewtonMeters()
-        / (driveSim.getGearing() * DRIVE_MOTOR_MODEL.KtNMPerAmp); 
-        double driveSupplyCurrentAmps = getSupplyCurrentAmps(supplyVoltageVolts, driveAppliedVoltageVolts, driveTorqueCurrentAmps);
+        double driveTorqueCurrentAmps = MotorSimCalcs.getTorqueCurrentAmps(driveSim, DRIVE_MOTOR_MODEL.KtNMPerAmp);
+        double driveSupplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(supplyVoltageVolts, driveAppliedVoltageVolts, driveTorqueCurrentAmps);
+        isDriveRegenerating = driveSupplyCurrentAmps > 0 ? false : true;
+        BatteryModel.addCurrentLoad(driveSupplyCurrentAverageAmps);
 
+        // Should return clamped applied volts
         double turnAppliedVoltageVolts = turnSim.getInputVoltage();
         // Can equivalently calculate torque current via getCurrent(speed, voltage)
-        double turnTorqueCurrentAmps = turnSim.getTorqueNewtonMeters() 
-        / (turnSim.getGearing() * TURN_MOTOR_MODEL.KtNMPerAmp); 
-        double turnSupplyCurrentAmps = getSupplyCurrentAmps(supplyVoltageVolts, turnAppliedVoltageVolts, turnTorqueCurrentAmps);
+        double turnTorqueCurrentAmps = MotorSimCalcs.getTorqueCurrentAmps(turnSim, TURN_MOTOR_MODEL.KtNMPerAmp);
+        double turnSupplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(supplyVoltageVolts, turnAppliedVoltageVolts, turnTorqueCurrentAmps);
+        isTurnRegenerating = turnSupplyCurrentAmps > 0 ? false : true;
+        BatteryModel.addCurrentLoad(turnSupplyCurrentAverageAmps); 
 
-        BatteryModel.addCurrentLoad(driveSupplyCurrentAmps + turnSupplyCurrentAmps);
-
-        // Update Drive inputs
+        // Update Drive inputs (here)
         // Note: Drive position, velocity, and torque are reported in mechanism units 
         inputs.driveConnected = true;
         inputs.drivePositionRad = driveSim.getAngularPositionRad(); 
@@ -213,20 +239,23 @@ public class ModuleIOSim implements ModuleIO {
         inputs.odometryDrivePositionsRad = new double[] { inputs.drivePositionRad };
         inputs.odometryTurnPositions = new Rotation2d[] { inputs.turnPosition };
 
-        logSimulationParameters(supplyVoltageVolts, driveAppliedVolts, driveSim.getInputVoltage(), driveTorqueCurrentAmps, 
-        driveSupplyCurrentAmps);
+        // Log module-specific simulation parameters for diagnostics
+        logModuleSimState(supplyVoltageVolts, driveUnclampedAppliedVolts, driveAppliedVoltageVolts, 
+        DriveConstants.getKSlipCurrent().in(Amps), driveTorqueCurrentAmps, driveSupplyCurrentAmps,
+        turnUnclampedAppliedVolts, turnAppliedVoltageVolts, DriveConstants.getTurnCurrentMax().in(Amps),
+        turnTorqueCurrentAmps, turnSupplyCurrentAmps);
     }
 
     @Override
     public void setDriveOpenLoop(double output) {
         driveClosedLoop = false;
-        driveAppliedVolts = output;
+        driveUnclampedAppliedVolts = output;
     }
 
     @Override
     public void setTurnOpenLoop(double output) {
         turnClosedLoop = false;
-        turnAppliedVolts = output;
+        turnUnclampedAppliedVolts = output;
     }
 
     @Override
@@ -242,98 +271,24 @@ public class ModuleIOSim implements ModuleIO {
         turnController.setSetpoint(rotation.getRadians());
     }
 
-    /**
-     * Attempt to clamp the requested voltage to the current limit of the motor, if the presently available battery 
-     * voltage allows. Clamps both positive and negative currents.
-     * 
-     * @param requestedVolts Applied volts requested by the controller (with proper sign to indicate polarity)
-     * @param mechanismVelocityRadPerSec Current mechanism-space (drive wheel or azimuth yoke) velocity in rad/s  
-     * (with proper sign to indicate direction). Assumed to have the same sign convention used by the DCMotorSim 
-     * input voltage
-     * @param gearing Gear ratio from motor to mechanism (drive wheel or azimuth yoke)
-     * @param motor DCMotor model of the motor being simulated (bare, unreduced, qty 1)
-     * @param currentLimitAmps Torque / stator current limit for the motor in amps (positive only)
-     * @param batteryVoltageVolts The current available battery voltage magnitude, assumed usable bidirectionally
-     * @return An updated applied voltage request, clamped to the current limit if necessary
-     */
-    private static double clampVoltageToCurrentLimit(
-        double requestedVolts,
-        double mechanismVelocityRadPerSec,
-        double gearing,
-        DCMotor motor,
-        double currentLimitAmps,
-        double batteryVoltageVolts) {
-            /*
-            * DCMotorSim is internally self-consistent: motor applied voltage,
-            * simulated output angular position/velocity, simulated output torque,
-            * and derived motor torque current all use the same simulated positive
-            * direction. This does not imply anything about real-world motor/controller
-            * inversion; it is only a local convention inside this sim model.
-            */
-            double motorVelocityRadPerSec = mechanismVelocityRadPerSec * gearing;
-            double currentLimitMagnitudeAmps = Math.abs(currentLimitAmps);
-            double batteryVoltageMagnitudeVolts = Math.abs(batteryVoltageVolts);
-
-            /* 
-             * Simple current model: I = (V_applied - w / Kv) / R 
-             * Therefore, for | I | <= I_magnitude_limit,
-             * | V_applied - w / Kv | <= I_magnitude_limit * R
-             * -I_magnitude_limit * R <= V_applied - w / Kv <= I_magnitude_limit * R
-             * w / Kv - I_magnitude_limit * R <= V_applied <= I_magnitude_limit * R + w / Kv
-             */
-            double zeroCurrentVolts = motorVelocityRadPerSec / motor.KvRadPerSecPerVolt;
-            double voltageMarginVolts = currentLimitMagnitudeAmps * motor.rOhms;
-            double currentLimitedMinVolts = zeroCurrentVolts - voltageMarginVolts;
-            double currentLimitedMaxVolts = zeroCurrentVolts + voltageMarginVolts;
-            // But also: -V_battery <= V_applied <= V_battery
-            double batteryLimitedMinVolts = -batteryVoltageMagnitudeVolts;
-            double batteryLimitedMaxVolts = batteryVoltageMagnitudeVolts;
-            /*
-             * Therefore, max(w / Kv - I_magnitude_limit * R, - V_battery) <= V_applied 
-             * <= min(I_magnitude_limit * R + w / Kv, V_battery) is the voltage range that 
-             * satisfies both the current limit and the presently available battery voltage.
-             */
-            double feasibleMinVolts = Math.max(currentLimitedMinVolts, batteryLimitedMinVolts);
-            double feasibleMaxVolts = Math.min(currentLimitedMaxVolts, batteryLimitedMaxVolts);
-
-            // If the intervals overlap, there is a voltage within the presently available
-            // battery voltage range that can satisfy the current limit. Clamp the requested
-            // voltage into that feasible interval.
-            if (feasibleMinVolts <= feasibleMaxVolts) {
-                return MathUtil.clamp(requestedVolts, feasibleMinVolts, feasibleMaxVolts);
-            }
-            // If the intervals do not overlap, no available battery voltage can satisfy the
-            // current limit. Apply the available voltage closest to the zero-current voltage,
-            // which minimizes current magnitude. Due to voltage saturation, the current limit
-            // will be exceeded.
-            return MathUtil.clamp(zeroCurrentVolts, batteryLimitedMinVolts, batteryLimitedMaxVolts);
-        }
-
-        /**
-         * Calculates the supply current draw from the battery based on the applied voltage, bus voltage, and torque current.
-         * Can be positive or negative depending on whether the motor is drawing current from the battery or regenerating back to it.
-         * 
-         * @param busVoltageVolts Bus (battery) voltage in Volts
-         * @param appliedVoltageVolts Motor applied voltage in Volts
-         * @param torqueCurrentAmps Torque (stator) current in Amps
-         * @return Supply current draw in Amps
-         */
-        private static double getSupplyCurrentAmps(double busVoltageVolts, double appliedVoltageVolts, double torqueCurrentAmps) {
-            double motorPowerWatts = torqueCurrentAmps * appliedVoltageVolts;
-            if (busVoltageVolts < 1e-6) {
-                return 0.0;
-            }
-            return motorPowerWatts / busVoltageVolts;
-        }
-
-        // TO-DO : clean this up
-        private static void logSimulationParameters(double supplyVoltageVolts, double driveUnclampedAppliedVolts, 
-        double driveClampedAppliedVolts, double driveTorqueCurrentAmps, double driveSupplyCurrentAmps) {
-            Logger.recordOutput("Drive/ModuleSim/SupplyVoltageVolts", supplyVoltageVolts);
-            Logger.recordOutput("Drive/ModuleSim/DriveUnclampedAppliedVolts", driveUnclampedAppliedVolts);
-            Logger.recordOutput("Drive/ModuleSim/DriveClampedAppliedVolts", driveClampedAppliedVolts);
-            Logger.recordOutput("Drive/ModuleSim/CurrentLimitAmps", DriveConstants.getKSlipCurrent().in(Amps));
-            Logger.recordOutput("Drive/ModuleSim/TorqueCurrentAmps", driveTorqueCurrentAmps);
-            Logger.recordOutput("Drive/ModuleSim/SupplyCurrentAmps", driveSupplyCurrentAmps);
-        }
+    // Log simulation parameters for diagnostics 
+    private void logModuleSimState(double supplyVoltageVolts, double driveUnclampedAppliedVolts, double 
+    driveClampedAppliedVolts, double driveCurrentLimitAmps, double driveTorqueCurrentAmps, double driveSupplyCurrentAmps, 
+    double turnUnclampedAppliedVolts, double turnClampedAppliedVolts, double turnCurrentLimitAmps,
+    double turnTorqueCurrentAmps, double turnSupplyCurrentAmps) {
+        String prefix = "Simulation/Drive/Module/" + moduleName + "/";
+        Logger.recordOutput(prefix + "SupplyVoltageVolts", supplyVoltageVolts);
+        // Drive
+        Logger.recordOutput(prefix + "DriveUnclampedAppliedVolts", driveUnclampedAppliedVolts);
+        Logger.recordOutput(prefix + "DriveClampedAppliedVolts", driveClampedAppliedVolts);
+        Logger.recordOutput(prefix + "DriveCurrentLimitAmps", driveCurrentLimitAmps);
+        Logger.recordOutput(prefix + "DriveTorqueCurrentAmps", driveTorqueCurrentAmps);
+        Logger.recordOutput(prefix + "DriveSupplyCurrentAmps", driveSupplyCurrentAmps);
+        // Turn
+        Logger.recordOutput(prefix + "TurnUnclampedAppliedVolts", turnUnclampedAppliedVolts);
+        Logger.recordOutput(prefix + "TurnClampedAppliedVolts", turnClampedAppliedVolts);
+        Logger.recordOutput(prefix + "TurnCurrentLimitAmps", turnCurrentLimitAmps);
+        Logger.recordOutput(prefix + "TurnTorqueCurrentAmps", turnTorqueCurrentAmps);
+        Logger.recordOutput(prefix + "TurnSupplyCurrentAmps", turnSupplyCurrentAmps);
+    }
 }
