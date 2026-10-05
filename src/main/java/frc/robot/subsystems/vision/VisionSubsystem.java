@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.lib.devices.AprilTagCamera;
 import frc.lib.io.vision.VisionIO.CameraResult;
+import frc.lib.io.vision.VisionIO.MultiTagObservation;
 import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.util.FieldUtil;
@@ -115,6 +116,10 @@ public class VisionSubsystem extends SubsystemBase {
      * @return {@code true} if the result passes preliminary checks, {@code false} otherwise
      */
     public static boolean preFilter(CameraResult result) {
+        // Accept multi-tag results when a multi-tag solution is present and close enough
+        if (result.multiTagObservation().isPresent()) {
+            return getAvgDistanceMeters(result) < MAX_DISTANCE_METERS;
+        }
 
         // Reject results with no tag observations
         if (result.tagObservations().length == 0) {
@@ -127,15 +132,11 @@ public class VisionSubsystem extends SubsystemBase {
             if (target.ambiguity() > MAX_AMBIGUITY) {
                 return false;
             }
-            if (cameraToTagDistance(target) > MAX_DISTANCE_METERS) {
+            if (cameraToTagDistance(target.fiducialId(), target.fieldToCameraPose())
+                    > MAX_DISTANCE_METERS) {
                 return false;
             }
             return true;
-        }
-
-        // Accept multi-tag results when a multi-tag solution is present and close enough
-        if (result.multiTagObservation().isPresent()) {
-            return getAvgDistanceMeters(result) < MAX_DISTANCE_METERS;
         }
 
         // Multi-tag frame but no multi-tag solve (e.g., solver disabled/unavailable):
@@ -146,7 +147,8 @@ public class VisionSubsystem extends SubsystemBase {
                         .orElse(null);
         if (best == null) return false;
         if (best.ambiguity() > MAX_AMBIGUITY) return false;
-        return cameraToTagDistance(best) <= MAX_DISTANCE_METERS;
+        return cameraToTagDistance(best.fiducialId(), best.fieldToCameraPose())
+                <= MAX_DISTANCE_METERS;
     }
 
     /**
@@ -336,14 +338,12 @@ public class VisionSubsystem extends SubsystemBase {
      * distance between the tag and the camera (both in field coordinates). Falls back to the
      * camera's distance from the field origin if the tag ID is not in the layout.
      */
-    private static double cameraToTagDistance(TagObservation obs) {
-        Optional<Pose3d> tagPoseOpt =
-                AprilTagLayoutType.NO_TRENCH.getLayout().getTagPose(obs.fiducialId());
+    private static double cameraToTagDistance(int tagID, Pose3d fieldToCameraPose) {
+        Optional<Pose3d> tagPoseOpt = AprilTagLayoutType.NO_TRENCH.getLayout().getTagPose(tagID);
         if (tagPoseOpt.isEmpty()) {
-            return obs.fieldToCameraPose().getTranslation().getNorm();
+            return fieldToCameraPose.getTranslation().getNorm();
         }
-        return tagPoseOpt.get().getTranslation().getDistance(
-                obs.fieldToCameraPose().getTranslation());
+        return tagPoseOpt.get().getTranslation().getDistance(fieldToCameraPose.getTranslation());
     }
 
     /**
@@ -353,9 +353,16 @@ public class VisionSubsystem extends SubsystemBase {
      * layout, falling back to the camera's distance from the field origin if a tag is not found.
      */
     private static double getAvgDistanceMeters(CameraResult result) {
+        if (result.multiTagObservation().isPresent()) {
+            MultiTagObservation obs = result.multiTagObservation().get();
+            return Arrays.stream(obs.fiducialIds())
+                    .mapToDouble(id -> cameraToTagDistance(id, obs.fieldToCameraPose()))
+                    .average()
+                    .orElse(0.0);
+        }
         if (result.tagObservations().length == 0) return 0.0;
         return Arrays.stream(result.tagObservations())
-                .mapToDouble(VisionSubsystem::cameraToTagDistance)
+                .mapToDouble(o -> cameraToTagDistance(o.fiducialId(), o.fieldToCameraPose()))
                 .average()
                 .orElse(0.0);
     }
@@ -375,8 +382,12 @@ public class VisionSubsystem extends SubsystemBase {
         int tagCount = Math.max(1, poseRecord.tagsUsed().size());
         boolean hasMultiTag = result.multiTagObservation().isPresent();
         double ambiguity = 0.0;
-        if (!hasMultiTag && result.tagObservations().length == 1) {
-            double rawAmbiguity = result.tagObservations()[0].ambiguity();
+        if (!hasMultiTag) {
+            double rawAmbiguity =
+                    Arrays.stream(result.tagObservations())
+                            .mapToDouble(TagObservation::ambiguity)
+                            .min()
+                            .orElse(1.0);
             ambiguity = rawAmbiguity < 0.0 ? 0.0 : rawAmbiguity;
         }
 
