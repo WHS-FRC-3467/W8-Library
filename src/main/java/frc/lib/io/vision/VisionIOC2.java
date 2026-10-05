@@ -480,26 +480,23 @@ public class VisionIOC2 implements VisionIO {
         Pose3d fieldToCameraAlt =
                 alternateSolution != null ? c2PoseToWpilib(alternateSolution) : null;
 
-        double ambiguity =
-                alternateSolution != null
-                        ? computeC2Ambiguity(primarySolution.error(), alternateSolution.error())
-                        : 0.0;
-
         // Build one TagObservation per detected tag
         ArrayList<TagObservation> tagObs = new ArrayList<>(observation.tagIdsLength());
-        for (int i = 0; i < observation.tagIdsLength(); i++) {
-            int tagId = observation.tagIds(i);
+        if (observation.tagIdsLength() == 1) {
+            int tagId = observation.tagIds(0);
             Optional<Pose3d> tagPoseOpt = tagLayout.getTagPose(tagId);
-            if (tagPoseOpt.isEmpty()) continue;
-
-            // Use the primary solve as the best pose; alternate as the alt pose
-            Pose3d alt = fieldToCameraAlt != null ? fieldToCameraAlt : fieldToCamera;
-            tagObs.add(new TagObservation(tagId, fieldToCamera, alt, 0.0, ambiguity));
+            if (tagPoseOpt.isPresent()) {
+                // Use the primary solve as the best pose; alternate as the alt pose
+                Pose3d alt = fieldToCameraAlt != null ? fieldToCameraAlt : fieldToCamera;
+                double ambiguity =
+                        computeC2Ambiguity(primarySolution.error(), alternateSolution.error());
+                tagObs.add(new TagObservation(tagId, fieldToCamera, alt, 0.0, ambiguity));
+            }
         }
 
         // Build a MultiTagObservation when ≥2 tags were used
         Optional<MultiTagObservation> multiTag = Optional.empty();
-        if (tagObs.size() >= 2) {
+        if (observation.tagIdsLength() >= 2) {
             int[] ids = tagObs.stream().mapToInt(TagObservation::fiducialId).toArray();
             multiTag =
                     Optional.of(
