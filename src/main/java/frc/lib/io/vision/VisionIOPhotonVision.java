@@ -44,20 +44,12 @@ public class VisionIOPhotonVision implements VisionIO {
     protected final PhotonCamera photonCamera;
 
     /**
-     * Field layout used to reconstruct field-to-camera poses from per-target camera-to-target
-     * transforms.
-     */
-    protected final AprilTagFieldLayout tagLayout;
-
-    /**
      * Constructs a PhotonVision camera interface.
      *
      * @param cameraProperties Camera configuration including name and calibration
-     * @param tagLayout Field layout used for tag pose lookups during result decoding
      */
-    public VisionIOPhotonVision(CameraProperties cameraProperties, AprilTagFieldLayout tagLayout) {
+    public VisionIOPhotonVision(CameraProperties cameraProperties) {
         this.photonCamera = new PhotonCamera(cameraProperties.name());
-        this.tagLayout = tagLayout;
     }
 
     /**

@@ -49,7 +49,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
             VisionSystemSim system,
             Supplier<Pose2d> poseSupplier,
             AprilTagFieldLayout fieldLayout) {
-        super(cameraProperties, fieldLayout);
+        super(cameraProperties);
         this.poseSupplier = poseSupplier;
         this.system = system;
 
