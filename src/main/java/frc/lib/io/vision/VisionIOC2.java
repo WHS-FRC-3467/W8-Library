@@ -296,7 +296,7 @@ public class VisionIOC2 implements VisionIO {
                         && observationSubscriber.exists()
                         && lastChangeUs > 0
                         && nowUs - lastChangeUs <= DISCONNECT_TIMEOUT_US;
-        inputs.rawPacketType = NativePacketType.C2.ordinal();
+        inputs.rawPacketType = NativePacketType.C2;
 
         TimestampedRaw[] unreadFrames = observationSubscriber.readQueue();
         if (unreadFrames.length == 0) {

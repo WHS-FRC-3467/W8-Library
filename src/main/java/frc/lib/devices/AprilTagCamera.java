@@ -30,7 +30,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIO.CameraResult;
-import frc.lib.io.vision.VisionIO.NativePacketType;
 import frc.lib.io.vision.VisionIOC2;
 import frc.lib.io.vision.VisionIOInputsAutoLogged;
 import frc.lib.io.vision.VisionIOPhotonVision;
@@ -123,16 +122,7 @@ public class AprilTagCamera {
         disconnectAlert.set(disconnectDebouncer.calculate(disconnected));
         if (disconnected) return Optional.empty();
 
-        NativePacketType type;
-        try {
-            type = NativePacketType.values()[inputs.rawPacketType];
-        } catch (IndexOutOfBoundsException e) {
-            DriverStation.reportError(
-                    "Unknown/Invalid Vision Packet Type Reported. Ignoring.", e.getStackTrace());
-            return Optional.empty();
-        }
-
-        return switch (type) {
+        return switch (inputs.rawPacketType) {
             case UNKNOWN -> {
                 DriverStation.reportError(
                         "Unknown/Invalid Vision Packet Type Reported. Ignoring.", null);

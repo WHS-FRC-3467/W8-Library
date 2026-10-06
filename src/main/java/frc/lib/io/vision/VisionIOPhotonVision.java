@@ -59,7 +59,7 @@ public class VisionIOPhotonVision implements VisionIO {
     @Override
     public void updateInputs(VisionIOInputs inputs) {
         inputs.connected = photonCamera.isConnected();
-        inputs.rawPacketType = NativePacketType.PHOTON.ordinal();
+        inputs.rawPacketType = NativePacketType.PHOTON;
 
         if (!inputs.connected) {
             inputs.rawResults = new byte[0][];

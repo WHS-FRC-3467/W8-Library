@@ -63,9 +63,8 @@ public interface VisionIO {
         /** Whether the camera is connected and responding */
         public boolean connected = false;
 
-        /** Ordinal value of type {@link NativePacketType} */
-        // Enums cannot be stored in @AutoLog classes
-        public int rawPacketType = NativePacketType.UNKNOWN.ordinal();
+        /** The type of packet in {@link VisionIOInputs#rawResults} */
+        public NativePacketType rawPacketType = NativePacketType.UNKNOWN;
 
         /** Raw unread frame payloads from the camera since last update. */
         // We log raw bytes both because it is faster and many structured
