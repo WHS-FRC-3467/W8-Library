@@ -181,9 +181,7 @@ public class VisionIOPhotonVision implements VisionIO {
     private static byte[] packPhotonResult(PhotonPipelineResult result) {
         Packet packet = new Packet(512);
         PhotonPipelineResult.photonStruct.pack(packet, result);
-        byte[] packed = packet.getWrittenDataCopy();
-        byte[] raw = new byte[packed.length];
-        System.arraycopy(packed, 0, raw, 0, packed.length);
+        byte[] raw = packet.getWrittenDataCopy();
         return raw;
     }
 }
