@@ -43,7 +43,7 @@ public interface VisionIO {
     public static record TagObservation(
             int fiducialId,
             Pose3d fieldToCameraPose, // Field to camera
-            Pose3d altPose,
+            Optional<Pose3d> altPose,
             double area,
             double ambiguity) {}
 

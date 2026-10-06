@@ -150,7 +150,7 @@ public class VisionIOPhotonVision implements VisionIO {
                     new TagObservation(
                             tagId,
                             fieldToCamera,
-                            altFieldToCamera,
+                            Optional.of(altFieldToCamera),
                             target.getArea(),
                             target.getPoseAmbiguity()));
         }

@@ -14,6 +14,8 @@
  */
 package frc.lib.io.vision;
 
+import dsv0.PoseSolution;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -396,10 +398,6 @@ public class VisionIOC2 implements VisionIO {
                 config.tagLayoutJson());
     }
 
-    // -------------------------------------------------------------------------
-    // CameraResult decoding — C2 flatbuffer → standardized records
-    // -------------------------------------------------------------------------
-
     /**
      * Decodes the raw C2 flatbuffer bytes stored in {@code inputs} into {@link CameraResult}
      * records.
@@ -476,20 +474,21 @@ public class VisionIOC2 implements VisionIO {
 
         dsv0.PoseSolution primarySolution = observation.solution0();
         Pose3d fieldToCamera = c2PoseToWpilib(primarySolution);
-        dsv0.PoseSolution alternateSolution = observation.solution1();
-        Pose3d fieldToCameraAlt =
-                alternateSolution != null ? c2PoseToWpilib(alternateSolution) : null;
 
-        // Build one TagObservation per detected tag
+        // Build one TagObservation for single-tag observations
         ArrayList<TagObservation> tagObs = new ArrayList<>(observation.tagIdsLength());
         if (observation.tagIdsLength() == 1) {
             int tagId = observation.tagIds(0);
             Optional<Pose3d> tagPoseOpt = tagLayout.getTagPose(tagId);
             if (tagPoseOpt.isPresent()) {
                 // Use the primary solve as the best pose; alternate as the alt pose
-                Pose3d alt = fieldToCameraAlt != null ? fieldToCameraAlt : fieldToCamera;
+                Optional<dsv0.PoseSolution> alternateSolution =
+                        Optional.ofNullable(observation.solution1());
+                Optional<Pose3d> alt = alternateSolution.map(VisionIOC2::c2PoseToWpilib);
                 double ambiguity =
-                        computeC2Ambiguity(primarySolution.error(), alternateSolution.error());
+                        computeC2Ambiguity(
+                                primarySolution.error(),
+                                alternateSolution.map(PoseSolution::error).orElse(-1.0));
                 tagObs.add(new TagObservation(tagId, fieldToCamera, alt, 0.0, ambiguity));
             }
         }
@@ -497,7 +496,11 @@ public class VisionIOC2 implements VisionIO {
         // Build a MultiTagObservation when ≥2 tags were used
         Optional<MultiTagObservation> multiTag = Optional.empty();
         if (observation.tagIdsLength() >= 2) {
-            int[] ids = tagObs.stream().mapToInt(TagObservation::fiducialId).toArray();
+            int[] ids = new int[observation.tagIdsLength()];
+            for (int i = 0; i < observation.tagIdsLength(); i++) {
+                ids[i] = observation.tagIds(i);
+            }
+
             multiTag =
                     Optional.of(
                             new MultiTagObservation(ids, fieldToCamera, primarySolution.error()));
