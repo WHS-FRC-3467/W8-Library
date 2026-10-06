@@ -23,6 +23,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.units.measure.LinearVelocity;
+
 import frc.lib.posestimator.PoseEstimator;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
@@ -53,17 +54,16 @@ public class RobotState {
 
     // -------- POSE ESTIMATION --------
 
-    private final PoseEstimator poseEstimator = new PoseEstimator(
-            new SwerveDriveKinematics(
-                    Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new)),
-            Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new),
-            Seconds.of(2),
-            LINEAR_ODOMETRY_STD_DEV,
-            ANGULAR_ODOMETRY_STD_DEV);
+    private final PoseEstimator poseEstimator =
+            new PoseEstimator(
+                    new SwerveDriveKinematics(
+                            Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new)),
+                    Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new),
+                    Seconds.of(2),
+                    LINEAR_ODOMETRY_STD_DEV,
+                    ANGULAR_ODOMETRY_STD_DEV);
 
-    @Getter
-    @Setter
-    private ChassisSpeeds robotRelativeVelocity = new ChassisSpeeds();
+    @Getter @Setter private ChassisSpeeds robotRelativeVelocity = new ChassisSpeeds();
 
     /**
      * Returns the robot's odometry-only pose (without vision corrections).
@@ -146,18 +146,4 @@ public class RobotState {
     public void resetPose(Pose2d pose) {
         poseEstimator.resetPose(pose);
     }
-
-    /**
-     * Returns the robot's estimated position {@code seconds} in the future
-     *
-     * @param seconds amount of time to predict
-     * @return the robot's estimated position {@code seconds} in the future
-     */
-    // public Pose2d getFuturePose(double seconds) {
-    // Transform2d velocity = new Transform2d(
-    // robotRelativeVelocity.vxMetersPerSecond,
-    // robotRelativeVelocity.vyMetersPerSecond,
-    // Rotation2d.fromRadians(robotRelativeVelocity.omegaRadiansPerSecond));
-    // return getEstimatedPose().plus(velocity.times(feedLookaheadSeconds.get()));
-    // }
 }
