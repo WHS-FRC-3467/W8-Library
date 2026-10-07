@@ -20,6 +20,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
@@ -30,6 +31,8 @@ import frc.robot.autos.AutoFactory;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.subsystems.flywheel.Flywheel;
+import frc.robot.subsystems.flywheel.FlywheelConstants;
 import frc.robot.subsystems.vision.VisionConstants;
 
 /**
@@ -44,6 +47,7 @@ public class RobotContainer {
 
     // Subsystems
     public final Drive drive;
+    public final Flywheel flywheel;
     public final AutoFactory autoFactory;
 
     // Controller
@@ -59,6 +63,7 @@ public class RobotContainer {
         drive = DriveConstants.get();
         VisionConstants.create();
         autoFactory = new AutoFactory(drive);
+        flywheel = new Flywheel(FlywheelConstants.get());
 
         conditionalChooser = new LoggedDashboardChooser<>("Conditional Choice");
         conditionalChooser.addOption("True", true);
@@ -101,6 +106,8 @@ public class RobotContainer {
                                                                         .getTranslation(),
                                                                 new Rotation2d())))
                                 .ignoringDisable(true));
+
+        SmartDashboard.putData("Start Flywheel", flywheel.startCommand());
     }
 
     /**
