@@ -81,9 +81,6 @@ public class VisionSubsystem extends SubsystemBase {
     /** Minimum distance used when computing vision standard deviation scaling. */
     public static final double MIN_STDDEV_DISTANCE_METERS = 0.5;
 
-    /** Maximum unread results processed per camera cycle. */
-    public static final int MAX_UNREAD_RESULTS = 5;
-
     /** Weight applied to ambiguity when scaling vision standard deviation. */
     public static final double STDDEV_AMBIGUITY_WEIGHT = 2.5;
 
@@ -214,11 +211,6 @@ public class VisionSubsystem extends SubsystemBase {
             if (results == null) {
                 continue;
             }
-            if (results.length > MAX_UNREAD_RESULTS) {
-                results =
-                        Arrays.copyOfRange(
-                                results, results.length - MAX_UNREAD_RESULTS, results.length);
-            }
 
             Map<String, OutputLogData> outputLogs = new LinkedHashMap<>();
 
@@ -266,8 +258,7 @@ public class VisionSubsystem extends SubsystemBase {
                 if (fieldToRobotPose.isPresent()) {
                     OutputLogData robotLog =
                             outputLogs.computeIfAbsent(
-                                    VisionConstants.NAME + "/Robot/",
-                                    key -> new OutputLogData());
+                                    VisionConstants.NAME + "/Robot/", key -> new OutputLogData());
                     if (accepted) {
                         robotLog.acceptedResults.add(result);
                         robotLog.acceptedPoses.add(fieldToRobotPose.get());
