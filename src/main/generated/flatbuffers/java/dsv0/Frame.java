@@ -2,22 +2,10 @@
 
 package dsv0;
 
-import com.google.flatbuffers.BaseVector;
-import com.google.flatbuffers.BooleanVector;
-import com.google.flatbuffers.ByteVector;
-import com.google.flatbuffers.Constants;
-import com.google.flatbuffers.DoubleVector;
-import com.google.flatbuffers.FlatBufferBuilder;
-import com.google.flatbuffers.FloatVector;
-import com.google.flatbuffers.IntVector;
-import com.google.flatbuffers.LongVector;
-import com.google.flatbuffers.ShortVector;
-import com.google.flatbuffers.StringVector;
-import com.google.flatbuffers.Struct;
-import com.google.flatbuffers.Table;
-import com.google.flatbuffers.UnionVector;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.nio.*;
+import java.lang.*;
+import java.util.*;
+import com.google.flatbuffers.*;
 
 /**
  * Top-level message containing results from all cameras in a single frame
@@ -29,35 +17,27 @@ public final class Frame extends Table {
   public void __init(int _i, ByteBuffer _bb) { __reset(_i, _bb); }
   public Frame __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
+  public byte resultsType() { int o = __offset(4); return o != 0 ? bb.get(o + bb_pos) : 0; }
   /**
-   * Microsecond timestamp for the frame capture
+   * Either per-camera or combined results
    */
-  public long timestampUs() { int o = __offset(4); return o != 0 ? bb.getLong(o + bb_pos) : 0L; }
-  /**
-   * Per-camera results
-   */
-  public dsv0.CameraOutput cameras(int j) { return cameras(new dsv0.CameraOutput(), j); }
-  public dsv0.CameraOutput cameras(dsv0.CameraOutput obj, int j) { int o = __offset(6); return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null; }
-  public int camerasLength() { int o = __offset(6); return o != 0 ? __vector_len(o) : 0; }
-  public dsv0.CameraOutput.Vector camerasVector() { return camerasVector(new dsv0.CameraOutput.Vector()); }
-  public dsv0.CameraOutput.Vector camerasVector(dsv0.CameraOutput.Vector obj) { int o = __offset(6); return o != 0 ? obj.__assign(__vector(o), 4, bb) : null; }
+  public Table results(Table obj) { int o = __offset(6); return o != 0 ? __union(obj, o + bb_pos) : null; }
 
   public static int createFrame(FlatBufferBuilder builder,
-      long timestampUs,
-      int camerasOffset) {
+      byte resultsType,
+      int resultsOffset) {
     builder.startTable(2);
-    Frame.addTimestampUs(builder, timestampUs);
-    Frame.addCameras(builder, camerasOffset);
+    Frame.addResults(builder, resultsOffset);
+    Frame.addResultsType(builder, resultsType);
     return Frame.endFrame(builder);
   }
 
   public static void startFrame(FlatBufferBuilder builder) { builder.startTable(2); }
-  public static void addTimestampUs(FlatBufferBuilder builder, long timestampUs) { builder.addLong(0, timestampUs, 0L); }
-  public static void addCameras(FlatBufferBuilder builder, int camerasOffset) { builder.addOffset(1, camerasOffset, 0); }
-  public static int createCamerasVector(FlatBufferBuilder builder, int[] data) { builder.startVector(4, data.length, 4); for (int i = data.length - 1; i >= 0; i--) builder.addOffset(data[i]); return builder.endVector(); }
-  public static void startCamerasVector(FlatBufferBuilder builder, int numElems) { builder.startVector(4, numElems, 4); }
+  public static void addResultsType(FlatBufferBuilder builder, byte resultsType) { builder.addByte(0, resultsType, 0); }
+  public static void addResults(FlatBufferBuilder builder, int resultsOffset) { builder.addOffset(1, resultsOffset, 0); }
   public static int endFrame(FlatBufferBuilder builder) {
     int o = builder.endTable();
+    builder.required(o, 6);  // results
     return o;
   }
   public static void finishFrameBuffer(FlatBufferBuilder builder, int offset) { builder.finish(offset); }

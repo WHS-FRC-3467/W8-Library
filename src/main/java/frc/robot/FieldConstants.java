@@ -57,6 +57,8 @@ public class FieldConstants {
 
         public static final AprilTagLayoutType DEFAULT_APRIL_TAG_TYPE = AprilTagLayoutType.OFFICIAL;
 
+        public static final Distance APRIL_TAG_WIDTH = Inches.of(6.5);
+
         // Field dimensions
         public static final double FIELD_LENGTH = AprilTagLayoutType.OFFICIAL.getLayout().getFieldLength();
         public static final double FIELD_WIDTH = AprilTagLayoutType.OFFICIAL.getLayout().getFieldWidth();

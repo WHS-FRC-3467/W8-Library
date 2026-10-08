@@ -34,16 +34,15 @@ import frc.lib.io.vision.VisionIOC2;
 import frc.lib.io.vision.VisionIOInputsAutoLogged;
 import frc.lib.io.vision.VisionIOPhotonVision;
 
-import lombok.Getter;
-
 import org.littletonrobotics.junction.Logger;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
- * Represents a single AprilTag camera on the robot.
+ * Owns one vision IO source and the properties for the robot's physical cameras.
  *
- * <p>This class owns the IO interface for one physical camera. It calls {@link
+ * <p>This class calls {@link
  * VisionIO#updateInputs} each cycle to flush raw bytes into the AdvantageKit-logged {@link
  * frc.lib.io.vision.VisionIO.VisionIOInputs}, then delegates decoding to {@link
  * VisionIO#decodeResults} so that all format-specific logic stays in the IO layer.
@@ -78,31 +77,44 @@ public class AprilTagCamera {
             Time latency,
             Time latencyStdDev) {}
 
+    private final String name;
+    private final CameraProperties[] cameraProperties;
     private final VisionIO io;
     private final VisionIOInputsAutoLogged inputs = new VisionIOInputsAutoLogged();
-
-    private final AprilTagFieldLayout fieldLayout;
-
     private final Alert disconnectAlert;
     private final Debouncer disconnectDebouncer = new Debouncer(0.25);
 
-    /** The camera's properties, including intrinsics and transform relative to the robot. */
-    @Getter private final CameraProperties properties;
+    private final AprilTagFieldLayout fieldLayout;
 
-    /**
-     * Constructs a new {@code AprilTagCamera}.
-     *
-     * @param properties the camera's intrinsic and mounting properties
-     * @param io the {@link VisionIO} implementation for this camera (handles both raw I/O and
-     *     decoding)
-     */
+    /** Constructs one robot-level IO owner with properties for every physical camera. */
     public AprilTagCamera(
-            CameraProperties properties, VisionIO io, AprilTagFieldLayout fieldLayout) {
-        this.properties = properties;
+            String name,
+            CameraProperties[] cameraProperties,
+            VisionIO io,
+            AprilTagFieldLayout fieldLayout) {
+        if (cameraProperties == null || cameraProperties.length == 0) {
+            throw new IllegalArgumentException("At least one camera property is required");
+        }
+        this.name = name;
+        this.cameraProperties = Arrays.copyOf(cameraProperties, cameraProperties.length);
         this.io = io;
-        this.disconnectAlert =
-                new Alert("Camera " + properties.name() + " is Disconnected!", AlertType.kError);
         this.fieldLayout = fieldLayout;
+        this.disconnectAlert =
+                new Alert("Vision source " + name + " is disconnected!", AlertType.kError);
+    }
+
+    public CameraProperties getProperties(int cameraIndex) {
+        return Arrays.stream(cameraProperties)
+                .filter(properties -> properties.index() == cameraIndex)
+                .findFirst()
+                .orElseThrow(
+                        () ->
+                                new IllegalArgumentException(
+                                        "Unknown camera index " + cameraIndex + " on robot"));
+    }
+
+    public CameraProperties[] getAllCameraProperties() {
+        return Arrays.copyOf(cameraProperties, cameraProperties.length);
     }
 
     /**
@@ -116,7 +128,7 @@ public class AprilTagCamera {
      */
     public Optional<CameraResult[]> getUnreadResults() {
         io.updateInputs(inputs);
-        Logger.processInputs(properties.name(), inputs);
+        Logger.processInputs(name, inputs);
 
         boolean disconnected = !inputs.connected;
         disconnectAlert.set(disconnectDebouncer.calculate(disconnected));
@@ -124,12 +136,22 @@ public class AprilTagCamera {
 
         return switch (inputs.rawPacketType) {
             case UNKNOWN -> {
+                if (inputs.rawResults.length == 0) {
+                    yield Optional.of(new CameraResult[0]);
+                }
                 DriverStation.reportError(
                         "Unknown/Invalid Vision Packet Type Reported. Ignoring.", null);
                 yield Optional.empty();
             }
-            case C2 -> Optional.of(VisionIOC2.decodeResults(inputs, fieldLayout, properties.index));
-            case PHOTON -> Optional.of(VisionIOPhotonVision.decodeResults(inputs, fieldLayout));
+            case C2 -> Optional.of(VisionIOC2.decodeResults(inputs, fieldLayout));
+            case PHOTON ->
+                    Optional.of(
+                            VisionIOPhotonVision.decodeResults(
+                                    inputs,
+                                    fieldLayout,
+                                    cameraProperties.length == 0
+                                            ? -1
+                                            : cameraProperties[0].index()));
         };
     }
 }

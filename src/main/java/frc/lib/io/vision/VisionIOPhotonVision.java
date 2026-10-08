@@ -92,6 +92,11 @@ public class VisionIOPhotonVision implements VisionIO {
      */
     public static CameraResult[] decodeResults(
             VisionIOInputs inputs, AprilTagFieldLayout tagLayout) {
+        return decodeResults(inputs, tagLayout, -1);
+    }
+
+    public static CameraResult[] decodeResults(
+            VisionIOInputs inputs, AprilTagFieldLayout tagLayout, int cameraIndex) {
         ArrayList<CameraResult> results = new ArrayList<>(inputs.rawResults.length);
         for (int i = 0; i < inputs.rawResults.length; i++) {
             byte[] raw = inputs.rawResults[i];
@@ -105,7 +110,7 @@ public class VisionIOPhotonVision implements VisionIO {
             long publishTs =
                     i < inputs.publishTimestampsUs.length ? inputs.publishTimestampsUs[i] : 0;
 
-            results.add(toCameraResult(photon, captureTs, publishTs, tagLayout));
+            results.add(toCameraResult(photon, captureTs, publishTs, tagLayout, cameraIndex));
         }
         return results.toArray(CameraResult[]::new);
     }
@@ -129,11 +134,12 @@ public class VisionIOPhotonVision implements VisionIO {
      * <p>For each tracked target, the field-to-camera pose is reconstructed as: {@code
      * fieldToCamera = fieldToTag * inverse(cameraToTag)}.
      */
-    private static CameraResult toCameraResult(
+    static CameraResult toCameraResult(
             PhotonPipelineResult photon,
             long captureTimestampUs,
             long publishTimestampUs,
-            AprilTagFieldLayout tagLayout) {
+            AprilTagFieldLayout tagLayout,
+            int cameraIndex) {
         ArrayList<TagObservation> tagObs = new ArrayList<>(photon.getTargets().size());
         for (PhotonTrackedTarget target : photon.getTargets()) {
             int tagId = target.getFiducialId();
@@ -175,7 +181,8 @@ public class VisionIOPhotonVision implements VisionIO {
                 tagObs.toArray(TagObservation[]::new),
                 multiTag,
                 (double) captureTimestampUs,
-                (double) publishTimestampUs);
+                (double) publishTimestampUs,
+                cameraIndex);
     }
 
     private static byte[] packPhotonResult(PhotonPipelineResult result) {

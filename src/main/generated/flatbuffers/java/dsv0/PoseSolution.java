@@ -2,22 +2,10 @@
 
 package dsv0;
 
-import com.google.flatbuffers.BaseVector;
-import com.google.flatbuffers.BooleanVector;
-import com.google.flatbuffers.ByteVector;
-import com.google.flatbuffers.Constants;
-import com.google.flatbuffers.DoubleVector;
-import com.google.flatbuffers.FlatBufferBuilder;
-import com.google.flatbuffers.FloatVector;
-import com.google.flatbuffers.IntVector;
-import com.google.flatbuffers.LongVector;
-import com.google.flatbuffers.ShortVector;
-import com.google.flatbuffers.StringVector;
-import com.google.flatbuffers.Struct;
-import com.google.flatbuffers.Table;
-import com.google.flatbuffers.UnionVector;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.nio.*;
+import java.lang.*;
+import java.util.*;
+import com.google.flatbuffers.*;
 
 @SuppressWarnings("unused")
 public final class PoseSolution extends Table {
@@ -28,11 +16,11 @@ public final class PoseSolution extends Table {
 
   public dsv0.Pose3d pose() { return pose(new dsv0.Pose3d()); }
   public dsv0.Pose3d pose(dsv0.Pose3d obj) { int o = __offset(4); return o != 0 ? obj.__assign(o + bb_pos, bb) : null; }
-  public double error() { int o = __offset(6); return o != 0 ? bb.getDouble(o + bb_pos) : 0.0; }
+  public double reprojectionError() { int o = __offset(6); return o != 0 ? bb.getDouble(o + bb_pos) : 0.0; }
 
   public static void startPoseSolution(FlatBufferBuilder builder) { builder.startTable(2); }
   public static void addPose(FlatBufferBuilder builder, int poseOffset) { builder.addStruct(0, poseOffset, 0); }
-  public static void addError(FlatBufferBuilder builder, double error) { builder.addDouble(1, error, 0.0); }
+  public static void addReprojectionError(FlatBufferBuilder builder, double reprojectionError) { builder.addDouble(1, reprojectionError, 0.0); }
   public static int endPoseSolution(FlatBufferBuilder builder) {
     int o = builder.endTable();
     return o;
