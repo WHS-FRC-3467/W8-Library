@@ -127,6 +127,7 @@ public interface VisionIO {
 
         /** NT-synced publish timestamps for each unread result, in microseconds. */
         public long[] publishTimestampsUs = new long[0];
+
     }
 
     /**

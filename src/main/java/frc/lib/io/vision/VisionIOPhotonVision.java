@@ -26,12 +26,14 @@ import org.photonvision.common.dataflow.structures.Packet;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 /**
- * Real hardware implementation of VisionIO using PhotonVision.
+ * Real hardware implementation of {@link VisionIO} using PhotonVision.
  *
  * <p>Connects to a PhotonVision coprocessor running an AprilTag detection pipeline and reads vision
  * results over NetworkTables. Used for real robot operation.
@@ -41,76 +43,90 @@ import java.util.Optional;
  * converts them to standardized {@link CameraResult} records.
  */
 public class VisionIOPhotonVision implements VisionIO {
-    protected final PhotonCamera photonCamera;
+    // Four-byte camera index followed by the PhotonPipelineResult struct.
+    private static final int PACKET_HEADER_BYTES = Integer.BYTES;
+
+    private record CameraSource(CameraProperties properties, PhotonCamera camera) {}
+
+    private record DecodedPhotonPacket(PhotonPipelineResult result, int cameraIndex) {}
+
+    private final List<CameraSource> cameras;
 
     /**
      * Constructs a PhotonVision camera interface.
      *
-     * @param cameraProperties Camera configuration including name and calibration
+     * @param cameraProperties configuration for every physical camera owned by this source
      */
-    public VisionIOPhotonVision(CameraProperties cameraProperties) {
-        this.photonCamera = new PhotonCamera(cameraProperties.name());
+    public VisionIOPhotonVision(CameraProperties[] cameraProperties) {
+        if (cameraProperties == null || cameraProperties.length == 0) {
+            throw new IllegalArgumentException("At least one camera is required");
+        }
+        this.cameras =
+                Arrays.stream(cameraProperties)
+                        .map(
+                                properties ->
+                                        new CameraSource(
+                                                properties, new PhotonCamera(properties.name())))
+                        .toList();
     }
 
     /**
-     * Reads all unread results from PhotonVision, packs them as raw bytes with the magic prefix,
-     * and stores them in {@code inputs} for AdvantageKit logging and replay.
+     * Reads all unread results from every connected PhotonVision camera and stores each result as
+     * a self-identifying packet for AdvantageKit logging and replay.
      */
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        inputs.connected = photonCamera.isConnected();
+        inputs.connected = cameras.stream().allMatch(source -> source.camera().isConnected());
         inputs.rawPacketType = NativePacketType.PHOTON;
 
-        if (!inputs.connected) {
-            inputs.rawResults = new byte[0][];
-            inputs.captureTimestampsUs = new long[0];
-            inputs.publishTimestampsUs = new long[0];
-            return;
+        ArrayList<byte[]> rawResults = new ArrayList<>();
+        ArrayList<Long> captureTimestampsUs = new ArrayList<>();
+        ArrayList<Long> publishTimestampsUs = new ArrayList<>();
+        for (CameraSource source : cameras) {
+            if (!source.camera().isConnected()) continue;
+            for (PhotonPipelineResult result : source.camera().getAllUnreadResults()) {
+                rawResults.add(packPhotonResult(result, source.properties().index()));
+                captureTimestampsUs.add(result.metadata.captureTimestampMicros);
+                publishTimestampsUs.add(result.metadata.publishTimestampMicros);
+            }
         }
-
-        var unreadResults = photonCamera.getAllUnreadResults();
-        inputs.rawResults =
-                unreadResults.stream()
-                        .map(VisionIOPhotonVision::packPhotonResult)
-                        .toArray(byte[][]::new);
+        inputs.rawResults = rawResults.toArray(byte[][]::new);
         inputs.captureTimestampsUs =
-                unreadResults.stream()
-                        .mapToLong(result -> result.metadata.captureTimestampMicros)
-                        .toArray();
+                captureTimestampsUs.stream().mapToLong(Long::longValue).toArray();
         inputs.publishTimestampsUs =
-                unreadResults.stream()
-                        .mapToLong(result -> result.metadata.publishTimestampMicros)
-                        .toArray();
+                publishTimestampsUs.stream().mapToLong(Long::longValue).toArray();
     }
 
     /**
      * Decodes the raw PhotonVision bytes stored in {@code inputs} into {@link CameraResult}
      * records.
      *
-     * <p>Each raw byte array is unpacked from the PhotonVision struct format, then each tracked
-     * target's field-to-camera pose is reconstructed using the known tag field positions.
+     * <p>Each raw byte array contains a camera-index header followed by a PhotonVision struct.
+     * The PhotonVision result is unpacked, then each tracked target's field-to-camera pose is
+     * reconstructed using the known tag field positions.
      */
     public static CameraResult[] decodeResults(
             VisionIOInputs inputs, AprilTagFieldLayout tagLayout) {
-        return decodeResults(inputs, tagLayout, -1);
-    }
-
-    public static CameraResult[] decodeResults(
-            VisionIOInputs inputs, AprilTagFieldLayout tagLayout, int cameraIndex) {
         ArrayList<CameraResult> results = new ArrayList<>(inputs.rawResults.length);
         for (int i = 0; i < inputs.rawResults.length; i++) {
             byte[] raw = inputs.rawResults[i];
             if (raw == null || raw.length == 0) continue;
 
-            PhotonPipelineResult photon = unpackPhotonResult(raw);
-            if (photon == null) continue;
+            DecodedPhotonPacket decoded = unpackPhotonPacket(raw);
+            if (decoded == null) continue;
 
             long captureTs =
                     i < inputs.captureTimestampsUs.length ? inputs.captureTimestampsUs[i] : 0;
             long publishTs =
                     i < inputs.publishTimestampsUs.length ? inputs.publishTimestampsUs[i] : 0;
 
-            results.add(toCameraResult(photon, captureTs, publishTs, tagLayout, cameraIndex));
+            results.add(
+                    toCameraResult(
+                            decoded.result(),
+                            captureTs,
+                            publishTs,
+                            tagLayout,
+                            decoded.cameraIndex()));
         }
         return results.toArray(CameraResult[]::new);
     }
@@ -126,6 +142,15 @@ public class VisionIOPhotonVision implements VisionIO {
         } catch (RuntimeException e) {
             return null;
         }
+    }
+
+    private static DecodedPhotonPacket unpackPhotonPacket(byte[] raw) {
+        if (raw.length <= PACKET_HEADER_BYTES) return null;
+        ByteBuffer header = ByteBuffer.wrap(raw);
+        int cameraIndex = header.getInt();
+        byte[] photonPayload = Arrays.copyOfRange(raw, PACKET_HEADER_BYTES, raw.length);
+        PhotonPipelineResult result = unpackPhotonResult(photonPayload);
+        return result == null ? null : new DecodedPhotonPacket(result, cameraIndex);
     }
 
     /**
@@ -185,10 +210,13 @@ public class VisionIOPhotonVision implements VisionIO {
                 cameraIndex);
     }
 
-    private static byte[] packPhotonResult(PhotonPipelineResult result) {
+    static byte[] packPhotonResult(PhotonPipelineResult result, int cameraIndex) {
         Packet packet = new Packet(512);
         PhotonPipelineResult.photonStruct.pack(packet, result);
-        byte[] raw = packet.getWrittenDataCopy();
-        return raw;
+        byte[] payload = packet.getWrittenDataCopy();
+        ByteBuffer encoded = ByteBuffer.allocate(PACKET_HEADER_BYTES + payload.length);
+        encoded.putInt(cameraIndex);
+        encoded.put(payload);
+        return encoded.array();
     }
 }

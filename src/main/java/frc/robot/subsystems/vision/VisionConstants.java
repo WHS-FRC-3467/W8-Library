@@ -346,16 +346,6 @@ public class VisionConstants {
                 fieldLayout);
     }
 
-    private static VisionIO getReplayIO() {
-        return new VisionIO() {
-            @Override
-            public void updateInputs(VisionIOInputs inputs) {
-                inputs.connected = true;
-                inputs.rawPacketType = VisionIO.NativePacketType.UNKNOWN;
-            }
-        };
-    }
-
     /**
      * Creates and configures a VisionSubsystem with AprilTag cameras based on the current robot
      * mode. Instantiates cameras with appropriate IO implementations (real, sim, or replay).
@@ -387,7 +377,7 @@ public class VisionConstants {
                             new AprilTagCamera(
                                     NAME,
                                     new CameraProperties[] {FRONT_LEFT, LEFT, RIGHT, FRONT_RIGHT},
-                                    getReplayIO(),
+                                    new VisionIO() {},
                                     fieldLayout));
         }
     }

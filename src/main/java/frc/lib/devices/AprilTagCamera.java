@@ -132,7 +132,11 @@ public class AprilTagCamera {
 
         boolean disconnected = !inputs.connected;
         disconnectAlert.set(disconnectDebouncer.calculate(disconnected));
-        if (disconnected) return Optional.empty();
+        // A shared PhotonVision IO can still provide valid results from its other cameras when
+        // one camera is disconnected.
+        if (disconnected && inputs.rawPacketType != VisionIO.NativePacketType.PHOTON) {
+            return Optional.empty();
+        }
 
         return switch (inputs.rawPacketType) {
             case UNKNOWN -> {
@@ -147,11 +151,7 @@ public class AprilTagCamera {
             case PHOTON ->
                     Optional.of(
                             VisionIOPhotonVision.decodeResults(
-                                    inputs,
-                                    fieldLayout,
-                                    cameraProperties.length == 0
-                                            ? -1
-                                            : cameraProperties[0].index()));
+                                    inputs, fieldLayout));
         };
     }
 }
