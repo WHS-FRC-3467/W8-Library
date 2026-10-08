@@ -29,6 +29,7 @@ import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.networktables.RawSubscriber;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.networktables.TimestampedRaw;
 import edu.wpi.first.util.WPIUtilJNI;
 
@@ -40,8 +41,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * Real hardware implementation of {@link VisionIO} using c2.
@@ -232,9 +235,19 @@ public class VisionIOC2 implements VisionIO {
     private final C2Config config;
     private final C2DeviceContext deviceContext;
     private final RawSubscriber observationSubscriber;
+    private final Supplier<Pose3d> estimatedPoseSupplier;
+    private final StructPublisher<Pose3d> estimatedPosePublisher;
 
-    /** Creates one IO source for all C2 cameras on the robot. */
-    public VisionIOC2(CameraProperties[] cameraProperties, C2Config config) {
+    /**
+     * Creates one IO source for all C2 cameras, publishing the current field-relative robot pose.
+     */
+    public VisionIOC2(
+            CameraProperties[] cameraProperties,
+            C2Config config,
+            Supplier<Pose3d> estimatedPoseSupplier) {
+        this.estimatedPoseSupplier =
+                Objects.requireNonNull(
+                        estimatedPoseSupplier, "estimatedPoseSupplier cannot be null");
         this.config = validateConfig(config);
         if (cameraProperties == null || cameraProperties.length == 0) {
             throw new IllegalArgumentException("At least one C2 camera is required");
@@ -243,6 +256,12 @@ public class VisionIOC2 implements VisionIO {
             throw new IllegalArgumentException("C2 camera properties cannot contain null values");
         }
         this.deviceContext = getOrCreateDeviceContext(cameraProperties, this.config);
+
+        estimatedPosePublisher =
+                ntInstance
+                        .getTable("/" + this.config.deviceId() + "/Feedback")
+                        .getStructTopic("Pose", Pose3d.struct)
+                        .publish();
 
         NetworkTable outputTable = ntInstance.getTable("/" + this.config.deviceId() + "/output");
 
@@ -260,6 +279,7 @@ public class VisionIOC2 implements VisionIO {
     @Override
     public void updateInputs(VisionIOInputs inputs) {
         publishConfigIfNeeded();
+        estimatedPosePublisher.set(estimatedPoseSupplier.get());
 
         long nowUs = WPIUtilJNI.now();
         long lastChangeUs = observationSubscriber.getLastChange();
