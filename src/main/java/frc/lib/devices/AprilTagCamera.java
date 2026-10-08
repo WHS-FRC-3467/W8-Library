@@ -42,10 +42,9 @@ import java.util.Optional;
 /**
  * Owns one vision IO source and the properties for the robot's physical cameras.
  *
- * <p>This class calls {@link
- * VisionIO#updateInputs} each cycle to flush raw bytes into the AdvantageKit-logged {@link
- * frc.lib.io.vision.VisionIO.VisionIOInputs}, then delegates decoding to {@link
- * VisionIO#decodeResults} so that all format-specific logic stays in the IO layer.
+ * <p>This class calls {@link VisionIO#updateInputs} each cycle to flush raw bytes into the
+ * AdvantageKit-logged {@link frc.lib.io.vision.VisionIO.VisionIOInputs}, then delegates decoding to
+ * {@link VisionIO#decodeResults} so that all format-specific logic stays in the IO layer.
  */
 public class AprilTagCamera {
     /**
@@ -132,9 +131,7 @@ public class AprilTagCamera {
 
         boolean disconnected = !inputs.connected;
         disconnectAlert.set(disconnectDebouncer.calculate(disconnected));
-        // A shared PhotonVision IO can still provide valid results from its other cameras when
-        // one camera is disconnected.
-        if (disconnected && inputs.rawPacketType != VisionIO.NativePacketType.PHOTON) {
+        if (disconnected) {
             return Optional.empty();
         }
 
@@ -148,10 +145,7 @@ public class AprilTagCamera {
                 yield Optional.empty();
             }
             case C2 -> Optional.of(VisionIOC2.decodeResults(inputs, fieldLayout));
-            case PHOTON ->
-                    Optional.of(
-                            VisionIOPhotonVision.decodeResults(
-                                    inputs, fieldLayout));
+            case PHOTON -> Optional.of(VisionIOPhotonVision.decodeResults(inputs, fieldLayout));
         };
     }
 }

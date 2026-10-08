@@ -71,12 +71,12 @@ public class VisionIOPhotonVision implements VisionIO {
     }
 
     /**
-     * Reads all unread results from every connected PhotonVision camera and stores each result as
-     * a self-identifying packet for AdvantageKit logging and replay.
+     * Reads all unread results from every connected PhotonVision camera and stores each result as a
+     * self-identifying packet for AdvantageKit logging and replay.
      */
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        inputs.connected = cameras.stream().allMatch(source -> source.camera().isConnected());
+        inputs.connected = cameras.stream().anyMatch(source -> source.camera().isConnected());
         inputs.rawPacketType = NativePacketType.PHOTON;
 
         ArrayList<byte[]> rawResults = new ArrayList<>();
@@ -101,8 +101,8 @@ public class VisionIOPhotonVision implements VisionIO {
      * Decodes the raw PhotonVision bytes stored in {@code inputs} into {@link CameraResult}
      * records.
      *
-     * <p>Each raw byte array contains a camera-index header followed by a PhotonVision struct.
-     * The PhotonVision result is unpacked, then each tracked target's field-to-camera pose is
+     * <p>Each raw byte array contains a camera-index header followed by a PhotonVision struct. The
+     * PhotonVision result is unpacked, then each tracked target's field-to-camera pose is
      * reconstructed using the known tag field positions.
      */
     public static CameraResult[] decodeResults(
