@@ -24,61 +24,90 @@ import edu.wpi.first.units.Units;
 
 import frc.lib.devices.AprilTagCamera.CameraProperties;
 
+import org.photonvision.PhotonCamera;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
+import org.photonvision.targeting.PhotonPipelineResult;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Simulated implementation of {@link VisionIOPhotonVision} using the PhotonVision simulation
- * framework.
+ * Simulates all configured PhotonVision cameras and logs their native PhotonVision result packets.
  *
- * <p>This class connects a {@link PhotonCameraSim} to a {@link VisionSystemSim} to simulate the
- * behavior of a real PhotonVision camera in a physics-based environment. It allows the robot code
- * to receive realistic vision data based on the robot's simulated pose and the field's AprilTag
- * layout.
+ * <p>All simulated cameras are owned by one IO instance. Each raw packet includes its camera
+ * index so replay retains per-camera attribution.
  */
-public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
+public class VisionIOPhotonVisionSim implements VisionIO {
+    private record SimCamera(CameraProperties properties, PhotonCamera camera) {}
+
     private final Supplier<Pose2d> poseSupplier;
-    private final PhotonCameraSim cameraSim;
     private final VisionSystemSim system;
+    private final List<SimCamera> cameras = new ArrayList<>();
 
     public VisionIOPhotonVisionSim(
-            CameraProperties cameraProperties,
+            CameraProperties[] cameraProperties,
             VisionSystemSim system,
             Supplier<Pose2d> poseSupplier,
             AprilTagFieldLayout fieldLayout) {
-        super(cameraProperties);
+        if (cameraProperties == null || cameraProperties.length == 0) {
+            throw new IllegalArgumentException("At least one simulated camera is required");
+        }
         this.poseSupplier = poseSupplier;
         this.system = system;
+        for (CameraProperties properties : cameraProperties) {
+            PhotonCamera photonCamera = new PhotonCamera(properties.name());
+            var simCameraProperties = new SimCameraProperties();
+            if (properties.cameraMatrix() == null || properties.distCoeffs() == null) {
+                simCameraProperties.setCalibration(
+                        properties.resolutionWidth(),
+                        properties.resolutionHeight(),
+                        Rotation2d.fromRadians(properties.fov().in(Radians)));
+            } else {
+                simCameraProperties.setCalibration(
+                        properties.resolutionWidth(),
+                        properties.resolutionHeight(),
+                        properties.cameraMatrix(),
+                        properties.distCoeffs());
+            }
 
-        var simCameraProperties = new SimCameraProperties();
-        if (cameraProperties.cameraMatrix() == null || cameraProperties.distCoeffs() == null) {
-            simCameraProperties.setCalibration(
-                    cameraProperties.resolutionWidth(),
-                    cameraProperties.resolutionHeight(),
-                    Rotation2d.fromRadians(cameraProperties.fov().in(Radians)));
-        } else {
-            simCameraProperties.setCalibration(
-                    cameraProperties.resolutionWidth(),
-                    cameraProperties.resolutionHeight(),
-                    cameraProperties.cameraMatrix(),
-                    cameraProperties.distCoeffs());
+            simCameraProperties.setFPS(properties.fps());
+            simCameraProperties.setAvgLatencyMs(properties.latency().in(Units.Milliseconds));
+            simCameraProperties.setLatencyStdDevMs(
+                    properties.latencyStdDev().in(Units.Milliseconds));
+
+            PhotonCameraSim cameraSim =
+                    new PhotonCameraSim(photonCamera, simCameraProperties, fieldLayout);
+            system.addCamera(cameraSim, properties.robotToCamera());
+            cameras.add(new SimCamera(properties, photonCamera));
         }
-
-        simCameraProperties.setFPS(cameraProperties.fps());
-        simCameraProperties.setAvgLatencyMs(cameraProperties.latency().in(Units.Milliseconds));
-        simCameraProperties.setLatencyStdDevMs(
-                cameraProperties.latencyStdDev().in(Units.Milliseconds));
-
-        cameraSim = new PhotonCameraSim(super.photonCamera, simCameraProperties, fieldLayout);
-        this.system.addCamera(cameraSim, cameraProperties.robotToCamera());
     }
 
     @Override
     public void updateInputs(VisionIOInputs inputs) {
         system.update(poseSupplier.get());
-        super.updateInputs(inputs);
+        inputs.connected = true;
+        inputs.rawPacketType = NativePacketType.PHOTON;
+
+        ArrayList<byte[]> rawResults = new ArrayList<>();
+        ArrayList<Long> captureTimestampsUs = new ArrayList<>();
+        ArrayList<Long> publishTimestampsUs = new ArrayList<>();
+        for (SimCamera camera : cameras) {
+            for (PhotonPipelineResult result : camera.camera().getAllUnreadResults()) {
+                rawResults.add(
+                        VisionIOPhotonVision.packPhotonResult(
+                                result, camera.properties().index()));
+                captureTimestampsUs.add(result.metadata.captureTimestampMicros);
+                publishTimestampsUs.add(result.metadata.publishTimestampMicros);
+            }
+        }
+
+        inputs.rawResults = rawResults.toArray(byte[][]::new);
+        inputs.captureTimestampsUs =
+                captureTimestampsUs.stream().mapToLong(Long::longValue).toArray();
+        inputs.publishTimestampsUs =
+                publishTimestampsUs.stream().mapToLong(Long::longValue).toArray();
     }
 }

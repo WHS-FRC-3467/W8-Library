@@ -19,8 +19,8 @@ import dsv0.PoseSolution;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.NetworkTable;
@@ -28,34 +28,33 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.networktables.RawSubscriber;
 import edu.wpi.first.networktables.StringPublisher;
+import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.networktables.TimestampedRaw;
 import edu.wpi.first.util.WPIUtilJNI;
 
 import frc.lib.devices.AprilTagCamera.CameraProperties;
-import frc.robot.FieldConstants.AprilTagLayoutType;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * Real hardware implementation of {@link VisionIO} using c2.
  *
- * <p>Publishes the capture configuration expected by the c2 coprocessor and reads its per-camera
- * flatbuffer output as raw bytes for downstream decoding.
+ * <p>Publishes shared robot configuration, including all camera extrinsics, and reads the combined
+ * robot-pose flatbuffer output once per frame.
  */
 public class VisionIOC2 implements VisionIO {
-    private static final String DEFAULT_DEVICE_ID = "dsv0";
-    private static final String DEFAULT_CAMERA_ID = "0";
     private static final String FLATBUFFER_TYPE = "dsv0_fb";
-    private static final int DEFAULT_CAMERA_EXPOSURE = 100;
-    private static final int DEFAULT_CAMERA_GAIN = 0;
-    private static final int DEFAULT_POLL_STORAGE_DEPTH = 32;
     private static final long DISCONNECT_TIMEOUT_US = 500_000L;
-    private static final double DEFAULT_FIDUCIAL_SIZE_METERS = Units.inchesToMeters(6.5);
     private static final ConcurrentHashMap<String, C2DeviceContext> DEVICE_CONTEXTS =
             new ConcurrentHashMap<>();
 
@@ -63,8 +62,6 @@ public class VisionIOC2 implements VisionIO {
      * Shared capture configuration for c2.
      *
      * @param deviceId NetworkTables device ID root, e.g. {@code dsv0}
-     * @param cameraIndex Index of this camera's output topic
-     * @param cameraId Capture device ID consumed by c2
      * @param exposure Exposure value sent to c2's config topic
      * @param gain Gain value sent to c2's config topic
      * @param fiducialSizeMeters AprilTag edge length used by c2 solvePnP
@@ -74,8 +71,6 @@ public class VisionIOC2 implements VisionIO {
      */
     public static record C2Config(
             String deviceId,
-            int cameraIndex,
-            String cameraId,
             int exposure,
             int gain,
             double fiducialSizeMeters,
@@ -84,11 +79,9 @@ public class VisionIOC2 implements VisionIO {
             int pollStorageDepth) {}
 
     private static record SharedDeviceConfig(
-            String cameraId,
-            int resolutionWidth,
-            int resolutionHeight,
             int exposure,
             int gain,
+            List<Pose3d> cameraExtrinsics,
             double fiducialSizeMeters,
             String tagLayoutJson) {}
 
@@ -96,13 +89,11 @@ public class VisionIOC2 implements VisionIO {
     private static final class C2DeviceContext {
         private final NetworkTableInstance ntInstance;
         private final String deviceId;
-        private final StringPublisher cameraIdPublisher;
-        private final IntegerPublisher resolutionWidthPublisher;
-        private final IntegerPublisher resolutionHeightPublisher;
         private final IntegerPublisher exposurePublisher;
         private final IntegerPublisher gainPublisher;
         private final DoublePublisher fiducialSizePublisher;
         private final StringPublisher tagLayoutPublisher;
+        private final StructArrayPublisher<Pose3d> cameraExtrinsicsPublisher;
         private final Map<Integer, String> cameraNamesByIndex = new HashMap<>();
 
         private SharedDeviceConfig sharedConfig = null;
@@ -111,47 +102,50 @@ public class VisionIOC2 implements VisionIO {
 
         private C2DeviceContext(
                 NetworkTableInstance ntInstance,
-                CameraProperties cameraProperties,
+                CameraProperties[] cameraProperties,
                 C2Config config) {
             this.ntInstance = ntInstance;
             this.deviceId = config.deviceId();
 
             NetworkTable configTable = ntInstance.getTable("/" + deviceId + "/config");
-            cameraIdPublisher = configTable.getStringTopic("camera_id").publish();
-            resolutionWidthPublisher =
-                    configTable.getIntegerTopic("camera_resolution_width").publish();
-            resolutionHeightPublisher =
-                    configTable.getIntegerTopic("camera_resolution_height").publish();
             exposurePublisher = configTable.getIntegerTopic("camera_exposure").publish();
             gainPublisher = configTable.getIntegerTopic("camera_gain").publish();
             fiducialSizePublisher = configTable.getDoubleTopic("fiducial_size_m").publish();
             tagLayoutPublisher = configTable.getStringTopic("tag_layout").publish();
+            cameraExtrinsicsPublisher =
+                    configTable.getStructArrayTopic("camera_extrinsics", Pose3d.struct).publish();
 
-            registerCamera(cameraProperties, config);
+            for (CameraProperties properties : cameraProperties) {
+                cameraNamesByIndex.put(properties.index(), properties.name());
+            }
+
+            registerCameras(cameraProperties, config);
         }
 
-        public synchronized void registerCamera(
-                CameraProperties cameraProperties, C2Config config) {
-            String existingCameraName =
-                    cameraNamesByIndex.putIfAbsent(config.cameraIndex(), cameraProperties.name());
-            if (existingCameraName != null && !existingCameraName.equals(cameraProperties.name())) {
-                throw new IllegalArgumentException(
-                        "Duplicate c2 cameraIndex "
-                                + config.cameraIndex()
-                                + " for deviceId \""
-                                + deviceId
-                                + "\". Cameras \""
-                                + existingCameraName
-                                + "\" and \""
-                                + cameraProperties.name()
-                                + "\" cannot share the same output topic.");
+        public synchronized void registerCameras(
+                CameraProperties[] cameraProperties, C2Config config) {
+            for (CameraProperties properties : cameraProperties) {
+                String existingCameraName =
+                        cameraNamesByIndex.putIfAbsent(properties.index(), properties.name());
+                if (existingCameraName != null && !existingCameraName.equals(properties.name())) {
+                    throw new IllegalArgumentException(
+                            "Duplicate c2 cameraIndex "
+                                    + properties.index()
+                                    + " for deviceId \""
+                                    + deviceId
+                                    + "\". Cameras \""
+                                    + existingCameraName
+                                    + "\" and \""
+                                    + properties.name()
+                                    + "\" cannot share the same output topic.");
+                }
             }
 
             SharedDeviceConfig candidateSharedConfig = sharedConfigFor(cameraProperties, config);
             if (sharedConfig == null) {
                 sharedConfig = candidateSharedConfig;
             } else if (!sharedConfig.equals(candidateSharedConfig)) {
-                throw conflictingSharedConfig(cameraProperties, candidateSharedConfig);
+                throw conflictingSharedConfig(candidateSharedConfig);
             }
 
             publishConfigIfNeeded();
@@ -170,40 +164,28 @@ public class VisionIOC2 implements VisionIO {
                 return;
             }
 
-            cameraIdPublisher.set(sharedConfig.cameraId());
-            resolutionWidthPublisher.set(sharedConfig.resolutionWidth());
-            resolutionHeightPublisher.set(sharedConfig.resolutionHeight());
             exposurePublisher.set(sharedConfig.exposure());
             gainPublisher.set(sharedConfig.gain());
             fiducialSizePublisher.set(sharedConfig.fiducialSizeMeters());
             tagLayoutPublisher.set(sharedConfig.tagLayoutJson());
+            cameraExtrinsicsPublisher.set(sharedConfig.cameraExtrinsics().toArray(Pose3d[]::new));
             hasPublishedConfig = true;
         }
 
         private IllegalArgumentException conflictingSharedConfig(
-                CameraProperties cameraProperties, SharedDeviceConfig candidateSharedConfig) {
+                SharedDeviceConfig candidateSharedConfig) {
             StringBuilder mismatches = new StringBuilder();
-            appendMismatch(
-                    mismatches,
-                    "cameraId",
-                    sharedConfig.cameraId(),
-                    candidateSharedConfig.cameraId());
-            appendMismatch(
-                    mismatches,
-                    "resolutionWidth",
-                    sharedConfig.resolutionWidth(),
-                    candidateSharedConfig.resolutionWidth());
-            appendMismatch(
-                    mismatches,
-                    "resolutionHeight",
-                    sharedConfig.resolutionHeight(),
-                    candidateSharedConfig.resolutionHeight());
             appendMismatch(
                     mismatches,
                     "exposure",
                     sharedConfig.exposure(),
                     candidateSharedConfig.exposure());
             appendMismatch(mismatches, "gain", sharedConfig.gain(), candidateSharedConfig.gain());
+            appendMismatch(
+                    mismatches,
+                    "cameraExtrinsics",
+                    sharedConfig.cameraExtrinsics(),
+                    candidateSharedConfig.cameraExtrinsics());
             appendMismatch(
                     mismatches,
                     "fiducialSizeMeters",
@@ -218,8 +200,6 @@ public class VisionIOC2 implements VisionIO {
             return new IllegalArgumentException(
                     "Conflicting shared c2 config for deviceId \""
                             + deviceId
-                            + "\" from camera \""
-                            + cameraProperties.name()
                             + "\". All cameras publishing to /"
                             + deviceId
                             + "/config must agree on: "
@@ -255,23 +235,35 @@ public class VisionIOC2 implements VisionIO {
     private final C2Config config;
     private final C2DeviceContext deviceContext;
     private final RawSubscriber observationSubscriber;
+    private final Supplier<Pose3d> estimatedPoseSupplier;
+    private final StructPublisher<Pose3d> estimatedPosePublisher;
 
     /**
-     * Constructs a c2 camera interface with explicit c2 configuration.
-     *
-     * @param cameraProperties Camera configuration including name and calibration
-     * @param config c2 capture and topic configuration
+     * Creates one IO source for all C2 cameras, publishing the current field-relative robot pose.
      */
-    public VisionIOC2(CameraProperties cameraProperties, C2Config config) {
+    public VisionIOC2(
+            CameraProperties[] cameraProperties,
+            C2Config config,
+            Supplier<Pose3d> estimatedPoseSupplier) {
+        this.estimatedPoseSupplier =
+                Objects.requireNonNull(
+                        estimatedPoseSupplier, "estimatedPoseSupplier cannot be null");
         this.config = validateConfig(config);
+        if (cameraProperties == null || cameraProperties.length == 0) {
+            throw new IllegalArgumentException("At least one C2 camera is required");
+        }
+        if (java.util.Arrays.stream(cameraProperties).anyMatch(java.util.Objects::isNull)) {
+            throw new IllegalArgumentException("C2 camera properties cannot contain null values");
+        }
         this.deviceContext = getOrCreateDeviceContext(cameraProperties, this.config);
 
-        NetworkTable outputTable =
-                ntInstance.getTable(
-                        "/"
-                                + this.config.deviceId()
-                                + "/output/camera_"
-                                + this.config.cameraIndex());
+        estimatedPosePublisher =
+                ntInstance
+                        .getTable("/" + this.config.deviceId() + "/Feedback")
+                        .getStructTopic("Pose", Pose3d.struct)
+                        .publish();
+
+        NetworkTable outputTable = ntInstance.getTable("/" + this.config.deviceId() + "/output");
 
         observationSubscriber =
                 outputTable
@@ -287,6 +279,7 @@ public class VisionIOC2 implements VisionIO {
     @Override
     public void updateInputs(VisionIOInputs inputs) {
         publishConfigIfNeeded();
+        estimatedPosePublisher.set(estimatedPoseSupplier.get());
 
         long nowUs = WPIUtilJNI.now();
         long lastChangeUs = observationSubscriber.getLastChange();
@@ -310,8 +303,10 @@ public class VisionIOC2 implements VisionIO {
         ArrayList<Long> captureTimestampsUs = new ArrayList<>(unreadFrames.length);
         ArrayList<Long> publishTimestampsUs = new ArrayList<>(unreadFrames.length);
 
-        var unreadFrame = unreadFrames[0]; // TODO: Re-evaluate as this limits the throughput
-        if (unreadFrame != null && unreadFrame.value != null && unreadFrame.value.length > 0) {
+        for (var unreadFrame : unreadFrames) {
+            if (unreadFrame == null || unreadFrame.value == null || unreadFrame.value.length == 0) {
+                continue;
+            }
             results.add(unreadFrame.value);
             captureTimestampsUs.add(unreadFrame.timestamp);
             publishTimestampsUs.add(
@@ -334,31 +329,12 @@ public class VisionIOC2 implements VisionIO {
         deviceContext.publishConfigIfNeeded();
     }
 
-    public static C2Config defaultsFor(int cameraIndex) {
-        return new C2Config(
-                DEFAULT_DEVICE_ID,
-                cameraIndex,
-                DEFAULT_CAMERA_ID,
-                DEFAULT_CAMERA_EXPOSURE,
-                DEFAULT_CAMERA_GAIN,
-                DEFAULT_FIDUCIAL_SIZE_METERS,
-                AprilTagLayoutType.NO_TRENCH.getLayout(),
-                AprilTagLayoutType.NO_TRENCH.getLayoutString(),
-                DEFAULT_POLL_STORAGE_DEPTH);
-    }
-
     private static C2Config validateConfig(C2Config config) {
         if (config == null) {
             throw new IllegalArgumentException("c2Config cannot be null");
         }
         if (config.deviceId() == null || config.deviceId().isBlank()) {
             throw new IllegalArgumentException("c2Config.deviceId cannot be blank");
-        }
-        if (config.cameraIndex() < 0) {
-            throw new IllegalArgumentException("c2Config.cameraIndex must be non-negative");
-        }
-        if (config.cameraId() == null) {
-            throw new IllegalArgumentException("c2Config.cameraId cannot be null");
         }
         if (config.tagLayout() == null) {
             throw new IllegalArgumentException("c2Config.tagLayout cannot be null");
@@ -373,7 +349,7 @@ public class VisionIOC2 implements VisionIO {
     }
 
     private static C2DeviceContext getOrCreateDeviceContext(
-            CameraProperties cameraProperties, C2Config config) {
+            CameraProperties[] cameraProperties, C2Config config) {
         return DEVICE_CONTEXTS.compute(
                 config.deviceId(),
                 (deviceId, existingContext) -> {
@@ -381,33 +357,54 @@ public class VisionIOC2 implements VisionIO {
                         return new C2DeviceContext(
                                 NetworkTableInstance.getDefault(), cameraProperties, config);
                     }
-                    existingContext.registerCamera(cameraProperties, config);
+                    existingContext.registerCameras(cameraProperties, config);
                     return existingContext;
                 });
     }
 
     private static SharedDeviceConfig sharedConfigFor(
-            CameraProperties cameraProperties, C2Config config) {
+            CameraProperties[] cameraProperties, C2Config config) {
         return new SharedDeviceConfig(
-                config.cameraId(),
-                cameraProperties.resolutionWidth(),
-                cameraProperties.resolutionHeight(),
                 config.exposure(),
                 config.gain(),
+                cameraExtrinsicsFor(cameraProperties),
                 config.fiducialSizeMeters(),
                 config.tagLayoutJson());
     }
 
+    private static List<Pose3d> cameraExtrinsicsFor(CameraProperties[] cameraProperties) {
+        int maxIndex =
+                Arrays.stream(cameraProperties)
+                        .mapToInt(CameraProperties::index)
+                        .max()
+                        .orElseThrow();
+        Pose3d[] extrinsics = new Pose3d[maxIndex + 1];
+        for (CameraProperties properties : cameraProperties) {
+            if (properties.index() < 0 || extrinsics[properties.index()] != null) {
+                throw new IllegalArgumentException(
+                        "C2 camera indices must be unique and non-negative");
+            }
+            Transform3d transform = properties.robotToCamera();
+            extrinsics[properties.index()] =
+                    new Pose3d(transform.getTranslation(), transform.getRotation());
+        }
+        for (int index = 0; index < extrinsics.length; index++) {
+            if (extrinsics[index] == null) {
+                throw new IllegalArgumentException("Missing C2 camera index " + index);
+            }
+        }
+        return List.copyOf(Arrays.asList(extrinsics));
+    }
+
     /**
-     * Decodes the raw C2 flatbuffer bytes stored in {@code inputs} into {@link CameraResult}
-     * records.
+     * Decodes raw C2 flatbuffer frames into camera or robot pose observations.
      *
      * <p>Each frame is decoded directly from the flatbuffer into the standardized {@link
      * CameraResult} type without an intermediate {@code PhotonPipelineResult}, keeping the C2 wire
      * format fully encapsulated in this IO layer.
      */
     public static CameraResult[] decodeResults(
-            VisionIOInputs inputs, AprilTagFieldLayout tagLayout, int cameraIndex) {
+            VisionIOInputs inputs, AprilTagFieldLayout tagLayout) {
         ArrayList<CameraResult> results = new ArrayList<>(inputs.rawResults.length);
         for (int i = 0; i < inputs.rawResults.length; i++) {
             byte[] raw = inputs.rawResults[i];
@@ -418,9 +415,9 @@ public class VisionIOC2 implements VisionIO {
             long publishTs =
                     i < inputs.publishTimestampsUs.length ? inputs.publishTimestampsUs[i] : 0;
 
-            CameraResult result = decodeC2Frame(raw, captureTs, publishTs, tagLayout, cameraIndex);
-            if (result != null) {
-                results.add(result);
+            CameraResult[] frameResults = decodeC2Frame(raw, captureTs, publishTs, tagLayout);
+            if (frameResults != null) {
+                results.addAll(java.util.Arrays.asList(frameResults));
             }
         }
         return results.toArray(CameraResult[]::new);
@@ -429,18 +426,17 @@ public class VisionIOC2 implements VisionIO {
     /**
      * Decodes one raw C2 flatbuffer frame into a {@link CameraResult}.
      *
-     * <p>If the frame contains no data for this camera index, or the pose solution is missing, an
-     * empty result is returned so callers always have a well-formed object.
+     * <p>Combined C2 frames produce one robot-pose observation. Per-camera frames are retained for
+     * compatibility with C2 configurations that publish individual camera solves.
      *
      * @return decoded result, or {@code null} if the byte array is not a valid flatbuffer
      */
-    private static CameraResult decodeC2Frame(
+    private static CameraResult[] decodeC2Frame(
             byte[] raw,
             long captureTimestampUs,
             long publishTimestampUs,
-            AprilTagFieldLayout tagLayout,
-            int cameraIndex) {
-        if (tagLayout == null || cameraIndex < 0) {
+            AprilTagFieldLayout tagLayout) {
+        if (tagLayout == null) {
             return null;
         }
 
@@ -451,25 +447,65 @@ public class VisionIOC2 implements VisionIO {
             return null;
         }
 
-        dsv0.CameraOutput cameraOutput = findCameraOutput(frame, cameraIndex);
-        if (cameraOutput == null) {
-            long resolvedCapture =
-                    captureTimestampUs != 0 ? captureTimestampUs : frame.timestampUs();
-            long resolvedPublish = publishTimestampUs != 0 ? publishTimestampUs : resolvedCapture;
-            return emptyC2Result(resolvedCapture, resolvedPublish);
+        long resolvedPublish = publishTimestampUs != 0 ? publishTimestampUs : captureTimestampUs;
+        switch (frame.resultsType()) {
+            case dsv0.Results.PerCameraResults -> {
+                dsv0.PerCameraResults perCamera =
+                        (dsv0.PerCameraResults) frame.results(new dsv0.PerCameraResults());
+                if (perCamera == null) return new CameraResult[0];
+                ArrayList<CameraResult> cameraResults = new ArrayList<>(perCamera.resultsLength());
+                for (int i = 0; i < perCamera.resultsLength(); i++) {
+                    dsv0.CameraOutput cameraOutput = perCamera.results(i);
+                    CameraResult cameraResult =
+                            decodeCameraOutput(
+                                    cameraOutput, tagLayout, captureTimestampUs, resolvedPublish);
+                    if (cameraResult != null) cameraResults.add(cameraResult);
+                }
+                return cameraResults.toArray(CameraResult[]::new);
+            }
+            case dsv0.Results.CombinedResults -> {
+                dsv0.CombinedResults combined =
+                        (dsv0.CombinedResults) frame.results(new dsv0.CombinedResults());
+                if (combined == null) return new CameraResult[0];
+                dsv0.CameraObservation observation = combined.robotObservation();
+                if (observation == null || observation.solution0() == null) {
+                    return new CameraResult[0];
+                }
+                dsv0.PoseSolution solution = observation.solution0();
+                int[] tagIds = new int[observation.tagIdsLength()];
+                for (int i = 0; i < tagIds.length; i++) {
+                    tagIds[i] = observation.tagIds(i);
+                }
+                return new CameraResult[] {
+                    new CameraResult(
+                            new TagObservation[0],
+                            Optional.empty(),
+                            (double) captureTimestampUs,
+                            (double) resolvedPublish,
+                            -1,
+                            Optional.of(
+                                    new RobotPoseObservation(
+                                            tagIds,
+                                            c2PoseToWpilib(solution),
+                                            solution.reprojectionError())))
+                };
+            }
+            default -> {
+                return new CameraResult[0];
+            }
         }
+    }
 
-        long resolvedCapture =
-                captureTimestampUs != 0
-                        ? captureTimestampUs
-                        : (cameraOutput.timestampUs() != 0
-                                ? cameraOutput.timestampUs()
-                                : frame.timestampUs());
-        long resolvedPublish = publishTimestampUs != 0 ? publishTimestampUs : resolvedCapture;
-
+    private static CameraResult decodeCameraOutput(
+            dsv0.CameraOutput cameraOutput,
+            AprilTagFieldLayout tagLayout,
+            long captureTimestampUs,
+            long publishTimestampUs) {
+        if (cameraOutput == null) return null;
+        int cameraIndex = cameraOutput.cameraIndex();
         dsv0.CameraObservation observation = cameraOutput.cameraObservation();
         if (observation == null || observation.solution0() == null) {
-            return emptyC2Result(resolvedCapture, resolvedPublish);
+            return emptyC2Result(captureTimestampUs, publishTimestampUs, cameraIndex);
         }
 
         dsv0.PoseSolution primarySolution = observation.solution0();
@@ -487,8 +523,10 @@ public class VisionIOC2 implements VisionIO {
                 Optional<Pose3d> alt = alternateSolution.map(VisionIOC2::c2PoseToWpilib);
                 double ambiguity =
                         computeC2Ambiguity(
-                                primarySolution.error(),
-                                alternateSolution.map(PoseSolution::error).orElse(-1.0));
+                                primarySolution.reprojectionError(),
+                                alternateSolution
+                                        .map(PoseSolution::reprojectionError)
+                                        .orElse(-1.0));
                 tagObs.add(new TagObservation(tagId, fieldToCamera, alt, 0.0, ambiguity));
             }
         }
@@ -503,33 +541,26 @@ public class VisionIOC2 implements VisionIO {
 
             multiTag =
                     Optional.of(
-                            new MultiTagObservation(ids, fieldToCamera, primarySolution.error()));
+                            new MultiTagObservation(
+                                    ids, fieldToCamera, primarySolution.reprojectionError()));
         }
 
         return new CameraResult(
                 tagObs.toArray(TagObservation[]::new),
                 multiTag,
-                (double) resolvedCapture,
-                (double) resolvedPublish);
+                (double) captureTimestampUs,
+                (double) publishTimestampUs,
+                cameraIndex);
     }
 
-    private static dsv0.CameraOutput findCameraOutput(dsv0.Frame frame, int cameraIndex) {
-        if (frame == null || frame.camerasLength() == 0) return null;
-        for (int i = 0; i < frame.camerasLength(); i++) {
-            dsv0.CameraOutput candidate = frame.cameras(i);
-            if (candidate != null && candidate.cameraIndex() == cameraIndex) {
-                return candidate;
-            }
-        }
-        return null;
-    }
-
-    private static CameraResult emptyC2Result(long captureTimestampUs, long publishTimestampUs) {
+    private static CameraResult emptyC2Result(
+            long captureTimestampUs, long publishTimestampUs, int cameraIndex) {
         return new CameraResult(
                 new TagObservation[0],
                 Optional.empty(),
                 (double) captureTimestampUs,
-                (double) publishTimestampUs);
+                (double) publishTimestampUs,
+                cameraIndex);
     }
 
     private static Pose3d c2PoseToWpilib(dsv0.PoseSolution solution) {

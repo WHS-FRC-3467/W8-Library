@@ -52,11 +52,61 @@ public interface VisionIO {
             Pose3d fieldToCameraPose, // Field to camera
             double error) {}
 
+    /** A pose already solved for the robot frame by a multi-camera vision source. */
+    public static record RobotPoseObservation(
+            int[] fiducialIds, Pose3d fieldToRobotPose, double reprojectionError) {}
+
     public static record CameraResult(
             TagObservation[] tagObservations,
             Optional<MultiTagObservation> multiTagObservation,
             double captureTimestampUs,
-            double publishTimestampUs) {}
+            double publishTimestampUs,
+            int cameraIndex,
+            Optional<RobotPoseObservation> robotPoseObservation) {
+        public CameraResult(
+                TagObservation[] tagObservations,
+                Optional<MultiTagObservation> multiTagObservation,
+                double captureTimestampUs,
+                double publishTimestampUs) {
+            this(
+                    tagObservations,
+                    multiTagObservation,
+                    captureTimestampUs,
+                    publishTimestampUs,
+                    -1,
+                    Optional.empty());
+        }
+
+        public CameraResult(
+                TagObservation[] tagObservations,
+                Optional<MultiTagObservation> multiTagObservation,
+                double captureTimestampUs,
+                double publishTimestampUs,
+                Optional<RobotPoseObservation> robotPoseObservation) {
+            this(
+                    tagObservations,
+                    multiTagObservation,
+                    captureTimestampUs,
+                    publishTimestampUs,
+                    -1,
+                    robotPoseObservation);
+        }
+
+        public CameraResult(
+                TagObservation[] tagObservations,
+                Optional<MultiTagObservation> multiTagObservation,
+                double captureTimestampUs,
+                double publishTimestampUs,
+                int cameraIndex) {
+            this(
+                    tagObservations,
+                    multiTagObservation,
+                    captureTimestampUs,
+                    publishTimestampUs,
+                    cameraIndex,
+                    Optional.empty());
+        }
+    }
 
     @AutoLog
     public static class VisionIOInputs {
@@ -77,6 +127,7 @@ public interface VisionIO {
 
         /** NT-synced publish timestamps for each unread result, in microseconds. */
         public long[] publishTimestampsUs = new long[0];
+
     }
 
     /**
