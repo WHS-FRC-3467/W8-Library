@@ -243,11 +243,6 @@ public class VisionConstants {
     public static final double RIGHT_FPS = 22;
     public static final double FRONT_RIGHT_FPS = 22;
 
-    public static final double FRONT_LEFT_STDDEV_FACTOR = 1.0;
-    public static final double LEFT_STDDEV_FACTOR = 1.0;
-    public static final double RIGHT_STDDEV_FACTOR = 1.0;
-    public static final double FRONT_RIGHT_STDDEV_FACTOR = 1.0;
-
     // Exposure 5 ms, USB 5 ms, detection 15 ms, scheduling 5 ms
     public static final Time FRONT_LEFT_LATENCY = Milliseconds.of(30);
     public static final Time LEFT_LATENCY = Milliseconds.of(30);
@@ -268,7 +263,6 @@ public class VisionConstants {
                     FRONT_LEFT_DIST_COEFFS,
                     FRONT_LEFT_RESOLUTION_WIDTH,
                     FRONT_LEFT_RESOLUTION_HEIGHT,
-                    FRONT_LEFT_STDDEV_FACTOR,
                     FRONT_LEFT_FOV,
                     FRONT_LEFT_FPS,
                     FRONT_LEFT_LATENCY,
@@ -283,7 +277,6 @@ public class VisionConstants {
                     LEFT_DIST_COEFFS,
                     LEFT_RESOLUTION_WIDTH,
                     LEFT_RESOLUTION_HEIGHT,
-                    LEFT_STDDEV_FACTOR,
                     LEFT_FOV,
                     LEFT_FPS,
                     LEFT_LATENCY,
@@ -298,7 +291,6 @@ public class VisionConstants {
                     RIGHT_DIST_COEFFS,
                     RIGHT_RESOLUTION_WIDTH,
                     RIGHT_RESOLUTION_HEIGHT,
-                    RIGHT_STDDEV_FACTOR,
                     RIGHT_FOV,
                     RIGHT_FPS,
                     RIGHT_LATENCY,
@@ -313,7 +305,6 @@ public class VisionConstants {
                     FRONT_RIGHT_DIST_COEFFS,
                     FRONT_RIGHT_RESOLUTION_WIDTH,
                     FRONT_RIGHT_RESOLUTION_HEIGHT,
-                    FRONT_RIGHT_STDDEV_FACTOR,
                     FRONT_RIGHT_FOV,
                     FRONT_RIGHT_FPS,
                     FRONT_RIGHT_LATENCY,

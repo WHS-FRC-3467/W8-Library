@@ -56,7 +56,6 @@ public class AprilTagCamera {
      * @param distCoeffs Distortion coefficients for the camera
      * @param resolutionWidth Camera resolution width in pixels
      * @param resolutionHeight Camera resolution height in pixels
-     * @param stdDevFactor Standard deviation factor used in vision pose estimation
      * @param fov Estimated FOV of camera
      * @param fps Estimate FPS of camera
      * @param latency Average latency of the camera (exposure to network tables)
@@ -70,7 +69,6 @@ public class AprilTagCamera {
             Matrix<N8, N1> distCoeffs,
             int resolutionWidth,
             int resolutionHeight,
-            double stdDevFactor,
             Angle fov,
             double fps,
             Time latency,

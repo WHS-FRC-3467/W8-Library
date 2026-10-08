@@ -270,13 +270,7 @@ public class VisionSubsystem extends SubsystemBase {
 
                 if (!accepted) continue;
 
-                double stdDevFactor =
-                        computeStdDevFactor(
-                                resultCameraProperties == null
-                                        ? 1.0
-                                        : resultCameraProperties.stdDevFactor(),
-                                result,
-                                poseRecord);
+                double stdDevFactor = computeStdDevFactor(result, poseRecord);
 
                 double linearStdDev = LINEAR_STDDEV_BASELINE * stdDevFactor;
                 double angularStdDev =
@@ -462,8 +456,7 @@ public class VisionSubsystem extends SubsystemBase {
      * @param poseRecord estimated pose record
      * @return clamped standard deviation scaling factor
      */
-    private double computeStdDevFactor(
-            double cameraStdDevFactor, CameraResult result, VisionPoseRecord poseRecord) {
+    private double computeStdDevFactor(CameraResult result, VisionPoseRecord poseRecord) {
         double distanceMeters =
                 Math.max(poseRecord.averageDistanceMeters(), MIN_STDDEV_DISTANCE_METERS);
         int tagCount = Math.max(1, poseRecord.tagsUsed().size());
@@ -484,7 +477,7 @@ public class VisionSubsystem extends SubsystemBase {
         double tagFactor = 1.0 / Math.pow(tagCount, STDDEV_TAGCOUNT_EXPONENT);
         double ambiguityFactor =
                 1.0 + STDDEV_AMBIGUITY_WEIGHT * Math.pow(ambiguity / MAX_AMBIGUITY, 2.0);
-        double stdDevFactor = distanceFactor * tagFactor * ambiguityFactor * cameraStdDevFactor;
+        double stdDevFactor = distanceFactor * tagFactor * ambiguityFactor;
 
         return MathUtil.clamp(stdDevFactor, STDDEV_FACTOR_MIN, STDDEV_FACTOR_MAX);
     }
