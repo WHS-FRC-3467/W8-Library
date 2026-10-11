@@ -22,6 +22,7 @@ import static edu.wpi.first.units.Units.Volts;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.sim.TalonFXSimState;
+import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
@@ -43,18 +44,20 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
      * Constructs and initializes a TalonFX motor simulation.
      *
      * @param name The name of the motor(s)
-     * @param motorModel The bare (i.e. unreduced) qty 1 {@link DCMotor} object containing the 
-     * actuator's performance characteristics, often constructed through DCMotor.getX(1).
-     * For example, DCMotor.getKrakenX60Foc(1).
+     * @param motorType The motor type (e.g. X44, X60). This should match motorModel.
+     * @param motorModel The bare (i.e. unreduced) qty 1 {@link DCMotor} object representing the motor,
+     * often constructed through DCMotor.getX(1). For example, DCMotor.getKrakenX60Foc(1).
      * @param config Configuration to apply to the motor(s)
      * @param main CAN ID of the main motor
      * @param followerData Configuration data for the follower(s)
      */
     public MotorIOTalonFXSim(
-            String name, DCMotor motorModel, TalonFXConfiguration config, CAN main, TalonFXFollower... followerData) {
+            String name, MotorType motorType, DCMotor motorModel, TalonFXConfiguration config, CAN main, TalonFXFollower... followerData) {
         super(name, motorModel, config, main, followerData);
 
         simState = super.motor.getSimState();
+        // The motor type is required for CTRE sim to properly simulate electrical performance 
+        simState.setMotorType(motorType);
     }
 
     /** Setter for the position of the mechanism associated with this motor group, typically taken from a WPILib mechanism

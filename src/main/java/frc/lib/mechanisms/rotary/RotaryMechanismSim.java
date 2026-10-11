@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIOSim;
 import frc.lib.io.motor.MotorIOSim;
+import frc.lib.mechanisms.MotorSimCalcs;
 import frc.lib.util.BatteryModel;
 
 import java.util.Optional;
@@ -70,7 +71,10 @@ public class RotaryMechanismSim extends RotaryMechanism<MotorIOSim, AbsoluteEnco
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        BatteryModel.addCurrentLoad(sim.getCurrentDrawAmps());
+        // Calculate supply current 
+        double supplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(RobotController.getBatteryVoltage(), inputs.appliedVoltage.in(Volts), 
+        inputs.torqueCurrent.in(Amps));
+        BatteryModel.addCurrentLoad(supplyCurrentAmps);
 
         AngularVelocity currentVelocity = RadiansPerSecond.of(sim.getVelocityRadPerSec());
         AngularAcceleration currentAcceleration;

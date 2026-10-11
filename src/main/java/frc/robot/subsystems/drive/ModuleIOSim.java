@@ -32,7 +32,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.lib.mechanisms.MotorSimCalcs;
 import frc.lib.util.BatteryModel;
-import lombok.Setter;
 
 /**
  * Physics sim implementation of module IO. The sim models are configured using
@@ -40,8 +39,7 @@ import lombok.Setter;
  * control.
  */
 public class ModuleIOSim implements ModuleIO {
-    @Setter
-    private String moduleName = "";
+    private final String name;
 
     // TunerConstants doesn't support separate sim constants, so they are declared
     // locally
@@ -86,12 +84,20 @@ public class ModuleIOSim implements ModuleIO {
     public boolean isDriveRegenerating = false;
     public boolean isTurnRegenerating = false;
 
-    // to-do docs
+    // Average of the drive and turn supply currents over a simulation step for use in battery load modeling
     private double driveSupplyCurrentAverageAmps = 0.0;
     private double turnSupplyCurrentAverageAmps = 0.0;
 
-    public ModuleIOSim(
+    /**
+     * Constructs a new ModuleIOSim instance.
+     *
+     * @param name Name of the module for logging purposes
+     * @param constants Module-specific constants for configuring hardware devices
+     */
+    public ModuleIOSim(String name,
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
+        this.name = name;
+
         /* 
          * Create Drive and Turn sim models. 
          * 
@@ -152,6 +158,8 @@ public class ModuleIOSim implements ModuleIO {
          * Over 0.02 s, wheel speed tends to change drastically; current limiting off of 20 ms stale back-EMF often 
          * results in logged stator currents that are notably below established current limits.
          */
+        driveSupplyCurrentAverageAmps = 0.0;
+        turnSupplyCurrentAverageAmps = 0.0;
 
         for (int i = 0; i < SIM_SUBSTEPS; i++) { 
             double driveClampedAppliedVolts = MotorSimCalcs.clampVoltageToTorqueCurrentLimit(
@@ -172,12 +180,11 @@ public class ModuleIOSim implements ModuleIO {
                 supplyVoltageVolts);
             turnSim.setInputVoltage(turnClampedAppliedVolts);
 
-            // Update the sim
+            // Substep the sim
             driveSim.update(SIMULATION_STEP_SECONDS / SIM_SUBSTEPS);
             turnSim.update(SIMULATION_STEP_SECONDS / SIM_SUBSTEPS);
 
-            // Average supply currents over the substeps for more accurate battery load modeling, though note this will introduce a
-            // slight latency (~ 0.01s) in the battery load response
+            // Average supply currents over the substeps for more accurate battery load modeling
             driveSupplyCurrentAverageAmps += MotorSimCalcs.getSupplyCurrentAmps(supplyVoltageVolts, driveClampedAppliedVolts, 
             MotorSimCalcs.getTorqueCurrentAmps(driveSim, DRIVE_MOTOR_MODEL.KtNMPerAmp));
             turnSupplyCurrentAverageAmps += MotorSimCalcs.getSupplyCurrentAmps(supplyVoltageVolts, turnClampedAppliedVolts, 
@@ -188,27 +195,30 @@ public class ModuleIOSim implements ModuleIO {
             }
         }
   
-        /* 
-         * Update the battery load accumulator with the current draw from both motors. A positive supply
-         * current is a bus draw and a negative supply current is a bus regen.
-         */
+        /* Update the battery load accumulator with the current draw from both motors. 
+         * This new load will be applied next loop. */
+        BatteryModel.addCurrentLoad(driveSupplyCurrentAverageAmps);
+        BatteryModel.addCurrentLoad(turnSupplyCurrentAverageAmps); 
+
+        /* Write the motor inputs for this control loop; these are the values from the most recent sim substep. */
         // Clamped applied volts
         double driveAppliedVoltageVolts = driveSim.getInputVoltage(); 
         // Can equivalently calculate torque current via getCurrent(speed, voltage)
         double driveTorqueCurrentAmps = MotorSimCalcs.getTorqueCurrentAmps(driveSim, DRIVE_MOTOR_MODEL.KtNMPerAmp);
         double driveSupplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(supplyVoltageVolts, driveAppliedVoltageVolts, driveTorqueCurrentAmps);
-        isDriveRegenerating = driveSupplyCurrentAmps > 0 ? false : true;
-        BatteryModel.addCurrentLoad(driveSupplyCurrentAverageAmps);
+        // A positive supply current is a bus draw and a negative supply current is a bus regen
+        isDriveRegenerating = driveSupplyCurrentAmps < 0;
+        
 
-        // Should return clamped applied volts
+        // Clamped applied volts
         double turnAppliedVoltageVolts = turnSim.getInputVoltage();
         // Can equivalently calculate torque current via getCurrent(speed, voltage)
         double turnTorqueCurrentAmps = MotorSimCalcs.getTorqueCurrentAmps(turnSim, TURN_MOTOR_MODEL.KtNMPerAmp);
         double turnSupplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(supplyVoltageVolts, turnAppliedVoltageVolts, turnTorqueCurrentAmps);
-        isTurnRegenerating = turnSupplyCurrentAmps > 0 ? false : true;
-        BatteryModel.addCurrentLoad(turnSupplyCurrentAverageAmps); 
-
-        // Update Drive inputs (here)
+        // A positive supply current is a bus draw and a negative supply current is a bus regen
+        isTurnRegenerating = turnSupplyCurrentAmps < 0;
+        
+        // Update Drive inputs
         // Note: Drive position, velocity, and torque are reported in mechanism units 
         inputs.driveConnected = true;
         inputs.drivePositionRad = driveSim.getAngularPositionRad(); 
@@ -217,7 +227,6 @@ public class ModuleIOSim implements ModuleIO {
         inputs.driveAppliedVoltageVolts = driveAppliedVoltageVolts;
         inputs.driveSupplyCurrentAmps = driveSupplyCurrentAmps;
         inputs.driveTorqueCurrentAmps = driveTorqueCurrentAmps;
-
 
         // Update Turn inputs
         // Note: Turn position, velocity, and torque are reported in mechanism units
@@ -231,7 +240,6 @@ public class ModuleIOSim implements ModuleIO {
         inputs.turnAppliedVoltageVolts = turnAppliedVoltageVolts;
         inputs.turnSupplyCurrentAmps = turnSupplyCurrentAmps;
         inputs.turnTorqueCurrentAmps = turnTorqueCurrentAmps;
-
 
         // Update odometry inputs (50Hz because high-frequency odometry in sim doesn't
         // matter)
@@ -271,12 +279,17 @@ public class ModuleIOSim implements ModuleIO {
         turnController.setSetpoint(rotation.getRadians());
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
+
     // Log simulation parameters for diagnostics 
     private void logModuleSimState(double supplyVoltageVolts, double driveUnclampedAppliedVolts, double 
     driveClampedAppliedVolts, double driveCurrentLimitAmps, double driveTorqueCurrentAmps, double driveSupplyCurrentAmps, 
     double turnUnclampedAppliedVolts, double turnClampedAppliedVolts, double turnCurrentLimitAmps,
     double turnTorqueCurrentAmps, double turnSupplyCurrentAmps) {
-        String prefix = "Simulation/Drive/Module/" + moduleName + "/";
+        String prefix = "Simulation/Drive/Module/" + name + "/";
         Logger.recordOutput(prefix + "SupplyVoltageVolts", supplyVoltageVolts);
         // Drive
         Logger.recordOutput(prefix + "DriveUnclampedAppliedVolts", driveUnclampedAppliedVolts);
@@ -284,11 +297,15 @@ public class ModuleIOSim implements ModuleIO {
         Logger.recordOutput(prefix + "DriveCurrentLimitAmps", driveCurrentLimitAmps);
         Logger.recordOutput(prefix + "DriveTorqueCurrentAmps", driveTorqueCurrentAmps);
         Logger.recordOutput(prefix + "DriveSupplyCurrentAmps", driveSupplyCurrentAmps);
+        Logger.recordOutput(prefix + "BatteryDriveCurrentLoadAmps", driveSupplyCurrentAverageAmps);
+        Logger.recordOutput(prefix + "DriveRegenerating", isDriveRegenerating);
         // Turn
         Logger.recordOutput(prefix + "TurnUnclampedAppliedVolts", turnUnclampedAppliedVolts);
         Logger.recordOutput(prefix + "TurnClampedAppliedVolts", turnClampedAppliedVolts);
         Logger.recordOutput(prefix + "TurnCurrentLimitAmps", turnCurrentLimitAmps);
         Logger.recordOutput(prefix + "TurnTorqueCurrentAmps", turnTorqueCurrentAmps);
         Logger.recordOutput(prefix + "TurnSupplyCurrentAmps", turnSupplyCurrentAmps);
+        Logger.recordOutput(prefix + "BatteryTurnCurrentLoadAmps", turnSupplyCurrentAverageAmps);
+        Logger.recordOutput(prefix + "TurnRegenerating", isTurnRegenerating);
     }
 }

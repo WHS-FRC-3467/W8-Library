@@ -33,6 +33,7 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.util.Color;
 
 import frc.lib.io.motor.MotorIOSim;
+import frc.lib.mechanisms.MotorSimCalcs;
 import frc.lib.util.BatteryModel;
 
 /**
@@ -78,7 +79,10 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        BatteryModel.addCurrentLoad(sim.getCurrentDrawAmps());
+        // Calculate supply current 
+        double supplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(RobotController.getBatteryVoltage(), inputs.appliedVoltage.in(Volts), 
+        inputs.torqueCurrent.in(Amps));
+        BatteryModel.addCurrentLoad(supplyCurrentAmps);
 
         // Angular displacement kinematic equation (trapezoidal integration of theta)
         AngularVelocity currentVelocity = sim.getAngularVelocity();

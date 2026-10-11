@@ -15,7 +15,6 @@
 package frc.lib.util;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import lombok.AccessLevel;
@@ -29,33 +28,34 @@ public final class BatteryModel {
      * This is the voltage of a fully charged battery with no load.
      * Set this field manually as desired to simulate various electrical performances. 
      */
-    private static final double batteryNominalVoltageVolts = 12.0;
+    private static final double BATTERY_NOMINAL_VOLTAGE_VOLTS = 12.0;
 
     /* 
      * Battery internal resistance to simulate in Ohms.
      * This is the internal resistance of the battery between the driving battery terminal and the load.
      * Set this field manually as desired to simulate various electrical performances. 
      */
-    private static final double batteryInternalResistanceOhms = 0.011; 
+    private static final double BATTERY_INTERNAL_RESISTANCE_OHMS = 0.011; 
 
     /*
      * Regeneration efficiency (unitless).
-     * This is the efficiency of bus regeneration, the remainder of power being dissipated as heat.
+     * This is the efficiency of bus regeneration.
      * Set this field manually as desired to simulate various electrical performances. 
      */
-    private static final double busRegenerationEfficiency = 0.50;
+    private static final double BUS_REGENERATION_EFFICIENCY = 0.50;
 
     /*
-     * The battery voltage's time constant.
-     * This is the time constant of the LPF applied to the sagged battery voltage, representing the inductive 
-     * inertia of the circuit. 
+     * The battery voltage's time constant (s).
+     * This is the time constant of the LPF applied to the sagged battery voltage,
+     * providing a reduced-order approximation of battery/bus transient response
+     * and preventing unrealistically abrupt voltage changes in simulation.
      * Set this field manually as desired to simulate various electrical performances.
      */
     private static final double BATTERY_VOLTAGE_TIME_CONSTANT_SECONDS = 0.10;
 
     /** 
      * The accumulated signed supply-current load on the simulated battery.
-     * This field is set programatically by the {@link #addCurrentLoad(Current)} method.
+     * This field is set programmatically by the {@link #addCurrentLoad(double)} method.
      */ 
     private static double simCurrentSumAmps = 0.0;
 
@@ -73,7 +73,7 @@ public final class BatteryModel {
      * @param currentAmps signed supply current in Amps
      */
     public static void addCurrentLoad(double currentAmps) {
-        double correctedCurrentAmps = currentAmps < 0 ? busRegenerationEfficiency * currentAmps : currentAmps;
+        double correctedCurrentAmps = currentAmps < 0 ? BUS_REGENERATION_EFFICIENCY * currentAmps : currentAmps;
         simCurrentSumAmps += correctedCurrentAmps;
     }
 
@@ -81,11 +81,11 @@ public final class BatteryModel {
      * Set the simulated battery's loaded supply voltage by utilizing the total current load accumulated through {@link #addCurrentLoad}
      * calls within each existing mechanism subclass periodic. Uses {@link RoboRioSim#setVInVoltage(double)} to set the simulated battery 
      * voltage, which can then be retrieved with the {@link edu.wpi.first.wpilibj.RobotController#getBatteryVoltage()} method. This function 
-     * assumes a nominal voltage of {@link #batteryNominalVoltageVolts} and a resistance {@link #batteryInternalResistanceOhms}.
+     * assumes a nominal voltage of {@link #BATTERY_NOMINAL_VOLTAGE_VOLTS} and a resistance {@link #BATTERY_INTERNAL_RESISTANCE_OHMS}.
      */
     public static void setSimulatedBatteryLoadedVoltage() {
         // Calculate the target loaded battery voltage based on the nominal voltage, internal resistance, and total current draw
-        double targetLoadedBatteryVoltageVolts = calculateDefaultBatteryLoadedVoltage(batteryNominalVoltageVolts, batteryInternalResistanceOhms, 
+        double targetLoadedBatteryVoltageVolts = calculateDefaultBatteryLoadedVoltage(BATTERY_NOMINAL_VOLTAGE_VOLTS, BATTERY_INTERNAL_RESISTANCE_OHMS, 
             simCurrentSumAmps);
         // LPF the battery voltage to avoid sudden jumps in voltage when the current draw changes 
         double alpha = LOOP_TIME_SECONDS / (LOOP_TIME_SECONDS + BATTERY_VOLTAGE_TIME_CONSTANT_SECONDS);

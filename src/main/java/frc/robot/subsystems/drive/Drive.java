@@ -185,10 +185,10 @@ public class Drive extends SubsystemBase {
             ModuleIO brModuleIO) {
         this.gyroIO = gyroIO;
 
-        modules[0] = new Module(flModuleIO, 0, DriveConstants.FrontLeft);
-        modules[1] = new Module(frModuleIO, 1, DriveConstants.FrontRight);
-        modules[2] = new Module(blModuleIO, 2, DriveConstants.BackLeft);
-        modules[3] = new Module(brModuleIO, 3, DriveConstants.BackRight);
+        modules[0] = new Module(flModuleIO, DriveConstants.FrontLeft);
+        modules[1] = new Module(frModuleIO, DriveConstants.FrontRight);
+        modules[2] = new Module(blModuleIO, DriveConstants.BackLeft);
+        modules[3] = new Module(brModuleIO, DriveConstants.BackRight);
 
         // Usage reporting for swerve template
         HAL.report(
@@ -691,10 +691,10 @@ public class Drive extends SubsystemBase {
      * @param powerProfiler The power profiler to register the module's current and voltage to
      */
     public void registerModules(PowerProfiler powerProfiler) {
-        String[] moduleNames = {"FrontLeft", "FrontRight", "BackLeft", "BackRight"};
         for (int i = 0; i < modules.length; i++) {
             // FL, FR, BL, BR
-            modules[i].registerModules("DriveBase/" + moduleNames[i], powerProfiler);
+            String moduleName = modules[i].getName();
+            modules[i].registerModules("DriveBase/" + moduleName, powerProfiler);
         }
     }
 }

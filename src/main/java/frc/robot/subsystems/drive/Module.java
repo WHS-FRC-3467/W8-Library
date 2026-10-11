@@ -34,10 +34,10 @@ import org.littletonrobotics.junction.Logger;
 public class Module {
     private final ModuleIO io;
     private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
-    private final int index;
     private final SwerveModuleConstants<
                     TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
             constants;
+    private final String name;
 
     private final Alert driveDisconnectedAlert;
     private final Alert turnDisconnectedAlert;
@@ -48,35 +48,34 @@ public class Module {
      * Constructs a new Module instance.
      *
      * @param io IO interface for the module
-     * @param index Module index (0-3: FL, FR, BL, BR)
      * @param constants Module-specific constants from DriveConstants
      */
     public Module(
             ModuleIO io,
-            int index,
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
                     constants) {
         this.io = io;
-        this.index = index;
-        this.constants = constants;
+        this.name = io.getName();
+        this.constants = constants; 
+
         driveDisconnectedAlert =
                 new Alert(
-                        "Disconnected drive motor on module " + Integer.toString(index) + ".",
+                        "Disconnected drive motor on module " + name + ".",
                         AlertType.kError);
         turnDisconnectedAlert =
                 new Alert(
-                        "Disconnected turn motor on module " + Integer.toString(index) + ".",
+                        "Disconnected turn motor on module " + name + ".",
                         AlertType.kError);
         turnEncoderDisconnectedAlert =
                 new Alert(
-                        "Disconnected turn encoder on module " + Integer.toString(index) + ".",
+                        "Disconnected turn encoder on module " + name + ".",
                         AlertType.kError);
     }
 
     /** Updates inputs, processes odometry data, and updates connection alerts. */
     public void periodic() {
         io.updateInputs(inputs);
-        Logger.processInputs("Drive/Module" + Integer.toString(index), inputs);
+        Logger.processInputs("Drive/Module" + name, inputs);
 
         // Calculate positions for odometry
         int sampleCount = inputs.odometryTimestamps.length; // All signals are sampled together
@@ -233,4 +232,10 @@ public class Module {
         powerProfiler.registerGeneric(key + "/Drive", () -> inputs.driveSupplyCurrentAmps, () -> inputs.driveSupplyVoltageVolts);
         powerProfiler.registerGeneric(key + "/Turn", () -> inputs.turnSupplyCurrentAmps, () -> inputs.turnSupplyVoltageVolts);
     }
+
+    /** Return the name of the {@link ModuleIO} object associated with this module. */
+    public String getName() {
+        return name;
+    }
+
 }

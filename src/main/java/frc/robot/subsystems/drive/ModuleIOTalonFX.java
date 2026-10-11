@@ -60,6 +60,7 @@ import java.util.logging.Logger;
  * customized here.
  */
 public class ModuleIOTalonFX implements ModuleIO {
+        private final String name; 
         private static final Logger LOGGER = Logger.getLogger(ModuleIOTalonFX.class.getName());
 
         private final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants;
@@ -114,11 +115,13 @@ public class ModuleIOTalonFX implements ModuleIO {
 
         /**
          * Constructs a new ModuleIOTalonFX instance.
-         *
+         * 
+         * @param name Name of the module for logging purposes
          * @param constants Module-specific constants for configuring hardware devices
          */
-        public ModuleIOTalonFX(
+        public ModuleIOTalonFX(String name, 
                         SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
+                this.name = name; 
                 this.constants = constants;
                 driveTalon = new TalonFX(constants.DriveMotorId, Ports.DRIVETRAIN_BUS);
                 turnTalon = new TalonFX(constants.SteerMotorId, Ports.DRIVETRAIN_BUS);
@@ -358,5 +361,10 @@ public class ModuleIOTalonFX implements ModuleIO {
                                                         LOGGER.log(Level.SEVERE, ex.toString(), ex);
                                                         return null;
                                                 });
+        }
+
+        @Override
+        public String getName() {
+            return name;
         }
 }

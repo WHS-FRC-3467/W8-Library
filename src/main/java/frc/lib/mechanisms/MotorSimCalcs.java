@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 
 /** A utility class providing calculation support for motor sims. */ 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public abstract class MotorSimCalcs {
+public final class MotorSimCalcs {
 
     /**
     * Calculates the supply current draw from the battery based on the applied voltage, bus voltage, and torque current.
@@ -49,10 +49,9 @@ public abstract class MotorSimCalcs {
      * voltage allows. Clamps both positive and negative currents. 
      * 
      * @param requestedVolts Applied volts requested by the controller (with proper sign to indicate polarity)
-     * @param mechanismVelocityRadPerSec Current mechanism-space (drive wheel or azimuth yoke) velocity in rad/s  
-     * (with proper sign to indicate direction). Assumed to have the same sign convention used by the DCMotorSim 
-     * input voltage
-     * @param gearing Gear ratio from motor to mechanism (drive wheel or azimuth yoke)
+     * @param mechanismVelocityRadPerSec Current mechanism/output-side angular velocity in rad/s, using the same sign 
+     * convention as the simulated motor input voltage
+     * @param gearing Gear ratio from motor to mechanism/output
      * @param motor DCMotor model of the motor being simulated (bare, unreduced, qty 1)
      * @param currentLimitAmps Torque / stator current limit magnitude for the motor in Amps. Note that this is
      * different from a supply current limit, which would require a different method. 
@@ -62,11 +61,11 @@ public abstract class MotorSimCalcs {
     public static double clampVoltageToTorqueCurrentLimit(double requestedVolts, double mechanismVelocityRadPerSec, double gearing,
     DCMotor motor, double currentLimitAmps, double batteryVoltageVolts) {
             /*
-            * DCMotorSim is internally self-consistent: motor applied voltage,
+            * Values from DCMotorSim/DCMotor are internally self-consistent: motor applied voltage,
             * simulated output angular position/velocity, simulated output torque,
             * and derived motor torque current all use the same simulated positive
             * direction. This does not imply anything about real-world motor/controller
-            * inversion; it is only a local convention inside this sim model.
+            * inversion; it is only a local convention inside the sim.
             */
             double motorVelocityRadPerSec = mechanismVelocityRadPerSec * gearing;
             double currentLimitMagnitudeAmps = Math.abs(currentLimitAmps);

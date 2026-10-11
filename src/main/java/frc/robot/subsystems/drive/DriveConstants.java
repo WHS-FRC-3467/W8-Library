@@ -357,29 +357,45 @@ public class DriveConstants {
             case REAL:
                 return new Drive(
                         new GyroIOPigeon2(),
-                        new ModuleIOTalonFX(DriveConstants.FrontLeft),
-                        new ModuleIOTalonFX(DriveConstants.FrontRight),
-                        new ModuleIOTalonFX(DriveConstants.BackLeft),
-                        new ModuleIOTalonFX(DriveConstants.BackRight));
+                        new ModuleIOTalonFX("FrontLeft", DriveConstants.FrontLeft),
+                        new ModuleIOTalonFX("FrontRight", DriveConstants.FrontRight),
+                        new ModuleIOTalonFX("BackLeft", DriveConstants.BackLeft),
+                        new ModuleIOTalonFX("BackRight", DriveConstants.BackRight));
             case SIM:
                 return new Drive(
                         new GyroIO() {
                         },
-                        new ModuleIOSim(DriveConstants.FrontLeft),
-                        new ModuleIOSim(DriveConstants.FrontRight),
-                        new ModuleIOSim(DriveConstants.BackLeft),
-                        new ModuleIOSim(DriveConstants.BackRight));
+                        new ModuleIOSim("FrontLeft", DriveConstants.FrontLeft),
+                        new ModuleIOSim("FrontRight", DriveConstants.FrontRight),
+                        new ModuleIOSim("BackLeft", DriveConstants.BackLeft),
+                        new ModuleIOSim("BackRight", DriveConstants.BackRight));
             case REPLAY:
                 return new Drive(
                         new GyroIO() {
                         },
                         new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "FrontLeft";
+                            }
                         },
                         new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "FrontRight";
+                            }
                         },
                         new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "BackLeft";
+                            }
                         },
                         new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "BackRight";
+                            }
                         });
             default:
                 throw new IllegalStateException("Unrecognized Robot Mode");

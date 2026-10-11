@@ -112,4 +112,7 @@ public interface ModuleIO {
     /** Toggles the drive motor current limit for brownout protection. */
     public default void toggleBrownedOut() {
     }
+
+    /** Return the module name. */
+    public String getName();
 }
