@@ -4,14 +4,12 @@
 
 // https://github.com/Mechanical-Advantage/RobotCode2024Public/blob/main/src/main/java/org/littletonrobotics/frc2024/subsystems/superstructure/arm/ArmVisualizer.java
 
-package frc.lib.mechanisms.rotary;
+package frc.lib.actuators.rotary;
 
 import static org.wpilib.units.Units.Degrees;
 import static org.wpilib.units.Units.Meters;
 import static org.wpilib.units.Units.Radians;
 import static org.wpilib.units.Units.Rotations;
-
-import frc.lib.mechanisms.rotary.RotaryActuator.RotaryMechCharacteristics;
 
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
@@ -21,6 +19,8 @@ import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
+
+import frc.lib.actuators.rotary.RotaryActuator.RotaryMechCharacteristics;
 
 import java.util.Optional;
 

@@ -2,14 +2,14 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-package frc.lib.mechanisms.linear;
+package frc.lib.actuators.linear;
 
 import static org.wpilib.units.Units.Meters;
 import static org.wpilib.units.Units.Radians;
 
+import frc.lib.actuators.Actuator;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.ControlType;
-import frc.lib.mechanisms.Actuator;
 
 import org.wpilib.math.geometry.Rotation3d;
 import org.wpilib.math.util.MathUtil;

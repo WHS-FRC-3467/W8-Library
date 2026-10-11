@@ -13,16 +13,20 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.mechanisms.linear;
+package frc.lib.actuators.flywheel;
 
+import frc.lib.actuators.Actuator;
 import frc.lib.io.motor.MotorIO;
 
 /**
- * A real implementation of the LinearMechanism class that interacts with a physical motor through a
- * MotorIO interface.
+ * Abstract base class for flywheel mechanisms. Flywheels are rotating mechanisms used for intakes,
+ * indexers, and shooters. Provides velocity control for spinning wheels at specific speeds.
+ *
+ * @param <T> the type of MotorIO implementation used by this flywheel
  */
-public class LinearActuatorReal extends LinearActuator<MotorIO> {
-    public LinearActuatorReal(String name, MotorIO io, LinearMechCharacteristics characteristics) {
-        super(name, characteristics, io);
+public abstract class FlywheelActuator<T extends MotorIO> extends Actuator<T> {
+
+    public FlywheelActuator(String name, T io) {
+        super(name, io);
     }
 }

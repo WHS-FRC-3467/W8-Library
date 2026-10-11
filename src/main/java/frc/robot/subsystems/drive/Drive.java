@@ -19,8 +19,8 @@ import static org.wpilib.units.Units.*;
 
 import com.ctre.phoenix6.configs.SlotConfigs;
 
+import frc.lib.actuators.Actuator.TunablePidConfig;
 import frc.lib.io.motor.MotorIO.PIDSlot;
-import frc.lib.mechanisms.Actuator.TunablePidConfig;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.PID;

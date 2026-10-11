@@ -13,7 +13,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.mechanisms.linear;
+package frc.lib.actuators.linear;
 
 import static org.wpilib.units.Units.Amps;
 import static org.wpilib.units.Units.Kilograms;

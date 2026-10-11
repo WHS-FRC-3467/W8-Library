@@ -17,10 +17,10 @@ package frc.lib.util;
 import static org.wpilib.units.Units.Amps;
 import static org.wpilib.units.Units.Volts;
 
-import frc.lib.mechanisms.Actuator;
-
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.system.Timer;
+
+import frc.lib.actuators.Actuator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
