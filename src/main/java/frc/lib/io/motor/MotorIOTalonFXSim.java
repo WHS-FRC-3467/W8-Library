@@ -15,21 +15,21 @@
 
 package frc.lib.io.motor;
 
-import static edu.wpi.first.units.Units.Rotations;
-import static edu.wpi.first.units.Units.RotationsPerSecond; 
-import static edu.wpi.first.units.Units.Volts;
+import static org.wpilib.units.Units.Rotations;
+import static org.wpilib.units.Units.RotationsPerSecond;
+import static org.wpilib.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.RobotController;
-
 import frc.lib.util.Device.CAN;
+
+import org.wpilib.system.RobotController;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularAcceleration;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Voltage;
 
 /**
  * Abstraction for a simulated CTRE TalonFX motor implementing the {@link MotorIOSim} interface.
@@ -53,9 +53,10 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         simState = super.motor.getSimState();
     }
 
-    /** Setter for the position of the mechanism associated with this motor group, typically taken from a WPILib mechanism
-     * simulation
-     * 
+    /**
+     * Setter for the position of the mechanism associated with this motor group, typically taken
+     * from a WPILib mechanism simulation
+     *
      * @param position The new mechanism position (in mechanism-space)
      */
     @Override
@@ -63,19 +64,21 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         simState.setRawRotorPosition(position.times(getRotorToMechanismRatio()));
     }
 
-    /** Setter for the velocity of the mechanism associated with this motor group, typically taken from a WPILib mechanism
-     * simulation
-     * 
+    /**
+     * Setter for the velocity of the mechanism associated with this motor group, typically taken
+     * from a WPILib mechanism simulation
+     *
      * @param velocity The new mechanism velocity (in mechanism-space)
      */
-    @Override 
+    @Override
     public void setMechanismVelocity(AngularVelocity velocity) {
         simState.setRotorVelocity(velocity.times(getRotorToMechanismRatio()));
     }
 
-    /** Setter for the acceleration of the mechanism associated with this motor group, typically taken from a WPILib mechanism
-     * simulation
-     * 
+    /**
+     * Setter for the acceleration of the mechanism associated with this motor group, typically
+     * taken from a WPILib mechanism simulation
+     *
      * @param acceleration The new mechanism acceleration (in mechanism-space)
      */
     @Override
@@ -84,8 +87,8 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
     }
 
     @Override
-    public void updateInputs(MotorInputs inputs) {
-        Voltage supplyVoltage = Volts.of(RobotController.getBatteryVoltage()); 
+    public void updateInputs(MotorIOInputs inputs) {
+        Voltage supplyVoltage = Volts.of(RobotController.getBatteryVoltage());
         simState.setSupplyVoltage(supplyVoltage.in(Volts));
 
         inputs.connected =

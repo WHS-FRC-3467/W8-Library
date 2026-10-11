@@ -15,9 +15,8 @@
 
 package frc.lib.io.vision;
 
-import edu.wpi.first.math.geometry.Pose3d;
-
 import org.littletonrobotics.junction.AutoLog;
+import org.wpilib.math.geometry.Pose3d;
 
 import java.util.Optional;
 

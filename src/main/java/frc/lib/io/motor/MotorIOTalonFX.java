@@ -15,10 +15,10 @@
 
 package frc.lib.io.motor;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Rotations;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+import static org.wpilib.units.Units.Amps;
+import static org.wpilib.units.Units.Rotations;
+import static org.wpilib.units.Units.RotationsPerSecond;
+import static org.wpilib.units.Units.RotationsPerSecondPerSecond;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
@@ -30,30 +30,27 @@ import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Temperature;
-import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
-
 import frc.lib.util.CANUpdateThread;
 import frc.lib.util.Device;
 import frc.lib.util.PID;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.wpilib.math.filter.Debouncer;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularAcceleration;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Current;
+import org.wpilib.units.measure.Temperature;
+import org.wpilib.units.measure.Voltage;
+import org.wpilib.util.Alert;
+import org.wpilib.util.Alert.Level;
 
 /**
  * Abstraction for a CTRE TalonFX motor implementing the {@link MotorIO} interface. Wraps motor
  * setup, control modes, telemetry polling, and error handling.
  */
 public class MotorIOTalonFX implements MotorIO {
-    private static final Logger LOGGER = Logger.getLogger(MotorIOTalonFX.class.getName());
+    private static final java.util.logging.Logger LOGGER =
+            java.util.logging.Logger.getLogger(MotorIOTalonFX.class.getName());
 
     public record TalonFXFollower(Device.CAN id, boolean opposesMain) {}
 
@@ -129,13 +126,14 @@ public class MotorIOTalonFX implements MotorIO {
                 .ctreCheckErrorAndRetry(() -> motor.getConfigurator().apply(config))
                 .exceptionally(
                         ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            LOGGER.log(java.util.logging.Level.SEVERE, ex.toString(), ex);
                             return null;
                         });
 
         // Initialize lists
         disconnectAlerts = new Alert[followerData.length + 1];
-        disconnectAlerts[0] = new Alert(name + " is disconnected!", AlertType.kError);
+        disconnectAlerts[0] =
+                new Alert("motor_" + name + "_disconnect", name + " is disconnected!", Level.HIGH);
 
         disconnectDebouncers = new Debouncer[followerData.length + 1];
         disconnectDebouncers[0] = new Debouncer(0.5);
@@ -145,7 +143,10 @@ public class MotorIOTalonFX implements MotorIO {
 
         for (int i = 0; i < followerData.length; i++) {
             disconnectAlerts[i + 1] =
-                    new Alert(name + " follower " + i + " is disconnected!", AlertType.kError);
+                    new Alert(
+                            "motor_" + name + "_follower_" + i + "_disconnect",
+                            name + " follower " + i + " is disconnected!",
+                            Level.HIGH);
             disconnectDebouncers[i + 1] = new Debouncer(0.5);
 
             Device.CAN id = followerData[i].id();
@@ -153,8 +154,9 @@ public class MotorIOTalonFX implements MotorIO {
             if (!id.bus().equals(main.bus())) {
                 followerOnWrongBusAlert[i] =
                         new Alert(
+                                "motor_" + name + "_follower_" + i + "_wrong_bus",
                                 name + " follower " + i + " is on a different CAN bus than main!",
-                                AlertType.kError);
+                                Level.HIGH);
                 followerOnWrongBusAlert[i].set(true);
             }
 
@@ -165,7 +167,7 @@ public class MotorIOTalonFX implements MotorIO {
                     .ctreCheckErrorAndRetry(() -> follower.getConfigurator().apply(config))
                     .exceptionally(
                             ex -> {
-                                LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                                LOGGER.log(java.util.logging.Level.SEVERE, ex.toString(), ex);
                                 return null;
                             });
             follower.setControl(
@@ -204,7 +206,7 @@ public class MotorIOTalonFX implements MotorIO {
                                         closedLoopReferenceSlope))
                 .exceptionally(
                         ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            LOGGER.log(java.util.logging.Level.SEVERE, ex.toString(), ex);
                             return null;
                         });
 
@@ -278,12 +280,12 @@ public class MotorIOTalonFX implements MotorIO {
     }
 
     /**
-     * Updates the passed-in MotorInputs structure with the latest sensor readings.
+     * Updates the passed-in MotorIOInputs structure with the latest sensor readings.
      *
      * @param inputs Motor input structure to populate.
      */
     @Override
-    public void updateInputs(MotorInputs inputs) {
+    public void updateInputs(MotorIOInputs inputs) {
         inputs.connected =
                 BaseStatusSignal.refreshAll(
                                 position,
@@ -387,7 +389,7 @@ public class MotorIOTalonFX implements MotorIO {
      */
     @Override
     public void runCurrent(Current current, double dutyCycle) {
-        double dutyCyclePercent = MathUtil.clamp(dutyCycle, 0.0, 1.0);
+        double dutyCyclePercent = Math.clamp(dutyCycle, 0.0, 1.0);
         motor.setControl(currentControl.withOutput(current).withMaxAbsDutyCycle(dutyCyclePercent));
     }
 
@@ -398,7 +400,7 @@ public class MotorIOTalonFX implements MotorIO {
      */
     @Override
     public void runDutyCycle(double dutyCycle, boolean ignoringSoftLimits) {
-        double dutyCyclePercent = MathUtil.clamp(dutyCycle, -1.0, 1.0);
+        double dutyCyclePercent = Math.clamp(dutyCycle, -1.0, 1.0);
         motor.setControl(
                 dutyCycleControl
                         .withOutput(dutyCyclePercent)
@@ -484,12 +486,13 @@ public class MotorIOTalonFX implements MotorIO {
         motor.setControl(mmVelocityControl.withVelocity(velocity).withSlot(slot.getNum()));
     }
 
-    /** Sets the motor's internal encoder to interpret the current mechanism position as "position". 
-     * For example, if you call MotorIOTalonFX.setEncoderPosition(Rotations.of(0.0)), the motor's 
+    /**
+     * Sets the motor's internal encoder to interpret the current mechanism position as "position".
+     * For example, if you call MotorIOTalonFX.setEncoderPosition(Rotations.of(0.0)), the motor's
      * internal encoder will read the current mechanism position as zero.
-     * 
+     *
      * @param position The new encoder reading for the current mechanism position.
-    */
+     */
     @Override
     public void setEncoderPosition(Angle position) {
         motor.setPosition(position);
@@ -521,7 +524,7 @@ public class MotorIOTalonFX implements MotorIO {
                         })
                 .exceptionally(
                         ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            LOGGER.log(java.util.logging.Level.SEVERE, ex.toString(), ex);
                             return null;
                         });
     }
@@ -566,7 +569,7 @@ public class MotorIOTalonFX implements MotorIO {
                 .exceptionally(
                         ex -> {
                             LOGGER.log(
-                                    Level.WARNING,
+                                    java.util.logging.Level.WARNING,
                                     "Failed to apply MotionMagic config asynchronously",
                                     ex);
                             return null;
@@ -588,7 +591,7 @@ public class MotorIOTalonFX implements MotorIO {
                 .ctreCheckErrorAndRetry(() -> motor.getConfigurator().apply(currentConfig))
                 .exceptionally(
                         ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            LOGGER.log(java.util.logging.Level.SEVERE, ex.toString(), ex);
                             return null;
                         });
     }
@@ -608,7 +611,7 @@ public class MotorIOTalonFX implements MotorIO {
                 .ctreCheckErrorAndRetry(() -> motor.getConfigurator().apply(currentConfig))
                 .exceptionally(
                         ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            LOGGER.log(java.util.logging.Level.SEVERE, ex.toString(), ex);
                             return null;
                         });
     }
@@ -628,7 +631,7 @@ public class MotorIOTalonFX implements MotorIO {
                 .ctreCheckErrorAndRetry(() -> motor.getConfigurator().apply(currentConfig))
                 .exceptionally(
                         ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                            LOGGER.log(java.util.logging.Level.SEVERE, ex.toString(), ex);
                             return null;
                         });
     }

@@ -1,19 +1,4 @@
 {
-  "cSpell.words": [
-    "cancoder",
-    "CANIVORE",
-    "Choreo",
-    "Grapplehook",
-    "pathfind",
-    "pathfinding",
-    "Pathing",
-    "Spinup",
-    "teleop",
-    "Traj",
-    "Unflipped",
-    "Windham",
-    "WPILOG"
-  ],
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.server.launchMode": "Standard",
   "files.exclude": {
@@ -33,14 +18,12 @@
     {
       "name": "WPIlibUnitTests",
       "workingDirectory": "${workspaceFolder}/build/jni/release",
-      "vmargs": [
-        "-Djava.library.path=${workspaceFolder}/build/jni/release"
-      ],
+      "vmargs": [ "-Djava.library.path=${workspaceFolder}/build/jni/release" ],
       "env": {
-        "LD_LIBRARY_PATH": "${workspaceFolder}/build/jni/release",
+        "LD_LIBRARY_PATH": "${workspaceFolder}/build/jni/release" ,
         "DYLD_LIBRARY_PATH": "${workspaceFolder}/build/jni/release"
       }
-    }
+    },
   ],
   "java.test.defaultConfig": "WPIlibUnitTests",
   "java.import.gradle.annotationProcessing.enabled": false,
@@ -54,7 +37,7 @@
     "org.mockito.Mockito.*",
     "org.mockito.ArgumentMatchers.*",
     "org.mockito.Answers.*",
-    "edu.wpi.first.units.Units.*"
+    "org.wpilib.units.Units.*"
   ],
   "java.completion.filteredTypes": [
     "java.awt.*",
@@ -70,40 +53,10 @@
     "javax.swing.*",
     "javax.management.*",
     "javax.smartcardio.*",
-    "edu.wpi.first.math.proto.*",
-    "edu.wpi.first.math.**.proto.*",
-    "edu.wpi.first.math.**.struct.*"
+    "org.wpilib.math.proto.*",
+    "org.wpilib.math.**.proto.*",
+    "org.wpilib.math.**.struct.*",
   ],
-  "java.templates.fileHeader": [
-    "/*",
-    " * Copyright (C) 2026 Windham Windup",
-    " *",
-    " * This program is free software: you can redistribute it and/or modify it under the terms of the",
-    " * GNU General Public License as published by the Free Software Foundation, either version 3 of the",
-    " * License, or any later version.",
-    " *",
-    " * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without",
-    " * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU",
-    " * General Public License for more details.",
-    " *",
-    " * You should have received a copy of the GNU General Public License along with this program. If",
-    " * not, see <https://www.gnu.org/licenses/>.",
-    " */",
-  ],
-  "editor.formatOnSave": true,
-  "[java]": {
-    "editor.detectIndentation": false,
-    "editor.defaultFormatter": "josevseb.google-java-format-for-vs-code"
-  },
-  "java.project.sourcePaths": [
-    "src/main/java",
-    "processor/src/main/java"
-  ],
-  "java.project.referencedLibraries": [
-    "processor/build/libs/**/*.jar"
-  ],
-  "java.compile.nullAnalysis.mode": "automatic",
-  "java.format.settings.google.extra": "--aosp",
-  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx16G -Xms100m -Xlog:disable",
-  "cmake.ignoreCMakeListsMissing": true
+  "java.debug.settings.enableRunDebugCodeLens": false,
+  "java.dependency.enableDependencyCheckup": false
 }

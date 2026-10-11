@@ -15,38 +15,32 @@
 
 package frc.robot.subsystems.vision;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Milliseconds;
+import static org.wpilib.units.Units.Degrees;
+import static org.wpilib.units.Units.Milliseconds;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.MatBuilder;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.numbers.N8;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Time;
-
-import frc.lib.devices.AprilTagCamera;
-import frc.lib.devices.AprilTagCamera.CameraProperties;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOC2;
-import frc.lib.io.vision.VisionIOPhotonVisionSim;
+import frc.lib.sensors.AprilTagCamera;
+import frc.lib.sensors.AprilTagCamera.CameraProperties;
 import frc.robot.Constants;
 import frc.robot.FieldConstants.AprilTagLayoutType;
-import frc.robot.RobotState;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import org.photonvision.simulation.VisionSystemSim;
-
-import java.util.Optional;
+import org.wpilib.fields.Field;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Transform3d;
+import org.wpilib.math.linalg.MatBuilder;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.linalg.Vector;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.math.numbers.N8;
+import org.wpilib.math.util.Nat;
+import org.wpilib.math.util.Units;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.Time;
 
 /**
  * Configuration constants for the vision subsystem.
@@ -67,7 +61,7 @@ import java.util.Optional;
 public class VisionConstants {
     public static final String NAME = "Vision";
 
-    public static final AprilTagFieldLayout fieldLayout = AprilTagLayoutType.NO_TRENCH.getLayout();
+    public static final Field fieldLayout = AprilTagLayoutType.NO_TRENCH.getLayout();
 
     // Extrinsics
     public static final String FRONT_LEFT_NAME = "front_left";
@@ -316,7 +310,6 @@ public class VisionConstants {
                     FRONT_RIGHT_LATENCY,
                     FRONT_RIGHT_LATENCY_STDDEV);
 
-    private static Optional<VisionSystemSim> visionSim = Optional.empty();
     private static final VisionIOC2.C2Config FRONT_LEFT_C2_CONFIG =
             VisionIOC2.defaultsFor(FRONT_LEFT_CAMERA_INDEX);
     private static final VisionIOC2.C2Config LEFT_C2_CONFIG =
@@ -326,60 +319,20 @@ public class VisionConstants {
     private static final VisionIOC2.C2Config FRONT_RIGHT_C2_CONFIG =
             VisionIOC2.defaultsFor(FRONT_RIGHT_CAMERA_INDEX);
 
-    private static VisionSystemSim getVisionSim() {
-        if (visionSim.isEmpty()) {
-            visionSim = Optional.of(new VisionSystemSim("main"));
-            visionSim.get().addAprilTags(fieldLayout);
-        }
-        return visionSim.get();
-    }
-
     private static VisionIO getFrontLeftIOReal() {
         return new VisionIOC2(FRONT_LEFT, FRONT_LEFT_C2_CONFIG);
-    }
-
-    private static VisionIOPhotonVisionSim getFrontLeftIOSim() {
-        return new VisionIOPhotonVisionSim(
-                FRONT_LEFT,
-                getVisionSim(),
-                () -> RobotState.getInstance().getOdometryPose(),
-                fieldLayout);
     }
 
     private static VisionIO getLeftIOReal() {
         return new VisionIOC2(LEFT, LEFT_C2_CONFIG);
     }
 
-    private static VisionIOPhotonVisionSim getLeftIOSim() {
-        return new VisionIOPhotonVisionSim(
-                LEFT,
-                getVisionSim(),
-                () -> RobotState.getInstance().getOdometryPose(),
-                fieldLayout);
-    }
-
     private static VisionIO getRightIOReal() {
         return new VisionIOC2(RIGHT, RIGHT_C2_CONFIG);
     }
 
-    private static VisionIOPhotonVisionSim getRightIOSim() {
-        return new VisionIOPhotonVisionSim(
-                RIGHT,
-                getVisionSim(),
-                () -> RobotState.getInstance().getOdometryPose(),
-                fieldLayout);
-    }
-
     private static VisionIO getFrontRightIOReal() {
         return new VisionIOC2(FRONT_RIGHT, FRONT_RIGHT_C2_CONFIG);
-    }
-
-    private static VisionIOPhotonVisionSim getFrontRightIOSim() {
-        return new VisionIOPhotonVisionSim(
-                FRONT_RIGHT,
-                getVisionSim(),
-                () -> RobotState.getInstance().getOdometryPose(),
-                fieldLayout);
     }
 
     /**
@@ -398,13 +351,7 @@ public class VisionConstants {
                 new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
             }
             case SIM -> {
-                var frontLeftCamera =
-                        new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim(), fieldLayout);
-                var leftCamera = new AprilTagCamera(LEFT, getLeftIOSim(), fieldLayout);
-                var rightCamera = new AprilTagCamera(RIGHT, getRightIOSim(), fieldLayout);
-                var frontRightCamera =
-                        new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim(), fieldLayout);
-                new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
+                // no vision sim without pv :(
             }
             case REPLAY -> {
                 var frontLeftCamera =

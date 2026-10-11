@@ -47,5 +47,4 @@ public class Ports {
     public static final Device.CAN indexerLaserCAN = new CAN(19, "rio");
 
     public static final Device.PWM servo1 = new PWM(1);
-
 }

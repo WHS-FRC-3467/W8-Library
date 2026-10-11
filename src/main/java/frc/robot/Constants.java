@@ -15,12 +15,12 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Inches;
+import static org.wpilib.units.Units.Degrees;
+import static org.wpilib.units.Units.Inches;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.RobotBase;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.Distance;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running

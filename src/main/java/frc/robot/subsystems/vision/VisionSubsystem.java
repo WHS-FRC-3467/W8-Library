@@ -15,25 +15,24 @@
 
 package frc.robot.subsystems.vision;
 
-import static edu.wpi.first.units.Units.Meters;
+import static org.wpilib.units.Units.Meters;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import frc.lib.devices.AprilTagCamera;
 import frc.lib.io.vision.VisionIO.CameraResult;
 import frc.lib.io.vision.VisionIO.MultiTagObservation;
 import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
+import frc.lib.sensors.AprilTagCamera;
 import frc.lib.util.FieldUtil;
 import frc.lib.util.LoggedTunableNumber;
 import frc.robot.FieldConstants;
 import frc.robot.FieldConstants.AprilTagLayoutType;
-import frc.robot.RobotState;
+import frc.robot.GlobalPoseEstimator;
 
 import org.littletonrobotics.junction.Logger;
+import org.wpilib.command3.Mechanism;
+import org.wpilib.command3.Scheduler;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Transform3d;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,13 +47,13 @@ import java.util.Set;
  *
  * <p>It uses one or more {@link AprilTagCamera}s to detect field elements and estimate the robot's
  * pose on the field. Observations are processed through the MultiTagOnCoproc vision processor, with
- * a fallback to LowestAmbiguity if necessary. Valid observations are added to {@link RobotState}
- * for use in localization and navigation.
+ * a fallback to LowestAmbiguity if necessary. Valid observations are added to {@link
+ * GlobalPoseEstimator} for use in localization and navigation.
  *
  * <p>The subsystem periodically polls cameras for new results and logs both accepted and rejected
  * vision observations.
  */
-public class VisionSubsystem extends SubsystemBase {
+public class VisionSubsystem implements Mechanism {
 
     /** Baseline linear standard deviation used for vision observations. */
     public static final double LINEAR_STDDEV_BASELINE = 0.03;
@@ -103,7 +102,7 @@ public class VisionSubsystem extends SubsystemBase {
     private static final LoggedTunableNumber TIMESTAMP_OFFSET =
             new LoggedTunableNumber("VisionSubsystem/TimestampOffset", -(1.0 / 45.0));
 
-    private final RobotState robotState = RobotState.getInstance();
+    private final GlobalPoseEstimator robotState = GlobalPoseEstimator.getInstance();
     private final AprilTagCamera[] cameras;
 
     /**
@@ -182,13 +181,13 @@ public class VisionSubsystem extends SubsystemBase {
      */
     public VisionSubsystem(AprilTagCamera... cameras) {
         this.cameras = cameras;
+        Scheduler.getDefault().addPeriodic(this::periodic);
     }
 
     /**
      * Periodically processes vision results from all cameras. Filters, validates, and adds pose
      * observations to RobotState for localization.
      */
-    @Override
     public void periodic() {
         for (int c = 0; c < cameras.length; c++) {
             AprilTagCamera camera = cameras[c];
@@ -401,7 +400,7 @@ public class VisionSubsystem extends SubsystemBase {
                         * ambiguityFactor
                         * camera.getProperties().stdDevFactor();
 
-        return MathUtil.clamp(stdDevFactor, STDDEV_FACTOR_MIN, STDDEV_FACTOR_MAX);
+        return Math.clamp(stdDevFactor, STDDEV_FACTOR_MIN, STDDEV_FACTOR_MAX);
     }
 
     /**

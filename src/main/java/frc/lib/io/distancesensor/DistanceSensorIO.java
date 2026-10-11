@@ -15,9 +15,8 @@
 
 package frc.lib.io.distancesensor;
 
-import edu.wpi.first.units.measure.Distance;
-
 import org.littletonrobotics.junction.AutoLog;
+import org.wpilib.units.measure.Distance;
 
 /** Standardized interface for distance sensors used in FRC. */
 public interface DistanceSensorIO {

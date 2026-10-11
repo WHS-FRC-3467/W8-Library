@@ -1,0 +1,569 @@
+/*
+ * Copyright (C) 2026 Windham Windup
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation, either version 3 of the
+ * License, or any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program. If
+ * not, see <https://www.gnu.org/licenses/>.
+ */
+
+package frc.lib.mechanisms;
+
+import static org.wpilib.units.Units.Meters;
+import static org.wpilib.units.Units.MetersPerSecond;
+import static org.wpilib.units.Units.MetersPerSecondPerSecond;
+import static org.wpilib.units.Units.Radians;
+import static org.wpilib.units.Units.RadiansPerSecond;
+import static org.wpilib.units.Units.RadiansPerSecondPerSecond;
+
+import frc.lib.io.motor.MotorIO;
+import frc.lib.io.motor.MotorIO.PIDSlot;
+import frc.lib.io.motor.MotorIOInputsAutoLogged;
+import frc.lib.util.LoggedTunableNumber;
+import frc.lib.util.PID;
+
+import lombok.Getter;
+
+import org.littletonrobotics.junction.Logger;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularAcceleration;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Current;
+import org.wpilib.units.measure.Distance;
+import org.wpilib.units.measure.LinearAcceleration;
+import org.wpilib.units.measure.LinearVelocity;
+import org.wpilib.units.measure.Voltage;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * Abstract base class for all robot mechanisms that use motors. Provides common functionality for
+ * motor control, PID tuning, logging, and visualization. Mechanisms include flywheels, linear
+ * actuators, and rotary arms.
+ *
+ * @param <T> the type of MotorIO implementation used by this mechanism
+ */
+public abstract class Actuator<T extends MotorIO> {
+    @Getter protected final String name;
+    protected final MotorIOInputsAutoLogged inputs = new MotorIOInputsAutoLogged();
+    protected final T io;
+    private final List<TunablePidConfig> tunablePidConfigs = new ArrayList<>();
+
+    /**
+     * Effective radius used for linear-to-angular conversion (meters). {@code null} means linear
+     * control is not configured for this mechanism.
+     */
+    private Double radiusMeters = null;
+
+    protected Actuator(String name, T io) {
+        this.name = name;
+        this.io = io;
+    }
+
+    /**
+     * Configures this mechanism with a linear radius for distance-based control. Once set, the
+     * mechanism can use {@link #runLinearPosition}, {@link #runLinearVelocity}, and related getters
+     * to work in linear (distance/velocity) units.
+     *
+     * @param radius Effective radius used for linear-to-angular conversion
+     * @return This mechanism, for chaining
+     * @throws IllegalArgumentException if radius is zero or negative
+     */
+    public Actuator<T> withRadius(Distance radius) {
+        double r = radius.in(Meters);
+        if (r <= 0.0) {
+            throw new IllegalArgumentException("radius must be greater than 0 meters");
+        }
+        this.radiusMeters = r;
+        return this;
+    }
+
+    /**
+     * Returns {@code true} if this mechanism has been configured with a radius.
+     *
+     * @return Whether linear control is available
+     */
+    public boolean hasRadius() {
+        return radiusMeters != null;
+    }
+
+    public static final class TunablePidConfig {
+        public final PIDSlot slot;
+        public final LoggedTunableNumber kp;
+        public final LoggedTunableNumber ki;
+        public final LoggedTunableNumber kd;
+        public final LoggedTunableNumber ka;
+        public final LoggedTunableNumber kv;
+        public final LoggedTunableNumber kg;
+        public final LoggedTunableNumber ks;
+        public final int id;
+
+        public TunablePidConfig(
+                PIDSlot slot,
+                LoggedTunableNumber kp,
+                LoggedTunableNumber ki,
+                LoggedTunableNumber kd,
+                LoggedTunableNumber ka,
+                LoggedTunableNumber kv,
+                LoggedTunableNumber kg,
+                LoggedTunableNumber ks,
+                int id) {
+            this.slot = slot;
+            this.kp = kp;
+            this.ki = ki;
+            this.kd = kd;
+            this.ka = ka;
+            this.kv = kv;
+            this.kg = kg;
+            this.ks = ks;
+            this.id = id;
+        }
+    }
+
+    /**
+     * Enables tunable PID for a slot using this mechanism's name as the logging prefix.
+     *
+     * @param slot The slot to update
+     * @param defaultPid The default PID values
+     */
+    public void enableTunablePID(PIDSlot slot, PID defaultPid) {
+        LoggedTunableNumber kp =
+                new LoggedTunableNumber(name + "/PID/" + slot + "/kP", defaultPid.P());
+        LoggedTunableNumber ki =
+                new LoggedTunableNumber(name + "/PID/" + slot + "/kI", defaultPid.I());
+        LoggedTunableNumber kd =
+                new LoggedTunableNumber(name + "/PID/" + slot + "/kD", defaultPid.D());
+        LoggedTunableNumber ka =
+                new LoggedTunableNumber(name + "/PID/" + slot + "/kA", defaultPid.A());
+        LoggedTunableNumber kv =
+                new LoggedTunableNumber(name + "/PID/" + slot + "/kV", defaultPid.V());
+        LoggedTunableNumber kg =
+                new LoggedTunableNumber(name + "/PID/" + slot + "/kG", defaultPid.G());
+        LoggedTunableNumber ks =
+                new LoggedTunableNumber(name + "/PID/" + slot + "/kS", defaultPid.S());
+        int id = Objects.hash(this, slot);
+        tunablePidConfigs.add(new TunablePidConfig(slot, kp, ki, kd, ka, kv, kg, ks, id));
+    }
+
+    /** Call this method periodically */
+    public void periodic() {
+        for (TunablePidConfig config : tunablePidConfigs) {
+            LoggedTunableNumber.ifChanged(
+                    config.id,
+                    () ->
+                            io.setPID(
+                                    config.slot,
+                                    new PID(
+                                            config.kp.get(),
+                                            config.ki.get(),
+                                            config.kd.get(),
+                                            config.ka.get(),
+                                            config.kv.get(),
+                                            config.kg.get(),
+                                            config.ks.get())),
+                    config.kp,
+                    config.ki,
+                    config.kd,
+                    config.ka,
+                    config.kv,
+                    config.kg,
+                    config.ks);
+        }
+        io.updateInputs(inputs);
+        Logger.processInputs(name, inputs);
+
+        // If a radius has been configured, also log linear equivalents of position/velocity.
+        if (radiusMeters != null) {
+            Logger.recordOutput(this.name + "/LinearPosition", getLinearPosition());
+            Logger.recordOutput(this.name + "/LinearPositionError", getLinearPositionError());
+            Logger.recordOutput(this.name + "/LinearVelocity", getLinearVelocity());
+            Logger.recordOutput(this.name + "/LinearVelocityError", getLinearVelocityError());
+        }
+    }
+
+    /** Sets the mechanism to coast mode. */
+    public void runCoast() {
+        io.runCoast();
+    }
+
+    /** Sets the mechanism to brake mode. */
+    public void runBrake() {
+        io.runBrake();
+    }
+
+    /**
+     * Runs the mechanism using direct voltage control.
+     *
+     * @param voltage Desired voltage output.
+     */
+    public void runVoltage(Voltage voltage) {
+        io.runVoltage(voltage);
+    }
+
+    /**
+     * Runs the mechanism with a specified current output.
+     *
+     * @param current Desired torque-producing current.
+     */
+    public void runCurrent(Current current) {
+        io.runCurrent(current);
+    }
+
+    /**
+     * Runs the mechanism with a specified current output.
+     *
+     * @param current Desired torque-producing current.
+     * @param dutyCycle Desired dutycycle of current output, limiting top speed
+     */
+    public void runCurrent(Current current, double dutyCycle) {
+        io.runCurrent(current, dutyCycle);
+    }
+
+    /**
+     * Runs the mechanism using duty cycle (percentage of available voltage).
+     *
+     * @param dutyCycle Fractional output between 0 and 1.
+     */
+    public void runDutyCycle(double dutyCycle, boolean ignoringSoftLimits) {
+        io.runDutyCycle(dutyCycle, ignoringSoftLimits);
+    }
+
+    /**
+     * Runs the mechanism to a specific position.
+     *
+     * @param position Target position.
+     * @param slot PID slot index.
+     */
+    public void runPosition(Angle position, PIDSlot slot) {
+        io.runPosition(position, slot);
+    }
+
+    /**
+     * Runs the mechanism to a specific position with Motion Magic cruise velocity and acceleration.
+     *
+     * @param position Target position.
+     * @param slot PID slot index.
+     * @param cruiseVelocity Motion Magic cruise velocity.
+     * @param acceleration Motion Magic acceleration.
+     */
+    public void runPosition(
+            Angle position,
+            PIDSlot slot,
+            AngularVelocity cruiseVelocity,
+            AngularAcceleration acceleration) {
+        io.runPosition(position, slot, cruiseVelocity, acceleration);
+    }
+
+    /**
+     * Runs the mechanism to a specific position without a motion profile.
+     *
+     * @param position Target position.
+     * @param slot PID slot index.
+     */
+    public void runUnprofiledPosition(Angle position, PIDSlot slot) {
+        io.runUnprofiledPosition(position, slot);
+    }
+
+    /**
+     * Runs the mechanism at a target velocity.
+     *
+     * @param velocity Desired velocity.
+     * @param slot PID slot index.
+     */
+    public void runVelocity(AngularVelocity velocity, PIDSlot slot) {
+        io.runVelocity(velocity, slot);
+    }
+
+    /**
+     * Runs the mechanism at a target velocity using a Motion Magic velocity request that ramps to
+     * the target velocity using the provided Motion Magic acceleration.
+     *
+     * @param velocity Desired velocity.
+     * @param acceleration Motion Magic acceleration used to ramp to target velocity.
+     * @param slot PID slot index.
+     */
+    public void runVelocity(
+            AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot) {
+        io.runVelocity(velocity, acceleration, slot);
+    }
+
+    /**
+     * Updates one PID slot on the motor
+     *
+     * @param slot The slot to update
+     * @param pid The PID to set
+     */
+    public void setPID(PIDSlot slot, PID pid) {
+        io.setPID(slot, pid);
+    }
+
+    /**
+     * Updates the mechanism supply current limit.
+     *
+     * @param currentLimit Desired supply current limit.
+     */
+    public void setSupplyCurrentLimit(Current currentLimit) {
+        io.setSupplyCurrentLimit(currentLimit);
+    }
+
+    /**
+     * Sets the motor's internal encoder to interpret the current mechanism position as "position".
+     * For example, if you call MotorIOTalonFX.setEncoderPosition(Rotations.of(0.0)), the motor's
+     * internal encoder will read the current mechanism position as zero.
+     *
+     * @param position The new encoder reading for the current mechanism position.
+     */
+    public void setEncoderPosition(Angle position) {
+        io.setEncoderPosition(position);
+    }
+
+    /**
+     * Returns the number of motors associated with the mechanism.
+     *
+     * @return the number of motors associated with the mechanism
+     */
+    public int getNumberOfMotors() {
+        return io.getNumberOfMotors();
+    }
+
+    /**
+     * Gets the supply current draw of the mechanism.
+     *
+     * @return The supply current
+     */
+    public Current getSupplyCurrent() {
+        return inputs.supplyCurrent;
+    }
+
+    /**
+     * Gets the applied voltage draw of the mechanism.
+     *
+     * @return The applied voltage
+     */
+    public Voltage getAppliedVoltage() {
+        return inputs.appliedVoltage;
+    }
+
+    /**
+     * Getter for angle of the motor
+     *
+     * @return Angle of the motor or fused encoder
+     */
+    public Angle getPosition() {
+        return inputs.position;
+    }
+
+    /**
+     * Gets the error between the target position and current position of the motor.
+     *
+     * @return The position error in angle units
+     */
+    public Angle getPositionError() {
+        return inputs.positionError;
+    }
+
+    /**
+     * Gets the torque-producing current of the mechanism.
+     *
+     * @return The torque current
+     */
+    public Current getTorqueCurrent() {
+        return inputs.torqueCurrent;
+    }
+
+    /**
+     * Gets the velocity of the mechanism.
+     *
+     * @return The angular velocity
+     */
+    public AngularVelocity getVelocity() {
+        return inputs.velocity;
+    }
+
+    /**
+     * Gets the error between the target velocity and current velocity of the motor.
+     *
+     * @return The velocity error in angular velocity units
+     */
+    public AngularVelocity getVelocityError() {
+        return inputs.velocityError;
+    }
+
+    /**
+     * Gets the current velocity setpoint
+     *
+     * @return The velocity setpoint
+     */
+    public AngularVelocity getVelocitySetpoint() {
+        return inputs.activeTrajectoryVelocity;
+    }
+
+    /**
+     * Gets the current velocity goal. Equal to {@link Actuator#getVelocitySetpoint} unless running
+     * Motion Magic
+     *
+     * @return The velocity goal
+     */
+    public AngularVelocity getVelocityGoal() {
+        return inputs.goalVelocity;
+    }
+
+    /**
+     * Checks that this mechanism was configured with a radius and throws if not.
+     *
+     * @throws IllegalStateException if {@link #withRadius} was never called
+     */
+    private void requireRadius() {
+        if (radiusMeters == null) {
+            throw new IllegalStateException(
+                    "Mechanism '"
+                            + name
+                            + "' has no radius configured. Call withRadius() before using linear"
+                            + " control methods.");
+        }
+    }
+
+    /**
+     * Runs the mechanism to a target linear position.
+     *
+     * @param position Desired linear position
+     * @param slot PID slot to use
+     * @throws IllegalStateException if {@link #withRadius} was never called
+     */
+    public void runLinearPosition(Distance position, PIDSlot slot) {
+        requireRadius();
+        Angle angle = Radians.of(position.in(Meters) / radiusMeters);
+        runPosition(angle, slot);
+    }
+
+    /**
+     * Runs the mechanism to a target linear position with Motion Magic cruise velocity and
+     * acceleration. Cruise velocity and acceleration are provided in linear units and converted to
+     * angular units using the configured radius.
+     *
+     * @param position Desired linear position
+     * @param slot PID slot to use
+     * @param cruiseVelocity Motion Magic cruise velocity in linear units
+     * @param acceleration Motion Magic acceleration in linear units
+     * @throws IllegalStateException if {@link #withRadius} was never called
+     */
+    public void runLinearPosition(
+            Distance position,
+            PIDSlot slot,
+            LinearVelocity cruiseVelocity,
+            LinearAcceleration acceleration) {
+        requireRadius();
+        Angle angle = Radians.of(position.in(Meters) / radiusMeters);
+        AngularVelocity angularCruiseVelocity =
+                RadiansPerSecond.of(cruiseVelocity.in(MetersPerSecond) / radiusMeters);
+        AngularAcceleration angularAcceleration =
+                RadiansPerSecondPerSecond.of(
+                        acceleration.in(MetersPerSecondPerSecond) / radiusMeters);
+        runPosition(angle, slot, angularCruiseVelocity, angularAcceleration);
+    }
+
+    /**
+     * Runs the mechanism to a target linear position without a motion profile.
+     *
+     * @param position Desired linear position
+     * @param slot PID slot to use
+     * @throws IllegalStateException if {@link #withRadius} was never called
+     */
+    public void runUnprofiledLinearPosition(Distance position, PIDSlot slot) {
+        requireRadius();
+        Angle angle = Radians.of(position.in(Meters) / radiusMeters);
+        runUnprofiledPosition(angle, slot);
+    }
+
+    /**
+     * Runs the mechanism at a target linear velocity with acceleration limiting.
+     *
+     * @param velocity Desired linear velocity
+     * @param slot PID slot to use
+     * @throws IllegalStateException if {@link #withRadius} was never called
+     */
+    public void runLinearVelocity(LinearVelocity velocity, PIDSlot slot) {
+        requireRadius();
+        AngularVelocity angularVelocity =
+                RadiansPerSecond.of(velocity.in(MetersPerSecond) / radiusMeters);
+        runVelocity(angularVelocity, slot);
+    }
+
+    /**
+     * Runs the mechanism at a target linear velocity using a Motion Magic velocity request that
+     * ramps to the target velocity using the provided Motion Magic acceleration. All parameters are
+     * provided in linear units and converted to angular units using the configured radius.
+     *
+     * @param velocity Desired linear velocity
+     * @param slot PID slot to use
+     * @param acceleration Motion Magic acceleration in linear units used to ramp to target velocity
+     * @throws IllegalStateException if {@link #withRadius} was never called
+     */
+    public void runLinearVelocity(
+            LinearVelocity velocity, PIDSlot slot, LinearAcceleration acceleration) {
+        requireRadius();
+        AngularVelocity angularVelocity =
+                RadiansPerSecond.of(velocity.in(MetersPerSecond) / radiusMeters);
+        AngularAcceleration angularacceleration =
+                RadiansPerSecondPerSecond.of(
+                        acceleration.in(MetersPerSecondPerSecond) / radiusMeters);
+        runVelocity(angularVelocity, angularacceleration, slot);
+    }
+
+    /**
+     * Gets the current linear position of the mechanism.
+     *
+     * @return Linear position
+     * @throws IllegalStateException if {@link #withRadius} was never called
+     */
+    public Distance getLinearPosition() {
+        requireRadius();
+        return Meters.of(inputs.position.in(Radians) * radiusMeters);
+    }
+
+    /**
+     * Gets the error between the target and current linear position.
+     *
+     * @return Linear position error
+     * @throws IllegalStateException if {@link #withRadius} was never called
+     */
+    public Distance getLinearPositionError() {
+        requireRadius();
+        return Meters.of(inputs.positionError.in(Radians) * radiusMeters);
+    }
+
+    /**
+     * Gets the current linear velocity of the mechanism.
+     *
+     * @return Linear velocity
+     * @throws IllegalStateException if {@link #withRadius} was never called
+     */
+    public LinearVelocity getLinearVelocity() {
+        requireRadius();
+        return MetersPerSecond.of(inputs.velocity.in(RadiansPerSecond) * radiusMeters);
+    }
+
+    /**
+     * Gets the error between the target and current linear velocity.
+     *
+     * @return Linear velocity error
+     * @throws IllegalStateException if {@link #withRadius} was never called
+     */
+    public LinearVelocity getLinearVelocityError() {
+        requireRadius();
+        return MetersPerSecond.of(inputs.velocityError.in(RadiansPerSecond) * radiusMeters);
+    }
+
+    /** Closes the mechanism and releases resources. */
+    public void close() {
+        io.close();
+    }
+}

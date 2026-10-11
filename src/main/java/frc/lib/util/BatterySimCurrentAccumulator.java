@@ -14,39 +14,45 @@
  */
 package frc.lib.util;
 
-import static edu.wpi.first.units.Units.Amps;
+import static org.wpilib.units.Units.Amps;
 
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.wpilibj.simulation.BatterySim;
-import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+
+import org.wpilib.simulation.BatterySim;
+import org.wpilib.simulation.RoboRioSim;
+import org.wpilib.units.measure.Current;
 
 /** A utility class extending the default functionality of {@link BatterySim}. */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class BatterySimCurrentAccumulator {
     /** The current accumulated magnitude of current draw loading the battery. */
     private static Current simCurrentSum = Amps.zero();
-    
-    /** Add a mechanism's current draw to the battery load accumulator.
-     * 
+
+    /**
+     * Add a mechanism's current draw to the battery load accumulator.
+     *
      * @param current the mechanism's current draw to add to the simulated battery
-    */
+     */
     public static void addCurrentLoad(Current current) {
         simCurrentSum = simCurrentSum.plus(Amps.of(Math.abs(current.in(Amps))));
     }
 
-    /** Set the simulated battery's loaded supply voltage by utilizing the total current load accumulated through {@link #addCurrentLoad}
-     * calls within each existing mechanism subclass periodic. Uses {@link RoboRioSim#setVInVoltage(double)} to set the simulated battery 
-     * voltage, which can then be retrieved with the {@link edu.wpi.first.wpilibj.RobotController#getBatteryVoltage()} method. This function 
-     * assumes a nominal voltage of 12V and a resistance of 20 milliohms (0.020 ohms)
+    /**
+     * Set the simulated battery's loaded supply voltage by utilizing the total current load
+     * accumulated through {@link #addCurrentLoad} calls within each existing mechanism subclass
+     * periodic. Uses {@link RoboRioSim#setVInVoltage(double)} to set the simulated battery voltage,
+     * which can then be retrieved with the {@link
+     * org.wpilib.system.RobotController#getBatteryVoltage()} method. This function assumes a
+     * nominal voltage of 12V and a resistance of 20 milliohms (0.020 ohms)
      */
     public static void setSimulatedBatteryLoadedVoltage() {
-        RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(simCurrentSum.in(Amps)));
+        RoboRioSim.setVInVoltage(
+                BatterySim.calculateDefaultBatteryLoadedVoltage(simCurrentSum.in(Amps)));
         zeroCurrents();
     }
 
     private static void zeroCurrents() {
         simCurrentSum = Amps.zero();
-    }  
+    }
 }

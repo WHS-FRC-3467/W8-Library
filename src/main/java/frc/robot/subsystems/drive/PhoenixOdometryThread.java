@@ -16,10 +16,10 @@
 package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.wpilibj.RobotController;
+
+import org.wpilib.system.RobotController;
+import org.wpilib.units.measure.Angle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,50 +32,44 @@ import java.util.function.DoubleSupplier;
 /**
  * Provides an interface for asynchronously reading high-frequency measurements to a set of queues.
  *
- * <p>
- * This version is intended for Phoenix 6 devices on both the RIO and CANivore buses. When using a
- * CANivore, the thread uses the "waitForAll" blocking method to enable more consistent sampling.
+ * <p>This version is intended for Phoenix 6 devices on both the RIO and CANivore buses. When using
+ * a CANivore, the thread uses the "waitForAll" blocking method to enable more consistent sampling.
  * This also allows Phoenix Pro users to benefit from lower latency between devices using CANivore
  * time synchronization.
  */
 public class PhoenixOdometryThread extends Thread {
     private final Lock signalsLock = new ReentrantLock(); // Prevents conflicts when registering
-                                                          // signals
+    // signals
     private BaseStatusSignal[] phoenixSignals = new BaseStatusSignal[0];
     private final List<DoubleSupplier> genericSignals = new ArrayList<>();
     private final List<Queue<Double>> phoenixQueues = new ArrayList<>();
     private final List<Queue<Double>> genericQueues = new ArrayList<>();
     private final List<Queue<Double>> timestampQueues = new ArrayList<>();
 
-    private static boolean isCANFD =
-        new CANBus(DriveConstants.drivetrainConstants.CANBusName).isNetworkFD();
+    private static boolean isCANFD = DriveConstants.drivetrainConstants.Network.isNetworkFD();
     private static PhoenixOdometryThread instance = null;
 
-    public static PhoenixOdometryThread getInstance()
-    {
+    public static PhoenixOdometryThread getInstance() {
         if (instance == null) {
             instance = new PhoenixOdometryThread();
         }
         return instance;
     }
 
-    private PhoenixOdometryThread()
-    {
+    private PhoenixOdometryThread() {
         setName("PhoenixOdometryThread");
         setDaemon(true);
     }
 
     @Override
-    public synchronized void start()
-    {
+    public synchronized void start() {
         if (timestampQueues.size() > 0) {
             super.start();
         }
     }
 
     /** Registers a Phoenix signal to be read from the thread. */
-    public Queue<Double> registerSignal(StatusSignal<Angle> signal)
-    {
+    public Queue<Double> registerSignal(StatusSignal<Angle> signal) {
         Queue<Double> queue = new ArrayBlockingQueue<>(20);
         signalsLock.lock();
         Drive.odometryLock.lock();
@@ -93,8 +87,7 @@ public class PhoenixOdometryThread extends Thread {
     }
 
     /** Registers a generic signal to be read from the thread. */
-    public Queue<Double> registerSignal(DoubleSupplier signal)
-    {
+    public Queue<Double> registerSignal(DoubleSupplier signal) {
         Queue<Double> queue = new ArrayBlockingQueue<>(20);
         signalsLock.lock();
         Drive.odometryLock.lock();
@@ -109,8 +102,7 @@ public class PhoenixOdometryThread extends Thread {
     }
 
     /** Returns a new queue that returns timestamp values for each sample. */
-    public Queue<Double> makeTimestampQueue()
-    {
+    public Queue<Double> makeTimestampQueue() {
         Queue<Double> queue = new ArrayBlockingQueue<>(20);
         Drive.odometryLock.lock();
         try {
@@ -123,8 +115,7 @@ public class PhoenixOdometryThread extends Thread {
 
     @Override
     @SuppressWarnings("CatchAndPrintStackTrace")
-    public void run()
-    {
+    public void run() {
         while (true) {
             // Wait for updates from all signals
             signalsLock.lock();
@@ -136,8 +127,7 @@ public class PhoenixOdometryThread extends Thread {
                     // that is not CAN FD, regardless of Pro licensing. No reasoning for this
                     // behavior is provided by the documentation.
                     Thread.sleep((long) (1000.0 / Drive.ODOMETRY_FREQUENCY));
-                    if (phoenixSignals.length > 0)
-                        BaseStatusSignal.refreshAll(phoenixSignals);
+                    if (phoenixSignals.length > 0) BaseStatusSignal.refreshAll(phoenixSignals);
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -151,7 +141,7 @@ public class PhoenixOdometryThread extends Thread {
                 // Sample timestamp is current FPGA time minus average CAN latency
                 // Default timestamps from Phoenix are NOT compatible with
                 // FPGA timestamps, this solution is imperfect but close
-                double timestamp = RobotController.getFPGATime() / 1e6;
+                double timestamp = RobotController.getMonotonicTime() / 1e6;
                 double totalLatency = 0.0;
                 for (BaseStatusSignal signal : phoenixSignals) {
                     totalLatency += signal.getTimestamp().getLatency();

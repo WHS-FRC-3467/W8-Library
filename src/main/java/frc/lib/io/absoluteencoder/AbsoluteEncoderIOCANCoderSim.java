@@ -18,10 +18,10 @@ package frc.lib.io.absoluteencoder;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.sim.CANcoderSimState;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.wpilibj.RobotController;
-
 import frc.lib.util.Device.CAN;
+
+import org.wpilib.system.RobotController;
+import org.wpilib.units.measure.Angle;
 
 /**
  * Simulated hardware implementation of AbsoluteEncoderIO using CTRE CANcoder.
@@ -40,10 +40,12 @@ public class AbsoluteEncoderIOCANCoderSim extends AbsoluteEncoderIOCANCoder
      *
      * @param id CAN device identifier (ID and bus name)
      * @param configuration CANcoder configuration including magnet offset and sensor direction
-     * @param encoderToMechanismRatio Returns the ratio of measured encoder rotations to mechanism rotations. 
-     * 1.0 means the encoder is mounted directly onto the output shaft of the mechanism. 
+     * @param encoderToMechanismRatio Returns the ratio of measured encoder rotations to mechanism
+     *     rotations. 1.0 means the encoder is mounted directly onto the output shaft of the
+     *     mechanism.
      */
-    public AbsoluteEncoderIOCANCoderSim(CAN id, CANcoderConfiguration configuration, double encoderToMechanismRatio) {
+    public AbsoluteEncoderIOCANCoderSim(
+            CAN id, CANcoderConfiguration configuration, double encoderToMechanismRatio) {
         super(id, configuration, encoderToMechanismRatio);
         simState = CANCoder.getSimState();
     }

@@ -14,14 +14,13 @@
  */
 package frc.lib.util;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Volts;
+import static org.wpilib.units.Units.Amps;
+import static org.wpilib.units.Units.Volts;
 
-import edu.wpi.first.wpilibj.Timer;
-
-import frc.lib.mechanisms.Mechanism;
+import frc.lib.mechanisms.Actuator;
 
 import org.littletonrobotics.junction.Logger;
+import org.wpilib.system.Timer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,7 +34,7 @@ import java.util.function.DoubleSupplier;
  */
 public class PowerProfiler {
 
-    public record MechanismRegistration(String key, Mechanism<?> mechanism) {}
+    public record MechanismRegistration(String key, Actuator<?> mechanism) {}
 
     public record GenericRegistration(
             String key, DoubleSupplier currentAmpsSupplier, DoubleSupplier appliedVoltSupplier) {}
@@ -65,7 +64,7 @@ public class PowerProfiler {
      * @param key a key to log under
      * @param mechanism a Mechanism to register
      */
-    public void registerMechanism(String key, Mechanism<?> mechanism) {
+    public void registerMechanism(String key, Actuator<?> mechanism) {
         mechanisms.add(new MechanismRegistration(key, mechanism));
     }
 
