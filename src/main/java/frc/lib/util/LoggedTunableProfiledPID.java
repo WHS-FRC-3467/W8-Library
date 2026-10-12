@@ -4,8 +4,8 @@
 
 package frc.lib.util;
 
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import org.wpilib.math.controller.ProfiledPIDController;
+import org.wpilib.math.trajectory.TrapezoidProfile;
 
 /**
  * A ProfiledPIDController with tunable gains that can be adjusted from the dashboard.

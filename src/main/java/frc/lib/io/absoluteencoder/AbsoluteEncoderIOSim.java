@@ -15,7 +15,7 @@
 
 package frc.lib.io.absoluteencoder;
 
-import edu.wpi.first.units.measure.Angle;
+import org.wpilib.units.measure.Angle;
 
 /**
  * Simulation extension of AbsoluteEncoderIO for testing and simulation.

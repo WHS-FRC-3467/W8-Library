@@ -21,10 +21,10 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 
-import edu.wpi.first.units.measure.Angle;
-
 import frc.lib.util.CANUpdateThread;
 import frc.lib.util.Device;
+
+import org.wpilib.units.measure.Angle;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -54,10 +54,11 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
      *
      * @param id CAN device identifier (ID and bus name)
      * @param configuration CANcoder configuration including magnet offset and sensor direction
-     * @param encoderToMechanismRatio Ratio of sensor rotations to mechanism rotations. 
-     * 1.0 means the encoder is mounted directly onto the output shaft of the mechanism.
+     * @param encoderToMechanismRatio Ratio of sensor rotations to mechanism rotations. 1.0 means
+     *     the encoder is mounted directly onto the output shaft of the mechanism.
      */
-    public AbsoluteEncoderIOCANCoder(Device.CAN id, CANcoderConfiguration configuration, double encoderToMechanismRatio) {
+    public AbsoluteEncoderIOCANCoder(
+            Device.CAN id, CANcoderConfiguration configuration, double encoderToMechanismRatio) {
         CANCoder = new CANcoder(id.id(), new CANBus(id.bus()));
 
         updateThread
@@ -84,14 +85,14 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
     @Override
     public void updateInputs(AbsoluteEncoderInputs inputs) {
         inputs.connected = BaseStatusSignal.refreshAll(angle).isOK();
-        
+
         inputs.angle = angle.getValue().div(encoderToMechanismRatio);
     }
 
     /**
-     * Returns the ratio of measured encoder rotations to mechanism rotations. 
-     * 1.0 means the encoder is mounted directly onto the output shaft of the mechanism. 
-     * 
+     * Returns the ratio of measured encoder rotations to mechanism rotations. 1.0 means the encoder
+     * is mounted directly onto the output shaft of the mechanism.
+     *
      * @return Returns the ratio of measured encoder rotations to mechanism rotations
      */
     @Override

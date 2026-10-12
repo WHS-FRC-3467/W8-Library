@@ -16,23 +16,23 @@ package frc.lib.io.vision;
 
 import dsv0.PoseSolution;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.IntegerPublisher;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.PubSubOption;
-import edu.wpi.first.networktables.RawSubscriber;
-import edu.wpi.first.networktables.StringPublisher;
-import edu.wpi.first.networktables.TimestampedRaw;
-import edu.wpi.first.util.WPIUtilJNI;
-
-import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.sensors.AprilTagCamera.CameraProperties;
 import frc.robot.FieldConstants.AprilTagLayoutType;
+
+import org.wpilib.fields.Field;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Translation3d;
+import org.wpilib.math.util.Units;
+import org.wpilib.networktables.DoublePublisher;
+import org.wpilib.networktables.IntegerPublisher;
+import org.wpilib.networktables.NetworkTable;
+import org.wpilib.networktables.NetworkTableInstance;
+import org.wpilib.networktables.PubSubOption;
+import org.wpilib.networktables.RawSubscriber;
+import org.wpilib.networktables.StringPublisher;
+import org.wpilib.networktables.TimestampedRaw;
+import org.wpilib.util.WPIUtilJNI;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -68,7 +68,6 @@ public class VisionIOC2 implements VisionIO {
      * @param exposure Exposure value sent to c2's config topic
      * @param gain Gain value sent to c2's config topic
      * @param fiducialSizeMeters AprilTag edge length used by c2 solvePnP
-     * @param tagLayout Field layout used both for config publishing and result reconstruction
      * @param tagLayoutJson Serialized field layout in c2's expected JSON format
      * @param pollStorageDepth NT queue depth for unread raw frames
      */
@@ -79,7 +78,6 @@ public class VisionIOC2 implements VisionIO {
             int exposure,
             int gain,
             double fiducialSizeMeters,
-            AprilTagFieldLayout tagLayout,
             String tagLayoutJson,
             int pollStorageDepth) {}
 
@@ -279,9 +277,9 @@ public class VisionIOC2 implements VisionIO {
                         .subscribe(
                                 FLATBUFFER_TYPE,
                                 new byte[0],
-                                PubSubOption.sendAll(true),
-                                PubSubOption.keepDuplicates(true),
-                                PubSubOption.pollStorage(this.config.pollStorageDepth()));
+                                new PubSubOption.SendAll(true),
+                                new PubSubOption.KeepDuplicates(true),
+                                new PubSubOption.PollStorage(this.config.pollStorageDepth()));
     }
 
     @Override
@@ -342,7 +340,6 @@ public class VisionIOC2 implements VisionIO {
                 DEFAULT_CAMERA_EXPOSURE,
                 DEFAULT_CAMERA_GAIN,
                 DEFAULT_FIDUCIAL_SIZE_METERS,
-                AprilTagLayoutType.NO_TRENCH.getLayout(),
                 AprilTagLayoutType.NO_TRENCH.getLayoutString(),
                 DEFAULT_POLL_STORAGE_DEPTH);
     }
@@ -359,9 +356,6 @@ public class VisionIOC2 implements VisionIO {
         }
         if (config.cameraId() == null) {
             throw new IllegalArgumentException("c2Config.cameraId cannot be null");
-        }
-        if (config.tagLayout() == null) {
-            throw new IllegalArgumentException("c2Config.tagLayout cannot be null");
         }
         if (config.tagLayoutJson() == null || config.tagLayoutJson().isBlank()) {
             throw new IllegalArgumentException("c2Config.tagLayoutJson cannot be blank");
@@ -407,7 +401,7 @@ public class VisionIOC2 implements VisionIO {
      * format fully encapsulated in this IO layer.
      */
     public static CameraResult[] decodeResults(
-            VisionIOInputs inputs, AprilTagFieldLayout tagLayout, int cameraIndex) {
+            VisionIOInputs inputs, Field tagLayout, int cameraIndex) {
         ArrayList<CameraResult> results = new ArrayList<>(inputs.rawResults.length);
         for (int i = 0; i < inputs.rawResults.length; i++) {
             byte[] raw = inputs.rawResults[i];
@@ -438,7 +432,7 @@ public class VisionIOC2 implements VisionIO {
             byte[] raw,
             long captureTimestampUs,
             long publishTimestampUs,
-            AprilTagFieldLayout tagLayout,
+            Field tagLayout,
             int cameraIndex) {
         if (tagLayout == null || cameraIndex < 0) {
             return null;
@@ -539,7 +533,7 @@ public class VisionIOC2 implements VisionIO {
         return new Pose3d(
                 new Translation3d(t.x(), t.y(), t.z()),
                 new Rotation3d(
-                        new edu.wpi.first.math.geometry.Quaternion(q.w(), q.x(), q.y(), q.z())));
+                        new org.wpilib.math.geometry.Quaternion(q.w(), q.x(), q.y(), q.z())));
     }
 
     private static double computeC2Ambiguity(double primaryError, double alternateError) {

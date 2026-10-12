@@ -4,13 +4,12 @@
 
 package frc.lib.util;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
-
 import lombok.Getter;
 
 import org.littletonrobotics.junction.Logger;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Translation3d;
 
 /**
  * Utility for tracking and visualizing game piece positions in simulation.

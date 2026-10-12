@@ -15,15 +15,9 @@
 
 package frc.robot;
 
-import au.grapplerobotics.CanBridge;
-
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
-
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 import frc.lib.util.BatterySimCurrentAccumulator;
 import frc.robot.Constants.Mode;
@@ -35,6 +29,7 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+import org.wpilib.command3.Scheduler;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -43,14 +38,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
  * project.
  */
 public class Robot extends LoggedRobot {
-    private final RobotState robotState = RobotState.getInstance();
-
-    private Command autonomousCommand;
-    private RobotContainer robotContainer;
-
     public Robot() {
-        CanBridge.runTCP(); // Used for configuring LaserCANs via Grapplehook
-
         // Record metadata
         Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
         Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
@@ -64,7 +52,7 @@ public class Robot extends LoggedRobot {
         }
 
         // Set up data receivers & replay source
-        switch (Constants.currentMode) {
+        switch (Constants.CURRENT_MODE) {
             case REAL -> {
                 // Running on a real robot, log to a USB stick ("/U/logs")
                 Logger.addDataReceiver(new WPILOGWriter());
@@ -106,17 +94,7 @@ public class Robot extends LoggedRobot {
 
         // Instantiate our RobotContainer. This will perform all our button bindings,
         // and put our autonomous chooser on the dashboard.
-        robotContainer = new RobotContainer();
-
-        DriverStation.silenceJoystickConnectionWarning(!Robot.isReal());
-    }
-
-    @Override
-    public void robotInit() {
-        // Log first 8 character of robot serial
-        // Logger.recordOutput("Robot Serial",
-        // Robot.isReal() ? Constants.RobotConstants.serial.subSequence(0, 8).toString()
-        // : Constants.RobotConstants.serial);
+        new RobotContainer();
     }
 
     /** This function is called periodically during all modes. */
@@ -131,11 +109,11 @@ public class Robot extends LoggedRobot {
         // finished or interrupted commands, and running subsystem periodic() methods.
         // This must be called from the robot's periodic block in order for anything in
         // the Command-based framework to work.
-        CommandScheduler.getInstance().run();
+        Scheduler.getDefault().run();
 
         // Simulate the loaded battery voltage after all subsystems have contributed their current
         // draws
-        if (Constants.currentMode == Mode.SIM) {
+        if (Constants.CURRENT_MODE == Mode.SIM) {
             BatterySimCurrentAccumulator.setSimulatedBatteryLoadedVoltage();
         }
 
@@ -149,40 +127,21 @@ public class Robot extends LoggedRobot {
 
     /** This function is called periodically when disabled. */
     @Override
-    public void disabledPeriodic() {
-        robotContainer.checkStartPose();
-    }
+    public void disabledPeriodic() {}
 
     /**
      * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
      */
     @Override
-    public void autonomousInit() {
-        autonomousCommand = robotContainer.getAutonomousCommand();
-
-        // schedule the autonomous command (example)
-        if (autonomousCommand != null) {
-            CommandScheduler.getInstance().schedule(autonomousCommand);
-        }
-    }
+    public void autonomousInit() {}
 
     /** This function is called periodically during autonomous. */
     @Override
-    public void autonomousPeriodic() {
-        RobotContainer.autoPreviewField.setRobotPose(robotState.getEstimatedPose());
-    }
+    public void autonomousPeriodic() {}
 
     /** This function is called once when teleop is enabled. */
     @Override
-    public void teleopInit() {
-        // This makes sure that the autonomous stops running when
-        // teleop starts running. If you want the autonomous to
-        // continue until interrupted by another command, remove
-        // this line or comment it out.
-        if (autonomousCommand != null) {
-            autonomousCommand.cancel();
-        }
-    }
+    public void teleopInit() {}
 
     /** This function is called periodically during operator control. */
     @Override
@@ -190,14 +149,11 @@ public class Robot extends LoggedRobot {
 
     /** This function is called once when test mode is enabled. */
     @Override
-    public void testInit() {
-        // Cancels all running commands at the start of test mode.
-        CommandScheduler.getInstance().cancelAll();
-    }
+    public void utilityInit() {}
 
     /** This function is called periodically during test mode. */
     @Override
-    public void testPeriodic() {}
+    public void utilityPeriodic() {}
 
     /** This function is called once when the robot is first started up. */
     @Override

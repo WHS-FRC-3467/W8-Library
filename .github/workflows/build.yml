@@ -13,16 +13,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.ACTIONS_TOKEN }}
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: "17"
+          java-version: "25"
       - name: Grant execute permission
         run: chmod +x gradlew
       - name: Build Robot Code
-        run: ./gradlew build -x test --stacktrace --info --no-daemon
+        run: ./gradlew build -x test
       - name: Test Robot Code
-        run: ./gradlew test --stacktrace --info --no-daemon
+        run: ./gradlew test
       - name: Check Formatting
-        run: ./gradlew spotlessCheck --stacktrace --info --no-daemon
+        run: ./gradlew spotlessCheck

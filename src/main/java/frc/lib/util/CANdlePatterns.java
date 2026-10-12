@@ -14,16 +14,16 @@
  */
 package frc.lib.util;
 
-import static edu.wpi.first.units.Units.Hertz;
-import static edu.wpi.first.units.Units.InchesPerSecond;
-import static edu.wpi.first.units.Units.Microseconds;
-import static edu.wpi.first.units.Units.Milliseconds;
-import static edu.wpi.first.units.Units.Seconds;
+import static org.wpilib.units.Units.Hertz;
+import static org.wpilib.units.Units.InchesPerSecond;
+import static org.wpilib.units.Units.Microseconds;
+import static org.wpilib.units.Units.Milliseconds;
+import static org.wpilib.units.Units.Seconds;
 
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.LEDPattern;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.util.Color;
+import org.wpilib.hardware.led.LEDPattern;
+import org.wpilib.system.RobotController;
+import org.wpilib.units.measure.Distance;
+import org.wpilib.util.Color;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,7 +69,7 @@ public class CANdlePatterns {
             }
 
             for (int led = max; led < bufLen; led++) {
-                writer.setLED(led, Color.kBlack);
+                writer.setLED(led, Color.BLACK);
             }
         };
     }
@@ -86,10 +86,8 @@ public class CANdlePatterns {
         double random = RandomGenerator.getDefault().nextDouble();
         LEDPattern fireScroll =
                 LEDPattern.gradient(
-                                LEDPattern.GradientType.kContinuous,
-                                Color.kOrange,
-                                Color.kOrangeRed)
-                        .scrollAtAbsoluteSpeed(InchesPerSecond.of(frameRate), ledSpacing)
+                                LEDPattern.GradientType.CONTINUOUS, Color.ORANGE, Color.ORANGE_RED)
+                        .scrollAtAbsoluteVelocity(InchesPerSecond.of(frameRate), ledSpacing)
                         .blink(Seconds.of((random == 0.0 ? 5.0 : random) * 3), Milliseconds.of(8));
         fireScroll.breathe(Seconds.of(3));
         return fireScroll;
@@ -159,10 +157,10 @@ public class CANdlePatterns {
                 }
                 if (max < bufLen) {
                     if (reversed.get(buffer)) {
-                        writer.setLED(bufLen - 2 - i, Color.kBlack);
+                        writer.setLED(bufLen - 2 - i, Color.BLACK);
 
                     } else {
-                        writer.setLED(i, Color.kBlack);
+                        writer.setLED(i, Color.BLACK);
                     }
                 }
             }
