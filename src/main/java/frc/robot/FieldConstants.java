@@ -337,19 +337,11 @@ public class FieldConstants {
                     if (layout == null) {
                         try {
                             Path p =
-                                    Constants.disableHAL
-                                            ? Path.of(
-                                                    "src",
-                                                    "main",
-                                                    "deploy",
-                                                    "apriltags",
-                                                    FIELD_TYPE.getJsonFolder(),
-                                                    name + ".json")
-                                            : Path.of(
-                                                    Filesystem.getDeployDirectory().getPath(),
-                                                    "apriltags",
-                                                    FIELD_TYPE.getJsonFolder(),
-                                                    name + ".json");
+                                    Path.of(
+                                            Filesystem.getDeployDirectory().getPath(),
+                                            "apriltags",
+                                            FIELD_TYPE.getJsonFolder(),
+                                            name + ".json");
                             layout = Field.loadFromFile(p);
                             layoutString = layout.getJson();
                         } catch (IOException e) {

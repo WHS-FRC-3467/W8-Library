@@ -6,7 +6,6 @@ package frc.lib.util;
 
 import static org.wpilib.units.Units.Meters;
 
-import frc.robot.Constants;
 import frc.robot.FieldConstants;
 
 import org.wpilib.driverstation.Alliance;
@@ -125,8 +124,7 @@ public class FieldUtil {
      * @return True if on red alliance, false if on blue alliance
      */
     public static boolean shouldFlip() {
-        return !Constants.disableHAL
-                && MatchState.getAlliance().isPresent()
+        return MatchState.getAlliance().isPresent()
                 && MatchState.getAlliance().get() == Alliance.RED;
     }
 

@@ -51,7 +51,7 @@ public interface DriveIO {
     double leftVelocityMPS = 0.0;
     double rightVelocityMPS = 0.0;
   }
-  
+
   void updateInputs(DriveInputs inputs);
   void setVoltage(double left, double right);
 }
@@ -60,11 +60,11 @@ public interface DriveIO {
 public class Drive extends SubsystemBase {
   private final DriveIO io;
   private final DriveInputsAutoLogged inputs = new DriveInputsAutoLogged();
-  
+
   public Drive(DriveIO io) {
     this.io = io;
   }
-  
+
   @Override
   public void periodic() {
     io.updateInputs(inputs);

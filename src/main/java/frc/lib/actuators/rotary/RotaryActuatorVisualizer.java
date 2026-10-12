@@ -11,6 +11,8 @@ import static org.wpilib.units.Units.Meters;
 import static org.wpilib.units.Units.Radians;
 import static org.wpilib.units.Units.Rotations;
 
+import frc.lib.actuators.rotary.RotaryActuator.RotaryMechCharacteristics;
+
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
@@ -19,8 +21,6 @@ import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
-
-import frc.lib.actuators.rotary.RotaryActuator.RotaryMechCharacteristics;
 
 import java.util.Optional;
 

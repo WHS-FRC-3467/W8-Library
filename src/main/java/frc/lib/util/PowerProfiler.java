@@ -17,10 +17,11 @@ package frc.lib.util;
 import static org.wpilib.units.Units.Amps;
 import static org.wpilib.units.Units.Volts;
 
+import frc.lib.actuators.Actuator;
+import frc.robot.Constants;
+
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.system.Timer;
-
-import frc.lib.actuators.Actuator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,8 +56,7 @@ public class PowerProfiler {
     private boolean isInitialized = false;
     private double lastTimestamp = 0.0;
 
-    private static final double DEFAULT_LOOP_TIME_SECONDS = 0.02;
-    private static final double MAX_LOOP_TIME_SECONDS = 0.1;
+    private static final double MAX_LOOP_PERIOD_SECONDS = 0.1;
 
     /**
      * Register a mechanism to the power profiler (e.g. rotary, linear)
@@ -166,22 +166,22 @@ public class PowerProfiler {
         if (!isInitialized) {
             lastTimestamp = now;
             isInitialized = true;
-            return DEFAULT_LOOP_TIME_SECONDS;
+            return Constants.LOOP_PERIOD;
         }
 
         if (Logger.hasReplaySource()) {
             lastTimestamp = now;
-            return DEFAULT_LOOP_TIME_SECONDS;
+            return Constants.LOOP_PERIOD;
         }
 
         double dt = now - lastTimestamp;
         lastTimestamp = now;
 
         if (dt <= 0.0) {
-            return DEFAULT_LOOP_TIME_SECONDS;
+            return Constants.LOOP_PERIOD;
         }
 
-        return Math.min(dt, MAX_LOOP_TIME_SECONDS);
+        return Math.min(dt, MAX_LOOP_PERIOD_SECONDS);
     }
 
     // Reset loop totals but maintain accumulated values

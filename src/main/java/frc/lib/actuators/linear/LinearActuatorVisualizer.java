@@ -6,6 +6,8 @@ package frc.lib.actuators.linear;
 
 import static org.wpilib.units.Units.Meters;
 
+import frc.lib.actuators.linear.LinearActuator.LinearMechCharacteristics;
+
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
@@ -14,8 +16,6 @@ import org.wpilib.math.geometry.Rotation3d;
 import org.wpilib.units.measure.Distance;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
-
-import frc.lib.actuators.linear.LinearActuator.LinearMechCharacteristics;
 
 import java.util.Optional;
 

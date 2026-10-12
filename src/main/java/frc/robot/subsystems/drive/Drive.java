@@ -286,7 +286,7 @@ public class Drive implements Mechanism {
                 AUTO_THETA_KD);
 
         // Update gyro alert
-        gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
+        gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.CURRENT_MODE != Mode.SIM);
 
         double[] sampleTimestamps = modules[0].getOdometryTimestamps();
         int sampleCount = sampleTimestamps.length;
@@ -326,7 +326,7 @@ public class Drive implements Mechanism {
      */
     public void runVelocity(ChassisVelocities speeds) {
         // Calculate module setpoints
-        ChassisVelocities discreteSpeeds = speeds.discretize(0.02);
+        ChassisVelocities discreteSpeeds = speeds.discretize(Constants.LOOP_PERIOD);
         SwerveModuleVelocity[] setpointStates = kinematics.toSwerveModuleVelocities(discreteSpeeds);
         setpointStates =
                 SwerveDriveKinematics.desaturateWheelVelocities(

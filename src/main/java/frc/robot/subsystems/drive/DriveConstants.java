@@ -345,7 +345,7 @@ public class DriveConstants {
      * @return Drive subsystem instance with appropriate IO implementations
      */
     public static Drive get() {
-        switch (Constants.currentMode) {
+        switch (Constants.CURRENT_MODE) {
             case REAL:
                 return new Drive(
                         new GyroIOPigeon2(),

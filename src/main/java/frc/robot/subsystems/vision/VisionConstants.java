@@ -340,7 +340,7 @@ public class VisionConstants {
      * mode. Instantiates cameras with appropriate IO implementations (real, sim, or replay).
      */
     public static void create() {
-        switch (Constants.currentMode) {
+        switch (Constants.CURRENT_MODE) {
             case REAL -> {
                 var frontLeftCamera =
                         new AprilTagCamera(FRONT_LEFT, getFrontLeftIOReal(), fieldLayout);

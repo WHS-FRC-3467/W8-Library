@@ -28,11 +28,11 @@ import org.wpilib.units.measure.Distance;
  * (log replay from a file).
  */
 public final class Constants {
-    public static final Mode simMode = Mode.SIM;
-    public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+    public static final Mode SIM_MODE = Mode.SIM;
+    public static final Mode CURRENT_MODE = RobotBase.isReal() ? Mode.REAL : SIM_MODE;
 
-    public static final boolean tuningMode = true;
-    public static final boolean disableHAL = false;
+    public static final boolean TUNING_MODE = true;
+    public static final double LOOP_PERIOD = 1.0 / 50.0;
 
     public static enum Mode {
         /** Running on a real robot. */

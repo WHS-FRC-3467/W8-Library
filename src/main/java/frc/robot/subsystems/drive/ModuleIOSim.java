@@ -19,6 +19,8 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 
+import frc.robot.Constants;
+
 import org.wpilib.math.controller.PIDController;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.system.DCMotor;
@@ -105,8 +107,8 @@ public class ModuleIOSim implements ModuleIO {
         // Update simulation state
         driveSim.setInputVoltage(Math.clamp(driveAppliedVolts, -12.0, 12.0));
         turnSim.setInputVoltage(Math.clamp(turnAppliedVolts, -12.0, 12.0));
-        driveSim.update(0.02);
-        turnSim.update(0.02);
+        driveSim.update(Constants.LOOP_PERIOD);
+        turnSim.update(Constants.LOOP_PERIOD);
 
         // Update drive inputs
         inputs.driveConnected = true;
