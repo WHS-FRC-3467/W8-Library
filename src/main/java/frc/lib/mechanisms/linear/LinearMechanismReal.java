@@ -15,7 +15,6 @@
 
 package frc.lib.mechanisms.linear;
 
-import edu.wpi.first.units.measure.Angle;
 
 import frc.lib.io.motor.MotorIO;
 
@@ -26,11 +25,5 @@ import frc.lib.io.motor.MotorIO;
 public class LinearMechanismReal extends LinearMechanism<MotorIO> {
     public LinearMechanismReal(String name, MotorIO io, LinearMechCharacteristics characteristics) {
         super(name, characteristics, io);
-    }
-
-    // TODO: Verify operation works correctly on real TalonFX
-    @Override
-    public void setEncoderPosition(Angle position) {
-        io.setEncoderPosition(position);
     }
 }
