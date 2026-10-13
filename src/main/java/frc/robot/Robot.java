@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.lib.util.BatteryModel;
 import frc.lib.util.PowerProfiler;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.Constants.Mode;
 
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;

@@ -23,6 +23,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.measure.Power;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -35,6 +36,7 @@ import frc.lib.commands.SteppableCommandGroup;
 import frc.lib.util.CommandXboxControllerExtended;
 import frc.lib.util.GamePieceVisualizer;
 import frc.lib.util.LoggedDashboardChooser;
+import frc.lib.util.PowerProfiler;
 import frc.robot.autos.AutoFactory;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveToPose;
@@ -53,6 +55,7 @@ import frc.robot.subsystems.vision.VisionConstants;
 @SuppressWarnings("unused")
 public class RobotContainer {
     private final RobotState robotState = RobotState.getInstance();
+    private final PowerProfiler powerProfiler = PowerProfiler.getInstance();
 
     // Subsystems
     public final Drive drive;
@@ -102,6 +105,8 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
+        // Register mechanisms and generic power channels with the power profiler for logging
+        registerMechanismsAndGenerics();
 
         GamePieceVisualizer algae =
                 new GamePieceVisualizer(
@@ -237,4 +242,9 @@ public class RobotContainer {
         // false);
 
     }
+
+        /** Register all of the subsystems' mechanisms and generic power channels.  */
+        private void registerMechanismsAndGenerics() {
+            drive.registerModules(powerProfiler);
+        }
 }
