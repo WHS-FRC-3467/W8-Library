@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.*;
 
 import frc.robot.Constants;
 import frc.robot.Ports;
+import lombok.Getter;
 
 /**
  * Configuration constants for the swerve drivetrain.
@@ -72,7 +73,10 @@ public class DriveConstants {
 
     // The stator current at which the wheels start to slip;
     // This needs to be tuned to your individual robot
+    @Getter
     private static final Current kSlipCurrent = Amps.of(94.0);
+    @Getter 
+    private static final Current turnCurrentMax = Amps.of(60.0);
 
     private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration();
     private static final TalonFXConfiguration steerInitialConfigs = new TalonFXConfiguration()
@@ -84,7 +88,7 @@ public class DriveConstants {
                             // low
                             // stator current limit to help avoid brownouts without
                             // impacting performance.
-                            .withStatorCurrentLimit(Amps.of(60))
+                            .withStatorCurrentLimit(turnCurrentMax)
                             .withStatorCurrentLimitEnable(true));
     private static final CANcoderConfiguration encoderInitialConfigs = new CANcoderConfiguration();
     // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs
@@ -108,8 +112,9 @@ public class DriveConstants {
     private static final int kPigeonId = 14;
 
     // These are only used for simulation
+    private static final Mass kWheelMass = Kilograms.of(0.25);
     private static final MomentOfInertia kSteerInertia = KilogramSquareMeters.of(0.004);
-    private static final MomentOfInertia kDriveInertia = KilogramSquareMeters.of(0.025);
+    private static final MomentOfInertia kDriveInertia = calculateDriveOutputInertia();
     // Simulated voltage necessary to overcome friction
     private static final Voltage kSteerFrictionVoltage = Volts.of(0.2);
     private static final Voltage kDriveFrictionVoltage = Volts.of(0.2);
@@ -352,33 +357,72 @@ public class DriveConstants {
             case REAL:
                 return new Drive(
                         new GyroIOPigeon2(),
-                        new ModuleIOTalonFX(DriveConstants.FrontLeft),
-                        new ModuleIOTalonFX(DriveConstants.FrontRight),
-                        new ModuleIOTalonFX(DriveConstants.BackLeft),
-                        new ModuleIOTalonFX(DriveConstants.BackRight));
+                        new ModuleIOTalonFX("FrontLeft", DriveConstants.FrontLeft),
+                        new ModuleIOTalonFX("FrontRight", DriveConstants.FrontRight),
+                        new ModuleIOTalonFX("BackLeft", DriveConstants.BackLeft),
+                        new ModuleIOTalonFX("BackRight", DriveConstants.BackRight));
             case SIM:
                 return new Drive(
                         new GyroIO() {
                         },
-                        new ModuleIOSim(DriveConstants.FrontLeft),
-                        new ModuleIOSim(DriveConstants.FrontRight),
-                        new ModuleIOSim(DriveConstants.BackLeft),
-                        new ModuleIOSim(DriveConstants.BackRight));
+                        new ModuleIOSim("FrontLeft", DriveConstants.FrontLeft),
+                        new ModuleIOSim("FrontRight", DriveConstants.FrontRight),
+                        new ModuleIOSim("BackLeft", DriveConstants.BackLeft),
+                        new ModuleIOSim("BackRight", DriveConstants.BackRight));
             case REPLAY:
                 return new Drive(
                         new GyroIO() {
                         },
                         new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "FrontLeft";
+                            }
                         },
                         new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "FrontRight";
+                            }
                         },
                         new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "BackLeft";
+                            }
                         },
                         new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "BackRight";
+                            }
                         });
             default:
                 throw new IllegalStateException("Unrecognized Robot Mode");
         }
+    }
+
+    /** 
+     * Returns the approximate output-side inertia seen by one drive motor at the wheel shaft.
+     *       
+     * <p>This includes the wheel's own spin inertia plus the equivalent rotational inertia
+     * needed to accelerate one quarter of the robot mass through the wheel radius:
+     * 
+     * <pre>
+     * a = alpha * r
+     * F = m_eff * a
+     * tau = F * r
+     * tau = m_eff * r^2 * alpha
+     * J_equiv = m_eff * r^2 ~ reflected translational inertia onto the wheel
+     * </pre>
+    */
+    private static MomentOfInertia calculateDriveOutputInertia() {
+        // MOI of solid center-driven wheel
+        MomentOfInertia wheelInertia = KilogramSquareMeters.of(0.5 * kWheelMass.in(Kilograms) * Math.pow(kWheelRadius.in(Meters), 2));
+        // Equivalent MOI of robot mass seen at wheel shaft (1/4 of robot mass per wheel)
+        MomentOfInertia robotInertia = KilogramSquareMeters.of(Constants.FULL_ROBOT_MASS.in(Kilograms) / 4.0 * Math.pow(kWheelRadius.in(Meters), 2));
+        // MOIs referencing same axis of rotation are additive 
+        return wheelInertia.plus(robotInertia);
     }
 
     /**

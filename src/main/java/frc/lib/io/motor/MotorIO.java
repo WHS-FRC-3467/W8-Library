@@ -23,6 +23,8 @@ import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.OptionalDouble;
+
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -273,6 +275,15 @@ public interface MotorIO extends AutoCloseable {
      */
     public default double getRotorToMechanismRatio() {
         return getRotorToSensorRatio() * getSensorToMechanismRatio();
+    }
+
+    /**
+     * Returns the motor's torque constant Kt ((N*m)/A).
+     * 
+     * @return The motor's torque constant Kt ((N*m)/A)
+     */
+    public default OptionalDouble getMotorTorqueConstant() {
+        return OptionalDouble.empty();
     }
 
     @Override

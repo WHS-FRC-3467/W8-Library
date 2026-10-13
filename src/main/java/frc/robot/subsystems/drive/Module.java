@@ -27,16 +27,17 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 
 import frc.lib.util.PID;
+import frc.lib.util.PowerProfiler;
 
 import org.littletonrobotics.junction.Logger;
 
 public class Module {
     private final ModuleIO io;
     private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
-    private final int index;
     private final SwerveModuleConstants<
                     TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
             constants;
+    private final String name;
 
     private final Alert driveDisconnectedAlert;
     private final Alert turnDisconnectedAlert;
@@ -47,35 +48,34 @@ public class Module {
      * Constructs a new Module instance.
      *
      * @param io IO interface for the module
-     * @param index Module index (0-3: FL, FR, BL, BR)
      * @param constants Module-specific constants from DriveConstants
      */
     public Module(
             ModuleIO io,
-            int index,
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
                     constants) {
         this.io = io;
-        this.index = index;
-        this.constants = constants;
+        this.name = io.getName();
+        this.constants = constants; 
+
         driveDisconnectedAlert =
                 new Alert(
-                        "Disconnected drive motor on module " + Integer.toString(index) + ".",
+                        "Disconnected drive motor on module " + name + ".",
                         AlertType.kError);
         turnDisconnectedAlert =
                 new Alert(
-                        "Disconnected turn motor on module " + Integer.toString(index) + ".",
+                        "Disconnected turn motor on module " + name + ".",
                         AlertType.kError);
         turnEncoderDisconnectedAlert =
                 new Alert(
-                        "Disconnected turn encoder on module " + Integer.toString(index) + ".",
+                        "Disconnected turn encoder on module " + name + ".",
                         AlertType.kError);
     }
 
     /** Updates inputs, processes odometry data, and updates connection alerts. */
     public void periodic() {
         io.updateInputs(inputs);
-        Logger.processInputs("Drive/Module" + Integer.toString(index), inputs);
+        Logger.processInputs("Drive/Module" + name, inputs);
 
         // Calculate positions for odometry
         int sampleCount = inputs.odometryTimestamps.length; // All signals are sampled together
@@ -221,4 +221,21 @@ public class Module {
     public void setTurnPID(PID pid) {
         io.setTurnPID(pid);
     }
+
+    /**
+     * Registers the module's drive and turn current and voltage to the power profiler.
+     * 
+     * @param key The key to use for the module in the power profiler
+     * @param powerProfiler The power profiler to register the module's current and voltage to
+     */
+    public void registerModules(String key, PowerProfiler powerProfiler) {
+        powerProfiler.registerGeneric(key + "/Drive", () -> inputs.driveSupplyCurrentAmps, () -> inputs.driveSupplyVoltageVolts);
+        powerProfiler.registerGeneric(key + "/Turn", () -> inputs.turnSupplyCurrentAmps, () -> inputs.turnSupplyVoltageVolts);
+    }
+
+    /** Return the name of the {@link ModuleIO} object associated with this module. */
+    public String getName() {
+        return name;
+    }
+
 }
