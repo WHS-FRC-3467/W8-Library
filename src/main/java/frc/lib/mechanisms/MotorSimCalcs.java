@@ -14,6 +14,8 @@
  */
 package frc.lib.mechanisms;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -106,7 +108,8 @@ public final class MotorSimCalcs {
             return MathUtil.clamp(zeroCurrentVolts, batteryLimitedMinVolts, batteryLimitedMaxVolts);
         }
 
-    /** Return the DCMotorSim's current torque current in Amps.
+    /** 
+     * Return the DCMotorSim's current torque current in Amps.
      * 
      * @param sim DCMotor sim representing the gearbox producing the torque current
      * @param motorKtNmPerAmp Motor torque constant in Nm/Amp for the motor being simulated
@@ -116,5 +119,31 @@ public final class MotorSimCalcs {
     public static double getTorqueCurrentAmps(DCMotorSim sim, double motorKtNmPerAmp) {
         // Gearing = motor-to-mechanism speed ratio (magnitude)
         return sim.getTorqueNewtonMeters() / (Math.abs(sim.getGearing() * motorKtNmPerAmp));
+    }
+
+    /**
+     * Logs the current state of the motor sim for diagnostics. 
+     * 
+     * @param key Key to log under
+     * @param supplyVoltageVolts Supply voltage in Volts
+     * @param unclampedAppliedVolts Unclamped applied voltage in Volts (e.g. raw controller command)
+     * @param clampedAppliedVolts Clamped applied voltage in Volts (e.g. after current limit clamping)
+     * @param currentLimitAmps Current limit in Amps
+     * @param torqueCurrentAmps Torque (stator) current in Amps
+     * @param supplyCurrentAmps Supply current draw in Amps
+     * @param supplyCurrentAverageAmps Average supply current draw in Amps (e.g. for battery load calculations)
+     * @param isRegenerating True if the motor is regenerating back to the battery, false if it is drawing current from the battery
+     */
+    public static void logSimState(String key, double supplyVoltageVolts, double unclampedAppliedVolts, double 
+    clampedAppliedVolts, double currentLimitAmps, double torqueCurrentAmps, double supplyCurrentAmps, 
+    double supplyCurrentAverageAmps, boolean isRegenerating) {
+        Logger.recordOutput(key + "SupplyVoltageVolts", supplyVoltageVolts);
+        Logger.recordOutput(key + "UnclampedAppliedVolts", unclampedAppliedVolts);
+        Logger.recordOutput(key + "ClampedAppliedVolts", clampedAppliedVolts);
+        Logger.recordOutput(key + "CurrentLimitAmps", currentLimitAmps);
+        Logger.recordOutput(key + "TorqueCurrentAmps", torqueCurrentAmps);
+        Logger.recordOutput(key + "SupplyCurrentAmps", supplyCurrentAmps);
+        Logger.recordOutput(key + "BatteryCurrentLoadAmps", supplyCurrentAverageAmps);
+        Logger.recordOutput(key + "IsRegenerating", isRegenerating);
     }
 }

@@ -42,7 +42,7 @@ public final class BatteryModel {
      * This is the efficiency of bus regeneration.
      * Set this field manually as desired to simulate various electrical performances. 
      */
-    private static final double BUS_REGENERATION_EFFICIENCY = 0.50;
+    private static final double BUS_REGENERATION_EFFICIENCY = 0.81;
 
     /*
      * The battery voltage's time constant (s).
@@ -61,6 +61,9 @@ public final class BatteryModel {
 
     // Controller loop time
     private static final double LOOP_TIME_SECONDS = 0.02; 
+
+    // Maximum regenerative overvoltage above nominal battery voltage
+    private static final double BATTERY_NOMINAL_VOLTAGE_OVERHEAD_VOLTS = 0.5;
  
     
     /**
@@ -107,8 +110,8 @@ public final class BatteryModel {
     private static double calculateDefaultBatteryLoadedVoltage(double nominalVoltageVolts, double resistanceOhms, double currentAmps) {
         double voltageSagVolts = currentAmps * resistanceOhms;
         double targetLoadedBatteryVoltage = nominalVoltageVolts - voltageSagVolts;
-        // Don't allow regen past nominal or decay past zero
-        return MathUtil.clamp(targetLoadedBatteryVoltage, 0.0, nominalVoltageVolts);
+        // Limit regenerative overvoltage above nominal and prevent voltage from falling below zero
+        return MathUtil.clamp(targetLoadedBatteryVoltage, 0.0, nominalVoltageVolts + BATTERY_NOMINAL_VOLTAGE_OVERHEAD_VOLTS);
     }
 
     private static void zeroCurrents() {

@@ -17,8 +17,6 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Amps;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -248,10 +246,14 @@ public class ModuleIOSim implements ModuleIO {
         inputs.odometryTurnPositions = new Rotation2d[] { inputs.turnPosition };
 
         // Log module-specific simulation parameters for diagnostics
-        logModuleSimState(supplyVoltageVolts, driveUnclampedAppliedVolts, driveAppliedVoltageVolts, 
-        DriveConstants.getKSlipCurrent().in(Amps), driveTorqueCurrentAmps, driveSupplyCurrentAmps,
-        turnUnclampedAppliedVolts, turnAppliedVoltageVolts, DriveConstants.getTurnCurrentMax().in(Amps),
-        turnTorqueCurrentAmps, turnSupplyCurrentAmps);
+        MotorSimCalcs.logSimState("Sim/Modules/Drive/" + name + "/", 
+            supplyVoltageVolts, driveUnclampedAppliedVolts, driveAppliedVoltageVolts, 
+            DriveConstants.getKSlipCurrent().in(Amps), driveTorqueCurrentAmps, driveSupplyCurrentAmps, 
+            driveSupplyCurrentAverageAmps, isDriveRegenerating);
+        MotorSimCalcs.logSimState("Sim/Modules/Turn/" + name + "/", 
+            supplyVoltageVolts, turnUnclampedAppliedVolts, turnAppliedVoltageVolts, 
+            DriveConstants.getTurnCurrentMax().in(Amps), turnTorqueCurrentAmps, turnSupplyCurrentAmps, 
+            turnSupplyCurrentAverageAmps, isTurnRegenerating);
     }
 
     @Override
@@ -282,30 +284,5 @@ public class ModuleIOSim implements ModuleIO {
     @Override
     public String getName() {
         return name;
-    }
-
-    // Log simulation parameters for diagnostics 
-    private void logModuleSimState(double supplyVoltageVolts, double driveUnclampedAppliedVolts, double 
-    driveClampedAppliedVolts, double driveCurrentLimitAmps, double driveTorqueCurrentAmps, double driveSupplyCurrentAmps, 
-    double turnUnclampedAppliedVolts, double turnClampedAppliedVolts, double turnCurrentLimitAmps,
-    double turnTorqueCurrentAmps, double turnSupplyCurrentAmps) {
-        String prefix = "Simulation/Drive/Module/" + name + "/";
-        Logger.recordOutput(prefix + "SupplyVoltageVolts", supplyVoltageVolts);
-        // Drive
-        Logger.recordOutput(prefix + "DriveUnclampedAppliedVolts", driveUnclampedAppliedVolts);
-        Logger.recordOutput(prefix + "DriveClampedAppliedVolts", driveClampedAppliedVolts);
-        Logger.recordOutput(prefix + "DriveCurrentLimitAmps", driveCurrentLimitAmps);
-        Logger.recordOutput(prefix + "DriveTorqueCurrentAmps", driveTorqueCurrentAmps);
-        Logger.recordOutput(prefix + "DriveSupplyCurrentAmps", driveSupplyCurrentAmps);
-        Logger.recordOutput(prefix + "BatteryDriveCurrentLoadAmps", driveSupplyCurrentAverageAmps);
-        Logger.recordOutput(prefix + "DriveRegenerating", isDriveRegenerating);
-        // Turn
-        Logger.recordOutput(prefix + "TurnUnclampedAppliedVolts", turnUnclampedAppliedVolts);
-        Logger.recordOutput(prefix + "TurnClampedAppliedVolts", turnClampedAppliedVolts);
-        Logger.recordOutput(prefix + "TurnCurrentLimitAmps", turnCurrentLimitAmps);
-        Logger.recordOutput(prefix + "TurnTorqueCurrentAmps", turnTorqueCurrentAmps);
-        Logger.recordOutput(prefix + "TurnSupplyCurrentAmps", turnSupplyCurrentAmps);
-        Logger.recordOutput(prefix + "BatteryTurnCurrentLoadAmps", turnSupplyCurrentAverageAmps);
-        Logger.recordOutput(prefix + "TurnRegenerating", isTurnRegenerating);
     }
 }

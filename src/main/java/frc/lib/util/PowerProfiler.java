@@ -115,7 +115,7 @@ public class PowerProfiler {
     *
     * This profiler currently has no insight into whether sign inversion exists between
     * the motor and mechanism coordinate systems, so this is reported as a magnitude. The signed quantity
-    * indicates the directionality of the power transfer -- positive is motoring, negative is braking. 
+    * would indicate the directionality of the power transfer -- positive is motoring, negative is braking. 
     * Use command/state/log context to determine whether the mechanism was motoring or braking at a given timestamp.
     *
     * Motoring refers to increasing the energy of the output load (e.g. accelerating a flywheel).
