@@ -1,3 +1,5 @@
+package frc.lib.io.vision;
+
 /*
  * Copyright (C) 2026 Windham Windup
  *
@@ -13,175 +15,68 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-package frc.lib.io.vision;
-
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Pose3d;
-
-import frc.lib.devices.AprilTagCamera.CameraProperties;
-import frc.lib.io.vision.VisionIO.CameraResult;
+import frc.lib.devices.VisionSource.CameraProperties;
 
 import org.photonvision.PhotonCamera;
 import org.photonvision.common.dataflow.structures.Packet;
 import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Optional;
+import java.util.List;
 
 /**
- * Real hardware implementation of VisionIO using PhotonVision.
+ * {@link VisionIO} for PhotonVision cameras.
  *
- * <p>Connects to a PhotonVision coprocessor running an AprilTag detection pipeline and reads vision
- * results over NetworkTables. Used for real robot operation.
+ * <p>PhotonVision shows the robot only cameras (by name, on NetworkTables), not the coprocessors
+ * running them, so this source is just the cameras given to it. It has no health signal of its own:
+ * {@code connected} is always true and each camera's status is its own heartbeat.
  *
- * <p>{@link #updateInputs} writes raw packed bytes into the logged {@link VisionIOInputs} for
- * AdvantageKit replay compatibility. {@link #decodeResults} then deserializes those bytes and
- * converts them to standardized {@link CameraResult} records.
+ * <p>Results are logged as raw PhotonVision bytes and decoded by {@link PhotonDecoder}.
  */
 public class VisionIOPhotonVision implements VisionIO {
-    protected final PhotonCamera photonCamera;
+    protected final List<PhotonCamera> photonCameras;
 
     /**
-     * Constructs a PhotonVision camera interface.
-     *
-     * @param cameraProperties Camera configuration including name and calibration
+     * @param cameras the cameras of this source, by their PhotonVision names
      */
-    public VisionIOPhotonVision(CameraProperties cameraProperties) {
-        this.photonCamera = new PhotonCamera(cameraProperties.name());
+    public VisionIOPhotonVision(List<CameraProperties> cameras) {
+        this.photonCameras = cameras.stream().map(c -> new PhotonCamera(c.name())).toList();
     }
 
-    /**
-     * Reads all unread results from PhotonVision, packs them as raw bytes with the magic prefix,
-     * and stores them in {@code inputs} for AdvantageKit logging and replay.
-     */
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        inputs.connected = photonCamera.isConnected();
         inputs.rawPacketType = NativePacketType.PHOTON;
+        inputs.reportsSourceHealth = false;
+        inputs.connected = true;
+        inputs.camerasConnected = new boolean[photonCameras.size()];
 
-        if (!inputs.connected) {
-            inputs.rawResults = new byte[0][];
-            inputs.captureTimestampsUs = new long[0];
-            inputs.publishTimestampsUs = new long[0];
-            return;
+        ArrayList<byte[]> raw = new ArrayList<>();
+        ArrayList<Integer> cameras = new ArrayList<>();
+        ArrayList<Long> capture = new ArrayList<>();
+        ArrayList<Long> publish = new ArrayList<>();
+        for (int i = 0; i < photonCameras.size(); i++) {
+            PhotonCamera camera = photonCameras.get(i);
+            inputs.camerasConnected[i] = camera.isConnected();
+            if (!inputs.camerasConnected[i]) {
+                continue;
+            }
+            for (PhotonPipelineResult result : camera.getAllUnreadResults()) {
+                raw.add(pack(result));
+                cameras.add(i);
+                capture.add(result.metadata.captureTimestampMicros);
+                publish.add(result.metadata.publishTimestampMicros);
+            }
         }
-
-        var unreadResults = photonCamera.getAllUnreadResults();
-        inputs.rawResults =
-                unreadResults.stream()
-                        .map(VisionIOPhotonVision::packPhotonResult)
-                        .toArray(byte[][]::new);
-        inputs.captureTimestampsUs =
-                unreadResults.stream()
-                        .mapToLong(result -> result.metadata.captureTimestampMicros)
-                        .toArray();
-        inputs.publishTimestampsUs =
-                unreadResults.stream()
-                        .mapToLong(result -> result.metadata.publishTimestampMicros)
-                        .toArray();
+        inputs.rawResults = raw.toArray(byte[][]::new);
+        inputs.resultCameras = cameras.stream().mapToInt(Integer::intValue).toArray();
+        inputs.captureTimestampsUs = capture.stream().mapToLong(Long::longValue).toArray();
+        inputs.publishTimestampsUs = publish.stream().mapToLong(Long::longValue).toArray();
     }
 
-    /**
-     * Decodes the raw PhotonVision bytes stored in {@code inputs} into {@link CameraResult}
-     * records.
-     *
-     * <p>Each raw byte array is unpacked from the PhotonVision struct format, then each tracked
-     * target's field-to-camera pose is reconstructed using the known tag field positions.
-     */
-    public static CameraResult[] decodeResults(
-            VisionIOInputs inputs, AprilTagFieldLayout tagLayout) {
-        ArrayList<CameraResult> results = new ArrayList<>(inputs.rawResults.length);
-        for (int i = 0; i < inputs.rawResults.length; i++) {
-            byte[] raw = inputs.rawResults[i];
-            if (raw == null || raw.length == 0) continue;
-
-            PhotonPipelineResult photon = unpackPhotonResult(raw);
-            if (photon == null) continue;
-
-            long captureTs =
-                    i < inputs.captureTimestampsUs.length ? inputs.captureTimestampsUs[i] : 0;
-            long publishTs =
-                    i < inputs.publishTimestampsUs.length ? inputs.publishTimestampsUs[i] : 0;
-
-            results.add(toCameraResult(photon, captureTs, publishTs, tagLayout));
-        }
-        return results.toArray(CameraResult[]::new);
-    }
-
-    // -------------------------------------------------------------------------
-    // Internal helpers
-    // -------------------------------------------------------------------------
-
-    private static PhotonPipelineResult unpackPhotonResult(byte[] raw) {
-        try {
-            byte[] payload = Arrays.copyOf(raw, raw.length);
-            return PhotonPipelineResult.photonStruct.unpack(new Packet(payload));
-        } catch (RuntimeException e) {
-            return null;
-        }
-    }
-
-    /**
-     * Converts a deserialized {@link PhotonPipelineResult} to a standardized {@link CameraResult}.
-     *
-     * <p>For each tracked target, the field-to-camera pose is reconstructed as: {@code
-     * fieldToCamera = fieldToTag * inverse(cameraToTag)}.
-     */
-    private static CameraResult toCameraResult(
-            PhotonPipelineResult photon,
-            long captureTimestampUs,
-            long publishTimestampUs,
-            AprilTagFieldLayout tagLayout) {
-        ArrayList<TagObservation> tagObs = new ArrayList<>(photon.getTargets().size());
-        for (PhotonTrackedTarget target : photon.getTargets()) {
-            int tagId = target.getFiducialId();
-            Optional<Pose3d> tagPoseOpt = tagLayout.getTagPose(tagId);
-            if (tagPoseOpt.isEmpty()) continue;
-            Pose3d tagPose = tagPoseOpt.get();
-
-            // fieldToCamera = fieldToTag * (cameraToTag)^-1
-            Pose3d fieldToCamera = tagPose.transformBy(target.getBestCameraToTarget().inverse());
-            Pose3d altFieldToCamera =
-                    tagPose.transformBy(target.getAlternateCameraToTarget().inverse());
-
-            tagObs.add(
-                    new TagObservation(
-                            tagId,
-                            fieldToCamera,
-                            Optional.of(altFieldToCamera),
-                            target.getArea(),
-                            target.getPoseAmbiguity()));
-        }
-
-        Optional<MultiTagObservation> multiTag =
-                photon.getMultiTagResult()
-                        .map(
-                                mt -> {
-                                    Pose3d fieldToCamPose =
-                                            new Pose3d(
-                                                    mt.estimatedPose.best.getTranslation(),
-                                                    mt.estimatedPose.best.getRotation());
-                                    int[] ids =
-                                            mt.fiducialIDsUsed.stream()
-                                                    .mapToInt(Short::intValue)
-                                                    .toArray();
-                                    return new MultiTagObservation(
-                                            ids, fieldToCamPose, mt.estimatedPose.bestReprojErr);
-                                });
-
-        return new CameraResult(
-                tagObs.toArray(TagObservation[]::new),
-                multiTag,
-                (double) captureTimestampUs,
-                (double) publishTimestampUs);
-    }
-
-    private static byte[] packPhotonResult(PhotonPipelineResult result) {
+    /** Serializes a PhotonVision result for logging; {@link PhotonDecoder} reverses it. */
+    static byte[] pack(PhotonPipelineResult result) {
         Packet packet = new Packet(512);
         PhotonPipelineResult.photonStruct.pack(packet, result);
-        byte[] raw = packet.getWrittenDataCopy();
-        return raw;
+        return packet.getWrittenDataCopy();
     }
 }

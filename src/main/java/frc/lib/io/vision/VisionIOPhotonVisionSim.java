@@ -12,7 +12,6 @@
  * You should have received a copy of the GNU General Public License along with this program. If
  * not, see <https://www.gnu.org/licenses/>.
  */
-
 package frc.lib.io.vision;
 
 import static edu.wpi.first.units.Units.Radians;
@@ -22,63 +21,67 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.Units;
 
-import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.VisionSource.CameraProperties;
 
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Simulated implementation of {@link VisionIOPhotonVision} using the PhotonVision simulation
- * framework.
- *
- * <p>This class connects a {@link PhotonCameraSim} to a {@link VisionSystemSim} to simulate the
- * behavior of a real PhotonVision camera in a physics-based environment. It allows the robot code
- * to receive realistic vision data based on the robot's simulated pose and the field's AprilTag
- * layout.
+ * {@link VisionIOPhotonVision} with PhotonVision's simulator: each camera is simulated from the
+ * robot's pose and the field's tag layout.
  */
 public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     private final Supplier<Pose2d> poseSupplier;
-    private final PhotonCameraSim cameraSim;
     private final VisionSystemSim system;
 
+    /**
+     * @param cameras the cameras of this source
+     * @param poseSupplier the robot pose to simulate the cameras from
+     * @param fieldLayout the field's tags
+     */
     public VisionIOPhotonVisionSim(
-            CameraProperties cameraProperties,
-            VisionSystemSim system,
+            List<CameraProperties> cameras,
             Supplier<Pose2d> poseSupplier,
             AprilTagFieldLayout fieldLayout) {
-        super(cameraProperties);
+        super(cameras);
         this.poseSupplier = poseSupplier;
-        this.system = system;
-
-        var simCameraProperties = new SimCameraProperties();
-        if (cameraProperties.cameraMatrix() == null || cameraProperties.distCoeffs() == null) {
-            simCameraProperties.setCalibration(
-                    cameraProperties.resolutionWidth(),
-                    cameraProperties.resolutionHeight(),
-                    Rotation2d.fromRadians(cameraProperties.fov().in(Radians)));
-        } else {
-            simCameraProperties.setCalibration(
-                    cameraProperties.resolutionWidth(),
-                    cameraProperties.resolutionHeight(),
-                    cameraProperties.cameraMatrix(),
-                    cameraProperties.distCoeffs());
+        this.system = new VisionSystemSim("main");
+        system.addAprilTags(fieldLayout);
+        for (int i = 0; i < cameras.size(); i++) {
+            CameraProperties camera = cameras.get(i);
+            PhotonCameraSim cameraSim =
+                    new PhotonCameraSim(photonCameras.get(i), simProperties(camera), fieldLayout);
+            system.addCamera(cameraSim, camera.robotToCamera());
         }
-
-        simCameraProperties.setFPS(cameraProperties.fps());
-        simCameraProperties.setAvgLatencyMs(cameraProperties.latency().in(Units.Milliseconds));
-        simCameraProperties.setLatencyStdDevMs(
-                cameraProperties.latencyStdDev().in(Units.Milliseconds));
-
-        cameraSim = new PhotonCameraSim(super.photonCamera, simCameraProperties, fieldLayout);
-        this.system.addCamera(cameraSim, cameraProperties.robotToCamera());
     }
 
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        system.update(poseSupplier.get());
+        system.update(poseSupplier.get()); // once for all cameras
         super.updateInputs(inputs);
+    }
+
+    private static SimCameraProperties simProperties(CameraProperties camera) {
+        var properties = new SimCameraProperties();
+        if (camera.cameraMatrix() == null || camera.distCoeffs() == null) {
+            properties.setCalibration(
+                    camera.resolutionWidth(),
+                    camera.resolutionHeight(),
+                    Rotation2d.fromRadians(camera.fov().in(Radians)));
+        } else {
+            properties.setCalibration(
+                    camera.resolutionWidth(),
+                    camera.resolutionHeight(),
+                    camera.cameraMatrix(),
+                    camera.distCoeffs());
+        }
+        properties.setFPS(camera.fps());
+        properties.setAvgLatencyMs(camera.latency().in(Units.Milliseconds));
+        properties.setLatencyStdDevMs(camera.latencyStdDev().in(Units.Milliseconds));
+        return properties;
     }
 }

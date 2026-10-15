@@ -68,11 +68,12 @@ public class DistanceSensorIOCANRange implements DistanceSensorIO {
 
         if (!inputs.connected) {
             inputs.ambientSignal = 0.0;
-            inputs.distance = null;
+            inputs.hasDistance = false;
             return;
         }
 
         inputs.ambientSignal = ambientSignal.getValue();
+        inputs.hasDistance = true;
         inputs.distance = distance.getValue();
     }
 }

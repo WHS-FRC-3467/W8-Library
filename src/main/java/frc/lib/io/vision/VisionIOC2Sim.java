@@ -23,12 +23,12 @@ import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 
-import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.VisionSource.CameraProperties;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleFunction;
 
 /**
@@ -42,80 +42,64 @@ import java.util.function.DoubleFunction;
  *   <li>{@code /<dev>/sim/true_pose} ({@code Pose3d}): every true-pose sample, each with its NT
  *       timestamp set to the sample's own FPGA time, so C2 can interpolate the pose at any capture
  *       instant.
- *   <li>{@code /<dev>/sim/robot_to_camera} ({@code Transform3d[]}): each camera's mount, indexed
- *       by C2 camera index.
+ *   <li>{@code /<dev>/sim/robot_to_camera} ({@code Transform3d[]}): each camera's mount, indexed by
+ *       its slice of C2's combined frame.
  * </ul>
  */
 public class VisionIOC2Sim extends VisionIOC2 {
-    private static final ConcurrentHashMap<String, SimDevice> SIM_DEVICES =
-            new ConcurrentHashMap<>();
-
-    /** Simulation publishers shared by every camera on one C2 device. */
-    private static final class SimDevice {
-        private final DoubleFunction<NavigableMap<Double, Pose2d>> truePoseSamplesAfter;
-        private final StructPublisher<Pose3d> truePosePublisher;
-        private final StructArrayPublisher<Transform3d> mountsPublisher;
-        private final Map<Integer, Transform3d> mountsByIndex = new TreeMap<>();
-        private double lastPublishedSeconds = Double.NEGATIVE_INFINITY;
-
-        private SimDevice(
-                String deviceId, DoubleFunction<NavigableMap<Double, Pose2d>> truePoseSamplesAfter) {
-            this.truePoseSamplesAfter = truePoseSamplesAfter;
-            NetworkTable sim = NetworkTableInstance.getDefault().getTable("/" + deviceId + "/sim");
-            truePosePublisher =
-                    sim.getStructTopic("true_pose", Pose3d.struct)
-                            .publish(
-                                    PubSubOption.sendAll(true), PubSubOption.keepDuplicates(true));
-            mountsPublisher =
-                    sim.getStructArrayTopic("robot_to_camera", Transform3d.struct).publish();
-        }
-
-        synchronized void addMount(int cameraIndex, Transform3d robotToCamera) {
-            mountsByIndex.put(cameraIndex, robotToCamera);
-            int count = mountsByIndex.keySet().stream().mapToInt(i -> i + 1).max().orElse(0);
-            Transform3d[] mounts = new Transform3d[count];
-            for (int i = 0; i < count; i++) {
-                mounts[i] = mountsByIndex.getOrDefault(i, Transform3d.kZero);
-            }
-            mountsPublisher.set(mounts);
-        }
-
-        /** Publishes the true-pose samples not sent yet. Cheap to call once per camera per loop. */
-        synchronized void publishTruePose() {
-            for (Map.Entry<Double, Pose2d> sample :
-                    truePoseSamplesAfter.apply(lastPublishedSeconds).entrySet()) {
-                truePosePublisher.set(
-                        new Pose3d(sample.getValue()), (long) (sample.getKey() * 1e6));
-                lastPublishedSeconds = sample.getKey();
-            }
-        }
-    }
-
-    private final SimDevice simDevice;
+    private final DoubleFunction<NavigableMap<Double, Pose2d>> truePoseSamplesAfter;
+    private final StructPublisher<Pose3d> truePosePublisher;
+    // Held so the topic stays published.
+    private final StructArrayPublisher<Transform3d> mountsPublisher;
+    private double lastPublishedSeconds = Double.NEGATIVE_INFINITY;
 
     /**
-     * Creates the simulated IO for one C2 camera.
-     *
-     * @param properties camera name, resolution, mount, etc.
-     * @param config C2 device and topic configuration
+     * @param config the device's configuration
+     * @param cameras the cameras of this source, in the same order as {@code config.cameraSlices()}
      * @param truePoseSamplesAfter returns true-pose samples newer than the given FPGA time
      *     (seconds), keyed by sample time. In simulation, odometry has no wheel slip, so the
      *     odometry pose is the true pose.
      */
     public VisionIOC2Sim(
-            CameraProperties properties,
             C2Config config,
+            List<CameraProperties> cameras,
             DoubleFunction<NavigableMap<Double, Pose2d>> truePoseSamplesAfter) {
-        super(properties, config);
-        simDevice =
-                SIM_DEVICES.computeIfAbsent(
-                        config.deviceId(), id -> new SimDevice(id, truePoseSamplesAfter));
-        simDevice.addMount(config.cameraIndex(), properties.robotToCamera());
+        super(config);
+        if (cameras.size() != config.cameraSlices().size()) {
+            throw new IllegalArgumentException(
+                    "VisionIOC2Sim needs one camera per C2 slice: "
+                            + cameras.size()
+                            + " cameras, slices "
+                            + config.cameraSlices());
+        }
+        this.truePoseSamplesAfter = truePoseSamplesAfter;
+        NetworkTable sim =
+                NetworkTableInstance.getDefault().getTable("/" + config.deviceId() + "/sim");
+        truePosePublisher =
+                sim.getStructTopic("true_pose", Pose3d.struct)
+                        .publish(PubSubOption.sendAll(true), PubSubOption.keepDuplicates(true));
+        mountsPublisher = sim.getStructArrayTopic("robot_to_camera", Transform3d.struct).publish();
+        mountsPublisher.set(mountsBySlice(config.cameraSlices(), cameras));
     }
 
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        simDevice.publishTruePose();
+        for (Map.Entry<Double, Pose2d> sample :
+                truePoseSamplesAfter.apply(lastPublishedSeconds).entrySet()) {
+            truePosePublisher.set(new Pose3d(sample.getValue()), (long) (sample.getKey() * 1e6));
+            lastPublishedSeconds = sample.getKey();
+        }
         super.updateInputs(inputs);
+    }
+
+    private static Transform3d[] mountsBySlice(
+            List<Integer> slices, List<CameraProperties> cameras) {
+        int count = slices.stream().mapToInt(slice -> slice + 1).max().orElse(0);
+        Transform3d[] mounts = new Transform3d[count];
+        Arrays.fill(mounts, Transform3d.kZero);
+        for (int i = 0; i < slices.size(); i++) {
+            mounts[slices.get(i)] = cameras.get(i).robotToCamera();
+        }
+        return mounts;
     }
 }

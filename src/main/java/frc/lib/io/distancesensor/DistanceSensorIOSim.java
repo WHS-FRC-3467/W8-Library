@@ -51,6 +51,9 @@ public class DistanceSensorIOSim implements DistanceSensorIO {
         if (tunableDistance.hasChanged(hashCode())) {
             distance = Inches.of(tunableDistance.getAsDouble());
         }
-        inputs.distance = distance;
+        inputs.hasDistance = distance != null;
+        if (distance != null) {
+            inputs.distance = distance;
+        }
     }
 }

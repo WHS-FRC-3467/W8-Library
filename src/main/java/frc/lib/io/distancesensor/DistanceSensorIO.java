@@ -15,6 +15,8 @@
 
 package frc.lib.io.distancesensor;
 
+import static edu.wpi.first.units.Units.Meters;
+
 import edu.wpi.first.units.measure.Distance;
 
 import org.littletonrobotics.junction.AutoLog;
@@ -27,8 +29,14 @@ public interface DistanceSensorIO {
         /** Whether the sensor is connected. */
         public boolean connected = false;
 
-        /** Distance from the sensor to the nearest object */
-        public Distance distance = null;
+        /** Whether {@link #distance} holds a valid reading. */
+        public boolean hasDistance = false;
+
+        /**
+         * Distance from the sensor to the nearest object; only meaningful when {@link
+         * #hasDistance}. Never null: AdvantageKit can't replay a null measurement.
+         */
+        public Distance distance = Meters.zero();
 
         /** The amount of ambient infrared light detected by the sensor. */
         public double ambientSignal = 0.0;

@@ -22,7 +22,9 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.lib.devices.AprilTagCamera;
+import frc.lib.devices.VisionSource;
+import frc.lib.devices.VisionSource.CameraProperties;
+import frc.lib.devices.VisionSource.CameraResults;
 import frc.lib.io.vision.VisionIO.CameraResult;
 import frc.lib.io.vision.VisionIO.MultiTagObservation;
 import frc.lib.io.vision.VisionIO.TagObservation;
@@ -46,10 +48,10 @@ import java.util.Set;
 /**
  * The {@code VisionSubsystem} manages all vision-related processing for the robot.
  *
- * <p>It uses one or more {@link AprilTagCamera}s to detect field elements and estimate the robot's
- * pose on the field. Observations are processed through the MultiTagOnCoproc vision processor, with
- * a fallback to LowestAmbiguity if necessary. Valid observations are added to {@link RobotState}
- * for use in localization and navigation.
+ * <p>It uses one or more {@link VisionSource}s (each a group of cameras) to detect field elements
+ * and estimate the robot's pose on the field. Observations are processed through the
+ * MultiTagOnCoproc vision processor, with a fallback to LowestAmbiguity if necessary. Valid
+ * observations are added to {@link RobotState} for use in localization and navigation.
  *
  * <p>The subsystem periodically polls cameras for new results and logs both accepted and rejected
  * vision observations.
@@ -110,7 +112,7 @@ public class VisionSubsystem extends SubsystemBase {
             new LoggedTunableNumber("VisionSubsystem/TimestampOffset", 0.0);
 
     private final RobotState robotState = RobotState.getInstance();
-    private final AprilTagCamera[] cameras;
+    private final VisionSource[] sources;
 
     /**
      * Quickly checks whether a result is likely to be useful before full processing.
@@ -182,12 +184,12 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     /**
-     * Constructs a new {@code VisionSubsystem} with the specified cameras.
+     * Constructs a new {@code VisionSubsystem} with the specified vision sources.
      *
-     * @param cameras the cameras to use for vision processing
+     * @param sources the vision sources (groups of cameras) to use
      */
-    public VisionSubsystem(AprilTagCamera... cameras) {
-        this.cameras = cameras;
+    public VisionSubsystem(VisionSource... sources) {
+        this.sources = sources;
     }
 
     /**
@@ -196,112 +198,114 @@ public class VisionSubsystem extends SubsystemBase {
      */
     @Override
     public void periodic() {
-        for (int c = 0; c < cameras.length; c++) {
-            AprilTagCamera camera = cameras[c];
-            String cameraLogPrefix =
-                    VisionConstants.NAME + "/" + camera.getProperties().name() + "/";
+        for (VisionSource source : sources) {
+            for (CameraResults cameraResults : source.getUnreadResults()) {
+                processCamera(
+                        cameraResults.camera(),
+                        cameraResults.results().toArray(CameraResult[]::new));
+            }
+        }
+    }
 
-            CameraResult[] results = camera.getUnreadResults().orElse(null);
-            if (results == null) {
+    /** Filters, validates, and adds one camera's results to RobotState, and logs them. */
+    private void processCamera(CameraProperties camera, CameraResult[] results) {
+        String cameraLogPrefix = VisionConstants.NAME + "/" + camera.name() + "/";
+        if (results.length > MAX_UNREAD_RESULTS) {
+            results =
+                    Arrays.copyOfRange(
+                            results, results.length - MAX_UNREAD_RESULTS, results.length);
+        }
+
+        ArrayList<CameraResult> acceptedResults = new ArrayList<>();
+        ArrayList<CameraResult> rejectedResults = new ArrayList<>();
+        ArrayList<Pose3d> acceptedPoses = new ArrayList<>();
+        ArrayList<Pose3d> rejectedPoses = new ArrayList<>();
+
+        for (CameraResult result : results) {
+
+            if (!preFilter(result)) {
+                rejectedResults.add(result);
                 continue;
             }
-            if (results.length > MAX_UNREAD_RESULTS) {
-                results =
-                        Arrays.copyOfRange(
-                                results, results.length - MAX_UNREAD_RESULTS, results.length);
+
+            // Compute robot pose directly from the standardized CameraResult
+            Optional<Pose3d> fieldToRobotPose = computeRobotPose(camera, result);
+            if (fieldToRobotPose.isEmpty()) {
+                rejectedResults.add(result);
+                continue;
             }
 
-            ArrayList<CameraResult> acceptedResults = new ArrayList<>();
-            ArrayList<CameraResult> rejectedResults = new ArrayList<>();
-            ArrayList<Pose3d> acceptedPoses = new ArrayList<>();
-            ArrayList<Pose3d> rejectedPoses = new ArrayList<>();
+            List<Integer> tagsUsed = getTagsUsed(result);
+            double avgDistanceMeters = getAvgDistanceMeters(result);
+            VisionPoseRecord poseRecord =
+                    new VisionPoseRecord(fieldToRobotPose.get(), tagsUsed, avgDistanceMeters);
 
-            for (CameraResult result : results) {
-
-                if (!preFilter(result)) {
-                    rejectedResults.add(result);
-                    continue;
-                }
-
-                // Compute robot pose directly from the standardized CameraResult
-                Optional<Pose3d> fieldToRobotPose = computeRobotPose(camera, result);
-                if (fieldToRobotPose.isEmpty()) {
-                    rejectedResults.add(result);
-                    continue;
-                }
-
-                List<Integer> tagsUsed = getTagsUsed(result);
-                double avgDistanceMeters = getAvgDistanceMeters(result);
-                VisionPoseRecord poseRecord =
-                        new VisionPoseRecord(fieldToRobotPose.get(), tagsUsed, avgDistanceMeters);
-
-                if (!postFilter(poseRecord.pose())) {
-                    rejectedResults.add(result);
-                    rejectedPoses.add(poseRecord.pose());
-                    continue;
-                }
-
-                double stdDevFactor = computeStdDevFactor(camera, result, poseRecord);
-
-                double linearStdDev = LINEAR_STDDEV_BASELINE * stdDevFactor;
-                double angularStdDev =
-                        poseRecord.tagsUsed().size() == 1
-                                ? SINGLE_TAG_ANGULAR_STDDEV
-                                : ANGULAR_STDDEV_BASELINE * stdDevFactor;
-
-                // captureTimestampUs holds the absolute capture timestamp in microseconds
-                double timestampSeconds =
-                        result.captureTimestampUs() / 1_000_000.0 + TIMESTAMP_OFFSET.get();
-                robotState.addVisionObservation(
-                        new VisionPoseObservation(
-                                timestampSeconds,
-                                poseRecord.pose().toPose2d(),
-                                poseRecord.averageDistanceMeters(),
-                                poseRecord.tagsUsed(),
-                                linearStdDev,
-                                angularStdDev));
-
-                acceptedResults.add(result);
-                acceptedPoses.add(poseRecord.pose());
+            if (!postFilter(poseRecord.pose())) {
+                rejectedResults.add(result);
+                rejectedPoses.add(poseRecord.pose());
+                continue;
             }
 
-            Set<Integer> tagsAccepted = new HashSet<>();
-            Set<Integer> tagsRejected = new HashSet<>();
+            double stdDevFactor = computeStdDevFactor(camera, result, poseRecord);
 
-            Logger.recordOutput(cameraLogPrefix + "Results/AcceptedLength", acceptedResults.size());
-            for (CameraResult accepted : acceptedResults) {
-                tagsAccepted.addAll(getTagsUsed(accepted));
-            }
+            double linearStdDev = LINEAR_STDDEV_BASELINE * stdDevFactor;
+            double angularStdDev =
+                    poseRecord.tagsUsed().size() == 1
+                            ? SINGLE_TAG_ANGULAR_STDDEV
+                            : ANGULAR_STDDEV_BASELINE * stdDevFactor;
 
-            Logger.recordOutput(cameraLogPrefix + "Results/RejectedLength", rejectedResults.size());
-            for (CameraResult rejected : rejectedResults) {
-                tagsRejected.addAll(getTagsUsed(rejected));
-            }
+            // captureTimestampUs holds the absolute capture timestamp in microseconds
+            double timestampSeconds =
+                    result.captureTimestampUs() / 1_000_000.0 + TIMESTAMP_OFFSET.get();
+            robotState.addVisionObservation(
+                    new VisionPoseObservation(
+                            timestampSeconds,
+                            poseRecord.pose().toPose2d(),
+                            poseRecord.averageDistanceMeters(),
+                            poseRecord.tagsUsed(),
+                            linearStdDev,
+                            angularStdDev));
 
-            Logger.recordOutput(
-                    cameraLogPrefix + "Poses/Accepted", acceptedPoses.toArray(Pose3d[]::new));
-            Logger.recordOutput(
-                    cameraLogPrefix + "Poses/Rejected", rejectedPoses.toArray(Pose3d[]::new));
-
-            List<Pose3d> tagPosesAccepted =
-                    tagsAccepted.stream()
-                            .map(this::getTagPose)
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .toList();
-
-            List<Pose3d> tagPosesRejected =
-                    tagsRejected.stream()
-                            .map(this::getTagPose)
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .toList();
-
-            Logger.recordOutput(
-                    cameraLogPrefix + "TagPoses/Accepted", tagPosesAccepted.toArray(Pose3d[]::new));
-            Logger.recordOutput(
-                    cameraLogPrefix + "TagPoses/Rejected", tagPosesRejected.toArray(Pose3d[]::new));
+            acceptedResults.add(result);
+            acceptedPoses.add(poseRecord.pose());
         }
+
+        Set<Integer> tagsAccepted = new HashSet<>();
+        Set<Integer> tagsRejected = new HashSet<>();
+
+        Logger.recordOutput(cameraLogPrefix + "Results/AcceptedLength", acceptedResults.size());
+        for (CameraResult accepted : acceptedResults) {
+            tagsAccepted.addAll(getTagsUsed(accepted));
+        }
+
+        Logger.recordOutput(cameraLogPrefix + "Results/RejectedLength", rejectedResults.size());
+        for (CameraResult rejected : rejectedResults) {
+            tagsRejected.addAll(getTagsUsed(rejected));
+        }
+
+        Logger.recordOutput(
+                cameraLogPrefix + "Poses/Accepted", acceptedPoses.toArray(Pose3d[]::new));
+        Logger.recordOutput(
+                cameraLogPrefix + "Poses/Rejected", rejectedPoses.toArray(Pose3d[]::new));
+
+        List<Pose3d> tagPosesAccepted =
+                tagsAccepted.stream()
+                        .map(this::getTagPose)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .toList();
+
+        List<Pose3d> tagPosesRejected =
+                tagsRejected.stream()
+                        .map(this::getTagPose)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .toList();
+
+        Logger.recordOutput(
+                cameraLogPrefix + "TagPoses/Accepted", tagPosesAccepted.toArray(Pose3d[]::new));
+        Logger.recordOutput(
+                cameraLogPrefix + "TagPoses/Rejected", tagPosesRejected.toArray(Pose3d[]::new));
     }
 
     /**
@@ -315,9 +319,9 @@ public class VisionSubsystem extends SubsystemBase {
      * @param result the standardized camera result
      * @return the robot pose in field coordinates, or empty if it cannot be computed
      */
-    private Optional<Pose3d> computeRobotPose(AprilTagCamera camera, CameraResult result) {
+    private Optional<Pose3d> computeRobotPose(CameraProperties camera, CameraResult result) {
         // The camera-to-robot transform: invert robotToCamera to go camera→robot
-        Transform3d cameraToRobot = camera.getProperties().robotToCamera().inverse();
+        Transform3d cameraToRobot = camera.robotToCamera().inverse();
 
         if (result.multiTagObservation().isPresent()) {
             Pose3d fieldToCamera = result.multiTagObservation().get().fieldToCameraPose();
@@ -382,7 +386,7 @@ public class VisionSubsystem extends SubsystemBase {
      * @return clamped standard deviation scaling factor
      */
     private double computeStdDevFactor(
-            AprilTagCamera camera, CameraResult result, VisionPoseRecord poseRecord) {
+            CameraProperties camera, CameraResult result, VisionPoseRecord poseRecord) {
         double distanceMeters =
                 Math.max(poseRecord.averageDistanceMeters(), MIN_STDDEV_DISTANCE_METERS);
         int tagCount = Math.max(1, poseRecord.tagsUsed().size());
@@ -401,11 +405,7 @@ public class VisionSubsystem extends SubsystemBase {
         double tagFactor = 1.0 / Math.pow(tagCount, STDDEV_TAGCOUNT_EXPONENT);
         double ambiguityFactor =
                 1.0 + STDDEV_AMBIGUITY_WEIGHT * Math.pow(ambiguity / MAX_AMBIGUITY, 2.0);
-        double stdDevFactor =
-                distanceFactor
-                        * tagFactor
-                        * ambiguityFactor
-                        * camera.getProperties().stdDevFactor();
+        double stdDevFactor = distanceFactor * tagFactor * ambiguityFactor * camera.stdDevFactor();
 
         return MathUtil.clamp(stdDevFactor, STDDEV_FACTOR_MIN, STDDEV_FACTOR_MAX);
     }

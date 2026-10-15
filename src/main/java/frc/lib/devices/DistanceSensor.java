@@ -62,7 +62,7 @@ public class DistanceSensor {
      * @return The distance read by the sensor
      */
     public Optional<Distance> getDistance() {
-        return Optional.ofNullable(inputs.distance);
+        return inputs.hasDistance ? Optional.of(inputs.distance) : Optional.empty();
     }
 
     /**

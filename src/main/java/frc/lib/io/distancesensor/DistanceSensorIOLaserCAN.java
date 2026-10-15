@@ -109,7 +109,7 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
 
             inputs.connected = false;
             inputs.ambientSignal = 0.0;
-            inputs.distance = null;
+            inputs.hasDistance = false;
             return;
         }
 
@@ -119,12 +119,13 @@ public class DistanceSensorIOLaserCAN implements DistanceSensorIO {
         if (measure.status != LaserCanInterface.LASERCAN_STATUS_VALID_MEASUREMENT) {
             invalidReadingAlert.set(true);
             inputs.ambientSignal = 0.0;
-            inputs.distance = null;
+            inputs.hasDistance = false;
             return;
         }
 
         invalidReadingAlert.set(false);
         inputs.ambientSignal = measure.ambient;
+        inputs.hasDistance = true;
         inputs.distance = Millimeters.of(measure.distance_mm);
     }
 }

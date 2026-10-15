@@ -32,8 +32,8 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Time;
 
-import frc.lib.devices.AprilTagCamera;
-import frc.lib.devices.AprilTagCamera.CameraProperties;
+import frc.lib.devices.VisionSource;
+import frc.lib.devices.VisionSource.CameraProperties;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOC2;
 import frc.lib.io.vision.VisionIOC2Sim;
@@ -45,9 +45,7 @@ import frc.robot.RobotState;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import org.photonvision.simulation.VisionSystemSim;
-
-import java.util.Optional;
+import java.util.List;
 
 /**
  * Configuration constants for the vision subsystem.
@@ -89,11 +87,11 @@ public class VisionConstants {
     public static final String RIGHT_NAME = "right";
     public static final String FRONT_RIGHT_NAME = "front_right";
 
-    // Combined-frame slice order on the shared CTWO device.
-    private static final int FRONT_LEFT_CAMERA_INDEX = 3;
-    private static final int LEFT_CTWO_CAMERA_INDEX = 1;
-    private static final int RIGHT_CTWO_CAMERA_INDEX = 0;
-    private static final int FRONT_RIGHT_CAMERA_INDEX = 2;
+    // Which slice of C2's combined frame each camera is.
+    private static final int FRONT_LEFT_C2_SLICE = 3;
+    private static final int LEFT_C2_SLICE = 1;
+    private static final int RIGHT_C2_SLICE = 0;
+    private static final int FRONT_RIGHT_C2_SLICE = 2;
 
     public static final Transform3d FRONT_LEFT_TRANSFORM =
             new Transform3d(
@@ -273,7 +271,6 @@ public class VisionConstants {
     public static final CameraProperties FRONT_LEFT =
             new CameraProperties(
                     FRONT_LEFT_NAME,
-                    FRONT_LEFT_CAMERA_INDEX,
                     FRONT_LEFT_TRANSFORM,
                     FRONT_LEFT_MATRIX,
                     FRONT_LEFT_DIST_COEFFS,
@@ -288,7 +285,6 @@ public class VisionConstants {
     public static final CameraProperties LEFT =
             new CameraProperties(
                     LEFT_NAME,
-                    LEFT_CTWO_CAMERA_INDEX,
                     LEFT_TRANSFORM,
                     LEFT_MATRIX,
                     LEFT_DIST_COEFFS,
@@ -303,7 +299,6 @@ public class VisionConstants {
     public static final CameraProperties RIGHT =
             new CameraProperties(
                     RIGHT_NAME,
-                    RIGHT_CTWO_CAMERA_INDEX,
                     RIGHT_TRANSFORM,
                     RIGHT_MATRIX,
                     RIGHT_DIST_COEFFS,
@@ -318,7 +313,6 @@ public class VisionConstants {
     public static final CameraProperties FRONT_RIGHT =
             new CameraProperties(
                     FRONT_RIGHT_NAME,
-                    FRONT_RIGHT_CAMERA_INDEX,
                     FRONT_RIGHT_TRANSFORM,
                     FRONT_RIGHT_MATRIX,
                     FRONT_RIGHT_DIST_COEFFS,
@@ -330,131 +324,53 @@ public class VisionConstants {
                     FRONT_RIGHT_LATENCY,
                     FRONT_RIGHT_LATENCY_STDDEV);
 
-    private static Optional<VisionSystemSim> visionSim = Optional.empty();
-    private static final VisionIOC2.C2Config FRONT_LEFT_C2_CONFIG =
-            VisionIOC2.defaultsFor(FRONT_LEFT_CAMERA_INDEX);
-    private static final VisionIOC2.C2Config LEFT_C2_CONFIG =
-            VisionIOC2.defaultsFor(LEFT_CTWO_CAMERA_INDEX);
-    private static final VisionIOC2.C2Config RIGHT_C2_CONFIG =
-            VisionIOC2.defaultsFor(RIGHT_CTWO_CAMERA_INDEX);
-    private static final VisionIOC2.C2Config FRONT_RIGHT_C2_CONFIG =
-            VisionIOC2.defaultsFor(FRONT_RIGHT_CAMERA_INDEX);
+    /** Every camera, on one C2 coprocessor (and on PhotonVision in PhotonVision sim). */
+    public static final List<CameraProperties> CAMERAS =
+            List.of(FRONT_LEFT, LEFT, RIGHT, FRONT_RIGHT);
 
-    private static VisionSystemSim getVisionSim() {
-        if (visionSim.isEmpty()) {
-            visionSim = Optional.of(new VisionSystemSim("main"));
-            visionSim.get().addAprilTags(fieldLayout);
-        }
-        return visionSim.get();
-    }
-
-    /** C2 in simulation mode renders this camera from the robot's true (odometry) pose. */
-    private static VisionIO getC2SimIO(CameraProperties camera, VisionIOC2.C2Config config) {
-        return new VisionIOC2Sim(
-                camera, config, RobotState.getInstance()::getOdometrySamplesAfter);
-    }
-
-    private static VisionIO getFrontLeftIOReal() {
-        return new VisionIOC2(FRONT_LEFT, FRONT_LEFT_C2_CONFIG);
-    }
-
-    private static VisionIOPhotonVisionSim getFrontLeftIOSim() {
-        return new VisionIOPhotonVisionSim(
-                FRONT_LEFT,
-                getVisionSim(),
-                () -> RobotState.getInstance().getOdometryPose(),
-                fieldLayout);
-    }
-
-    private static VisionIO getLeftIOReal() {
-        return new VisionIOC2(LEFT, LEFT_C2_CONFIG);
-    }
-
-    private static VisionIOPhotonVisionSim getLeftIOSim() {
-        return new VisionIOPhotonVisionSim(
-                LEFT,
-                getVisionSim(),
-                () -> RobotState.getInstance().getOdometryPose(),
-                fieldLayout);
-    }
-
-    private static VisionIO getRightIOReal() {
-        return new VisionIOC2(RIGHT, RIGHT_C2_CONFIG);
-    }
-
-    private static VisionIOPhotonVisionSim getRightIOSim() {
-        return new VisionIOPhotonVisionSim(
-                RIGHT,
-                getVisionSim(),
-                () -> RobotState.getInstance().getOdometryPose(),
-                fieldLayout);
-    }
-
-    private static VisionIO getFrontRightIOReal() {
-        return new VisionIOC2(FRONT_RIGHT, FRONT_RIGHT_C2_CONFIG);
-    }
-
-    private static VisionIOPhotonVisionSim getFrontRightIOSim() {
-        return new VisionIOPhotonVisionSim(
-                FRONT_RIGHT,
-                getVisionSim(),
-                () -> RobotState.getInstance().getOdometryPose(),
-                fieldLayout);
-    }
+    /** The C2 device: which slice of its combined frame each of {@link #CAMERAS} is. */
+    private static final VisionIOC2.C2Config C2_CONFIG =
+            VisionIOC2.C2Config.defaults(
+                    FRONT_LEFT_RESOLUTION_WIDTH,
+                    FRONT_LEFT_RESOLUTION_HEIGHT,
+                    List.of(
+                            FRONT_LEFT_C2_SLICE,
+                            LEFT_C2_SLICE,
+                            RIGHT_C2_SLICE,
+                            FRONT_RIGHT_C2_SLICE));
 
     /**
-     * Creates and configures a VisionSubsystem with AprilTag cameras based on the current robot
-     * mode. Instantiates cameras with appropriate IO implementations (real, sim, or replay).
+     * The single vision source's name. The same in every mode, so its logged inputs are under the
+     * same key whichever IO recorded them, and replay reads them without any configuration.
+     */
+    private static final String SOURCE_NAME = "main";
+
+    /**
+     * Creates the VisionSubsystem with the vision source for the current robot mode (real, sim, or
+     * replay).
      */
     public static void create() {
-        switch (Constants.currentMode) {
-            case REAL -> {
-                var frontLeftCamera =
-                        new AprilTagCamera(FRONT_LEFT, getFrontLeftIOReal(), fieldLayout);
-                var leftCamera = new AprilTagCamera(LEFT, getLeftIOReal(), fieldLayout);
-                var rightCamera = new AprilTagCamera(RIGHT, getRightIOReal(), fieldLayout);
-                var frontRightCamera =
-                        new AprilTagCamera(FRONT_RIGHT, getFrontRightIOReal(), fieldLayout);
-                new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
-            }
-            case SIM -> {
-                if (SIM_BACKEND == SimBackend.C2) {
-                    var frontLeftCamera =
-                            new AprilTagCamera(
-                                    FRONT_LEFT,
-                                    getC2SimIO(FRONT_LEFT, FRONT_LEFT_C2_CONFIG),
-                                    fieldLayout);
-                    var leftCamera =
-                            new AprilTagCamera(
-                                    LEFT, getC2SimIO(LEFT, LEFT_C2_CONFIG), fieldLayout);
-                    var rightCamera =
-                            new AprilTagCamera(
-                                    RIGHT, getC2SimIO(RIGHT, RIGHT_C2_CONFIG), fieldLayout);
-                    var frontRightCamera =
-                            new AprilTagCamera(
-                                    FRONT_RIGHT,
-                                    getC2SimIO(FRONT_RIGHT, FRONT_RIGHT_C2_CONFIG),
-                                    fieldLayout);
-                    new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
-                } else {
-                    var frontLeftCamera =
-                            new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim(), fieldLayout);
-                    var leftCamera = new AprilTagCamera(LEFT, getLeftIOSim(), fieldLayout);
-                    var rightCamera = new AprilTagCamera(RIGHT, getRightIOSim(), fieldLayout);
-                    var frontRightCamera =
-                            new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim(), fieldLayout);
-                    new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
-                }
-            }
-            case REPLAY -> {
-                var frontLeftCamera =
-                        new AprilTagCamera(FRONT_LEFT, new VisionIO() {}, fieldLayout);
-                var leftCamera = new AprilTagCamera(LEFT, new VisionIO() {}, fieldLayout);
-                var rightCamera = new AprilTagCamera(RIGHT, new VisionIO() {}, fieldLayout);
-                var frontRightCamera =
-                        new AprilTagCamera(FRONT_RIGHT, new VisionIO() {}, fieldLayout);
-                new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
-            }
-        }
+        VisionIO io =
+                switch (Constants.currentMode) {
+                    case REAL -> new VisionIOC2(C2_CONFIG);
+                    case SIM ->
+                            switch (SIM_BACKEND) {
+                                // Same IO as the real robot; C2 (in sim mode) renders the cameras
+                                // from the true pose.
+                                case C2 ->
+                                        new VisionIOC2Sim(
+                                                C2_CONFIG,
+                                                CAMERAS,
+                                                RobotState.getInstance()::getOdometrySamplesAfter);
+                                case PHOTONVISION ->
+                                        new VisionIOPhotonVisionSim(
+                                                CAMERAS,
+                                                () -> RobotState.getInstance().getOdometryPose(),
+                                                fieldLayout);
+                            };
+                    // The log says which packet type each result is (C2 or PhotonVision).
+                    case REPLAY -> new VisionIO() {};
+                };
+        new VisionSubsystem(new VisionSource(SOURCE_NAME, CAMERAS, io, fieldLayout));
     }
 }

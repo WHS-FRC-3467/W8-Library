@@ -14,10 +14,6 @@
  */
 package frc.lib.io.vision;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanSubscriber;
@@ -32,84 +28,59 @@ import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.TimestampedRaw;
 import edu.wpi.first.util.WPIUtilJNI;
 
-import frc.lib.devices.AprilTagCamera.CameraProperties;
 import frc.robot.FieldConstants.AprilTagLayoutType;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashSet;
+import java.util.List;
 
 /**
- * {@link VisionIO} for one camera of a C2 multi-camera coprocessor.
+ * {@link VisionIO} for one C2 coprocessor: one source serving all of its cameras.
  *
  * <p>NetworkTables layout used (see C2's README for the full list), for device {@code dsv0}:
  *
  * <ul>
  *   <li>{@code /dsv0/config/*}: capture settings (camera id, per-camera resolution, exposure,
- *       gain), shared by every camera on the device.
- *   <li>{@code /dsv0/pipelines/apriltag/enabled}, {@code .../config/tag_layout}, {@code
- *       .../config/fiducial_size_m}, {@code .../config/min_tag_size_px}: the AprilTag pipeline's
- *       settings.
- *   <li>{@code /dsv0/pipelines/apriltag/output/camera_<i>}: one flatbuffer ({@code dsv0.Frame})
- *       per frame for camera {@code i}, including frames with no tags.
- *   <li>{@code /dsv0/status/heartbeat} and {@code /dsv0/status/camera_<i>/connected}: health.
+ *       gain).
+ *   <li>{@code /dsv0/pipelines/apriltag/enabled} and {@code .../config/*}: the AprilTag pipeline's
+ *       settings (tag layout, tag size, minimum tag size in pixels).
+ *   <li>{@code /dsv0/pipelines/apriltag/output/camera_<slice>}: one flatbuffer per frame per
+ *       camera, including frames with no tags (decoded by {@link C2Decoder}).
+ *   <li>{@code /dsv0/status/heartbeat} and {@code /dsv0/status/camera_<slice>/connected}: health.
  * </ul>
  *
+ * <p>The robot is the NT server, so the settings published here persist on the server and C2 picks
+ * them up whenever it (re)connects. C2 only sets defaults on these topics, so ours always win.
+ *
  * <p>Timestamps: C2 publishes each result with the NT timestamp set to the frame's capture time on
- * the robot's clock (FPGA time), corrected for clock drift. {@link TimestampedRaw#timestamp} is
- * therefore directly comparable to {@code Timer.getFPGATimestamp()} (in microseconds), in real
- * matches and in simulation. No extra offset should be needed.
+ * the robot's clock (FPGA time), corrected for clock drift. No extra offset is needed.
  */
 public class VisionIOC2 implements VisionIO {
-    private static final String DEFAULT_DEVICE_ID = "dsv0";
-    private static final String DEFAULT_CAMERA_ID = "0";
+    public static final String DEFAULT_DEVICE_ID = "dsv0";
     private static final String PIPELINE = "apriltag";
     private static final String FLATBUFFER_TYPE = "dsv0_fb";
-    private static final int DEFAULT_CAMERA_EXPOSURE = 100;
-    private static final int DEFAULT_CAMERA_GAIN = 0;
-    private static final int DEFAULT_POLL_STORAGE_DEPTH = 32;
-    /** C2's heartbeat ticks every 100 ms; this many microseconds without one means it is gone. */
+    /** C2's heartbeat ticks every 100 ms; this long without one means it is gone. */
     private static final long HEARTBEAT_TIMEOUT_US = 500_000L;
 
-    private static final double DEFAULT_FIDUCIAL_SIZE_METERS = Units.inchesToMeters(6.5);
-
     /**
-     * Tags smaller than this (longest edge, pixels) are left out of C2's solve: tiny tags have
-     * noisy corners. In C2's simulation, 50 px cut the worst multi-tag error from 76 cm to under 7
-     * cm. With these cameras' focal lengths (~1380-2000 px), 50 px is a tag about 4.6-6.6 m away.
-     */
-    private static final double DEFAULT_MIN_TAG_SIZE_PX = 50.0;
-    private static final ConcurrentHashMap<String, C2Device> DEVICES = new ConcurrentHashMap<>();
-
-    /**
-     * Configuration for one C2 camera.
+     * Configuration for one C2 device.
      *
      * @param deviceId NetworkTables root of the C2 device, e.g. {@code dsv0}
-     * @param cameraIndex This camera's slice of the module's combined frame
-     * @param cameraId Capture device consumed by C2 (shared by the device)
-     * @param exposure Exposure sent to C2 (shared by the device)
-     * @param gain Gain sent to C2 (shared by the device)
+     * @param cameraSlices for each camera of this source (in the source's camera order), which
+     *     slice of C2's combined frame it is
+     * @param cameraId capture device consumed by C2
+     * @param resolutionWidth width of ONE camera, pixels
+     * @param resolutionHeight camera height, pixels
+     * @param exposure exposure sent to C2
+     * @param gain gain sent to C2
      * @param fiducialSizeMeters AprilTag edge length used by C2's solvePnP
-     * @param tagLayoutJson Serialized {@link AprilTagFieldLayout} for C2
-     * @param minTagSizePx Tags smaller than this in the image are left out of C2's solve; 0 = off
-     * @param pollStorageDepth NT queue depth for unread results
+     * @param tagLayoutJson serialized field layout for C2
+     * @param minTagSizePx tags smaller than this in the image are left out of C2's solve; 0 = off
+     * @param pollStorageDepth NT queue depth for unread results, per camera
      */
     public static record C2Config(
             String deviceId,
-            int cameraIndex,
-            String cameraId,
-            int exposure,
-            int gain,
-            double fiducialSizeMeters,
-            String tagLayoutJson,
-            double minTagSizePx,
-            int pollStorageDepth) {}
-
-    /** Settings every camera on the same C2 device must agree on. */
-    private static record SharedConfig(
+            List<Integer> cameraSlices,
             String cameraId,
             int resolutionWidth,
             int resolutionHeight,
@@ -117,363 +88,165 @@ public class VisionIOC2 implements VisionIO {
             int gain,
             double fiducialSizeMeters,
             String tagLayoutJson,
-            double minTagSizePx) {}
+            double minTagSizePx,
+            int pollStorageDepth) {
 
-    /**
-     * Publishers and subscribers shared by every camera on one C2 device.
-     *
-     * <p>The robot is the NT server, so values published here persist on the server and C2 picks
-     * them up whenever it (re)connects. C2 only sets defaults on these topics, so ours always win.
-     */
-    private static final class C2Device {
-        private final String deviceId;
-        private final Map<Integer, String> cameraNamesByIndex = new HashMap<>();
-        private final NetworkTable table;
-        private final IntegerSubscriber heartbeat;
-
-        private SharedConfig sharedConfig = null;
-
-        // Held so the topics stay published.
-        private final StringPublisher cameraIdPublisher;
-        private final IntegerPublisher widthPublisher;
-        private final IntegerPublisher heightPublisher;
-        private final IntegerPublisher exposurePublisher;
-        private final IntegerPublisher gainPublisher;
-        private final BooleanPublisher pipelineEnabledPublisher;
-        private final StringPublisher tagLayoutPublisher;
-        private final DoublePublisher fiducialSizePublisher;
-        private final DoublePublisher minTagSizePublisher;
-
-        private C2Device(NetworkTableInstance ntInstance, String deviceId) {
-            this.deviceId = deviceId;
-            table = ntInstance.getTable("/" + deviceId);
-
-            NetworkTable capture = table.getSubTable("config");
-            cameraIdPublisher = capture.getStringTopic("camera_id").publish();
-            widthPublisher = capture.getIntegerTopic("camera_resolution_width").publish();
-            heightPublisher = capture.getIntegerTopic("camera_resolution_height").publish();
-            exposurePublisher = capture.getIntegerTopic("camera_exposure").publish();
-            gainPublisher = capture.getIntegerTopic("camera_gain").publish();
-
-            NetworkTable pipeline = table.getSubTable("pipelines").getSubTable(PIPELINE);
-            pipelineEnabledPublisher = pipeline.getBooleanTopic("enabled").publish();
-            NetworkTable pipelineConfig = pipeline.getSubTable("config");
-            tagLayoutPublisher = pipelineConfig.getStringTopic("tag_layout").publish();
-            fiducialSizePublisher = pipelineConfig.getDoubleTopic("fiducial_size_m").publish();
-            minTagSizePublisher = pipelineConfig.getDoubleTopic("min_tag_size_px").publish();
-
-            heartbeat = table.getSubTable("status").getIntegerTopic("heartbeat").subscribe(0);
+        /**
+         * Defaults for device {@code dsv0}.
+         *
+         * @param resolutionWidth width of one camera, pixels
+         * @param resolutionHeight camera height, pixels
+         * @param cameraSlices each camera's slice of the combined frame, in the source's order
+         * @return the configuration
+         */
+        public static C2Config defaults(
+                int resolutionWidth, int resolutionHeight, List<Integer> cameraSlices) {
+            return new C2Config(
+                    DEFAULT_DEVICE_ID,
+                    cameraSlices,
+                    "0",
+                    resolutionWidth,
+                    resolutionHeight,
+                    100,
+                    0,
+                    Units.inchesToMeters(6.5),
+                    AprilTagLayoutType.NO_TRENCH.getLayoutString(),
+                    // Tags smaller than this have noisy corners. In C2's simulation, 50 px cut the
+                    // worst multi-tag error from 76 cm to under 7 cm. With these cameras' focal
+                    // lengths (~1380-2000 px), 50 px is a tag about 4.6-6.6 m away.
+                    50.0,
+                    32);
         }
 
-        synchronized void registerCamera(CameraProperties properties, C2Config config) {
-            String existing =
-                    cameraNamesByIndex.putIfAbsent(config.cameraIndex(), properties.name());
-            if (existing != null && !existing.equals(properties.name())) {
-                throw new IllegalArgumentException(
-                        "Cameras \""
-                                + existing
-                                + "\" and \""
-                                + properties.name()
-                                + "\" both use C2 camera index "
-                                + config.cameraIndex()
-                                + " on device \""
-                                + deviceId
-                                + "\".");
+        void validate() {
+            if (deviceId == null || deviceId.isBlank()) {
+                throw new IllegalArgumentException("C2Config.deviceId cannot be blank");
             }
-
-            SharedConfig candidate =
-                    new SharedConfig(
-                            config.cameraId(),
-                            properties.resolutionWidth(),
-                            properties.resolutionHeight(),
-                            config.exposure(),
-                            config.gain(),
-                            config.fiducialSizeMeters(),
-                            config.tagLayoutJson(),
-                            config.minTagSizePx());
-            if (sharedConfig == null) {
-                sharedConfig = candidate;
-                publish(candidate);
-            } else if (!sharedConfig.equals(candidate)) {
-                throw new IllegalArgumentException(
-                        "Camera \""
-                                + properties.name()
-                                + "\" disagrees with the other cameras on C2 device \""
-                                + deviceId
-                                + "\" about device-wide settings (camera id, resolution, exposure,"
-                                + " gain, tag size, tag layout, or min tag size): "
-                                + sharedConfig
-                                + " vs "
-                                + candidate);
+            if (cameraSlices == null || cameraSlices.isEmpty()) {
+                throw new IllegalArgumentException("C2Config.cameraSlices cannot be empty");
             }
-        }
-
-        private void publish(SharedConfig config) {
-            cameraIdPublisher.set(config.cameraId());
-            widthPublisher.set(config.resolutionWidth());
-            heightPublisher.set(config.resolutionHeight());
-            exposurePublisher.set(config.exposure());
-            gainPublisher.set(config.gain());
-            pipelineEnabledPublisher.set(true);
-            tagLayoutPublisher.set(config.tagLayoutJson());
-            fiducialSizePublisher.set(config.fiducialSizeMeters());
-            minTagSizePublisher.set(config.minTagSizePx());
-        }
-
-        /** Whether C2 is running and connected (its heartbeat is fresh). */
-        boolean isAlive(long nowUs) {
-            long lastBeatUs = heartbeat.getLastChange();
-            return lastBeatUs > 0 && nowUs - lastBeatUs <= HEARTBEAT_TIMEOUT_US;
-        }
-
-        NetworkTable table() {
-            return table;
+            if (cameraSlices.stream().anyMatch(slice -> slice == null || slice < 0)
+                    || new HashSet<>(cameraSlices).size() != cameraSlices.size()) {
+                throw new IllegalArgumentException(
+                        "C2Config.cameraSlices must be distinct and non-negative: " + cameraSlices);
+            }
+            if (cameraId == null) {
+                throw new IllegalArgumentException("C2Config.cameraId cannot be null");
+            }
+            if (tagLayoutJson == null || tagLayoutJson.isBlank()) {
+                throw new IllegalArgumentException("C2Config.tagLayoutJson cannot be blank");
+            }
+            if (minTagSizePx < 0) {
+                throw new IllegalArgumentException("C2Config.minTagSizePx cannot be negative");
+            }
+            if (pollStorageDepth <= 0) {
+                throw new IllegalArgumentException("C2Config.pollStorageDepth must be positive");
+            }
         }
     }
 
     private final NetworkTableInstance ntInstance = NetworkTableInstance.getDefault();
-    private final C2Device device;
-    private final BooleanSubscriber cameraConnected;
-    private final RawSubscriber results;
+    private final IntegerSubscriber heartbeat;
+    private final List<BooleanSubscriber> camerasConnected = new ArrayList<>();
+    private final List<RawSubscriber> results = new ArrayList<>();
+
+    // Held so the topics stay published.
+    private final List<Object> publishers = new ArrayList<>();
 
     /**
-     * Creates the IO for one C2 camera.
-     *
-     * @param properties camera name, resolution, etc.
-     * @param config C2 device and topic configuration
+     * @param config the device's configuration
      */
-    public VisionIOC2(CameraProperties properties, C2Config config) {
-        validate(config);
-        device =
-                DEVICES.computeIfAbsent(
-                        config.deviceId(), id -> new C2Device(NetworkTableInstance.getDefault(), id));
-        device.registerCamera(properties, config);
+    public VisionIOC2(C2Config config) {
+        config.validate();
+        NetworkTable device = ntInstance.getTable("/" + config.deviceId());
+        publishSettings(device, config);
 
-        String camera = "camera_" + config.cameraIndex();
-        cameraConnected =
-                device.table()
-                        .getSubTable("status")
-                        .getSubTable(camera)
-                        .getBooleanTopic("connected")
-                        .subscribe(false);
-        results =
-                device.table()
-                        .getSubTable("pipelines")
-                        .getSubTable(PIPELINE)
-                        .getSubTable("output")
-                        .getRawTopic(camera)
-                        .subscribe(
-                                FLATBUFFER_TYPE,
-                                new byte[0],
-                                PubSubOption.sendAll(true),
-                                PubSubOption.keepDuplicates(true),
-                                PubSubOption.pollStorage(config.pollStorageDepth()));
+        NetworkTable status = device.getSubTable("status");
+        heartbeat = status.getIntegerTopic("heartbeat").subscribe(0);
+        NetworkTable outputs =
+                device.getSubTable("pipelines").getSubTable(PIPELINE).getSubTable("output");
+        for (int slice : config.cameraSlices()) {
+            String camera = "camera_" + slice;
+            camerasConnected.add(
+                    status.getSubTable(camera).getBooleanTopic("connected").subscribe(false));
+            results.add(
+                    outputs.getRawTopic(camera)
+                            .subscribe(
+                                    FLATBUFFER_TYPE,
+                                    new byte[0],
+                                    PubSubOption.sendAll(true),
+                                    PubSubOption.keepDuplicates(true),
+                                    PubSubOption.pollStorage(config.pollStorageDepth())));
+        }
     }
 
     @Override
     public void updateInputs(VisionIOInputs inputs) {
-        long nowUs = WPIUtilJNI.now();
-        inputs.connected =
-                ntInstance.isConnected() && device.isAlive(nowUs) && cameraConnected.get();
         inputs.rawPacketType = NativePacketType.C2;
+        inputs.reportsSourceHealth = true;
+        long nowUs = WPIUtilJNI.now();
+        long lastBeatUs = heartbeat.getLastChange();
+        inputs.connected =
+                ntInstance.isConnected()
+                        && lastBeatUs > 0
+                        && nowUs - lastBeatUs <= HEARTBEAT_TIMEOUT_US;
 
-        // Every result since the last loop, oldest first. The caller decides how many to use.
-        TimestampedRaw[] unread = results.readQueue();
-        ArrayList<TimestampedRaw> valid = new ArrayList<>(unread.length);
-        for (TimestampedRaw result : unread) {
-            if (result != null && result.value != null && result.value.length > 0) {
-                valid.add(result);
+        int cameras = results.size();
+        inputs.camerasConnected = new boolean[cameras];
+        ArrayList<TimestampedRaw> unread = new ArrayList<>();
+        ArrayList<Integer> resultCameras = new ArrayList<>();
+        for (int i = 0; i < cameras; i++) {
+            // C2 reports each camera separately (images arriving and not blank).
+            inputs.camerasConnected[i] = inputs.connected && camerasConnected.get(i).get();
+            // Every result since the last loop, oldest first. The caller decides how many to use.
+            for (TimestampedRaw result : results.get(i).readQueue()) {
+                if (result != null && result.value != null && result.value.length > 0) {
+                    unread.add(result);
+                    resultCameras.add(i);
+                }
             }
         }
 
-        inputs.rawResults = new byte[valid.size()][];
-        inputs.captureTimestampsUs = new long[valid.size()];
-        inputs.publishTimestampsUs = new long[valid.size()];
-        for (int i = 0; i < valid.size(); i++) {
-            inputs.rawResults[i] = valid.get(i).value;
+        inputs.rawResults = new byte[unread.size()][];
+        inputs.resultCameras = resultCameras.stream().mapToInt(Integer::intValue).toArray();
+        inputs.captureTimestampsUs = new long[unread.size()];
+        inputs.publishTimestampsUs = new long[unread.size()];
+        for (int i = 0; i < unread.size(); i++) {
+            inputs.rawResults[i] = unread.get(i).value;
             // The NT timestamp IS the capture time, on the robot's clock (see class docs).
-            inputs.captureTimestampsUs[i] = valid.get(i).timestamp;
+            inputs.captureTimestampsUs[i] = unread.get(i).timestamp;
             // NT doesn't record arrival time; this is when the robot read it (<= one loop later).
             inputs.publishTimestampsUs[i] = nowUs;
         }
     }
 
-    /**
-     * Default configuration for camera {@code cameraIndex} of device {@code dsv0}.
-     *
-     * @param cameraIndex the camera's slice of the module's combined frame
-     * @return the configuration
-     */
-    public static C2Config defaultsFor(int cameraIndex) {
-        return new C2Config(
-                DEFAULT_DEVICE_ID,
-                cameraIndex,
-                DEFAULT_CAMERA_ID,
-                DEFAULT_CAMERA_EXPOSURE,
-                DEFAULT_CAMERA_GAIN,
-                DEFAULT_FIDUCIAL_SIZE_METERS,
-                AprilTagLayoutType.NO_TRENCH.getLayoutString(),
-                DEFAULT_MIN_TAG_SIZE_PX,
-                DEFAULT_POLL_STORAGE_DEPTH);
-    }
+    private void publishSettings(NetworkTable device, C2Config config) {
+        NetworkTable capture = device.getSubTable("config");
+        StringPublisher cameraId = capture.getStringTopic("camera_id").publish();
+        IntegerPublisher width = capture.getIntegerTopic("camera_resolution_width").publish();
+        IntegerPublisher height = capture.getIntegerTopic("camera_resolution_height").publish();
+        IntegerPublisher exposure = capture.getIntegerTopic("camera_exposure").publish();
+        IntegerPublisher gain = capture.getIntegerTopic("camera_gain").publish();
 
-    private static void validate(C2Config config) {
-        if (config == null) {
-            throw new IllegalArgumentException("C2Config cannot be null");
-        }
-        if (config.deviceId() == null || config.deviceId().isBlank()) {
-            throw new IllegalArgumentException("C2Config.deviceId cannot be blank");
-        }
-        if (config.cameraIndex() < 0) {
-            throw new IllegalArgumentException("C2Config.cameraIndex must be non-negative");
-        }
-        if (config.cameraId() == null) {
-            throw new IllegalArgumentException("C2Config.cameraId cannot be null");
-        }
-        if (config.tagLayoutJson() == null || config.tagLayoutJson().isBlank()) {
-            throw new IllegalArgumentException("C2Config.tagLayoutJson cannot be blank");
-        }
-        if (config.minTagSizePx() < 0) {
-            throw new IllegalArgumentException("C2Config.minTagSizePx cannot be negative");
-        }
-        if (config.pollStorageDepth() <= 0) {
-            throw new IllegalArgumentException("C2Config.pollStorageDepth must be positive");
-        }
-    }
+        NetworkTable pipeline = device.getSubTable("pipelines").getSubTable(PIPELINE);
+        BooleanPublisher enabled = pipeline.getBooleanTopic("enabled").publish();
+        NetworkTable pipelineConfig = pipeline.getSubTable("config");
+        StringPublisher tagLayout = pipelineConfig.getStringTopic("tag_layout").publish();
+        DoublePublisher tagSize = pipelineConfig.getDoubleTopic("fiducial_size_m").publish();
+        DoublePublisher minTagSize = pipelineConfig.getDoubleTopic("min_tag_size_px").publish();
 
-    /**
-     * Decodes the raw C2 results stored in {@code inputs} (possibly from a replayed log) into
-     * {@link CameraResult}s.
-     *
-     * @param inputs the logged inputs
-     * @param tagLayout field layout, to look up observed tags
-     * @param cameraIndex which camera's output to extract
-     * @return one result per decodable frame
-     */
-    public static CameraResult[] decodeResults(
-            VisionIOInputs inputs, AprilTagFieldLayout tagLayout, int cameraIndex) {
-        ArrayList<CameraResult> decoded = new ArrayList<>(inputs.rawResults.length);
-        for (int i = 0; i < inputs.rawResults.length; i++) {
-            byte[] raw = inputs.rawResults[i];
-            if (raw == null || raw.length == 0 || i >= inputs.captureTimestampsUs.length) {
-                continue;
-            }
-            long publishTimestampUs =
-                    i < inputs.publishTimestampsUs.length
-                            ? inputs.publishTimestampsUs[i]
-                            : inputs.captureTimestampsUs[i];
-            CameraResult result =
-                    decodeFrame(
-                            raw,
-                            inputs.captureTimestampsUs[i],
-                            publishTimestampUs,
-                            tagLayout,
-                            cameraIndex);
-            if (result != null) {
-                decoded.add(result);
-            }
-        }
-        return decoded.toArray(CameraResult[]::new);
-    }
-
-    /**
-     * Decodes one {@code dsv0.Frame}.
-     *
-     * @return the result (empty if no tags were seen), or {@code null} if {@code raw} is not a
-     *     valid frame
-     */
-    private static CameraResult decodeFrame(
-            byte[] raw,
-            long captureTimestampUs,
-            long publishTimestampUs,
-            AprilTagFieldLayout tagLayout,
-            int cameraIndex) {
-        if (tagLayout == null || cameraIndex < 0) {
-            return null;
-        }
-
-        dsv0.Frame frame;
-        try {
-            frame = dsv0.Frame.getRootAsFrame(ByteBuffer.wrap(raw));
-        } catch (RuntimeException e) {
-            return null;
-        }
-
-        dsv0.CameraOutput cameraOutput = findCameraOutput(frame, cameraIndex);
-        dsv0.CameraObservation observation =
-                cameraOutput == null ? null : cameraOutput.cameraObservation();
-        if (observation == null || observation.solution0() == null) {
-            return emptyResult(captureTimestampUs, publishTimestampUs);
-        }
-
-        dsv0.PoseSolution best = observation.solution0();
-        Pose3d fieldToCamera = toWpilibPose(best);
-
-        // Single tag: two candidate poses (IPPE); report both with an ambiguity ratio.
-        ArrayList<TagObservation> tagObservations = new ArrayList<>(1);
-        if (observation.tagIdsLength() == 1) {
-            int tagId = observation.tagIds(0);
-            if (tagLayout.getTagPose(tagId).isPresent()) {
-                Optional<dsv0.PoseSolution> alternate = Optional.ofNullable(observation.solution1());
-                tagObservations.add(
-                        new TagObservation(
-                                tagId,
-                                fieldToCamera,
-                                alternate.map(VisionIOC2::toWpilibPose),
-                                0.0,
-                                ambiguity(
-                                        best.error(),
-                                        alternate.map(dsv0.PoseSolution::error).orElse(-1.0))));
-            }
-        }
-
-        // Two or more tags: one unambiguous pose solved from every corner.
-        Optional<MultiTagObservation> multiTag = Optional.empty();
-        if (observation.tagIdsLength() >= 2) {
-            int[] ids = new int[observation.tagIdsLength()];
-            for (int i = 0; i < ids.length; i++) {
-                ids[i] = observation.tagIds(i);
-            }
-            multiTag = Optional.of(new MultiTagObservation(ids, fieldToCamera, best.error()));
-        }
-
-        return new CameraResult(
-                tagObservations.toArray(TagObservation[]::new),
-                multiTag,
-                (double) captureTimestampUs,
-                (double) publishTimestampUs);
-    }
-
-    private static dsv0.CameraOutput findCameraOutput(dsv0.Frame frame, int cameraIndex) {
-        for (int i = 0; i < frame.camerasLength(); i++) {
-            dsv0.CameraOutput candidate = frame.cameras(i);
-            if (candidate != null && candidate.cameraIndex() == cameraIndex) {
-                return candidate;
-            }
-        }
-        return null;
-    }
-
-    private static CameraResult emptyResult(long captureTimestampUs, long publishTimestampUs) {
-        return new CameraResult(
-                new TagObservation[0],
-                Optional.empty(),
-                (double) captureTimestampUs,
-                (double) publishTimestampUs);
-    }
-
-    private static Pose3d toWpilibPose(dsv0.PoseSolution solution) {
-        dsv0.Pose3d pose = solution.pose();
-        dsv0.Vec3 t = pose.translation();
-        dsv0.Quaternion q = pose.rotation();
-        return new Pose3d(
-                new Translation3d(t.x(), t.y(), t.z()),
-                new Rotation3d(
-                        new edu.wpi.first.math.geometry.Quaternion(q.w(), q.x(), q.y(), q.z())));
-    }
-
-    private static double ambiguity(double bestError, double alternateError) {
-        if (alternateError <= 0.0) return 0.0;
-        return Math.max(0.0, Math.min(1.0, bestError / alternateError));
+        cameraId.set(config.cameraId());
+        width.set(config.resolutionWidth());
+        height.set(config.resolutionHeight());
+        exposure.set(config.exposure());
+        gain.set(config.gain());
+        enabled.set(true);
+        tagLayout.set(config.tagLayoutJson());
+        tagSize.set(config.fiducialSizeMeters());
+        minTagSize.set(config.minTagSizePx());
+        publishers.addAll(
+                List.of(
+                        cameraId, width, height, exposure, gain, enabled, tagLayout, tagSize,
+                        minTagSize));
     }
 }

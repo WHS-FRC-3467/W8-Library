@@ -12,7 +12,6 @@
  * You should have received a copy of the GNU General Public License along with this program. If
  * not, see <https://www.gnu.org/licenses/>.
  */
-
 package frc.lib.io.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
@@ -22,24 +21,30 @@ import org.littletonrobotics.junction.AutoLog;
 import java.util.Optional;
 
 /**
- * Hardware interface for vision cameras that detect AprilTags for robot localization.
+ * Hardware interface for one vision <em>source</em>: a group of cameras whose AprilTag results
+ * arrive through one interface.
  *
- * <p>This interface defines the contract for vision camera hardware, allowing the robot to read
- * camera results for pose estimation. Implementations handle vendor-specific camera APIs
- * (PhotonVision, Limelight, etc.) while the rest of the robot code remains hardware-agnostic.
+ * <ul>
+ *   <li>A C2 coprocessor is one source serving all of its cameras, with its own health signal.
+ *   <li>PhotonVision exposes only cameras on NetworkTables (which coprocessor runs which camera is
+ *       hidden), so a PhotonVision source is simply whichever cameras are grouped together.
+ * </ul>
+ *
+ * <p>The IO only moves raw bytes, so AdvantageKit can log and replay them. Turning bytes into
+ * {@link CameraResult}s is done by {@link C2Decoder} or {@link PhotonDecoder}, chosen by the logged
+ * {@link NativePacketType}. Everything that differs between kinds of source (packet type, whether
+ * it reports its own health) is in the logged inputs, so a log replays correctly whichever kind of
+ * source recorded it.
  */
 public interface VisionIO {
-    /** Identifier for the type of raw packet we are recieving in {@link VisionIOInputs#} */
+    /** The format of the raw results in {@link VisionIOInputs#rawResults}. */
     public static enum NativePacketType {
         UNKNOWN,
         C2,
         PHOTON
     }
 
-    /**
-     * Container for vision camera sensor readings. Logged automatically by AdvantageKit for replay
-     * and analysis.
-     */
+    /** One AprilTag seen alone: two candidate camera poses (single-tag solves are ambiguous). */
     public static record TagObservation(
             int fiducialId,
             Pose3d fieldToCameraPose, // Field to camera
@@ -47,43 +52,59 @@ public interface VisionIO {
             double area,
             double ambiguity) {}
 
+    /** Several AprilTags solved together: one unambiguous camera pose. */
     public static record MultiTagObservation(
             int[] fiducialIds,
             Pose3d fieldToCameraPose, // Field to camera
             double error) {}
 
+    /** Everything one camera reported for one frame. */
     public static record CameraResult(
             TagObservation[] tagObservations,
             Optional<MultiTagObservation> multiTagObservation,
             double captureTimestampUs,
             double publishTimestampUs) {}
 
+    /** Raw readings from one source, logged by AdvantageKit for replay. */
     @AutoLog
     public static class VisionIOInputs {
-        /** Whether the camera is connected and responding */
-        public boolean connected = false;
-
-        /** The type of packet in {@link VisionIOInputs#rawResults} */
+        /** The format of {@link #rawResults}, which decides how they are decoded. */
         public NativePacketType rawPacketType = NativePacketType.UNKNOWN;
 
-        /** Raw unread frame payloads from the camera since last update. */
-        // We log raw bytes both because it is faster and many structured
-        // classes cannot be @AutoLog-ed, such as records containing
-        // arrays
+        /**
+         * Whether the source has a health signal of its own (C2 does; PhotonVision doesn't), so a
+         * disconnect can be blamed on the source rather than on each camera.
+         */
+        public boolean reportsSourceHealth = false;
+
+        /**
+         * Whether the source itself is reachable. For sources without a health signal of their own
+         * (PhotonVision), this is always true and only per-camera status is meaningful.
+         */
+        public boolean connected = false;
+
+        /** Whether each camera of the source is delivering images, indexed by camera. */
+        public boolean[] camerasConnected = new boolean[0];
+
+        /** Which camera (index into the source's camera list) each raw result came from. */
+        public int[] resultCameras = new int[0];
+
+        // Raw bytes are logged (rather than decoded records) because it is faster and many
+        // structured classes cannot be @AutoLog-ed, such as records containing arrays.
+        /** Raw unread results since the last update, oldest first per camera. */
         public byte[][] rawResults = new byte[0][];
 
-        /** NT-synced capture timestamps for each unread result, in microseconds. */
+        /** Capture timestamp of each result, on the robot's clock (FPGA time), microseconds. */
         public long[] captureTimestampsUs = new long[0];
 
-        /** NT-synced publish timestamps for each unread result, in microseconds. */
+        /** When each result was published or received, robot clock, microseconds. */
         public long[] publishTimestampsUs = new long[0];
     }
 
     /**
-     * Updates the vision inputs with the latest readings from the camera. Called periodically by
-     * the vision device layer.
+     * Reads everything the source has produced since the last call.
      *
-     * @param inputs The input object to populate with sensor data
+     * @param inputs the inputs to fill
      */
     public default void updateInputs(VisionIOInputs inputs) {}
 }
