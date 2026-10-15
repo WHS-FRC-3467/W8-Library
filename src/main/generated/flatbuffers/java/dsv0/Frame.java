@@ -20,7 +20,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
- * Top-level message containing results from all cameras in a single frame
+ * One message per camera per frame
  */
 @SuppressWarnings("unused")
 public final class Frame extends Table {
@@ -30,11 +30,7 @@ public final class Frame extends Table {
   public Frame __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   /**
-   * Microsecond timestamp for the frame capture
-   */
-  public long timestampUs() { int o = __offset(4); return o != 0 ? bb.getLong(o + bb_pos) : 0L; }
-  /**
-   * Per-camera results
+   * Per-camera results (one entry: this topic's camera)
    */
   public dsv0.CameraOutput cameras(int j) { return cameras(new dsv0.CameraOutput(), j); }
   public dsv0.CameraOutput cameras(dsv0.CameraOutput obj, int j) { int o = __offset(6); return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null; }
@@ -43,16 +39,13 @@ public final class Frame extends Table {
   public dsv0.CameraOutput.Vector camerasVector(dsv0.CameraOutput.Vector obj) { int o = __offset(6); return o != 0 ? obj.__assign(__vector(o), 4, bb) : null; }
 
   public static int createFrame(FlatBufferBuilder builder,
-      long timestampUs,
       int camerasOffset) {
     builder.startTable(2);
-    Frame.addTimestampUs(builder, timestampUs);
     Frame.addCameras(builder, camerasOffset);
     return Frame.endFrame(builder);
   }
 
   public static void startFrame(FlatBufferBuilder builder) { builder.startTable(2); }
-  public static void addTimestampUs(FlatBufferBuilder builder, long timestampUs) { builder.addLong(0, timestampUs, 0L); }
   public static void addCameras(FlatBufferBuilder builder, int camerasOffset) { builder.addOffset(1, camerasOffset, 0); }
   public static int createCamerasVector(FlatBufferBuilder builder, int[] data) { builder.startVector(4, data.length, 4); for (int i = data.length - 1; i >= 0; i--) builder.addOffset(data[i]); return builder.endVector(); }
   public static void startCamerasVector(FlatBufferBuilder builder, int numElems) { builder.startVector(4, numElems, 4); }

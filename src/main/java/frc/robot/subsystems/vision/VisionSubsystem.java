@@ -100,8 +100,14 @@ public class VisionSubsystem extends SubsystemBase {
     public static final record VisionPoseRecord(
             Pose3d pose, List<Integer> tagsUsed, double averageDistanceMeters) {}
 
+    /**
+     * Added to every camera timestamp, in seconds. C2 publishes the frame's capture time on the
+     * robot's clock (corrected for clock drift), so this should be 0. It was -1/45 s to compensate
+     * for the old C2, which stamped frames before they arrived. Tune only if a measured offset
+     * remains.
+     */
     private static final LoggedTunableNumber TIMESTAMP_OFFSET =
-            new LoggedTunableNumber("VisionSubsystem/TimestampOffset", -(1.0 / 45.0));
+            new LoggedTunableNumber("VisionSubsystem/TimestampOffset", 0.0);
 
     private final RobotState robotState = RobotState.getInstance();
     private final AprilTagCamera[] cameras;

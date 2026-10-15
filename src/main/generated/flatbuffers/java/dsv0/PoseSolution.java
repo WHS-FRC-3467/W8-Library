@@ -26,8 +26,14 @@ public final class PoseSolution extends Table {
   public void __init(int _i, ByteBuffer _bb) { __reset(_i, _bb); }
   public PoseSolution __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
+  /**
+   * Field-to-camera pose
+   */
   public dsv0.Pose3d pose() { return pose(new dsv0.Pose3d()); }
   public dsv0.Pose3d pose(dsv0.Pose3d obj) { int o = __offset(4); return o != 0 ? obj.__assign(o + bb_pos, bb) : null; }
+  /**
+   * solvePnP reprojection error, pixels
+   */
   public double error() { int o = __offset(6); return o != 0 ? bb.getDouble(o + bb_pos) : 0.0; }
 
   public static void startPoseSolution(FlatBufferBuilder builder) { builder.startTable(2); }

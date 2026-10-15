@@ -32,7 +32,7 @@ public final class CameraObservation extends Table {
   public dsv0.PoseSolution solution0() { return solution0(new dsv0.PoseSolution()); }
   public dsv0.PoseSolution solution0(dsv0.PoseSolution obj) { int o = __offset(4); return o != 0 ? obj.__assign(__indirect(o + bb_pos), bb) : null; }
   /**
-   * Alternate pose solution (present for single-tag ambiguity)
+   * Alternate pose solution (only for single-tag observations, which are ambiguous)
    */
   public dsv0.PoseSolution solution1() { return solution1(new dsv0.PoseSolution()); }
   public dsv0.PoseSolution solution1(dsv0.PoseSolution obj) { int o = __offset(6); return o != 0 ? obj.__assign(__indirect(o + bb_pos), bb) : null; }

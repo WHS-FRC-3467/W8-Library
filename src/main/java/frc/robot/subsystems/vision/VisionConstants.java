@@ -36,6 +36,7 @@ import frc.lib.devices.AprilTagCamera;
 import frc.lib.devices.AprilTagCamera.CameraProperties;
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIOC2;
+import frc.lib.io.vision.VisionIOC2Sim;
 import frc.lib.io.vision.VisionIOPhotonVisionSim;
 import frc.robot.Constants;
 import frc.robot.FieldConstants.AprilTagLayoutType;
@@ -68,6 +69,19 @@ public class VisionConstants {
     public static final String NAME = "Vision";
 
     public static final AprilTagFieldLayout fieldLayout = AprilTagLayoutType.NO_TRENCH.getLayout();
+
+    /** Where simulated camera results come from. */
+    public enum SimBackend {
+        /**
+         * The real C2 code in simulation mode ({@code python src/main.py --sim} in C2, on this
+         * computer). Exercises the exact real-robot path: C2's detector, NT topics, timestamps.
+         */
+        C2,
+        /** PhotonVision's built-in simulator. No external process needed. */
+        PHOTONVISION
+    }
+
+    public static final SimBackend SIM_BACKEND = SimBackend.C2;
 
     // Extrinsics
     public static final String FRONT_LEFT_NAME = "front_left";
@@ -334,6 +348,12 @@ public class VisionConstants {
         return visionSim.get();
     }
 
+    /** C2 in simulation mode renders this camera from the robot's true (odometry) pose. */
+    private static VisionIO getC2SimIO(CameraProperties camera, VisionIOC2.C2Config config) {
+        return new VisionIOC2Sim(
+                camera, config, RobotState.getInstance()::getOdometrySamplesAfter);
+    }
+
     private static VisionIO getFrontLeftIOReal() {
         return new VisionIOC2(FRONT_LEFT, FRONT_LEFT_C2_CONFIG);
     }
@@ -398,13 +418,33 @@ public class VisionConstants {
                 new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
             }
             case SIM -> {
-                var frontLeftCamera =
-                        new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim(), fieldLayout);
-                var leftCamera = new AprilTagCamera(LEFT, getLeftIOSim(), fieldLayout);
-                var rightCamera = new AprilTagCamera(RIGHT, getRightIOSim(), fieldLayout);
-                var frontRightCamera =
-                        new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim(), fieldLayout);
-                new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
+                if (SIM_BACKEND == SimBackend.C2) {
+                    var frontLeftCamera =
+                            new AprilTagCamera(
+                                    FRONT_LEFT,
+                                    getC2SimIO(FRONT_LEFT, FRONT_LEFT_C2_CONFIG),
+                                    fieldLayout);
+                    var leftCamera =
+                            new AprilTagCamera(
+                                    LEFT, getC2SimIO(LEFT, LEFT_C2_CONFIG), fieldLayout);
+                    var rightCamera =
+                            new AprilTagCamera(
+                                    RIGHT, getC2SimIO(RIGHT, RIGHT_C2_CONFIG), fieldLayout);
+                    var frontRightCamera =
+                            new AprilTagCamera(
+                                    FRONT_RIGHT,
+                                    getC2SimIO(FRONT_RIGHT, FRONT_RIGHT_C2_CONFIG),
+                                    fieldLayout);
+                    new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
+                } else {
+                    var frontLeftCamera =
+                            new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim(), fieldLayout);
+                    var leftCamera = new AprilTagCamera(LEFT, getLeftIOSim(), fieldLayout);
+                    var rightCamera = new AprilTagCamera(RIGHT, getRightIOSim(), fieldLayout);
+                    var frontRightCamera =
+                            new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim(), fieldLayout);
+                    new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
+                }
             }
             case REPLAY -> {
                 var frontLeftCamera =

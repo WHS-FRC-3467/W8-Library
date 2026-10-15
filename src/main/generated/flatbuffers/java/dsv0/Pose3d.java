@@ -19,6 +19,9 @@ import com.google.flatbuffers.UnionVector;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+/**
+ * WPILib coordinates (field frame: +X downfield, +Z up)
+ */
 @SuppressWarnings("unused")
 public final class Pose3d extends Struct {
   public void __init(int _i, ByteBuffer _bb) { __reset(_i, _bb); }

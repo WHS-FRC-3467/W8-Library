@@ -35,6 +35,7 @@ import lombok.Setter;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 
+import java.util.NavigableMap;
 import java.util.Optional;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -73,6 +74,17 @@ public class RobotState {
     @AutoLogOutput(key = "Odometry/OdometryPose")
     public Pose2d getOdometryPose() {
         return poseEstimator.odometryPose();
+    }
+
+    /**
+     * Returns the odometry-only poses sampled after {@code timestampSeconds}, keyed by sample
+     * timestamp (FPGA seconds), oldest first.
+     *
+     * @param timestampSeconds exclusive lower bound
+     * @return the matching odometry samples
+     */
+    public NavigableMap<Double, Pose2d> getOdometrySamplesAfter(double timestampSeconds) {
+        return poseEstimator.odometrySamplesAfter(timestampSeconds);
     }
 
     /**

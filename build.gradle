@@ -22,6 +22,201 @@ java {
 
 def ROBOT_MAIN_CLASS = "frc.robot.Main"
 
+// FlatBuffers: Java classes for C2's messages are generated from C2/schema/*.fbs
+// (the C2 submodule) into src/main/generated/flatbuffers/java before every compile.
+// The flatc version must match the flatbuffers-java runtime below.
+def flatbuffersVersion = "25.2.10"
+def flatbuffersSchemaDir = file("C2/schema")
+def flatbuffersGeneratedSourceDir = file("src/main/generated/flatbuffers/java")
+def flatbuffersToolDir = file("$buildDir/flatbuffers/tooling")
+
+def isWindows = {
+    System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")
+}
+
+def flatcVersionOf = { String flatcPath ->
+    def stdout = new ByteArrayOutputStream()
+    def result = project.exec {
+        commandLine(flatcPath, "--version")
+        standardOutput = stdout
+        errorOutput = new ByteArrayOutputStream()
+        ignoreExitValue = true
+    }
+    // Prints e.g. "flatc version 25.2.10"
+    return result.exitValue == 0 ? stdout.toString().trim().tokenize(" ").last() : null
+}
+
+def findMatchingFlatcOnPath = {
+    def stdout = new ByteArrayOutputStream()
+    def result = project.exec {
+        commandLine(isWindows() ? ["where", "flatc"] : ["which", "flatc"])
+        standardOutput = stdout
+        errorOutput = new ByteArrayOutputStream()
+        ignoreExitValue = true
+    }
+    if (result.exitValue != 0) {
+        return null
+    }
+    def flatcPath = stdout.toString().readLines().collect { it.trim() }.find { !it.isEmpty() }
+    def version = flatcPath == null ? null : flatcVersionOf(flatcPath)
+    if (version != flatbuffersVersion) {
+        logger.info("Ignoring flatc on PATH (version ${version}); need ${flatbuffersVersion}.")
+        return null
+    }
+    return flatcPath
+}
+
+def flatcBinaryName = {
+    isWindows() ? "flatc.exe" : "flatc"
+}
+
+def flatcArchiveName = {
+    def osName = System.getProperty("os.name").toLowerCase(Locale.ROOT)
+    def arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT)
+
+    if (osName.contains("mac")) {
+        return arch.contains("aarch64") || arch.contains("arm") ? "Mac.flatc.binary.zip" : "MacIntel.flatc.binary.zip"
+    }
+    if (osName.contains("win")) {
+        return "Windows.flatc.binary.zip"
+    }
+    if (osName.contains("linux")) {
+        return "Linux.flatc.binary.g++-13.zip"
+    }
+
+    throw new GradleException("Unsupported operating system for FlatBuffers code generation: ${System.getProperty("os.name")} (${System.getProperty("os.arch")})")
+}
+
+def downloadFlatc = {
+    try {
+        def archiveFile = file("$flatbuffersToolDir/${flatcArchiveName()}")
+        def extractDir = file("$flatbuffersToolDir/${flatcArchiveName() - '.zip'}")
+
+        flatbuffersToolDir.mkdirs()
+
+        def flatcExecutable = fileTree(extractDir).matching {
+            include flatcBinaryName()
+            include "**/${flatcBinaryName()}"
+        }.files.find()
+
+        if (flatcExecutable == null) {
+            if (!archiveFile.exists()) {
+                def downloadUrl = "https://github.com/google/flatbuffers/releases/download/v${flatbuffersVersion}/${flatcArchiveName()}"
+                logger.lifecycle("Downloading FlatBuffers compiler from ${downloadUrl}")
+                new URL(downloadUrl).withInputStream { input ->
+                    archiveFile.withOutputStream { output ->
+                        output << input
+                    }
+                }
+            }
+
+            copy {
+                from zipTree(archiveFile)
+                into extractDir
+            }
+
+            flatcExecutable = fileTree(extractDir).matching {
+                include flatcBinaryName()
+                include "**/${flatcBinaryName()}"
+            }.files.find()
+        }
+
+        if (flatcExecutable == null) {
+            throw new GradleException("Unable to locate ${flatcBinaryName()} after extracting ${archiveFile.name}")
+        }
+
+        if (!isWindows()) {
+            flatcExecutable.setExecutable(true)
+        }
+
+        return flatcExecutable.absolutePath
+    } catch (Exception ex) {
+        logger.warn("Unable to download or extract FlatBuffers compiler automatically; using existing generated sources in ${flatbuffersGeneratedSourceDir}.")
+        def message = ex.message?.trim()
+        if (message) {
+            logger.warn(message)
+        }
+        return null
+    }
+}
+
+// flatc adds a ValidateVersion() call that pins the exact runtime version; drop it.
+def sanitizeGeneratedFlatbufferSources = { File sourceRoot ->
+    fileTree(sourceRoot).matching { include "**/*.java" }.files.each { generatedFile ->
+        def generatedSource = generatedFile.getText("UTF-8")
+        def sanitizedSource = generatedSource.replaceAll(
+                /(?m)^  public static void ValidateVersion\(\) \{ Constants\.FLATBUFFERS_[0-9_]+\(\); \}\r?\n/,
+                ""
+        )
+
+        if (sanitizedSource != generatedSource) {
+            generatedFile.write(sanitizedSource, "UTF-8")
+        }
+    }
+}
+
+tasks.register("generateFlatbuffers") {
+    description = "Refreshes Java sources from C2's FlatBuffers schemas when flatc is available."
+    group = "build"
+
+    inputs.files(fileTree(flatbuffersSchemaDir).matching { include "**/*.fbs" })
+    outputs.dir(flatbuffersGeneratedSourceDir)
+
+    doLast {
+        def schemaFiles = fileTree(flatbuffersSchemaDir).matching { include "**/*.fbs" }.files.toList().sort()
+        if (schemaFiles.isEmpty()) {
+            logger.warn("No FlatBuffers schemas found in ${flatbuffersSchemaDir} (is the C2 submodule checked out?); using existing generated sources in ${flatbuffersGeneratedSourceDir}.")
+            return
+        }
+
+        def flatcPath = providers.gradleProperty("flatcPath").orNull ?: findMatchingFlatcOnPath()
+        if (flatcPath == null) {
+            flatcPath = downloadFlatc()
+        }
+        if (flatcPath == null) {
+            logger.warn("FlatBuffers compiler unavailable after PATH lookup and download attempt; using existing generated sources in ${flatbuffersGeneratedSourceDir}. Set -PflatcPath=/path/to/flatc to refresh them explicitly.")
+            return
+        }
+        logger.lifecycle("Generating FlatBuffers Java sources with ${flatcPath}")
+
+        def tempOutputDir = file("$buildDir/generated/sources/flatbuffers/java/main")
+        delete(tempOutputDir)
+        tempOutputDir.mkdirs()
+
+        def stderr = new ByteArrayOutputStream()
+        def result = project.exec {
+            commandLine([
+                flatcPath,
+                "--java",
+                "-I", flatbuffersSchemaDir.absolutePath,
+                "-o", tempOutputDir.absolutePath,
+            ] + schemaFiles.collect { it.absolutePath })
+            standardOutput = new ByteArrayOutputStream()
+            errorOutput = stderr
+            ignoreExitValue = true
+        }
+
+        if (result.exitValue != 0) {
+            logger.warn("FlatBuffers code generation failed with exit code ${result.exitValue}; using existing generated sources in ${flatbuffersGeneratedSourceDir}.")
+            def commandOutput = stderr.toString("UTF-8").trim()
+            if (!commandOutput.isEmpty()) {
+                logger.warn(commandOutput)
+            }
+            return
+        }
+
+        sanitizeGeneratedFlatbufferSources(tempOutputDir)
+
+        delete(flatbuffersGeneratedSourceDir)
+        copy {
+            from tempOutputDir
+            into flatbuffersGeneratedSourceDir
+        }
+    }
+}
+
+project.compileJava.dependsOn("generateFlatbuffers")
+
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
 deploy {
@@ -96,6 +291,7 @@ dependencies {
     annotationProcessor 'com.google.errorprone:error_prone_core:2.35.0'
 
     implementation "org.apache.commons:commons-lang3:3.18.0"
+    implementation "com.google.flatbuffers:flatbuffers-java:${flatbuffersVersion}"
 }
 
 test {

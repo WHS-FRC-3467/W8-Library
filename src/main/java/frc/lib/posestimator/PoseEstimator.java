@@ -39,7 +39,9 @@ import lombok.experimental.Accessors;
 import org.littletonrobotics.junction.Logger;
 
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 
 @Accessors(fluent = true)
@@ -143,6 +145,18 @@ public class PoseEstimator {
 
     public Pose2d odometryPose() {
         return odometry.odometryPose();
+    }
+
+    /**
+     * Returns the buffered odometry poses newer than {@code timestampSeconds}, keyed by their
+     * sample timestamp (FPGA seconds), oldest first.
+     *
+     * @param timestampSeconds exclusive lower bound
+     * @return a copy of the matching samples
+     */
+    public NavigableMap<Double, Pose2d> odometrySamplesAfter(double timestampSeconds) {
+        return new TreeMap<>(
+                odometry.odometryBuffer().getInternalBuffer().tailMap(timestampSeconds, false));
     }
 
     /**
