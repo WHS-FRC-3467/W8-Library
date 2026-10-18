@@ -23,7 +23,6 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
@@ -36,15 +35,11 @@ import org.junit.jupiter.api.Test;
 
 class DriveTest {
     static final double DELTA = 1e-1; // acceptable deviation range
-    static final String SKID_DETECTION_ENABLED_KEY = "Drive/Enable Skid Detection";
-    static final String FRONT_LEFT_SKID_SIM_KEY = "Drive/FrontLeft/Enable Skid Simulation";
     Drive drive;
 
     @BeforeEach // this method will run before each test
     void setup() {
         assertTrue(HAL.initialize(500, 0)); // initialize the HAL, crash if failed
-        setTunableBoolean(SKID_DETECTION_ENABLED_KEY, true);
-        setTunableBoolean(FRONT_LEFT_SKID_SIM_KEY, false);
 
         drive = new Drive(
                 new GyroIO() {
@@ -157,10 +152,5 @@ class DriveTest {
                     "Failed to turn the Drive modules into an X arrangement to resist movement: "
                             + e.getMessage());
         }
-    }
-
-    private static void setTunableBoolean(String key, boolean value) {
-        NetworkTableInstance.getDefault().getEntry("/Tuning/" + key).setBoolean(value);
-        NetworkTableInstance.getDefault().flushLocal();
     }
 }

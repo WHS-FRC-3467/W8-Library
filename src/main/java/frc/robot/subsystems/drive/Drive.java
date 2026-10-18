@@ -328,8 +328,7 @@ public class Drive extends SubsystemBase {
                     new OdometryObservation(
                             Seconds.of(sampleTimestamps[sampleIndex]),
                             modulePositions,
-                            gyroAngle,
-                            new boolean[] {false, false, false, false}));
+                            gyroAngle));
         }
 
         // Update RobotState velocity
