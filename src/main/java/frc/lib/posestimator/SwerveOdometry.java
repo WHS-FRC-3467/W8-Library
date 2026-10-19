@@ -30,7 +30,6 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 
 import java.util.Optional;
-import java.util.function.Predicate;
 
 /**
  * Integrates swerve-drive odometry observations to maintain a continuous estimate of the robot's
@@ -72,9 +71,6 @@ public class SwerveOdometry {
     /** The most recent odometry-based robot pose. */
     @Getter private Pose2d odometryPose = new Pose2d(1.0, 1.0, gyroOffset);
 
-    /** Optional validator for candidate odometry poses. */
-    private Predicate<Pose2d> poseValidator = pose -> true;
-
     /**
      * True when a pose reset has occurred and the next odometry observation should re-seed the
      * module position baseline to avoid a spurious jump.
@@ -96,8 +92,8 @@ public class SwerveOdometry {
     /**
      * Adds an odometry observation to the integrator.
      *
-     * @param observation an {@link OdometryObservation} containing module positions, timestamp, an
-     *     and an optional gyro angle
+     * @param observation an {@link OdometryObservation} containing module positions, timestamp, and
+     *     an optional gyro angle
      */
     public void addOdometryObservation(OdometryObservation observation) {
         double timestampSeconds = observation.timestamp().in(Seconds);
@@ -127,7 +123,7 @@ public class SwerveOdometry {
             candidatePose = new Pose2d(candidatePose.getTranslation(), angle.plus(gyroOffset));
         }
 
-        odometryPose = resolveValidatedPose(candidatePose, observation.gyroAngle());
+        odometryPose = candidatePose;
 
         // Store pose for later interpolation (e.g., vision sync)
         odometryBuffer.addSample(timestampSeconds, odometryPose);
@@ -167,27 +163,6 @@ public class SwerveOdometry {
 
         // Store pose for later interpolation (e.g., vision sync)
         odometryBuffer.addSample(timestampSeconds, odometryPose);
-    }
-
-    /**
-     * Sets a validator for candidate odometry poses. When the validator returns {@code false},
-     * translation updates are rejected (heading may still update if gyro data is present).
-     *
-     * @param poseValidator predicate that returns {@code true} for acceptable poses
-     */
-    public void setPoseValidator(Predicate<Pose2d> poseValidator) {
-        this.poseValidator = poseValidator == null ? pose -> true : poseValidator;
-    }
-
-    private Pose2d resolveValidatedPose(Pose2d candidatePose, Optional<Rotation2d> gyroAngle) {
-        if (poseValidator.test(candidatePose)) {
-            return candidatePose;
-        }
-        if (gyroAngle.isPresent()) {
-            // Keep translation stable but allow heading to track the gyro.
-            return new Pose2d(odometryPose.getTranslation(), gyroAngle.get().plus(gyroOffset));
-        }
-        return odometryPose;
     }
 
     private static SwerveModulePosition[] copyPositions(SwerveModulePosition[] positions) {

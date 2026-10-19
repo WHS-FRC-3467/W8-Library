@@ -51,13 +51,7 @@ public class PoseEstimator {
             double avgTagDistance,
             List<Integer> seenTagIds,
             double linearStdDev,
-            double angularStdDev) {
-    }
-
-    private enum OdometryObservationReason {
-        ACCEPTED,
-        POSE_VALIDATOR_REJECTED
-    }
+            double angularStdDev) {}
 
     private enum VisionObservationReason {
         ACCEPTED,
@@ -77,8 +71,8 @@ public class PoseEstimator {
     private Predicate<Pose2d> poseValidator = pose -> true;
 
     // Initialize to value not outside the field
-    @Getter
-    private Pose2d estimatedPose = new Pose2d(1, 1, new Rotation2d());
+    @Getter private Pose2d estimatedPose = new Pose2d(1, 1, new Rotation2d());
+
     // private Pose2d odometryPoseAtReset = new Pose2d(1, 1, new Rotation2d());
 
     public PoseEstimator(
@@ -89,14 +83,14 @@ public class PoseEstimator {
         double linearOdometryVariance = Math.pow(linearOdometryStdDev, 2);
         double angularOdometryVariance = Math.pow(angularOdometryStdDev, 2);
 
-        odometryVariances = new double[] {
-                linearOdometryVariance, // X axis
-                linearOdometryVariance, // Y axis
-                angularOdometryVariance // Rotation
-        };
+        odometryVariances =
+                new double[] {
+                    linearOdometryVariance, // X axis
+                    linearOdometryVariance, // Y axis
+                    angularOdometryVariance // Rotation
+                };
 
         odometry = new SwerveOdometry(kinematics, odometryBufferSize);
-        refreshOdometryPoseValidator();
     }
 
     public PoseEstimator(
@@ -115,20 +109,14 @@ public class PoseEstimator {
     }
 
     /**
-     * Adds a new odometry observation to the pose estimator and updates the
-     * estimated pose.
+     * Adds a new odometry observation to the pose estimator and updates the estimated pose.
      *
-     * <p>
-     * This method retrieves the last odometry pose, applies the new odometry
-     * observation, and
-     * calculates the change in pose (twist) between the last and new odometry
-     * poses. The estimated
+     * <p>This method retrieves the last odometry pose, applies the new odometry observation, and
+     * calculates the change in pose (twist) between the last and new odometry poses. The estimated
      * pose is then updated by applying the calculated twist.
      *
-     * @param observation The new odometry observation to be added. This observation
-     *                    typically
-     *                    contains information about the robot's movement such as
-     *                    displacement and rotation.
+     * @param observation The new odometry observation to be added. This observation typically
+     *     contains information about the robot's movement such as displacement and rotation.
      */
     public void addOdometryObservation(OdometryObservation observation) {
         Pose2d lastOdometryPose = odometry.odometryPose();
@@ -141,21 +129,15 @@ public class PoseEstimator {
     }
 
     /**
-     * Adds a new odometry observation to the pose estimator, ignores everything
-     * except gyro, and
+     * Adds a new odometry observation to the pose estimator, ignores everything except gyro, and
      * updates the estimated pose.
      *
-     * <p>
-     * This method retrieves the last odometry pose, applies the new odometry
-     * observation, and
-     * calculates the change in pose (twist) between the last and new odometry
-     * poses. The estimated
+     * <p>This method retrieves the last odometry pose, applies the new odometry observation, and
+     * calculates the change in pose (twist) between the last and new odometry poses. The estimated
      * pose is then updated by applying the calculated twist.
      *
-     * @param observation The new odometry observation to be added. This observation
-     *                    typically
-     *                    contains information about the robot's movement such as
-     *                    displacement and rotation.
+     * @param observation The new odometry observation to be added. This observation typically
+     *     contains information about the robot's movement such as displacement and rotation.
      */
     public void addGyroObservation(OdometryObservation observation) {
         Pose2d lastOdometryPose = odometry.odometryPose();
@@ -168,17 +150,12 @@ public class PoseEstimator {
     }
 
     /**
-     * Calculates the change in pose (delta) between the odometry pose at a given
-     * timestamp and the
-     * current odometry pose. This is mainly used for latency compensation for
-     * vision.
+     * Calculates the change in pose (delta) between the odometry pose at a given timestamp and the
+     * current odometry pose. This is mainly used for latency compensation for vision.
      *
-     * @param timestampSeconds The timestamp (in seconds) for which to retrieve the
-     *                         odometry pose.
-     * @return An {@link Optional} containing the {@link Transform2d} representing
-     *         the pose delta if
-     *         the odometry pose at the given timestamp exists; otherwise, an empty
-     *         {@link Optional}.
+     * @param timestampSeconds The timestamp (in seconds) for which to retrieve the odometry pose.
+     * @return An {@link Optional} containing the {@link Transform2d} representing the pose delta if
+     *     the odometry pose at the given timestamp exists; otherwise, an empty {@link Optional}.
      */
     public Optional<Transform2d> getPoseDeltaThenToNow(double timestampSeconds) {
         var optionalOdometryPoseAtTime = odometry.odometryBuffer().getSample(timestampSeconds);
@@ -195,17 +172,12 @@ public class PoseEstimator {
     /**
      * Retrieves the estimated pose of the robot at a specific timestamp.
      *
-     * <p>
-     * This method calculates the pose at the given timestamp by determining the
-     * pose delta from
-     * the current estimated pose and applying the inverse of that delta to the
-     * current pose.
+     * <p>This method calculates the pose at the given timestamp by determining the pose delta from
+     * the current estimated pose and applying the inverse of that delta to the current pose.
      *
-     * @param timestampSeconds The timestamp (in seconds) for which the pose is
-     *                         requested.
-     * @return An {@code Optional<Pose2d>} containing the estimated pose at the
-     *         specified timestamp,
-     *         or an empty {@code Optional} if the pose cannot be determined.
+     * @param timestampSeconds The timestamp (in seconds) for which the pose is requested.
+     * @return An {@code Optional<Pose2d>} containing the estimated pose at the specified timestamp,
+     *     or an empty {@code Optional} if the pose cannot be determined.
      */
     public Optional<Pose2d> getPoseAtTime(double timestampSeconds) {
         return getPoseDeltaThenToNow(timestampSeconds)
@@ -213,10 +185,8 @@ public class PoseEstimator {
     }
 
     /**
-     * Incorporates a vision-based pose observation into the pose estimator. This
-     * method uses a
-     * Kalman filter approach to blend the vision-based observation with the current
-     * odometry-based
+     * Incorporates a vision-based pose observation into the pose estimator. This method uses a
+     * Kalman filter approach to blend the vision-based observation with the current odometry-based
      * pose estimate, accounting for the variances in both sources of data.
      *
      * @param observation The vision pose observation
@@ -225,7 +195,8 @@ public class PoseEstimator {
 
         // Attempt to get heading. Fails if the odometer has not recorded
         // a measurement near this timestamp
-        Transform2d poseDeltaThenToNow = getPoseDeltaThenToNow(observation.timestampSeconds).orElse(null);
+        Transform2d poseDeltaThenToNow =
+                getPoseDeltaThenToNow(observation.timestampSeconds).orElse(null);
         if (poseDeltaThenToNow == null) {
             logVisionObservation(
                     observation,
@@ -257,9 +228,9 @@ public class PoseEstimator {
         // Logic is copied from:
         // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/edu/wpi/first/math/estimator/PoseEstimator.java#L93-L109
         double[] visionVariances = {
-                visionLinearVariance, // X axis
-                visionLinearVariance, // Y axis
-                visionAngularVariance
+            visionLinearVariance, // X axis
+            visionLinearVariance, // Y axis
+            visionAngularVariance
         }; // Rotation
 
         // Transform between our best estimated pose at the time the frame was captured
@@ -269,10 +240,13 @@ public class PoseEstimator {
         // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/edu/wpi/first/math/estimator/PoseEstimator.java#L276-L292
         Transform2d unscaledVisionCorrection = new Transform2d(oldPose, newVisionPose);
 
-        double translationSigma = Math.sqrt(Math.max(visionLinearVariance + odometryVariances[0], 1.0e-9));
-        double rotationSigma = Math.sqrt(Math.max(visionAngularVariance + odometryVariances[2], 1.0e-9));
+        double translationSigma =
+                Math.sqrt(Math.max(visionLinearVariance + odometryVariances[0], 1.0e-9));
+        double rotationSigma =
+                Math.sqrt(Math.max(visionAngularVariance + odometryVariances[2], 1.0e-9));
 
-        double translationMag = Math.hypot(unscaledVisionCorrection.getX(), unscaledVisionCorrection.getY());
+        double translationMag =
+                Math.hypot(unscaledVisionCorrection.getX(), unscaledVisionCorrection.getY());
         double rotationMag = Math.abs(unscaledVisionCorrection.getRotation().getRadians());
 
         double translationNSigma = translationMag / translationSigma;
@@ -294,21 +268,24 @@ public class PoseEstimator {
         }
 
         // Scale the vision correction by the Kalman gain
-        var scaledVisionCorrectionVector = visionKalmanGain.times(
-                VecBuilder.fill(
-                        unscaledVisionCorrection.getX(),
-                        unscaledVisionCorrection.getY(),
-                        unscaledVisionCorrection.getRotation().getRadians()));
+        var scaledVisionCorrectionVector =
+                visionKalmanGain.times(
+                        VecBuilder.fill(
+                                unscaledVisionCorrection.getX(),
+                                unscaledVisionCorrection.getY(),
+                                unscaledVisionCorrection.getRotation().getRadians()));
 
         // Convert to Transform2d
-        Transform2d scaledVisionCorrection = new Transform2d(
-                scaledVisionCorrectionVector.get(0, 0),
-                scaledVisionCorrectionVector.get(1, 0),
-                Rotation2d.fromRadians(scaledVisionCorrectionVector.get(2, 0)));
+        Transform2d scaledVisionCorrection =
+                new Transform2d(
+                        scaledVisionCorrectionVector.get(0, 0),
+                        scaledVisionCorrectionVector.get(1, 0),
+                        Rotation2d.fromRadians(scaledVisionCorrectionVector.get(2, 0)));
 
-        Pose2d candidatePose = oldPose.transformBy(scaledVisionCorrection) // Adjust by the correction
-                .transformBy(
-                        poseDeltaThenToNow); // Bring back to present time (latency comp)
+        Pose2d candidatePose =
+                oldPose.transformBy(scaledVisionCorrection) // Adjust by the correction
+                        .transformBy(
+                                poseDeltaThenToNow); // Bring back to present time (latency comp)
 
         if (!poseValidator.test(candidatePose)) {
             logVisionObservation(
@@ -334,16 +311,11 @@ public class PoseEstimator {
     /**
      * Resets the pose estimator to a known field-relative pose.
      *
-     * <p>
-     * This method should be called when the robot's absolute position on the field
-     * is known —
-     * for example, at the start of autonomous or after a vision-based correction.
-     * It reinitializes
-     * both the odometry integrator and the estimator’s internal pose state to the
-     * specified pose.
+     * <p>This method should be called when the robot's absolute position on the field is known —
+     * for example, at the start of autonomous or after a vision-based correction. It reinitializes
+     * both the odometry integrator and the estimator’s internal pose state to the specified pose.
      *
-     * @param pose the known {@link Pose2d} representing the robot’s field-relative
-     *             position
+     * @param pose the known {@link Pose2d} representing the robot’s field-relative position
      */
     public void resetPose(Pose2d pose) {
         odometry.resetPose(pose);
@@ -358,33 +330,7 @@ public class PoseEstimator {
      */
     public PoseEstimator withPoseValidator(Predicate<Pose2d> validator) {
         poseValidator = validator;
-        refreshOdometryPoseValidator();
         return this;
-    }
-
-    private void refreshOdometryPoseValidator() {
-        odometry.setPoseValidator(
-                pose -> {
-                    boolean accepted = poseValidator.test(pose);
-                    OdometryObservationReason reason = accepted
-                            ? OdometryObservationReason.ACCEPTED
-                            : OdometryObservationReason.POSE_VALIDATOR_REJECTED;
-                    logOdometryObservation(pose, accepted, reason);
-                    return accepted;
-                });
-    }
-
-    private void logOdometryObservation(
-            Pose2d candidatePose, boolean accepted, OdometryObservationReason reason) {
-        Logger.recordOutput(LOG_PREFIX + "Odometry/Accepted", accepted);
-        Logger.recordOutput(LOG_PREFIX + "Odometry/Reason", reason.name());
-        Logger.recordOutput(LOG_PREFIX + "Odometry/CandidatePose", candidatePose);
-        Logger.recordOutput(
-                LOG_PREFIX + "Odometry/AcceptedPose",
-                accepted ? new Pose2d[] { candidatePose } : new Pose2d[] {});
-        Logger.recordOutput(
-                LOG_PREFIX + "Odometry/RejectedPose",
-                accepted ? new Pose2d[] {} : new Pose2d[] { candidatePose });
     }
 
     private void logVisionObservation(
@@ -394,15 +340,17 @@ public class PoseEstimator {
             VisionObservationReason reason,
             double translationNSigma,
             double rotationNSigma) {
-        int[] seenTagIds = observation.seenTagIds() != null
-                ? observation.seenTagIds().stream().mapToInt(Integer::intValue).toArray()
-                : new int[] {};
+        int[] seenTagIds =
+                observation.seenTagIds() != null
+                        ? observation.seenTagIds().stream().mapToInt(Integer::intValue).toArray()
+                        : new int[] {};
         Pose3d[] seenTagPoses = new Pose3d[seenTagIds.length];
         for (int i = 0; i < seenTagIds.length; i++) {
-            seenTagPoses[i] = AprilTagLayoutType.OFFICIAL
-                    .getLayout()
-                    .getTagPose(seenTagIds[i])
-                    .orElse(Pose3d.kZero);
+            seenTagPoses[i] =
+                    AprilTagLayoutType.OFFICIAL
+                            .getLayout()
+                            .getTagPose(seenTagIds[i])
+                            .orElse(Pose3d.kZero);
         }
 
         Logger.recordOutput(LOG_PREFIX + "Vision/Accepted", accepted);
@@ -419,13 +367,13 @@ public class PoseEstimator {
         Logger.recordOutput(LOG_PREFIX + "Vision/RotationNSigma", rotationNSigma);
         Logger.recordOutput(
                 LOG_PREFIX + "Vision/CandidatePose",
-                new Pose2d[] { candidatePose != null ? candidatePose : Pose2d.kZero });
+                new Pose2d[] {candidatePose != null ? candidatePose : Pose2d.kZero});
         if (accepted && candidatePose != null) {
-            Logger.recordOutput(LOG_PREFIX + "Vision/AcceptedPose", new Pose2d[] { candidatePose });
+            Logger.recordOutput(LOG_PREFIX + "Vision/AcceptedPose", new Pose2d[] {candidatePose});
         } else {
             Logger.recordOutput(
                     LOG_PREFIX + "Vision/RejectedPose",
-                    new Pose2d[] { candidatePose != null ? candidatePose : observation.robotPose() });
+                    new Pose2d[] {candidatePose != null ? candidatePose : observation.robotPose()});
         }
     }
 }
