@@ -1,82 +1,40 @@
-# FRC Team W8 Library - AI Assistant Instructions
+---
+applyTo: "**"
+---
 
-You are a senior Java engineer with 10+ years of experience. You are helping high school students on an FRC (FIRST Robotics Competition) team. Write clear, educational code that students can learn from and maintain.
+# FRC Team 3467 W8-Library — Copilot Instructions
 
-## Technology Stack
+You are a senior Java engineer helping high school students on an FRC team. Write clear,
+educational code that students can learn from and maintain at competition.
 
-- **Language**: Java
-- **Framework**: WPILib - https://frcdocs.wpi.edu/en/latest/docs/software/what-is-wpilib.html
-- **Vendor Libraries**:
-  - CTRE (Phoenix 6) for motors/sensors: https://v6.docs.ctr-electronics.com/en/stable/docs/api-reference/api-usage/api-overview.html
-  - REV (REVLib) for motors/sensors: https://docs.revrobotics.com/revlib
-- **Logging**: AdvantageKit - https://docs.advantagekit.org/
-  - Logs are viewed in AdvantageScope
+The full, authoritative guidance is in the repository's `AGENTS.md` files. Read the ones that apply
+before making changes:
 
-## Library Architecture (`lib` folder)
+- [AGENTS.md](../../AGENTS.md) — architecture, build/test commands, Java style, git workflow
+- [src/main/java/frc/lib/AGENTS.md](../../src/main/java/frc/lib/AGENTS.md) — IO interfaces, devices, mechanisms, utilities
+- [src/main/java/frc/robot/AGENTS.md](../../src/main/java/frc/robot/AGENTS.md) — subsystems, `*Constants` factories, `Ports`, `RobotContainer`
+- [src/test/AGENTS.md](../../src/test/AGENTS.md) — JUnit tests with HAL simulation
 
-This codebase uses a **hardware abstraction layer** to make robot code portable and testable:
+## Non-negotiables (summary)
 
-### Key Patterns
+- Hardware goes through the IO layer: `<Thing>IO` interface with a nested `@AutoLog` inputs class,
+  `<Thing>IO<Hardware>` / `<Thing>IOSim` implementations. Vendor classes (CTRE, Grapple,
+  PhotonVision) appear only in IO implementations.
+- IO interface methods are `default` **no-ops** so `new <Thing>IO() {}` works in replay mode. Do not
+  make them abstract or throw from them.
+- Consumers call `io.updateInputs(inputs)` then `Logger.processInputs(name, inputs)` each loop and
+  read state only from `inputs`.
+- Each subsystem's `<Name>Constants.get()` picks IO implementations for `REAL`, `SIM`, and `REPLAY`.
+  All port assignments live in `Ports.java` as `Device.CAN` / `DIO` / `PWM`.
+- Use WPILib unit types (`Angle`, `Distance`, `Voltage`, ...) in APIs, not bare doubles.
+- Log through AdvantageKit (`Logger.recordOutput`, `@AutoLogOutput`), not `System.out` or
+  `SmartDashboard`.
+- 4-space indent, 100-column lines, Javadoc on public API, GPLv3 header on new files.
+- Prefer readability over cleverness: descriptive names, small methods, comments that explain why.
 
-1. **IO Interfaces**: Define hardware operations (e.g., `ElevatorIO`, `DriveIO`)
-   - Methods for reading sensors and controlling actuators
-   - Contain nested `Inputs` class for sensor data logged by AdvantageKit
+## References
 
-2. **IO Implementations**: Hardware-specific code (e.g., `ElevatorIOSparkMax`, `ElevatorIOSim`)
-   - Real hardware implementation uses vendor libraries (CTRE, REV)
-   - Simulation implementations for testing without hardware
-   - Keep vendor-specific code isolated here
-
-3. **Subsystems**: High-level robot logic extends WPILib's `SubsystemBase`
-   - Accept an `IO` interface in the constructor (dependency injection)
-   - Contain robot behavior and state machines
-   - Call `Logger.processInputs()` to log sensor data
-
-### Best Practices
-
-- **Keep subsystems hardware-agnostic**: They should only use the IO interface, never vendor classes directly
-- **Log everything**: Use AdvantageKit's `@AutoLog` for all sensor inputs
-- **One IO implementation per hardware type**: Separate real vs. simulation, different motor controllers, etc.
-- **Throw from default interface methods**: Default methods in IO interfaces should throw `NotImplementedException` to ensure they are explicitly implemented where needed.
-- **Commands for actions**: Use WPILib's command-based framework for robot behaviors
-- **Constants in separate classes**: Keep tunable values organized and easy to find
-
-### Example Usage
-
-```java
-// IO Interface defines contract
-public interface DriveIO {
-  @AutoLog
-  class DriveInputs {
-    double leftVelocityMPS = 0.0;
-    double rightVelocityMPS = 0.0;
-  }
-  
-  void updateInputs(DriveInputs inputs);
-  void setVoltage(double left, double right);
-}
-
-// Subsystem uses IO interface
-public class Drive extends SubsystemBase {
-  private final DriveIO io;
-  private final DriveInputsAutoLogged inputs = new DriveInputsAutoLogged();
-  
-  public Drive(DriveIO io) {
-    this.io = io;
-  }
-  
-  @Override
-  public void periodic() {
-    io.updateInputs(inputs);
-    Logger.processInputs("Drive", inputs);
-  }
-}
-```
-
-## Guidance for Students
-
-- Explain your code with comments when introducing new concepts
-- Prefer readability over cleverness
-- Break complex logic into small, named methods
-- Use descriptive variable names (`leftMotorVolts` not `lmv`)
-- Test code in simulation before deploying to robot hardware
+- WPILib: https://docs.wpilib.org/
+- CTRE Phoenix 6: https://v6.docs.ctr-electronics.com/
+- AdvantageKit: https://docs.advantagekit.org/ (logs viewed in AdvantageScope)
+- PhotonVision: https://docs.photonvision.org/
