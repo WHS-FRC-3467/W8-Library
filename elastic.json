@@ -504,7 +504,7 @@
             ]
           },
           {
-            "title": "Module0",
+            "title": "ModuleFrontLeft",
             "x": 450.0,
             "y": 300.0,
             "width": 200.0,
@@ -515,14 +515,14 @@
             },
             "children": [
               {
-                "title": "DriveAppliedVolts",
+                "title": "DriveAppliedVoltageVolts",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/DriveAppliedVolts",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/DriveAppliedVoltageVolts",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -536,7 +536,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/DriveConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/DriveConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -546,14 +546,14 @@
                 }
               },
               {
-                "title": "DriveCurrentAmps",
+                "title": "DriveSupplyCurrentAmps",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/DriveCurrentAmps",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/DriveSupplyCurrentAmps",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -567,7 +567,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/DrivePositionRad",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/DrivePositionRad",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -581,7 +581,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/DriveVelocityRadPerSec",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/DriveVelocityRadPerSec",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -595,7 +595,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/OdometryDrivePositionsRad",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/OdometryDrivePositionsRad",
                   "period": 0.06,
                   "data_type": "double[]",
                   "show_submit_button": false
@@ -609,21 +609,21 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/OdometryTimestamps",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/OdometryTimestamps",
                   "period": 0.06,
                   "data_type": "double[]",
                   "show_submit_button": false
                 }
               },
               {
-                "title": "TurnAppliedVolts",
+                "title": "TurnAppliedVoltageVolts",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/TurnAppliedVolts",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/TurnAppliedVoltageVolts",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -637,7 +637,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/TurnConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/TurnConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -647,14 +647,14 @@
                 }
               },
               {
-                "title": "TurnCurrentAmps",
+                "title": "TurnSupplyCurrentAmps",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/TurnCurrentAmps",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/TurnSupplyCurrentAmps",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -668,7 +668,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/TurnEncoderConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/TurnEncoderConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -685,7 +685,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module0/TurnVelocityRadPerSec",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontLeft/TurnVelocityRadPerSec",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -694,7 +694,7 @@
             ]
           },
           {
-            "title": "Module1",
+            "title": "ModuleFrontRight",
             "x": 650.0,
             "y": 300.0,
             "width": 200.0,
@@ -705,14 +705,14 @@
             },
             "children": [
               {
-                "title": "DriveAppliedVolts",
+                "title": "DriveAppliedVoltageVolts",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/DriveAppliedVolts",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/DriveAppliedVoltageVolts",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -726,7 +726,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/DriveConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/DriveConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -736,14 +736,14 @@
                 }
               },
               {
-                "title": "DriveCurrentAmps",
+                "title": "DriveSupplyCurrentAmps",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/DriveCurrentAmps",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/DriveSupplyCurrentAmps",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -757,7 +757,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/DrivePositionRad",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/DrivePositionRad",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -771,7 +771,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/DriveVelocityRadPerSec",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/DriveVelocityRadPerSec",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -785,7 +785,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/OdometryDrivePositionsRad",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/OdometryDrivePositionsRad",
                   "period": 0.06,
                   "data_type": "double[]",
                   "show_submit_button": false
@@ -799,21 +799,21 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/OdometryTimestamps",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/OdometryTimestamps",
                   "period": 0.06,
                   "data_type": "double[]",
                   "show_submit_button": false
                 }
               },
               {
-                "title": "TurnAppliedVolts",
+                "title": "TurnAppliedVoltageVolts",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/TurnAppliedVolts",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/TurnAppliedVoltageVolts",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -827,7 +827,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/TurnConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/TurnConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -837,14 +837,14 @@
                 }
               },
               {
-                "title": "TurnCurrentAmps",
+                "title": "TurnSupplyCurrentAmps",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/TurnCurrentAmps",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/TurnSupplyCurrentAmps",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -858,7 +858,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/TurnEncoderConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/TurnEncoderConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -875,7 +875,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module1/TurnVelocityRadPerSec",
+                  "topic": "/AdvantageKit/Drive/ModuleFrontRight/TurnVelocityRadPerSec",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -884,7 +884,7 @@
             ]
           },
           {
-            "title": "Module2",
+            "title": "ModuleBackLeft",
             "x": 850.0,
             "y": 300.0,
             "width": 200.0,
@@ -895,14 +895,14 @@
             },
             "children": [
               {
-                "title": "DriveAppliedVolts",
+                "title": "DriveAppliedVoltageVolts",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/DriveAppliedVolts",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/DriveAppliedVoltageVolts",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -916,7 +916,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/DriveConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/DriveConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -926,14 +926,14 @@
                 }
               },
               {
-                "title": "DriveCurrentAmps",
+                "title": "DriveSupplyCurrentAmps",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/DriveCurrentAmps",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/DriveSupplyCurrentAmps",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -947,7 +947,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/DrivePositionRad",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/DrivePositionRad",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -961,7 +961,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/DriveVelocityRadPerSec",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/DriveVelocityRadPerSec",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -975,7 +975,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/OdometryDrivePositionsRad",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/OdometryDrivePositionsRad",
                   "period": 0.06,
                   "data_type": "double[]",
                   "show_submit_button": false
@@ -989,21 +989,21 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/OdometryTimestamps",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/OdometryTimestamps",
                   "period": 0.06,
                   "data_type": "double[]",
                   "show_submit_button": false
                 }
               },
               {
-                "title": "TurnAppliedVolts",
+                "title": "TurnAppliedVoltageVolts",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/TurnAppliedVolts",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/TurnAppliedVoltageVolts",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -1017,7 +1017,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/TurnConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/TurnConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -1027,14 +1027,14 @@
                 }
               },
               {
-                "title": "TurnCurrentAmps",
+                "title": "TurnSupplyCurrentAmps",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/TurnCurrentAmps",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/TurnSupplyCurrentAmps",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -1048,7 +1048,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/TurnEncoderConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/TurnEncoderConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -1065,7 +1065,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module2/TurnVelocityRadPerSec",
+                  "topic": "/AdvantageKit/Drive/ModuleBackLeft/TurnVelocityRadPerSec",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -1074,7 +1074,7 @@
             ]
           },
           {
-            "title": "Module3",
+            "title": "ModuleBackRight",
             "x": 1050.0,
             "y": 300.0,
             "width": 200.0,
@@ -1085,14 +1085,14 @@
             },
             "children": [
               {
-                "title": "DriveAppliedVolts",
+                "title": "DriveAppliedVoltageVolts",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/DriveAppliedVolts",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/DriveAppliedVoltageVolts",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -1106,7 +1106,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/DriveConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/DriveConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -1116,14 +1116,14 @@
                 }
               },
               {
-                "title": "DriveCurrentAmps",
+                "title": "DriveSupplyCurrentAmps",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/DriveCurrentAmps",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/DriveSupplyCurrentAmps",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -1137,7 +1137,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/DrivePositionRad",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/DrivePositionRad",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -1151,7 +1151,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/DriveVelocityRadPerSec",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/DriveVelocityRadPerSec",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -1165,7 +1165,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/OdometryDrivePositionsRad",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/OdometryDrivePositionsRad",
                   "period": 0.06,
                   "data_type": "double[]",
                   "show_submit_button": false
@@ -1179,21 +1179,21 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/OdometryTimestamps",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/OdometryTimestamps",
                   "period": 0.06,
                   "data_type": "double[]",
                   "show_submit_button": false
                 }
               },
               {
-                "title": "TurnAppliedVolts",
+                "title": "TurnAppliedVoltageVolts",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/TurnAppliedVolts",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/TurnAppliedVoltageVolts",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -1207,7 +1207,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/TurnConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/TurnConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -1217,14 +1217,14 @@
                 }
               },
               {
-                "title": "TurnCurrentAmps",
+                "title": "TurnSupplyCurrentAmps",
                 "x": 0.0,
                 "y": 0.0,
                 "width": 150.0,
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/TurnCurrentAmps",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/TurnSupplyCurrentAmps",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false
@@ -1238,7 +1238,7 @@
                 "height": 150.0,
                 "type": "Boolean Box",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/TurnEncoderConnected",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/TurnEncoderConnected",
                   "period": 0.06,
                   "data_type": "boolean",
                   "true_color": 4283215696,
@@ -1255,7 +1255,7 @@
                 "height": 150.0,
                 "type": "Text Display",
                 "properties": {
-                  "topic": "/AdvantageKit/Drive/Module3/TurnVelocityRadPerSec",
+                  "topic": "/AdvantageKit/Drive/ModuleBackRight/TurnVelocityRadPerSec",
                   "period": 0.06,
                   "data_type": "double",
                   "show_submit_button": false

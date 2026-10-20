@@ -48,9 +48,11 @@ public class ModuleIOSim implements ModuleIO {
     private static final double TURN_KD = 0.0;
 
     /** 
-    * Bare, unreduced DC motor models for the drive and turn motor simulations (qty 1 ea). 
+    * Bare, unreduced DCMotor models for the drive and turn motor simulations (qty 1 ea). 
     * The gear ratios are not applied to these objects; they are instead applied in the 
     * {@link LinearSystemId#createDCMotorSystem(DCMotor, double, double)} call. 
+    * 
+    * Drive = X60 FOC (1 motor), Turn = X44 FOC (1 motor).
     */
     private static final DCMotor DRIVE_MOTOR_MODEL = DCMotor.getKrakenX60Foc(1);
     /** See {@link #DRIVE_MOTOR_MODEL}. */
@@ -79,8 +81,8 @@ public class ModuleIOSim implements ModuleIO {
     private static final int SIM_SUBSTEPS = 6;
 
     // Boolean indicating whether regenerative braking is feeding the bus. Can vary from module to module.
-    public boolean isDriveRegenerating = false;
-    public boolean isTurnRegenerating = false;
+    private boolean isDriveRegenerating = false;
+    private boolean isTurnRegenerating = false;
 
     // Average of the drive and turn supply currents over a simulation step for use in battery load modeling
     private double driveSupplyCurrentAverageAmps = 0.0;
@@ -187,11 +189,9 @@ public class ModuleIOSim implements ModuleIO {
             MotorSimCalcs.getTorqueCurrentAmps(driveSim, DRIVE_MOTOR_MODEL.KtNMPerAmp));
             turnSupplyCurrentAverageAmps += MotorSimCalcs.getSupplyCurrentAmps(supplyVoltageVolts, turnClampedAppliedVolts, 
             MotorSimCalcs.getTorqueCurrentAmps(turnSim, TURN_MOTOR_MODEL.KtNMPerAmp));
-            if (i == SIM_SUBSTEPS - 1) {
-                driveSupplyCurrentAverageAmps /= SIM_SUBSTEPS;
-                turnSupplyCurrentAverageAmps /= SIM_SUBSTEPS;
-            }
         }
+        driveSupplyCurrentAverageAmps /= SIM_SUBSTEPS;
+        turnSupplyCurrentAverageAmps /= SIM_SUBSTEPS;
   
         /* Update the battery load accumulator with the current draw from both motors. 
          * This new load will be applied next loop. */

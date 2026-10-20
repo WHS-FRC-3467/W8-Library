@@ -39,6 +39,21 @@ public class RotaryMechanismSim extends RotaryMechanism<MotorIOSim, AbsoluteEnco
     private Time lastTime = RobotController.getMeasureTime();
     private AngularVelocity lastVelocity = RadiansPerSecond.zero();
 
+    /**
+     * Constructs a simulated rotary mechanism with the given parameters. 
+     * 
+     * @param name Name of the rotary mechanism
+     * @param io MotorIOSim implementation (e.g. TalonFX) for the rotor
+     * @param motor The bare (unreduced) DCMotor model representing the entire motor group, 
+     * including all leaders and followers. For example, DCMotor.getKrakenX60Foc(2) for two motors.
+     * Gear reduction is applied separately using the MotorIO ratios.
+     * @param momentOfInertia The moment of inertia of the rotor in kg*m^2
+     * @param useGravity Whether to simulate gravity effects (applies when orientation is vertical)
+     * @param characteristics RotaryMechCharacteristics object containing arm length, min/max angles, starting 
+     * angle, and axis
+     * @param absoluteEncoder Optional AbsoluteEncoderIOSim implementation for absolute encoder feedback
+     * @param encoderName Name of the absolute encoder (used for logging)
+     */
     public RotaryMechanismSim(
             String name,
             MotorIOSim io,
@@ -56,7 +71,7 @@ public class RotaryMechanismSim extends RotaryMechanism<MotorIOSim, AbsoluteEnco
         sim =
                 new SingleJointedArmSim(
                         motor,
-                        io.getRotorToSensorRatio() * io.getSensorToMechanismRatio(),
+                        io.getRotorToMechanismRatio(),
                         momentOfInertia.in(KilogramSquareMeters),
                         characteristics.armLength().in(Meters),
                         characteristics.minAngle().in(Radians),
@@ -72,9 +87,9 @@ public class RotaryMechanismSim extends RotaryMechanism<MotorIOSim, AbsoluteEnco
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        // Calculate supply current 
+        // Calculate the motor group's supply current 
         double supplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(RobotController.getBatteryVoltage(), inputs.appliedVoltage.in(Volts), 
-        inputs.torqueCurrent.in(Amps));
+        inputs.torqueCurrent.in(Amps)) * io.getNumberOfMotors();
         BatteryModel.addCurrentLoad(supplyCurrentAmps);
 
         AngularVelocity currentVelocity = RadiansPerSecond.of(sim.getVelocityRadPerSec());

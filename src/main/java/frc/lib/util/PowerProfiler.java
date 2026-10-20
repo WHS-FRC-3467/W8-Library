@@ -96,45 +96,38 @@ public class PowerProfiler {
     private final Map<String, Double> subsystemEnergies = new HashMap<>();
 
     // Single motor raw rotor speed (i.e. before gear ratio)
-    private double motorSpeedRadPerSec = 0.0;
     private final Map<String, Double> motorSpeeds = new HashMap<>();
     // Single motor raw rotor torque (i.e. before gear ratio)
-    private double singleMotorTorqueNM = 0.0;
     private final Map<String, Double> motorTorques = new HashMap<>();
-
     // Mechanism velocity (i.e. after gear ratio)
-    private double mechanismVelocityRadPerSec = 0.0;
     private final Map<String, Double> mechanismVelocities = new HashMap<>();
     // Total mechanism torque magnitude (i.e. after gear ratio torque magnitude of ALL motors in the motor group)
-    private double totalMechanismTorqueMagNM = 0.0;
     private final Map<String, Double> totalMechanismTorqueMags = new HashMap<>();
     /*
-    * Total estimated mechanism mechanical power magnitude:
-    *
-    *   |P_mech| ≈ |T_mech| * |ω_mech|
-    *
-    * This profiler currently has no insight into whether sign inversion exists between
-    * the motor and mechanism coordinate systems, so this is reported as a magnitude. The signed quantity
-    * would indicate the directionality of the power transfer -- positive is motoring, negative is braking. 
-    * Use command/state/log context to determine whether the mechanism was motoring or braking at a given timestamp.
-    *
-    * Motoring refers to increasing the energy of the output load (e.g. accelerating a flywheel).
-    * Braking refers to decreasing the energy of the output load (e.g. decelerating a flywheel).
-    */
-    private double totalMechanismMechPowerMagWatts = 0.0;
+     * Total estimated mechanism mechanical power magnitude:
+     *
+     *   |P_mech| ≈ |T_mech| * |ω_mech|
+     *
+     * This profiler currently has no insight into whether sign inversion exists between
+     * the motor and mechanism coordinate systems, so this is reported as a magnitude. The signed quantity
+     * would indicate the directionality of the power transfer -- positive is motoring, negative is braking. 
+     * Use command/state/log context to determine whether the mechanism was motoring or braking at a given timestamp.
+     *
+     * Motoring refers to increasing the energy of the output load (e.g. accelerating a flywheel).
+     * Braking refers to decreasing the energy of the output load (e.g. decelerating a flywheel).
+     */
     private final Map<String, Double> totalMechanismPowerMags = new HashMap<>();
     /*
-    * Empirical diagnostic ratio, not a guaranteed true efficiency measurement.
-    *
-    * This is only meaningful when external context confirms the mechanism is
-    * motoring. It should not be trusted during braking, backdriving,
-    * backlash, impacts, severe slip, stalls/hard-stops, or other cases where
-    * the estimated mechanism power magnitude is not useful output power.
-    *
-    * Values above 1.0 indicate invalid assumptions or an operating condition
-    * outside this model.
-    */
-    private double estBatteryToMechanismEfficiency = 0.0;
+     * Empirical diagnostic ratio, not a guaranteed true efficiency measurement.
+     *
+     * This is only meaningful when external context confirms the mechanism is
+     * motoring. It should not be trusted during braking, backdriving,
+     * backlash, impacts, severe slip, stalls/hard-stops, or other cases where
+     * the estimated mechanism power magnitude is not useful output power.
+     *
+     * Values above 1.0 indicate invalid assumptions or an operating condition
+     * outside this model.
+     */
     private final Map<String, Double> estBatteryToMechanismEfficiencies = new HashMap<>();
 
     private boolean isInitialized = false;
@@ -142,7 +135,7 @@ public class PowerProfiler {
 
     private static final double DEFAULT_LOOP_TIME_SECONDS = 0.02;
     private static final double MAX_LOOP_TIME_SECONDS = 0.1;
-    private static final double EPSILON = 1.0;
+    private static final double MIN_BATTERY_POWER_FOR_EFFICIENCY_WATTS = 1.0;
 
     /**
      * Register a subsystem's mechanism to the power profiler.
@@ -184,7 +177,7 @@ public class PowerProfiler {
 
         // Mechanisms (electrical & mechanical)
         for (var reg : mechanisms) {
-            // Cache
+            // Starting cache & initialization
             Mechanism<?> mechanism = reg.mechanism();
             int numMotors = mechanism.getNumberOfMotors();
             Logger.recordOutput("PowerProfiler/NumRegisteredMotors/" + reg.key(), numMotors);
@@ -199,35 +192,44 @@ public class PowerProfiler {
             reportElectricalUsage(reg.key(), drawCurrentAmps, suppliedVolts, loopTimeSeconds);
 
             /* Mechanical report */ 
+            // Mechanical cache
             OptionalDouble Kt = mechanism.getMotorTorqueConstant();
             boolean valid = Kt.isPresent();
             double sentinel = Double.NaN;
 
             // Motor
+            // Single motor raw rotor speed (i.e. before gear ratio)
             // No insight into gearing/belt inversion, so don't assume sign
-            motorSpeedRadPerSec = Math.abs(mechanism.getVelocity().times(mechanism.getRotorToMechanismRatio()).in(RadiansPerSecond));
-            singleMotorTorqueNM = 
+            double motorSpeedRadPerSec = Math.abs(mechanism.getVelocity().times(mechanism.getRotorToMechanismRatio()).in(RadiansPerSecond));
+            // Single motor raw rotor torque (i.e. before gear ratio)
+            double singleMotorTorqueNM = 
                 valid 
                     ? mechanism.getTorqueCurrent().in(Amps) * Kt.getAsDouble() 
                     : sentinel;
 
             // Mechanism
-            mechanismVelocityRadPerSec = mechanism.getVelocity().in(RadiansPerSecond);
+            // Mechanism velocity (i.e. after gear ratio)
+            double mechanismVelocityRadPerSec = mechanism.getVelocity().in(RadiansPerSecond);
+            // Total mechanism torque magnitude (i.e. after gear ratio torque magnitude of ALL motors in the motor group)
             // No insight into gearing/belt inversion, so don't assume sign
-            totalMechanismTorqueMagNM = 
+            double totalMechanismTorqueMagNM = 
                 valid 
                     ? Math.abs(singleMotorTorqueNM * mechanism.getRotorToMechanismRatio() * numMotors)
                     : sentinel;
-            totalMechanismMechPowerMagWatts = valid ? 
+
+            // Total estimated mechanism mechanical power magnitude (W)
+            double totalMechanismMechPowerMagWatts = valid ? 
                 totalMechanismTorqueMagNM * Math.abs(mechanismVelocityRadPerSec)
                 : sentinel;
             double batteryPowerWatts = drawCurrentAmps * suppliedVolts;
             /*
+             * Estimated battery-to-mechanism efficiency 
+             * 
              * This efficiency is only meaningful when the mechanism is known to be normally motoring (defined above).
              * When the motor is acting as a generator (i.e. actual mechanism power < 0), this definition of efficiency is invalid
              * and should be ignored.
              */
-            estBatteryToMechanismEfficiency = valid && batteryPowerWatts > EPSILON ? 
+            double estBatteryToMechanismEfficiency = valid && batteryPowerWatts > MIN_BATTERY_POWER_FOR_EFFICIENCY_WATTS ? 
                 totalMechanismMechPowerMagWatts / batteryPowerWatts : sentinel;
 
             // Mechanical totalizer

@@ -52,7 +52,9 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
      *
      * @param name The name of the mechanism
      * @param io The motor IO simulation
-     * @param motor The DC motor characteristics
+     * @param motor The bare (unreduced) DCMotor model representing the entire motor group, 
+     * including all leaders and followers. For example, DCMotor.getKrakenX60Foc(2) for two motors.
+     * Gear reduction is applied separately using the MotorIO ratios.
      * @param mass The mass of the carriage
      * @param useGravity Whether to simulate gravity effects (applies when orientation is vertical)
      * @param characteristics The mechanism characteristics including orientation
@@ -66,16 +68,20 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
             LinearMechCharacteristics characteristics) {
         super(name, characteristics, io);
 
-        // ElevatorSim is used as the underlying physics simulation.
-        // Note: ElevatorSim assumes vertical orientation for gravity simulation.
-        // The visualization and 3D pose will correctly reflect any orientation angle,
-        // but physics simulation is most accurate when useGravity=true and orientation
-        // is vertical (pitch = -90° for upward, 90° for downward), or when useGravity=false for
-        // horizontal mechanisms.
+        /* 
+         * Both the underlying plant and sim API require an unreduced DCMotor object with the proper number of 
+         * motors to properly model the gearbox; gearing is manually applied. 
+         * 
+         * Note: ElevatorSim assumes vertical orientation for gravity simulation.
+         * The visualization and 3D pose will correctly reflect any orientation angle,
+         * but physics simulation is most accurate when useGravity=true and orientation
+         * is vertical (pitch = -90° for upward, 90° for downward), or when useGravity=false for
+         * horizontal mechanisms.
+         */
         sim =
                 new ElevatorSim(
                         motor,
-                        io.getRotorToSensorRatio() * io.getSensorToMechanismRatio(),
+                        io.getRotorToMechanismRatio(),
                         mass.in(Kilograms),
                         characteristics.drumRadius().in(Meters),
                         characteristics.minDistance().in(Meters),
@@ -99,9 +105,9 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
         // For accurate physics at arbitrary angles, consider using a custom LinearSystemSim.
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        // Calculate supply current 
+        // Calculate the motor group's supply current 
         double supplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(RobotController.getBatteryVoltage(), inputs.appliedVoltage.in(Volts), 
-        inputs.torqueCurrent.in(Amps));
+        inputs.torqueCurrent.in(Amps)) * io.getNumberOfMotors();
         BatteryModel.addCurrentLoad(supplyCurrentAmps);
 
         AngularVelocity currentVelocity =

@@ -49,6 +49,17 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
     private AngularVelocity lastVelocity = RadiansPerSecond.zero();
     private Angle simPosition = Radians.zero();
 
+    /**
+     * Constructs a simulated flywheel mechanism with the given parameters. 
+     * 
+     * @param name Name of the flywheel mechanism
+     * @param io MotorIOSim implementation (e.g. TalonFX) for the flywheel
+     * @param motor The bare (unreduced) DCMotor model representing the entire motor group, 
+     * including all leaders and followers. For example, DCMotor.getKrakenX60Foc(2) for two motors.
+     * Gear reduction is applied separately using the MotorIO ratios.
+     * @param momentOfInertia The moment of inertia of the flywheel in kg*m^2
+     * @param tolerance The acceptable angular velocity error tolerance for the flywheel in rad/s
+     */
     public FlywheelMechanismSim(
             String name,
             MotorIOSim io,
@@ -61,12 +72,16 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
             throw new IllegalArgumentException("momentOfInertia must be greater than zero!");
 
         this.tolerance = tolerance;
+        /* 
+         * Both the plant and sim API require an unreduced DCMotor object with the proper number of motors to properly 
+         * model the gearbox; gearing is manually applied. 
+         */
         sim =
                 new FlywheelSim(
                         LinearSystemId.createFlywheelSystem(
                                 motor,
                                 momentOfInertia.in(KilogramSquareMeters),
-                                io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()),
+                                io.getRotorToMechanismRatio()),
                         motor);
 
         visualizer = new FlywheelVisualizer(name);
@@ -79,9 +94,9 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        // Calculate supply current 
+        // Calculate the motor group's supply current 
         double supplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(RobotController.getBatteryVoltage(), inputs.appliedVoltage.in(Volts), 
-        inputs.torqueCurrent.in(Amps));
+        inputs.torqueCurrent.in(Amps)) * io.getNumberOfMotors();
         BatteryModel.addCurrentLoad(supplyCurrentAmps);
 
         // Angular displacement kinematic equation (trapezoidal integration of theta)

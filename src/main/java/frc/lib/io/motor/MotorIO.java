@@ -76,19 +76,19 @@ public interface MotorIO extends AutoCloseable {
         /** Mechanism velocity. */
         public AngularVelocity velocity = RadiansPerSecond.of(0.0);
 
-        /** Motor supply (bus) voltage. */
+        /** Motor supply (bus) voltage. Approximately applies to all motors in the motor group. */
         public Voltage supplyVoltage = Volts.of(0.0);
 
-        /** Motor applied (output) voltage. */
+        /** Motor applied (output) voltage. Approximately applies to all motors in the motor group. */
         public Voltage appliedVoltage = Volts.of(0.0);
 
-        /** Total supply current to the motor. */
+        /** Total supply current to the motor. Only applies to the leader of the motor group. */
         public Current supplyCurrent = Amps.of(0.0);
 
-        /** Torque-producing (stator) current through the motor. */
+        /** Torque-producing (stator) current through the motor. Only applies to the leader of the motor group. */
         public Current torqueCurrent = Amps.of(0.0);
 
-        /** Motor temperature in degrees. */
+        /** Motor temperature in degrees. Approximately applies to all motors in the motor group. */
         public Temperature temperature = Celsius.of(0.0);
 
         /** Error in mechanism position. */
