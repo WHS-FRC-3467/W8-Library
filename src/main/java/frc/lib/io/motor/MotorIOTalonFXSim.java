@@ -116,6 +116,12 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         inputs.supplyCurrent = simState.getSupplyCurrentMeasure();
         inputs.torqueCurrent = simState.getTorqueCurrentMeasure();
         inputs.temperature = super.temperature.getValue();
+        inputs.numberOfMotors = super.getNumberOfMotors();
+        inputs.rotorToSensorRatio = super.getRotorToSensorRatio();
+        inputs.sensorToMechanismRatio = super.getSensorToMechanismRatio();
+        inputs.rotorToMechanismRatio = super.getRotorToMechanismRatio();
+        inputs.motorTorqueConstant = super.getMotorTorqueConstant().isPresent() ? 
+        super.getMotorTorqueConstant().getAsDouble() : -1.0;
 
         // Interpret control-loop status signals conditionally based on current mode
         Double closedLoopErrorValue = super.closedLoopError.getValue();

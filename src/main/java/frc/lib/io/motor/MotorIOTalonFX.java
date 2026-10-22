@@ -45,6 +45,8 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.lib.util.CANUpdateThread;
 import frc.lib.util.Device;
 import frc.lib.util.PID;
+import lombok.AccessLevel;
+import lombok.Getter;
 
 import java.util.Optional;
 import java.util.OptionalDouble;
@@ -97,9 +99,18 @@ public class MotorIOTalonFX implements MotorIO {
     private volatile TalonFXConfiguration currentConfig;
     protected volatile Angle goalPosition = Rotations.of(0.0);
     protected volatile AngularVelocity goalVelocity = RotationsPerSecond.zero();
-    private final double rotorToSensorRatio;
-    private final double sensorToMechanismRatio;
-    private final OptionalDouble motorTorqueConstant;
+
+    // Motor parameters for use in PowerProfiler, sim, and other calculations
+    @Getter(AccessLevel.PROTECTED)
+    private int numberOfMotors;
+    @Getter(AccessLevel.PROTECTED)
+    private double rotorToSensorRatio;
+    @Getter(AccessLevel.PROTECTED)
+    private double sensorToMechanismRatio;
+    @Getter(AccessLevel.PROTECTED)
+    private double rotorToMechanismRatio;
+    @Getter(AccessLevel.PROTECTED)
+    private OptionalDouble motorTorqueConstant;
 
     // Caches for last-applied Motion Magic parameters (NaN = never applied)
     private double lastAppliedMmCruiseVelocity = Double.NaN;
@@ -152,21 +163,10 @@ public class MotorIOTalonFX implements MotorIO {
             Device.CAN main,
             TalonFXFollower... followerData) {
         currentConfig = config;
-        rotorToSensorRatio = config.Feedback.RotorToSensorRatio;
-        sensorToMechanismRatio = config.Feedback.SensorToMechanismRatio;
         lastAppliedMmCruiseVelocity = config.MotionMagic.MotionMagicCruiseVelocity;
         lastAppliedMmAcceleration = config.MotionMagic.MotionMagicAcceleration;
         lastRequestedMmCruiseVelocity = lastAppliedMmCruiseVelocity;
         lastRequestedMmAcceleration = lastAppliedMmAcceleration;
-
-        if (motorModel.isPresent()) {
-            // Use the bare, unreduced motor Kt. Motor count and gearing are applied separately
-            // by the profiler using getNumberOfMotors() and getRotorToMechanismRatio()
-            motorTorqueConstant = OptionalDouble.of(motorModel.get().KtNMPerAmp);
-        }
-        else {
-            motorTorqueConstant = OptionalDouble.empty();
-        }
 
         motor = new TalonFX(main.id(), new CANBus(main.bus()));
         updateThread
@@ -219,6 +219,11 @@ public class MotorIOTalonFX implements MotorIO {
                                     ? MotorAlignmentValue.Opposed
                                     : MotorAlignmentValue.Aligned));
         }
+
+        // Use the bare, unreduced motor Kt. Motor count and gearing are applied separately
+        // by the profiler using getNumberOfMotors() and getRotorToMechanismRatio()
+        setMotorParameters(followers.length + 1, config.Feedback.RotorToSensorRatio, config.Feedback.SensorToMechanismRatio, 
+        motorModel.isPresent() ? OptionalDouble.of(motorModel.get().KtNMPerAmp) : OptionalDouble.empty());
 
         position = motor.getPosition();
         velocity = motor.getVelocity();
@@ -355,6 +360,11 @@ public class MotorIOTalonFX implements MotorIO {
         inputs.supplyCurrent = supplyCurrent.getValue();
         inputs.torqueCurrent = torqueCurrent.getValue();
         inputs.temperature = temperature.getValue();
+        inputs.numberOfMotors = numberOfMotors;
+        inputs.rotorToSensorRatio = rotorToSensorRatio;
+        inputs.sensorToMechanismRatio = sensorToMechanismRatio;
+        inputs.rotorToMechanismRatio = rotorToMechanismRatio;
+        inputs.motorTorqueConstant = motorTorqueConstant.isPresent() ? motorTorqueConstant.getAsDouble() : -1.0;
 
         // Interpret control-loop status signals conditionally based on current mode
         Double closedLoopErrorValue = closedLoopError.getValue();
@@ -570,26 +580,6 @@ public class MotorIOTalonFX implements MotorIO {
                         });
     }
 
-    @Override
-    public int getNumberOfMotors() {
-        return followers.length + 1;
-    }
-
-    @Override
-    public double getRotorToSensorRatio() {
-        return rotorToSensorRatio;
-    }
-
-    @Override
-    public double getSensorToMechanismRatio() {
-        return sensorToMechanismRatio;
-    }
-
-    @Override
-    public OptionalDouble getMotorTorqueConstant() {
-        return motorTorqueConstant;
-    }
-
     private void queueMotionMagicConfigUpdate(double cruiseVelocity, double acceleration) {
         if (cruiseVelocity == lastRequestedMmCruiseVelocity
                 && acceleration == lastRequestedMmAcceleration) {
@@ -689,6 +679,24 @@ public class MotorIOTalonFX implements MotorIO {
             case SLOT_1 -> setPIDSlot1(pid);
             case SLOT_2 -> setPIDSlot2(pid);
         }
+    }
+
+    /**
+     * Sets the motor's operating parameters, including the number of motors, rotor-to-sensor ratio, sensor-to-mechanism ratio, 
+     * and optional motor torque constant.
+     * 
+     * @param numberOfMotors Number of motors associated with this motor object (leader + all followers)
+     * @param rotorToSensorRatio Sets the ratio of rotor rotations to the motor's internal encoder rotations
+     * @param sensorToMechanismRation Sets the ratio of the motor's internal encoder rotations to mechanism rotations
+     * @param motorTorqueConstant Optional motor torque constant Kt ((N*m)/A)
+     */
+    private void setMotorParameters(int numberOfMotors, double rotorToSensorRatio, double sensorToMechanismRation, 
+    OptionalDouble motorTorqueConstant) {
+        this.numberOfMotors = numberOfMotors;
+        this.rotorToSensorRatio = rotorToSensorRatio;
+        this.sensorToMechanismRatio = sensorToMechanismRation;
+        this.rotorToMechanismRatio = rotorToSensorRatio * sensorToMechanismRatio;
+        this.motorTorqueConstant = motorTorqueConstant;
     }
 
     @Override

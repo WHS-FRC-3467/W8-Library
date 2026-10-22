@@ -23,8 +23,6 @@ import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
-import java.util.OptionalDouble;
-
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -65,6 +63,11 @@ public interface MotorIO extends AutoCloseable {
         VELOCITY
     }
 
+    /** 
+     * Motor inputs class carrying information including motor telemetry, control variables, configuration/parameters.
+     * Configuration/parameters (e.g. rotorToMechanismRatio) are continuously written to the inputs structure by the MotorIO 
+     * implementation despite being static metadata. This is because raw getters in the IO layer may not be consistent with replay.
+     */
     @AutoLog
     abstract class MotorInputs {
         /** Whether the motor is connected. */
@@ -111,11 +114,27 @@ public interface MotorIO extends AutoCloseable {
 
         /** Current control type. */
         public ControlType controlType = ControlType.BRAKE;
+
+        /** The number of motors associated with the motor object (leader + all followers). */
+        public int numberOfMotors = 1;
+
+        /** The ratio of rotor rotations to the motor's internal encoder rotations. */
+        public double rotorToSensorRatio = 1.0;
+
+        /** The ratio of the motor's internal encoder rotations to mechanism rotations. */
+        public double sensorToMechanismRatio = 1.0;
+
+        /** The ratio of rotor rotations to mechanism rotations. */
+        public double rotorToMechanismRatio = 1.0;
+
+        /** The motor's torque constant Kt ((N*m)/A). Returns -1.0 when a Kt is not set. */
+        public double motorTorqueConstant = -1.0; 
     }
 
     /**
-     * Updates the provided {@link MotorInputs} instance with the latest sensor readings. If the
-     * sensor is not connected, it populates the fields with default values.
+     * Updates the provided {@link MotorInputs} instance with the latest sensor readings 
+     * and motor configuration metadata such as motor count, gearing, and torque constant. 
+     * If the sensor is not connected, it populates the fields with default values.
      *
      * @param inputs The structure to populate with updated sensor values.
      */
@@ -240,51 +259,6 @@ public interface MotorIO extends AutoCloseable {
      * @param currentLimit Desired supply current limit.
      */
     public default void setSupplyCurrentLimit(Current currentLimit) {}
-
-    /**
-     * Return the total number of motors associated with this motor object
-     *
-     * @return The number of motors associated with the motor object (leader + all followers)
-     */
-    public default int getNumberOfMotors() {
-        return 1;
-    }
-
-    /** 
-     * Return the ratio of rotor rotations to the motor's internal encoder rotations
-     * 
-     * @return The ratio of rotor rotations to motor's internal encoder rotations
-     */
-    public default double getRotorToSensorRatio() {
-        return 1.0;
-    }
-
-    /**  
-     * Return the ratio of the motor's internal encoder rotations to mechanism rotations
-     * 
-     * @return The ratio of the motor's internal encoder rotations to mechanism rotations
-     */
-    public default double getSensorToMechanismRatio() {
-        return 1.0;
-    }
-
-    /** 
-     * Return the ratio of rotor rotations to mechanism rotations
-     * 
-     * @return The ratio of rotor rotations to mechanism rotations
-     */
-    public default double getRotorToMechanismRatio() {
-        return getRotorToSensorRatio() * getSensorToMechanismRatio();
-    }
-
-    /**
-     * Returns the motor's torque constant Kt ((N*m)/A).
-     * 
-     * @return The motor's torque constant Kt ((N*m)/A)
-     */
-    public default OptionalDouble getMotorTorqueConstant() {
-        return OptionalDouble.empty();
-    }
 
     @Override
     public default void close() {}

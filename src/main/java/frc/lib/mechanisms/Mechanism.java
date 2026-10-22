@@ -332,7 +332,7 @@ public abstract class Mechanism<T extends MotorIO> {
      * @return the number of motors associated with the mechanism
      */
     public int getNumberOfMotors() {
-        return io.getNumberOfMotors();
+        return inputs.numberOfMotors;
     }
 
     /**
@@ -342,7 +342,8 @@ public abstract class Mechanism<T extends MotorIO> {
      * @return The motor's torque constant Kt ((N*m)/A)
      */
     public OptionalDouble getMotorTorqueConstant() {
-        return io.getMotorTorqueConstant();
+        return inputs.motorTorqueConstant >= 0.0 ? OptionalDouble.of(inputs.motorTorqueConstant) : 
+        OptionalDouble.empty();
     }
 
     /** 
@@ -351,7 +352,7 @@ public abstract class Mechanism<T extends MotorIO> {
      * @return The ratio of rotor rotations to mechanism rotations
      */
     public double getRotorToMechanismRatio() {
-        return io.getRotorToMechanismRatio();
+        return inputs.rotorToMechanismRatio;
     }
 
     /** 
