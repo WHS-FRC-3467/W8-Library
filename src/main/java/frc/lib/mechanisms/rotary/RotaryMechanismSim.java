@@ -93,8 +93,13 @@ public class RotaryMechanismSim extends RotaryMechanism<MotorIOSim, AbsoluteEnco
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        // Calculate the motor group's supply current
-        // Note this value cannot be trusted in the first robot loop while MotorInputs is initializing (e.g. numMotors defaults to 1)
+        /* 
+         * Calculate the motor group's supply current. PowerProfiler independently reports the supply current provided by CTRE 
+         * simulation. Therefore, this value and PowerProfiler's may slightly disagree in sim, for which this value is currently 
+         * treated as authoritative. 
+         * 
+         * Note this value cannot be trusted in the first robot loop while MotorInputs is initializing (e.g. numMotors defaults to 1).
+         */
         double supplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(RobotController.getBatteryVoltage(), inputs.appliedVoltage.in(Volts), 
         inputs.torqueCurrent.in(Amps)) * getNumberOfMotors();
         BatteryModel.addCurrentLoad(supplyCurrentAmps);
