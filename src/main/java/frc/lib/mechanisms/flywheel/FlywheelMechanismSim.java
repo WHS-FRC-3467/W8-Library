@@ -33,7 +33,8 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.util.Color;
 
 import frc.lib.io.motor.MotorIOSim;
-import frc.lib.util.BatterySimCurrentAccumulator;
+import frc.lib.mechanisms.MotorSimCalcs;
+import frc.lib.util.BatteryModel;
 
 /**
  * A simulated implementation of the FlywheelMechanism abstract class that uses FlywheelSim to
@@ -43,29 +44,50 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
     private final FlywheelSim sim;
     private final FlywheelVisualizer visualizer;
     private final AngularVelocity tolerance;
+    private final double rotorToMechanismRatio;
 
     private Time lastTime = RobotController.getMeasureTime();
     private AngularVelocity lastVelocity = RadiansPerSecond.zero();
     private Angle simPosition = Radians.zero();
 
+    /**
+     * Constructs a simulated flywheel mechanism with the given parameters. 
+     * 
+     * @param name Name of the flywheel mechanism
+     * @param io MotorIOSim implementation (e.g. TalonFX) for the flywheel
+     * @param motor The bare (unreduced) DCMotor model representing the entire motor group, 
+     * including all leaders and followers. For example, DCMotor.getKrakenX60Foc(2) for two motors.
+     * Gear reduction is applied separately, internal to this simulation, using the provided ratio.
+     * @param rotorToMechanismRatio The ratio of the rotor to mechanism movement. This value should match what is 
+     * provided in MotorIO implementation's config file. An error will be thrown if the MotorIO implementation reports 
+     * a different ratio than what is provided here.
+     * @param momentOfInertia The moment of inertia of the flywheel in kg*m^2
+     * @param tolerance The acceptable angular velocity error tolerance for the flywheel in rad/s
+     */
     public FlywheelMechanismSim(
             String name,
             MotorIOSim io,
             DCMotor motor,
+            double rotorToMechanismRatio,
             MomentOfInertia momentOfInertia,
             AngularVelocity tolerance) {
         super(name, io);
+        this.rotorToMechanismRatio = rotorToMechanismRatio; 
 
         if (momentOfInertia.isEquivalent(KilogramSquareMeters.zero()))
             throw new IllegalArgumentException("momentOfInertia must be greater than zero!");
 
         this.tolerance = tolerance;
+        /* 
+         * Both the plant and sim API require an unreduced DCMotor object with the proper number of motors to properly 
+         * model the gearbox; gearing is manually applied. 
+         */
         sim =
                 new FlywheelSim(
                         LinearSystemId.createFlywheelSystem(
                                 motor,
                                 momentOfInertia.in(KilogramSquareMeters),
-                                io.getRotorToSensorRatio() * io.getSensorToMechanismRatio()),
+                                rotorToMechanismRatio),
                         motor);
 
         visualizer = new FlywheelVisualizer(name);
@@ -78,7 +100,18 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
 
         sim.setInputVoltage(inputs.appliedVoltage.in(Volts));
         sim.update(deltaTime);
-        BatterySimCurrentAccumulator.addCurrentLoad(Amps.of(sim.getCurrentDrawAmps()));
+        /*
+        * Calculate the motor group's supply current for BatteryModel loading.
+        * PowerProfiler independently reports CTRE's simulated supply current,
+        * so the two estimates may differ. The MotorSimCalcs estimate is treated
+        * as authoritative for battery simulation.
+        *
+        * Note: This calculation uses the previous loop's MotorInputs and may
+        * be inaccurate during the first robot loop (e.g. numMotors defaults to 1).
+        */
+        double supplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(RobotController.getBatteryVoltage(), inputs.appliedVoltage.in(Volts), 
+        inputs.torqueCurrent.in(Amps)) * getNumberOfMotors();
+        BatteryModel.addCurrentLoad(supplyCurrentAmps);
 
         // Angular displacement kinematic equation (trapezoidal integration of theta)
         AngularVelocity currentVelocity = sim.getAngularVelocity();
@@ -93,7 +126,29 @@ public class FlywheelMechanismSim extends FlywheelMechanism<MotorIOSim> {
         io.setMechanismVelocity(currentVelocity);
         io.setMechanismAcceleration(sim.getAngularAcceleration());
 
+        /* 
+         * Enforce consistency between the gear ratio used to construct this mechanism's state-space model and that reported by its 
+         * corresponding MotorIO implementation; after the first mechanism.periodic() call below, the corresponding MotorIO implementation's 
+         * updateInputs() method will also be called, thereby correctly setting the motor parameters (e.g. rotorToMechanismRatio) in the 
+         * MotorIO.MotorInputs structure. Before then, these parameters will have their default values from the MotorIO interface (e.g. 
+         * rotorToMechanismRatio = 1.0). 
+         * 
+         * Note that including the motor parameters as inputs rather than IO getters is for consistency with replay.
+         */
         super.periodic();
+
+        if (!Double.isFinite(rotorToMechanismRatio)
+                || rotorToMechanismRatio <= 0.0
+                || !Double.isFinite(getRotorToMechanismRatio())
+                || getRotorToMechanismRatio() <= 0.0
+                || Math.abs(rotorToMechanismRatio - getRotorToMechanismRatio()) > 1e-6) {
+            throw new IllegalStateException(
+                    String.format(
+                            "Inconsistent/invalid rotor-to-mechanism ratio: "
+                                    + "MotorIO reports %.6f, simulation configured %.6f",
+                            getRotorToMechanismRatio(),
+                            rotorToMechanismRatio));
+        }
 
         visualizer.setAngle(inputs.position);
         if (inputs.velocityError != null && inputs.velocityError.lte(tolerance)) {
