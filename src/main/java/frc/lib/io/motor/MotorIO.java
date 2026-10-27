@@ -118,13 +118,16 @@ public interface MotorIO extends AutoCloseable {
         /** The number of motors associated with the motor object (leader + all followers). */
         public int numberOfMotors = 1;
 
-        /** The ratio of rotor rotations to the motor's internal encoder rotations. */
+        /** The ratio of motor rotor rotations to feedback sensor rotations. */
         public double rotorToSensorRatio = 1.0;
 
-        /** The ratio of the motor's internal encoder rotations to mechanism rotations. */
+        /** The ratio of feedback sensor rotations to mechanism output rotations. */
         public double sensorToMechanismRatio = 1.0;
 
-        /** The ratio of rotor rotations to mechanism rotations. */
+        /**
+         * The ratio of motor rotor rotations to mechanism output rotations. Equal to 
+         * rotorToSensorRatio * sensorToMechanismRatio.
+         */
         public double rotorToMechanismRatio = 1.0;
 
         /** The motor's torque constant Kt ((N*m)/A). Returns -1.0 when a Kt is not set. */
