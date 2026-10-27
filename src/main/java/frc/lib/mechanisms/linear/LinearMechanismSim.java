@@ -47,18 +47,22 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
     private Time lastTime = RobotController.getMeasureTime();
     private AngularVelocity lastVelocity = RadiansPerSecond.zero();
     private final double rotorToMechanismRatio;
+    private final int numMotors;
 
     /**
      * Creates a new LinearMechanismSim.
      *
      * @param name The name of the mechanism
      * @param io The motor IO simulation
-     * @param motor The bare (unreduced) DCMotor model representing the entire motor group, 
-     * including the leaders and followers. For example, DCMotor.getKrakenX60Foc(2) for two motors.
-     * Gear reduction is applied separately, internal to this simulation, using the provided ratio.
+     * @param motor The bare (unreduced) DCMotor model representing the entire motor group, including the leaders + all followers. 
+     * For example, DCMotor.getKrakenX60Foc(numMotors) for numMotors -- this is the same numMotors provided as a separate parameter
+     * in this call. Gear reduction is applied separately, internal to this simulation, using the provided ratio.
      * @param rotorToMechanismRatio The ratio of the rotor to mechanism movement. This value should match what is 
      * provided in MotorIO implementation's config file. An error will be thrown if the MotorIO implementation reports 
      * a different ratio than what is provided here.
+     * @param numMotors The number of motors (leader + all followers) utilized in this mechanism. This is the same value provided
+     * separately to the motor parameter. Additionally, this parameter should match what is provided in MotorIO implementation's config 
+     * file. An error will be thrown if the MotorIO implementation reports a different number than what is provided here.
      * @param mass The mass of the carriage
      * @param useGravity Whether to simulate gravity effects (applies when orientation is vertical)
      * @param characteristics The mechanism characteristics including orientation
@@ -68,11 +72,22 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
             MotorIOSim io,
             DCMotor motor,
             double rotorToMechanismRatio,
+            int numMotors,
             Mass mass,
             Boolean useGravity,
             LinearMechCharacteristics characteristics) {
         super(name, characteristics, io);
+
+        if (!Double.isFinite(rotorToMechanismRatio) || rotorToMechanismRatio <= 0.0) {
+            throw new IllegalArgumentException("Rotor-to-mechanism ratio must be greater than zero and finite.");
+        }
+
+        if (numMotors < 1) {
+            throw new IllegalArgumentException("Number of motors in the motor group must be greater than or equal to one.");
+        }
+
         this.rotorToMechanismRatio = rotorToMechanismRatio;
+        this.numMotors = numMotors;
 
         /* 
          * Both the underlying plant and sim API require an unreduced DCMotor object with the proper number of 
@@ -116,12 +131,9 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
         * PowerProfiler independently reports CTRE's simulated supply current,
         * so the two estimates may differ. The MotorSimCalcs estimate is treated
         * as authoritative for battery simulation.
-        *
-        * Note: This calculation uses the previous loop's MotorInputs and may
-        * be inaccurate during the first robot loop (e.g. numMotors defaults to 1).
         */
         double supplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(RobotController.getBatteryVoltage(), inputs.appliedVoltage.in(Volts), 
-        inputs.torqueCurrent.in(Amps)) * getNumberOfMotors();
+        inputs.torqueCurrent.in(Amps)) * numMotors;
         BatteryModel.addCurrentLoad(supplyCurrentAmps);
 
         AngularVelocity currentVelocity =
@@ -141,27 +153,33 @@ public class LinearMechanismSim extends LinearMechanism<MotorIOSim> {
         io.setMechanismAcceleration(currentAcceleration);
 
         /* 
-         * Enforce consistency between the gear ratio used to construct this mechanism's state-space model and that reported by its 
-         * corresponding MotorIO implementation; after the first mechanism.periodic() call below, the corresponding MotorIO implementation's 
-         * updateInputs() method will also be called, thereby correctly setting the motor parameters (e.g. rotorToMechanismRatio) in the 
-         * MotorIO.MotorInputs structure. Before then, these parameters will have their default values from the MotorIO interface (e.g. 
-         * rotorToMechanismRatio = 1.0). 
+         * Enforce consistency between the gear ratio and number of motors used to construct this mechanism's state-space model and that 
+         * reported by its corresponding MotorIO implementation; after the first mechanism.periodic() call below, the corresponding MotorIO 
+         * implementation's updateInputs() method will also be called, thereby correctly setting the motor parameters (e.g. rotorToMechanismRatio) 
+         * in the MotorIO.MotorInputs structure. Before then, these parameters will have their default values from the MotorIO interface (e.g. 
+         * rotorToMechanismRatio = 1.0, numMotors = 1). 
          * 
          * Note that including the motor parameters as inputs rather than IO getters is for consistency with replay.
          */
         super.periodic();
 
-        if (!Double.isFinite(rotorToMechanismRatio)
-                || rotorToMechanismRatio <= 0.0
-                || !Double.isFinite(getRotorToMechanismRatio())
-                || getRotorToMechanismRatio() <= 0.0
-                || Math.abs(rotorToMechanismRatio - getRotorToMechanismRatio()) > 1e-6) {
+        if (!Double.isFinite(getRotorToMechanismRatio()) || getRotorToMechanismRatio() <= 0.0 
+        || Math.abs(rotorToMechanismRatio - getRotorToMechanismRatio()) > 1e-6) {
             throw new IllegalStateException(
                     String.format(
                             "Inconsistent/invalid rotor-to-mechanism ratio: "
                                     + "MotorIO reports %.6f, simulation configured %.6f",
                             getRotorToMechanismRatio(),
                             rotorToMechanismRatio));
+        }
+
+        if (numMotors != getNumberOfMotors()) {
+            throw new IllegalStateException(
+                String.format(
+                        "Inconsistent motor count: "
+                             + "MotorIO reports %d, simulation configured %d",
+                     getNumberOfMotors(),
+                     numMotors));
         }
     }
 
