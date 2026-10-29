@@ -309,7 +309,18 @@ public class EkfPoseEstimator {
             Twist2d twist,
             double dtSeconds,
             boolean tipped,
-            State state) {}
+            State state,
+            List<Correction> corrections) {}
+
+    /**
+     * An accepted vision measurement, kept on the step it was applied at so that a frame arriving
+     * late, and applied at an earlier step, can replay it over the new state instead of losing it.
+     *
+     * @param recovered whether gate recovery inflated the covariance to admit it, which the replay
+     *     repeats against the new state
+     */
+    private record Correction(
+            Pose2d measurement, double[] variances, boolean[] measured, boolean recovered) {}
 
     private final SwerveOdometry odometry;
     private final double bufferSeconds;
@@ -618,7 +629,18 @@ public class EkfPoseEstimator {
         State posterior =
                 correct(prior, innovation, observationMatrix, measurementNoise, innovationInverse);
 
-        // Replay everything after the measurement so the correction reaches the present
+        // Replay everything after the measurement so the correction reaches the present.
+        // Corrections
+        // already applied at later steps are applied again on top of the new state, so a late frame
+        // does not erase newer ones.
+        Correction correction =
+                new Correction(
+                        measurement,
+                        variances,
+                        measured,
+                        reason == VisionObservationReason.ACCEPTED_AFTER_GATE_RECOVERY);
+        List<Correction> anchorCorrections = new ArrayList<>(anchor.corrections());
+        anchorCorrections.add(correction);
         List<Step> replayed = new ArrayList<>(stepsAfter + 1);
         replayed.add(
                 new Step(
@@ -626,23 +648,22 @@ public class EkfPoseEstimator {
                         anchor.twist(),
                         anchor.dtSeconds(),
                         anchor.tipped(),
-                        posterior));
+                        posterior,
+                        anchorCorrections));
         State running = posterior;
         for (Step step : newer) {
-            running =
-                    predict(
-                            running,
-                            step.twist(),
-                            step.dtSeconds(),
-                            step.tipped(),
-                            config);
+            running = predict(running, step.twist(), step.dtSeconds(), step.tipped(), config);
+            for (Correction later : step.corrections()) {
+                running = reapply(running, later);
+            }
             replayed.add(
                     new Step(
                             step.timestampSeconds(),
                             step.twist(),
                             step.dtSeconds(),
                             step.tipped(),
-                            running));
+                            running,
+                            step.corrections()));
         }
 
         if (!poseValidator.test(running.pose())) {
@@ -662,6 +683,37 @@ public class EkfPoseEstimator {
             recentGateOutcomes.clear();
         }
         logVision(observation, reason, nis, measuredAxes);
+    }
+
+    /**
+     * Applies a previously accepted correction to a new prior during replay. It is not gated again:
+     * it was accepted once, and rejecting it now would only let a late frame undo newer vision.
+     */
+    private State reapply(State prior, Correction c) {
+        Matrix<N3, N3> h = observationMatrix(c.measured());
+        Matrix<N3, N3> r = measurementNoise(c.variances(), c.measured());
+        Vector<N3> innovation = innovation(prior.pose(), c.measurement(), c.measured());
+        try {
+            State base = prior;
+            if (c.recovered()) {
+                int axes = 0;
+                for (boolean m : c.measured()) {
+                    axes += m ? 1 : 0;
+                }
+                base =
+                        new State(
+                                prior.pose(),
+                                inflateToGate(
+                                        prior.covariance(),
+                                        innovation,
+                                        h,
+                                        r,
+                                        gateThresholdFor(axes)));
+            }
+            return correct(base, innovation, h, r);
+        } catch (SingularMatrixException e) {
+            return prior;
+        }
     }
 
     /**
@@ -700,11 +752,7 @@ public class EkfPoseEstimator {
      * @param tipped whether the robot is tipped, which adds uncertainty at a fixed rate
      */
     static State predict(
-            State prior,
-            Twist2d twist,
-            double dtSeconds,
-            boolean tipped,
-            Config config) {
+            State prior, Twist2d twist, double dtSeconds, boolean tipped, Config config) {
         double theta = prior.pose().getRotation().getRadians();
 
         // F·P·Fᵀ + G·Q·Gᵀ written out on scalars. This runs at odometry rate and again for every
@@ -1084,7 +1132,8 @@ public class EkfPoseEstimator {
                                 diagonal(
                                         square(linearStdDev),
                                         square(linearStdDev),
-                                        square(angularStdDev)))));
+                                        square(angularStdDev))),
+                        List.of()));
     }
 
     private void predictFromOdometry(Pose2d lastOdometryPose, double timestampSeconds) {
@@ -1110,7 +1159,7 @@ public class EkfPoseEstimator {
         lastTimestampSeconds = timestampSeconds;
 
         State next = predict(latest().state(), twist, dt, tipped, config);
-        history.add(new Step(timestampSeconds, twist, dt, tipped, next));
+        history.add(new Step(timestampSeconds, twist, dt, tipped, next, List.of()));
 
         // Drop history older than the buffer, but always keep the most recent step
         double cutoff = timestampSeconds - bufferSeconds;
