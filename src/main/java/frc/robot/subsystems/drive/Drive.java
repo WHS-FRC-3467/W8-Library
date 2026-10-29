@@ -46,6 +46,7 @@ import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.LoggerHelper;
 import frc.lib.util.PID;
+import frc.lib.util.PowerProfiler;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.RobotState;
@@ -176,10 +177,10 @@ public class Drive extends SubsystemBase {
             ModuleIO brModuleIO) {
         this.gyroIO = gyroIO;
 
-        modules[0] = new Module(flModuleIO, 0, DriveConstants.FrontLeft);
-        modules[1] = new Module(frModuleIO, 1, DriveConstants.FrontRight);
-        modules[2] = new Module(blModuleIO, 2, DriveConstants.BackLeft);
-        modules[3] = new Module(brModuleIO, 3, DriveConstants.BackRight);
+        modules[0] = new Module(flModuleIO, DriveConstants.FrontLeft);
+        modules[1] = new Module(frModuleIO, DriveConstants.FrontRight);
+        modules[2] = new Module(blModuleIO, DriveConstants.BackLeft);
+        modules[3] = new Module(brModuleIO, DriveConstants.BackRight);
 
         // Usage reporting for swerve template
         HAL.report(
@@ -550,5 +551,18 @@ public class Drive extends SubsystemBase {
 
     public Rotation2d getRawGyroAngle() {
         return gyroInputs.yawPosition;
+    }
+
+    /**
+     * Registers the module's drive and turn current and voltage to the power profiler.
+     * 
+     * @param powerProfiler The power profiler to register the module's current and voltage to
+     */
+    public void registerModules(PowerProfiler powerProfiler) {
+        for (int i = 0; i < modules.length; i++) {
+            // FL, FR, BL, BR
+            String moduleName = modules[i].getName();
+            modules[i].registerModules("DriveBase/" + moduleName, powerProfiler);
+        }
     }
 }

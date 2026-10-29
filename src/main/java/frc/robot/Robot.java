@@ -24,10 +24,10 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-
-import frc.lib.util.BatterySimCurrentAccumulator;
-import frc.robot.Constants.Mode;
+import frc.lib.util.BatteryModel;
+import frc.lib.util.PowerProfiler;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.Constants.Mode;
 
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -44,6 +44,7 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
  */
 public class Robot extends LoggedRobot {
     private final RobotState robotState = RobotState.getInstance();
+    private final PowerProfiler powerProfiler = PowerProfiler.getInstance();
 
     private Command autonomousCommand;
     private RobotContainer robotContainer;
@@ -136,8 +137,11 @@ public class Robot extends LoggedRobot {
         // Simulate the loaded battery voltage after all subsystems have contributed their current
         // draws
         if (Constants.currentMode == Mode.SIM) {
-            BatterySimCurrentAccumulator.setSimulatedBatteryLoadedVoltage();
+            BatteryModel.setSimulatedBatteryLoadedVoltage();
         }
+
+        // Update the robot's power profiler
+        powerProfiler.periodicAfterScheduler();
 
         // Return to non-RT thread priority (do not modify the first argument)
         // Threads.setCurrentThreadPriority(false, 10);
