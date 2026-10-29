@@ -133,8 +133,8 @@ public class VisionOdometryCharacterizer {
 
     /**
      * Ensure the vision measurement is valid. This check should ensure the vision measurement is
-     * being taken at representative conditions. The result is an estimate of R (baseline) such that
-     * this characterizer produces LINEAR_STDDEV_BASELINE & ANGULAR_STDDEV_BASELINE.
+     * being taken at representative conditions. The result is an estimate of R (baseline), which
+     * corresponds to TrustModel's xyPerMeterSquared and thetaPerMeterSquared.
      *
      * <p>Note that avgTagDistance is used as a proxy for measurement variance since variance scales
      * with distance, and the number of tags used is used as a proxy for number of independent
