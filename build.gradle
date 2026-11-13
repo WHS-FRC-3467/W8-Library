@@ -1,7 +1,7 @@
 plugins {
     id "java"
     id "application"
-    id "org.wpilib.GradleRIO" version "2027.0.0-alpha-7"
+    id "org.wpilib.GradleRIO" version "2027.0.0-alpha-8"
     id "com.peterabeles.gversion" version "1.10"
     id "io.freefair.lombok" version "8.6"
     id "net.ltgt.errorprone" version "4.3.0"
