@@ -16,6 +16,7 @@
 package frc.robot;
 
 import frc.lib.util.GamePieceVisualizer;
+import frc.lib.util.PowerProfiler;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -37,6 +38,7 @@ import org.wpilib.math.geometry.Translation3d;
 @SuppressWarnings("unused")
 public class RobotContainer {
     private final GlobalPoseEstimator robotState = GlobalPoseEstimator.getInstance();
+    private final PowerProfiler powerProfiler = PowerProfiler.getInstance();
 
     // Subsystems
     public final Drive drive;
@@ -51,6 +53,8 @@ public class RobotContainer {
 
         // Configure the button bindings
         configureButtonBindings();
+        // Register mechanisms and generic power channels with the power profiler for logging
+        registerMechanismsAndGenerics();
 
         GamePieceVisualizer algae =
                 new GamePieceVisualizer(
@@ -70,5 +74,10 @@ public class RobotContainer {
                         () -> -controller.getLeftX(),
                         () -> -controller.getLeftY(),
                         () -> -controller.getRightX()));
+    }
+
+    /** Register all of the subsystems' mechanisms and generic power channels. */
+    private void registerMechanismsAndGenerics() {
+        drive.registerModules(powerProfiler);
     }
 }

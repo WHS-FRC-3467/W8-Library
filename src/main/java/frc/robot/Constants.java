@@ -17,10 +17,12 @@ package frc.robot;
 
 import static org.wpilib.units.Units.Degrees;
 import static org.wpilib.units.Units.Inches;
+import static org.wpilib.units.Units.Kilograms;
 
 import org.wpilib.framework.RobotBase;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.Distance;
+import org.wpilib.units.measure.Mass;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
@@ -50,5 +52,6 @@ public final class Constants {
 
     public static final Distance FULL_ROBOT_WIDTH = Inches.of(27.0 + 3.25);
     public static final Distance FULL_ROBOT_LENGTH = Inches.of(27.0 + 3.25);
+    public static final Mass FULL_ROBOT_MASS = Kilograms.of(65.0);
     public static final Distance BUMPER_HEIGHT = Inches.of(4.0);
 }

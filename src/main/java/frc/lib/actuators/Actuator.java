@@ -43,6 +43,7 @@ import org.wpilib.units.measure.Voltage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalDouble;
 
 /**
  * Abstract base class for all robot mechanisms that use motors. Provides common functionality for
@@ -308,7 +309,7 @@ public abstract class Actuator<T extends MotorIO> {
     /**
      * Updates the mechanism supply current limit.
      *
-     * @param currentLimit Desired supply current limit.
+     * @param currentLimit Desired supply current limit
      */
     public void setSupplyCurrentLimit(Current currentLimit) {
         io.setSupplyCurrentLimit(currentLimit);
@@ -331,20 +332,61 @@ public abstract class Actuator<T extends MotorIO> {
      * @return the number of motors associated with the mechanism
      */
     public int getNumberOfMotors() {
-        return io.getNumberOfMotors();
+        return inputs.numberOfMotors;
     }
 
     /**
-     * Gets the supply current draw of the mechanism.
+     * Returns the motor torque constant associated with any given motor in the motor group,
+     * assuming all motors in the group have the same characteristics.
      *
-     * @return The supply current
+     * @return The motor's torque constant Kt ((N*m)/A)
+     */
+    public OptionalDouble getMotorTorqueConstant() {
+        return inputs.motorTorqueConstant >= 0.0
+                ? OptionalDouble.of(inputs.motorTorqueConstant)
+                : OptionalDouble.empty();
+    }
+
+    /**
+     * Return the ratio of rotor rotations to mechanism rotations.
+     *
+     * @return The ratio of rotor rotations to mechanism rotations
+     */
+    public double getRotorToMechanismRatio() {
+        return inputs.rotorToMechanismRatio;
+    }
+
+    /**
+     * Return the configured radius of the mechanism (meters).
+     *
+     * @return The configured radius of the mechanism in meters (empty if radius not configured).
+     */
+    public OptionalDouble getRadius() {
+        OptionalDouble radius =
+                this.hasRadius() ? OptionalDouble.of(this.radiusMeters) : OptionalDouble.empty();
+        return radius;
+    }
+
+    /**
+     * Gets the supply current draw of the mechanism's leader motor.
+     *
+     * @return The supply current of the mechanism's leader motor
      */
     public Current getSupplyCurrent() {
         return inputs.supplyCurrent;
     }
 
     /**
-     * Gets the applied voltage draw of the mechanism.
+     * Gets the bus voltage supplied to the mechanism.
+     *
+     * @return The supply voltage
+     */
+    public Voltage getSupplyVoltage() {
+        return inputs.supplyVoltage;
+    }
+
+    /**
+     * Gets the output voltage applied to the mechanism.
      *
      * @return The applied voltage
      */
@@ -353,9 +395,9 @@ public abstract class Actuator<T extends MotorIO> {
     }
 
     /**
-     * Getter for angle of the motor
+     * Gets the mechanism position.
      *
-     * @return Angle of the motor or fused encoder
+     * @return The angle of the mechanism
      */
     public Angle getPosition() {
         return inputs.position;
@@ -371,9 +413,9 @@ public abstract class Actuator<T extends MotorIO> {
     }
 
     /**
-     * Gets the torque-producing current of the mechanism.
+     * Gets the torque-producing current of the mechanism's leader motor.
      *
-     * @return The torque current
+     * @return The torque current of the mechanism's leader motor
      */
     public Current getTorqueCurrent() {
         return inputs.torqueCurrent;
@@ -382,7 +424,7 @@ public abstract class Actuator<T extends MotorIO> {
     /**
      * Gets the velocity of the mechanism.
      *
-     * @return The angular velocity
+     * @return The angular velocity of the mechanism
      */
     public AngularVelocity getVelocity() {
         return inputs.velocity;
@@ -398,7 +440,7 @@ public abstract class Actuator<T extends MotorIO> {
     }
 
     /**
-     * Gets the current velocity setpoint
+     * Gets the current velocity setpoint.
      *
      * @return The velocity setpoint
      */

@@ -19,7 +19,8 @@ import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
 
-import frc.lib.util.BatterySimCurrentAccumulator;
+import frc.lib.util.BatteryModel;
+import frc.lib.util.PowerProfiler;
 import frc.robot.Constants.Mode;
 import frc.robot.subsystems.drive.DriveConstants;
 
@@ -38,6 +39,8 @@ import org.wpilib.command3.Scheduler;
  * project.
  */
 public class Robot extends LoggedRobot {
+    private final PowerProfiler powerProfiler = PowerProfiler.getInstance();
+
     public Robot() {
         // Record metadata
         Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
@@ -114,8 +117,11 @@ public class Robot extends LoggedRobot {
         // Simulate the loaded battery voltage after all subsystems have contributed their current
         // draws
         if (Constants.CURRENT_MODE == Mode.SIM) {
-            BatterySimCurrentAccumulator.setSimulatedBatteryLoadedVoltage();
+            BatteryModel.setSimulatedBatteryLoadedVoltage();
         }
+
+        // Update the robot's power profiler
+        powerProfiler.periodicAfterScheduler();
 
         // Return to non-RT thread priority (do not modify the first argument)
         // Threads.setCurrentThreadPriority(false, 10);

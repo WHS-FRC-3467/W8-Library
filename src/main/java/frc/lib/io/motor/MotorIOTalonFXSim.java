@@ -22,9 +22,11 @@ import static org.wpilib.units.Units.Volts;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.sim.TalonFXSimState;
+import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
 
 import frc.lib.util.Device.CAN;
 
+import org.wpilib.math.system.DCMotor;
 import org.wpilib.system.RobotController;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.AngularAcceleration;
@@ -42,15 +44,26 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
      * Constructs and initializes a TalonFX motor simulation.
      *
      * @param name The name of the motor(s)
+     * @param motorType The motor type (e.g. X44, X60). This should match motorModel.
+     * @param motorModel The bare (i.e. unreduced) qty 1 {@link DCMotor} object representing the
+     *     motor, often constructed through DCMotor.getX(1). For example,
+     *     DCMotor.getKrakenX60Foc(1).
      * @param config Configuration to apply to the motor(s)
      * @param main CAN ID of the main motor
      * @param followerData Configuration data for the follower(s)
      */
     public MotorIOTalonFXSim(
-            String name, TalonFXConfiguration config, CAN main, TalonFXFollower... followerData) {
-        super(name, config, main, followerData);
+            String name,
+            MotorType motorType,
+            DCMotor motorModel,
+            TalonFXConfiguration config,
+            CAN main,
+            TalonFXFollower... followerData) {
+        super(name, motorModel, config, main, followerData);
 
         simState = super.motor.getSimState();
+        // The motor type is required for CTRE sim to properly simulate electrical performance
+        simState.setMotorType(motorType);
     }
 
     /**
@@ -112,6 +125,14 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         inputs.supplyCurrent = simState.getSupplyCurrentMeasure();
         inputs.torqueCurrent = simState.getTorqueCurrentMeasure();
         inputs.temperature = super.temperature.getValue();
+        inputs.numberOfMotors = super.getNumberOfMotors();
+        inputs.rotorToSensorRatio = super.getRotorToSensorRatio();
+        inputs.sensorToMechanismRatio = super.getSensorToMechanismRatio();
+        inputs.rotorToMechanismRatio = super.getRotorToMechanismRatio();
+        inputs.motorTorqueConstant =
+                super.getMotorTorqueConstant().isPresent()
+                        ? super.getMotorTorqueConstant().getAsDouble()
+                        : -1.0;
 
         // Interpret control-loop status signals conditionally based on current mode
         Double closedLoopErrorValue = super.closedLoopError.getValue();
