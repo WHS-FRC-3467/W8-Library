@@ -105,6 +105,8 @@ public class Drive implements Mechanism {
     private static final LoggedTunableNumber AUTO_THETA_KD =
             new LoggedTunableNumber("Drive/AutoThetaPID/kD", 0.1);
 
+    private static final double loop_period_seconds = Constants.LOOP_PERIOD.in(Seconds);
+
     private final GyroIO gyroIO;
     private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 
@@ -327,7 +329,7 @@ public class Drive implements Mechanism {
      */
     public void runVelocity(ChassisVelocities speeds) {
         // Calculate module setpoints
-        ChassisVelocities discreteSpeeds = speeds.discretize(Constants.LOOP_PERIOD);
+        ChassisVelocities discreteSpeeds = speeds.discretize(loop_period_seconds);
         SwerveModuleVelocity[] setpointStates = kinematics.toSwerveModuleVelocities(discreteSpeeds);
         setpointStates =
                 SwerveDriveKinematics.desaturateWheelVelocities(
