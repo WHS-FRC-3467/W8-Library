@@ -115,6 +115,18 @@ public class GlobalPoseEstimator {
     }
 
     /**
+     * Returns the robot-relative velocity around a past timestamp, from odometry.
+     *
+     * @param timestampSeconds the timestamp in seconds
+     * @return the velocity, or zero velocity if the odometry history does not reach that time
+     */
+    public ChassisVelocities getRobotRelativeVelocityAtTime(double timestampSeconds) {
+        return poseEstimator
+                .getVelocityAtTime(timestampSeconds)
+                .orElseGet(() -> new ChassisVelocities(0, 0, 0));
+    }
+
+    /**
      * Returns the robot's field-relative velocity.
      *
      * @return the field-relative chassis speeds

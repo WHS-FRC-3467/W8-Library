@@ -17,8 +17,9 @@ package frc.lib.sensors;
 
 import frc.lib.io.vision.VisionIO;
 import frc.lib.io.vision.VisionIO.CameraResult;
-import frc.lib.io.vision.VisionIOC2;
 import frc.lib.io.vision.VisionIOInputsAutoLogged;
+import frc.lib.io.vision.VisionIOPhotonVision;
+import frc.lib.util.AlertUtil;
 
 import lombok.Getter;
 
@@ -34,7 +35,6 @@ import org.wpilib.math.numbers.N8;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.Time;
 import org.wpilib.util.Alert;
-import org.wpilib.util.Alert.Level;
 
 import java.util.Optional;
 
@@ -64,7 +64,6 @@ public class AprilTagCamera {
      */
     public record CameraProperties(
             String name,
-            int index,
             Transform3d robotToCamera,
             Matrix<N3, N3> cameraMatrix,
             Matrix<N8, N1> distCoeffs,
@@ -98,10 +97,10 @@ public class AprilTagCamera {
         this.properties = properties;
         this.io = io;
         this.disconnectAlert =
-                new Alert(
-                        "camera_" + properties.name() + "_disconnect",
+                AlertUtil.create(
                         "Camera " + properties.name() + " is Disconnected!",
-                        Level.HIGH);
+                        "Camera " + properties.name() + " is Disconnected!",
+                        Alert.Level.HIGH);
         this.fieldLayout = fieldLayout;
     }
 
@@ -128,11 +127,7 @@ public class AprilTagCamera {
                         "Unknown/Invalid Vision Packet Type Reported. Ignoring.", null);
                 yield Optional.empty();
             }
-            case C2 -> Optional.of(VisionIOC2.decodeResults(inputs, fieldLayout, properties.index));
-            case PHOTON -> {
-                // No PV :(
-                yield Optional.empty();
-            }
+            case PHOTON -> Optional.of(VisionIOPhotonVision.decodeResults(inputs, fieldLayout));
         };
     }
 }

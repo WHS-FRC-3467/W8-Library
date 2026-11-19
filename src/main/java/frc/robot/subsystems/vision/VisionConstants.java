@@ -19,15 +19,18 @@ import static org.wpilib.units.Units.Degrees;
 import static org.wpilib.units.Units.Milliseconds;
 
 import frc.lib.io.vision.VisionIO;
-import frc.lib.io.vision.VisionIOC2;
+import frc.lib.io.vision.VisionIOPhotonVision;
+import frc.lib.io.vision.VisionIOPhotonVisionSim;
 import frc.lib.sensors.AprilTagCamera;
 import frc.lib.sensors.AprilTagCamera.CameraProperties;
 import frc.robot.Constants;
 import frc.robot.FieldConstants.AprilTagLayoutType;
+import frc.robot.GlobalPoseEstimator;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import org.photonvision.simulation.VisionSystemSim;
 import org.wpilib.fields.Field;
 import org.wpilib.math.geometry.Rotation3d;
 import org.wpilib.math.geometry.Transform3d;
@@ -41,6 +44,8 @@ import org.wpilib.math.util.Nat;
 import org.wpilib.math.util.Units;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.Time;
+
+import java.util.Optional;
 
 /**
  * Configuration constants for the vision subsystem.
@@ -69,40 +74,34 @@ public class VisionConstants {
     public static final String RIGHT_NAME = "right";
     public static final String FRONT_RIGHT_NAME = "front_right";
 
-    // Combined-frame slice order on the shared CTWO device.
-    private static final int FRONT_LEFT_CAMERA_INDEX = 3;
-    private static final int LEFT_CTWO_CAMERA_INDEX = 1;
-    private static final int RIGHT_CTWO_CAMERA_INDEX = 0;
-    private static final int FRONT_RIGHT_CAMERA_INDEX = 2;
-
     public static final Transform3d FRONT_LEFT_TRANSFORM =
             new Transform3d(
-                    Units.inchesToMeters(13.106),
+                    Units.inchesToMeters(13.23),
                     Units.inchesToMeters(5.25),
-                    Units.inchesToMeters(12.681),
+                    Units.inchesToMeters(13.142),
                     new Rotation3d(
                             Units.degreesToRadians(0.0),
                             Units.degreesToRadians(-25.0),
                             Units.degreesToRadians(0.0)));
     public static final Transform3d LEFT_TRANSFORM =
             new Transform3d(
-                    Units.inchesToMeters(12.749),
-                    Units.inchesToMeters(13.293334),
-                    Units.inchesToMeters(16.758),
+                    Units.inchesToMeters(12.175),
+                    Units.inchesToMeters(13.766),
+                    Units.inchesToMeters(16.429),
                     new Rotation3d(
                             0.0, Units.degreesToRadians(-20.0), Units.degreesToRadians(90.0)));
     public static final Transform3d RIGHT_TRANSFORM =
             new Transform3d(
-                    Units.inchesToMeters(12.749),
-                    Units.inchesToMeters(-13.299),
-                    Units.inchesToMeters(16.758),
+                    Units.inchesToMeters(12.175),
+                    Units.inchesToMeters(-13.766),
+                    Units.inchesToMeters(16.429),
                     new Rotation3d(
                             0.0, Units.degreesToRadians(-20.0), Units.degreesToRadians(-90.00)));
     public static final Transform3d FRONT_RIGHT_TRANSFORM =
             new Transform3d(
-                    Units.inchesToMeters(13.106),
+                    Units.inchesToMeters(13.23),
                     Units.inchesToMeters(-5.25),
-                    Units.inchesToMeters(12.681),
+                    Units.inchesToMeters(13.142),
                     new Rotation3d(
                             Units.degreesToRadians(0.0),
                             Units.degreesToRadians(-25.0),
@@ -214,19 +213,19 @@ public class VisionConstants {
                     0.0033869449584776738,
                     0.013942594262017396);
 
-    public static final int FRONT_LEFT_RESOLUTION_WIDTH = 1600;
-    public static final int FRONT_LEFT_RESOLUTION_HEIGHT = 1304;
-    public static final int LEFT_RESOLUTION_WIDTH = 1600;
-    public static final int LEFT_RESOLUTION_HEIGHT = 1304;
-    public static final int RIGHT_RESOLUTION_WIDTH = 1600;
-    public static final int RIGHT_RESOLUTION_HEIGHT = 1304;
-    public static final int FRONT_RIGHT_RESOLUTION_WIDTH = 1600;
-    public static final int FRONT_RIGHT_RESOLUTION_HEIGHT = 1304;
+    public static final int FRONT_LEFT_RESOLUTION_WIDTH = 1280;
+    public static final int FRONT_LEFT_RESOLUTION_HEIGHT = 800;
+    public static final int LEFT_RESOLUTION_WIDTH = 1280;
+    public static final int LEFT_RESOLUTION_HEIGHT = 800;
+    public static final int RIGHT_RESOLUTION_WIDTH = 1280;
+    public static final int RIGHT_RESOLUTION_HEIGHT = 800;
+    public static final int FRONT_RIGHT_RESOLUTION_WIDTH = 1280;
+    public static final int FRONT_RIGHT_RESOLUTION_HEIGHT = 800;
 
-    public static final Angle FRONT_LEFT_FOV = Degrees.of(80); // from Thrifty docs
-    public static final Angle LEFT_FOV = Degrees.of(55);
-    public static final Angle RIGHT_FOV = Degrees.of(55);
-    public static final Angle FRONT_RIGHT_FOV = Degrees.of(55);
+    public static final Angle FRONT_LEFT_FOV = Degrees.of(92); // from Thrifty docs
+    public static final Angle LEFT_FOV = Degrees.of(92);
+    public static final Angle RIGHT_FOV = Degrees.of(92);
+    public static final Angle FRONT_RIGHT_FOV = Degrees.of(92);
 
     // Performance
     public static final double FRONT_LEFT_FPS = 22;
@@ -253,7 +252,6 @@ public class VisionConstants {
     public static final CameraProperties FRONT_LEFT =
             new CameraProperties(
                     FRONT_LEFT_NAME,
-                    FRONT_LEFT_CAMERA_INDEX,
                     FRONT_LEFT_TRANSFORM,
                     FRONT_LEFT_MATRIX,
                     FRONT_LEFT_DIST_COEFFS,
@@ -268,7 +266,6 @@ public class VisionConstants {
     public static final CameraProperties LEFT =
             new CameraProperties(
                     LEFT_NAME,
-                    LEFT_CTWO_CAMERA_INDEX,
                     LEFT_TRANSFORM,
                     LEFT_MATRIX,
                     LEFT_DIST_COEFFS,
@@ -283,7 +280,6 @@ public class VisionConstants {
     public static final CameraProperties RIGHT =
             new CameraProperties(
                     RIGHT_NAME,
-                    RIGHT_CTWO_CAMERA_INDEX,
                     RIGHT_TRANSFORM,
                     RIGHT_MATRIX,
                     RIGHT_DIST_COEFFS,
@@ -298,7 +294,6 @@ public class VisionConstants {
     public static final CameraProperties FRONT_RIGHT =
             new CameraProperties(
                     FRONT_RIGHT_NAME,
-                    FRONT_RIGHT_CAMERA_INDEX,
                     FRONT_RIGHT_TRANSFORM,
                     FRONT_RIGHT_MATRIX,
                     FRONT_RIGHT_DIST_COEFFS,
@@ -310,29 +305,62 @@ public class VisionConstants {
                     FRONT_RIGHT_LATENCY,
                     FRONT_RIGHT_LATENCY_STDDEV);
 
-    private static final VisionIOC2.C2Config FRONT_LEFT_C2_CONFIG =
-            VisionIOC2.defaultsFor(FRONT_LEFT_CAMERA_INDEX);
-    private static final VisionIOC2.C2Config LEFT_C2_CONFIG =
-            VisionIOC2.defaultsFor(LEFT_CTWO_CAMERA_INDEX);
-    private static final VisionIOC2.C2Config RIGHT_C2_CONFIG =
-            VisionIOC2.defaultsFor(RIGHT_CTWO_CAMERA_INDEX);
-    private static final VisionIOC2.C2Config FRONT_RIGHT_C2_CONFIG =
-            VisionIOC2.defaultsFor(FRONT_RIGHT_CAMERA_INDEX);
+    private static Optional<VisionSystemSim> visionSim = Optional.empty();
+
+    private static VisionSystemSim getVisionSim() {
+        if (visionSim.isEmpty()) {
+            visionSim = Optional.of(new VisionSystemSim("main"));
+            visionSim.get().addAprilTags(fieldLayout);
+        }
+        return visionSim.get();
+    }
 
     private static VisionIO getFrontLeftIOReal() {
-        return new VisionIOC2(FRONT_LEFT, FRONT_LEFT_C2_CONFIG);
+        return new VisionIOPhotonVision(FRONT_LEFT);
+    }
+
+    private static VisionIOPhotonVisionSim getFrontLeftIOSim() {
+        return new VisionIOPhotonVisionSim(
+                FRONT_LEFT,
+                getVisionSim(),
+                () -> GlobalPoseEstimator.getInstance().getOdometryPose(),
+                fieldLayout);
     }
 
     private static VisionIO getLeftIOReal() {
-        return new VisionIOC2(LEFT, LEFT_C2_CONFIG);
+        return new VisionIOPhotonVision(LEFT);
+    }
+
+    private static VisionIOPhotonVisionSim getLeftIOSim() {
+        return new VisionIOPhotonVisionSim(
+                LEFT,
+                getVisionSim(),
+                () -> GlobalPoseEstimator.getInstance().getOdometryPose(),
+                fieldLayout);
     }
 
     private static VisionIO getRightIOReal() {
-        return new VisionIOC2(RIGHT, RIGHT_C2_CONFIG);
+        return new VisionIOPhotonVision(RIGHT);
+    }
+
+    private static VisionIOPhotonVisionSim getRightIOSim() {
+        return new VisionIOPhotonVisionSim(
+                RIGHT,
+                getVisionSim(),
+                () -> GlobalPoseEstimator.getInstance().getOdometryPose(),
+                fieldLayout);
     }
 
     private static VisionIO getFrontRightIOReal() {
-        return new VisionIOC2(FRONT_RIGHT, FRONT_RIGHT_C2_CONFIG);
+        return new VisionIOPhotonVision(FRONT_RIGHT);
+    }
+
+    private static VisionIOPhotonVisionSim getFrontRightIOSim() {
+        return new VisionIOPhotonVisionSim(
+                FRONT_RIGHT,
+                getVisionSim(),
+                () -> GlobalPoseEstimator.getInstance().getOdometryPose(),
+                fieldLayout);
     }
 
     /**
@@ -351,7 +379,13 @@ public class VisionConstants {
                 new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
             }
             case SIM -> {
-                // no vision sim without pv :(
+                var frontLeftCamera =
+                        new AprilTagCamera(FRONT_LEFT, getFrontLeftIOSim(), fieldLayout);
+                var leftCamera = new AprilTagCamera(LEFT, getLeftIOSim(), fieldLayout);
+                var rightCamera = new AprilTagCamera(RIGHT, getRightIOSim(), fieldLayout);
+                var frontRightCamera =
+                        new AprilTagCamera(FRONT_RIGHT, getFrontRightIOSim(), fieldLayout);
+                new VisionSubsystem(frontLeftCamera, leftCamera, rightCamera, frontRightCamera);
             }
             case REPLAY -> {
                 var frontLeftCamera =

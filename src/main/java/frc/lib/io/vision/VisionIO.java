@@ -31,7 +31,6 @@ public interface VisionIO {
     /** Identifier for the type of raw packet we are recieving in {@link VisionIOInputs#} */
     public static enum NativePacketType {
         UNKNOWN,
-        C2,
         PHOTON
     }
 
