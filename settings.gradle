@@ -2,7 +2,7 @@ import org.gradle.internal.os.OperatingSystem
 
 pluginManagement {
     repositories {
-        String wpilibYear = '2027_alpha7'
+        String wpilibYear = '2027_alpha8'
         File wpilibHome
         def os = OperatingSystem.current()
         if (os.isWindows()) {
