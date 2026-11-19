@@ -23,7 +23,6 @@ import static org.wpilib.units.Units.Volts;
 import static org.wpilib.units.Units.Watts;
 
 import frc.lib.actuators.Actuator;
-import frc.robot.Constants;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -140,7 +139,10 @@ public class PowerProfiler {
      */
     private final Map<String, Double> estBatteryToMechanismEfficiencies = new HashMap<>();
 
-    /** The ideal loop period of the robot. Defaults to 0.02s, but can be changed with {@link PowerProfiler#setLoopPeriod} */
+    /**
+     * The ideal loop period of the robot. Defaults to 0.02s, but can be changed with {@link
+     * PowerProfiler#setLoopPeriod}
+     */
     private double loop_period_seconds = 0.02;
 
     private boolean isInitialized = false;

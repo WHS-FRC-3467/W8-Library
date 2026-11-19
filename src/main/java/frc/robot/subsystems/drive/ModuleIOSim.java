@@ -118,7 +118,8 @@ public class ModuleIOSim implements ModuleIO {
          * A) bare motor model if actual gearing is passed, or
          * B) pre-reduced motor model with 1.0 passed into gearing.
          */
-        // 2027 alpha has no DC-motor model factory; the arm model uses the same plant, so we generate from that method.
+        // 2027 alpha has no DC-motor model factory; the arm model uses the same plant, so we
+        // generate from that method.
         driveSim =
                 new DCMotorSim(
                         Models.singleJointedArmFromPhysicalConstants(
