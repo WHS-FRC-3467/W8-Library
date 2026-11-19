@@ -122,7 +122,7 @@ public class DriveCommands {
                                         getLinearVelocityFromJoysticks(
                                                 xSupplier.getAsDouble(), ySupplier.getAsDouble());
 
-                                // Apply rotation deadband
+                                // Deadband is applied by the 2027 controller (0.1 default)
                                 double omega = omegaSupplier.getAsDouble();
 
                                 // Square rotation value for more precise control
