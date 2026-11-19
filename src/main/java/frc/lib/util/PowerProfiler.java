@@ -18,6 +18,7 @@ import static org.wpilib.units.Units.Amps;
 import static org.wpilib.units.Units.NewtonMeters;
 import static org.wpilib.units.Units.RadiansPerSecond;
 import static org.wpilib.units.Units.RotationsPerSecond;
+import static org.wpilib.units.Units.Seconds;
 import static org.wpilib.units.Units.Volts;
 import static org.wpilib.units.Units.Watts;
 
@@ -33,6 +34,7 @@ import org.wpilib.system.RobotController;
 import org.wpilib.system.Timer;
 import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.Power;
+import org.wpilib.units.measure.Time;
 import org.wpilib.units.measure.Torque;
 
 import java.util.ArrayList;
@@ -138,11 +140,23 @@ public class PowerProfiler {
      */
     private final Map<String, Double> estBatteryToMechanismEfficiencies = new HashMap<>();
 
+    /** The ideal loop period of the robot. Defaults to 0.02s, but can be changed with {@link PowerProfiler#setLoopPeriod} */
+    private double loop_period_seconds = 0.02;
+
     private boolean isInitialized = false;
     private double lastTimestamp = 0.0;
 
     private static final double MAX_LOOP_PERIOD_SECONDS = 0.1;
     private static final double MIN_BATTERY_POWER_FOR_EFFICIENCY_WATTS = 1.0;
+
+    /**
+     * Sets the ideal loop period of the robot
+     *
+     * @param period the ideal loop period of the robot
+     */
+    public void setLoopPeriod(Time period) {
+        loop_period_seconds = period.in(Seconds);
+    }
 
     /**
      * Register a subsystem's mechanism to the power profiler. For example, "Shooter/Hood",
@@ -387,19 +401,19 @@ public class PowerProfiler {
         if (!isInitialized) {
             lastTimestamp = now;
             isInitialized = true;
-            return Constants.LOOP_PERIOD;
+            return loop_period_seconds;
         }
 
         if (Logger.hasReplaySource()) {
             lastTimestamp = now;
-            return Constants.LOOP_PERIOD;
+            return loop_period_seconds;
         }
 
         double dt = now - lastTimestamp;
         lastTimestamp = now;
 
         if (dt <= 0.0) {
-            return Constants.LOOP_PERIOD;
+            return loop_period_seconds;
         }
 
         return Math.min(dt, MAX_LOOP_PERIOD_SECONDS);

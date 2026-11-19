@@ -78,6 +78,7 @@ public class RobotContainer {
 
     /** Register all of the subsystems' mechanisms and generic power channels. */
     private void registerMechanismsAndGenerics() {
+        powerProfiler.setLoopPeriod(Constants.LOOP_PERIOD);
         drive.registerModules(powerProfiler);
     }
 }

@@ -18,11 +18,13 @@ package frc.robot;
 import static org.wpilib.units.Units.Degrees;
 import static org.wpilib.units.Units.Inches;
 import static org.wpilib.units.Units.Kilograms;
+import static org.wpilib.units.Units.Seconds;
 
 import org.wpilib.framework.RobotBase;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.Distance;
 import org.wpilib.units.measure.Mass;
+import org.wpilib.units.measure.Time;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
@@ -34,7 +36,7 @@ public final class Constants {
     public static final Mode CURRENT_MODE = RobotBase.isReal() ? Mode.REAL : SIM_MODE;
 
     public static final boolean TUNING_MODE = true;
-    public static final double LOOP_PERIOD = 1.0 / 50.0;
+    public static final Time LOOP_PERIOD = Seconds.of(1.0 / 50.0);
 
     public static enum Mode {
         /** Running on a real robot. */
