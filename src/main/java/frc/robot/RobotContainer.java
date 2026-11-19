@@ -40,6 +40,8 @@ import frc.lib.util.PowerProfiler;
 import frc.robot.autos.AutoFactory;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveToPose;
+import frc.robot.subsystems.battery.Battery;
+import frc.robot.subsystems.battery.BatteryConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.lasercan1.LaserCAN1;
@@ -60,6 +62,7 @@ public class RobotContainer {
     // Subsystems
     public final Drive drive;
     private final LaserCAN1 laserCAN1;
+    private final Battery battery;
     public final AutoFactory autoFactory;
 
     // Controller
@@ -74,6 +77,7 @@ public class RobotContainer {
     public RobotContainer() {
         drive = DriveConstants.get();
         laserCAN1 = LaserCAN1Constants.get();
+        battery = BatteryConstants.get();
         VisionConstants.create();
         autoFactory = new AutoFactory(drive);
 

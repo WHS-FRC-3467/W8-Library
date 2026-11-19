@@ -69,4 +69,22 @@ public sealed interface Device {
      * @param id the PWM port ID on the roboRIO
      */
     public final record PWM(int id) implements Device {}
+
+    /**
+     * USB serial device (a USB-to-serial adapter such as the Pepper C1 RFID reader).
+     *
+     * <p>2027 / Systemcore: Systemcore has 4 USB-A ports, but WPILib 2027's {@code SerialPort} still
+     * only names USB 1 and 2. If that changes (or we switch to opening {@code /dev/tty*} paths
+     * directly), widen or replace the range check here. See {@code SerialIOUSB} for the full list.
+     *
+     * @param id which USB serial port the device is on, 1 or 2 (WPILib only exposes two)
+     */
+    public final record USB(int id) implements Device {
+        public USB {
+            if (id < 1 || id > 2) {
+                throw new IllegalArgumentException(
+                        "Illegal USB serial port " + id + ". Ports must be 1 or 2.");
+            }
+        }
+    }
 }

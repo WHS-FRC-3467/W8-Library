@@ -21,6 +21,7 @@ import frc.lib.util.Device;
 import frc.lib.util.Device.CAN;
 import frc.lib.util.Device.DIO;
 import frc.lib.util.Device.PWM;
+import frc.lib.util.Device.USB;
 
 public class Ports {
     /*
@@ -47,5 +48,7 @@ public class Ports {
     public static final Device.CAN indexerLaserCAN = new CAN(19, "rio");
 
     public static final Device.PWM servo1 = new PWM(1);
+
+    public static final Device.USB batteryReader = new USB(1);
 
 }
