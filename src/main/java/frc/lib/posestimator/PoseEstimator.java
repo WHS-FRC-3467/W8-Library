@@ -30,6 +30,7 @@ import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Transform2d;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
 import org.wpilib.math.kinematics.SwerveDriveKinematics;
 import org.wpilib.math.linalg.Matrix;
 import org.wpilib.math.linalg.VecBuilder;
@@ -37,6 +38,9 @@ import org.wpilib.math.numbers.N3;
 import org.wpilib.math.util.Nat;
 import org.wpilib.units.measure.Time;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -81,7 +85,19 @@ public class PoseEstimator {
     private static final double ODOMETRY_STDDEV_MULTIPLIER_MAX_LINEAR = 4.0;
     private static final double ODOMETRY_STDDEV_MULTIPLIER_MAX_ANGULAR = 3.0;
 
+    /**
+     * Width of the window {@link #getVelocityAtTime} averages over, centered on the requested time.
+     * One odometry step is a few milliseconds, which is too noisy to read a velocity from.
+     */
+    private static final double VELOCITY_WINDOW_SECONDS = 0.05;
+
+    /** One odometry sample's robot-frame twist and the time it covered. */
+    private record VelocityStep(double timestampSeconds, Twist2d twist, double dtSeconds) {}
+
     private final SwerveOdometry odometry;
+    private final double bufferSeconds;
+    private final Deque<VelocityStep> velocityHistory = new ArrayDeque<>();
+    private double lastOdometryTimestampSeconds = Double.NaN;
 
     /** Base odometry variances */
     private final double[] odometryVariances;
@@ -124,6 +140,7 @@ public class PoseEstimator {
                     angularOdometryVariance // Rotation
                 };
 
+        bufferSeconds = odometryBufferSize.in(Seconds);
         odometry = new SwerveOdometry(kinematics, moduleTranslations, odometryBufferSize);
         refreshOdometryPoseValidator();
     }
@@ -163,6 +180,7 @@ public class PoseEstimator {
         Twist2d twist = newOdometryPose.minus(lastOdometryPose).log();
 
         estimatedPose = estimatedPose.plus(twist.exp());
+        recordVelocityStep(twist, observation.timestamp().in(Seconds));
     }
 
     /**
@@ -184,6 +202,84 @@ public class PoseEstimator {
         Twist2d twist = newOdometryPose.minus(lastOdometryPose).log();
 
         estimatedPose = estimatedPose.plus(twist.exp());
+        recordVelocityStep(twist, observation.timestamp().in(Seconds));
+    }
+
+    private void recordVelocityStep(Twist2d twist, double timestampSeconds) {
+        if (!Double.isFinite(twist.dx)
+                || !Double.isFinite(twist.dy)
+                || !Double.isFinite(twist.dtheta)) {
+            return;
+        }
+        double dt =
+                Double.isNaN(lastOdometryTimestampSeconds)
+                        ? 0.0
+                        : Math.max(0.0, timestampSeconds - lastOdometryTimestampSeconds);
+        lastOdometryTimestampSeconds = timestampSeconds;
+        velocityHistory.addLast(new VelocityStep(timestampSeconds, twist, dt));
+
+        double cutoff = timestampSeconds - bufferSeconds;
+        while (!velocityHistory.isEmpty()
+                && velocityHistory.peekFirst().timestampSeconds() < cutoff) {
+            velocityHistory.pollFirst();
+        }
+    }
+
+    /**
+     * The robot's velocity around a past time, from the odometry steps near it, so a camera frame
+     * can be judged by how fast the robot was moving when it was captured and not when it arrived.
+     *
+     * <p>The velocity is robot-relative, averaged over the steps within {@value
+     * #VELOCITY_WINDOW_SECONDS} s centered on {@code timestampSeconds}. If no step falls in that
+     * window, the nearest earlier step is used.
+     *
+     * @param timestampSeconds the time to look up, in the same timebase as odometry samples
+     * @return the velocity, or empty if the retained history does not reach that time
+     */
+    public Optional<ChassisVelocities> getVelocityAtTime(double timestampSeconds) {
+        double from = timestampSeconds - VELOCITY_WINDOW_SECONDS / 2.0;
+        double to = timestampSeconds + VELOCITY_WINDOW_SECONDS / 2.0;
+
+        double dx = 0.0;
+        double dy = 0.0;
+        double dtheta = 0.0;
+        double seconds = 0.0;
+        // Nearest step at or before the time that covers some time, used if the window is empty
+        VelocityStep fallback = null;
+        boolean reached = false;
+        // Newest to oldest, stopping once past the window, so only the recent steps are visited
+        for (Iterator<VelocityStep> it = velocityHistory.descendingIterator(); it.hasNext(); ) {
+            VelocityStep step = it.next();
+            double stamp = step.timestampSeconds();
+            if (stamp <= timestampSeconds) {
+                reached = true;
+                if (fallback == null && step.dtSeconds() > 0.0) {
+                    fallback = step;
+                }
+            }
+            if (stamp >= from && stamp <= to && step.dtSeconds() > 0.0) {
+                dx += step.twist().dx;
+                dy += step.twist().dy;
+                dtheta += step.twist().dtheta;
+                seconds += step.dtSeconds();
+            }
+            if (stamp < from && fallback != null) {
+                break;
+            }
+        }
+        if (!reached) {
+            return Optional.empty();
+        }
+        if (seconds <= 0.0) {
+            if (fallback == null) {
+                return Optional.empty();
+            }
+            dx = fallback.twist().dx;
+            dy = fallback.twist().dy;
+            dtheta = fallback.twist().dtheta;
+            seconds = fallback.dtSeconds();
+        }
+        return Optional.of(new ChassisVelocities(dx / seconds, dy / seconds, dtheta / seconds));
     }
 
     private void updateOdometryStdDevMultipliersFromSkid(boolean[] badWheels) {
@@ -389,6 +485,8 @@ public class PoseEstimator {
     public void resetPose(Pose2d pose) {
         odometry.resetPose(pose);
         estimatedPose = pose;
+        velocityHistory.clear();
+        lastOdometryTimestampSeconds = Double.NaN;
 
         odometryStdDevMultiplierLinear = 1.0;
         odometryStdDevMultiplierAngular = 1.0;
