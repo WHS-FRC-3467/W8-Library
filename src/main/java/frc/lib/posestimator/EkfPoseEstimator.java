@@ -118,7 +118,7 @@ import org.wpilib.units.measure.Time;
  * rejections, so a few accepted low-quality observations mixed in cannot hold the filter in the
  * wrong place.
  */
-public class EkfPoseEstimator {
+public class EkfPoseEstimator implements PoseEstimator {
     private static final String LOG_PREFIX = "EkfPoseEstimator/";
 
     private static final double DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS = 2.0;
@@ -361,11 +361,13 @@ public class EkfPoseEstimator {
     // ---------------------------------------------------------------------------------------
 
     /** Current best estimate of the robot pose. */
+    @Override
     public Pose2d estimatedPose() {
         return latest().state().pose();
     }
 
     /** Odometry-only pose, with no vision corrections. */
+    @Override
     public Pose2d odometryPose() {
         return odometry.odometryPose();
     }
@@ -403,6 +405,7 @@ public class EkfPoseEstimator {
      *
      * @param observation module positions, optional gyro angle and timestamp
      */
+    @Override
     public void addOdometryObservation(OdometryObservation observation) {
         Pose2d lastOdometryPose = odometry.odometryPose();
         odometry.addOdometryObservation(observation);
@@ -414,6 +417,7 @@ public class EkfPoseEstimator {
      *
      * @param observation optional gyro angle and timestamp
      */
+    @Override
     public void addGyroObservation(OdometryObservation observation) {
         Pose2d lastOdometryPose = odometry.odometryPose();
         odometry.addGyroObservation(observation);
@@ -426,6 +430,7 @@ public class EkfPoseEstimator {
      * @param timestampSeconds the time to look up, in the same timebase as odometry samples
      * @return the pose, or empty if that time is older than the retained history
      */
+    @Override
     public Optional<Pose2d> getPoseAtTime(double timestampSeconds) {
         Step before = null;
         Step after = null;
@@ -464,6 +469,7 @@ public class EkfPoseEstimator {
      * @param timestampSeconds the time to look up, in the same timebase as odometry samples
      * @return the velocity, or empty if the retained history does not reach that time
      */
+    @Override
     public Optional<ChassisVelocities> getVelocityAtTime(double timestampSeconds) {
         double from = timestampSeconds - VELOCITY_WINDOW_SECONDS / 2.0;
         double to = timestampSeconds + VELOCITY_WINDOW_SECONDS / 2.0;
@@ -516,6 +522,7 @@ public class EkfPoseEstimator {
      * @param observation the vision observation. Its standard deviations define the camera
      *     uncertainty.
      */
+    @Override
     public void addVisionObservation(VisionPoseObservation observation) {
         int stepsAfter = stepsAfter(observation.timestampSeconds());
         if (stepsAfter < 0) {
@@ -677,6 +684,7 @@ public class EkfPoseEstimator {
      *
      * @param pose the known pose
      */
+    @Override
     public void resetPose(Pose2d pose) {
         odometry.resetPose(pose);
         recentGateOutcomes.clear();
@@ -689,6 +697,7 @@ public class EkfPoseEstimator {
      * @param validator returns {@code true} for acceptable poses
      * @return this
      */
+    @Override
     public EkfPoseEstimator withPoseValidator(Predicate<Pose2d> validator) {
         poseValidator = validator;
         return this;

@@ -32,11 +32,11 @@ import org.wpilib.units.measure.Time;
 /**
  * Integrates swerve-drive odometry observations to maintain a continuous estimate of the robot's
  * field-relative pose over time. This is essentially a {@link SwerveDriveOdometry} with more
- * outputs to be utilized in a {@link PoseEstimator}.
+ * outputs to be utilized in a {@link WPILibStylePoseEstimator}.
  *
  * <p>This class tracks the robot's module positions, integrates motion deltas into a {@link Pose2d}
  * estimate, and maintains a time-buffered history of poses for interpolation. It is intended to be
- * used by a higher-level {@link PoseEstimator} that fuses odometry with vision or other sensors. Do
+ * used by a higher-level {@link WPILibStylePoseEstimator} that fuses odometry with vision or other sensors. Do
  * not use this class on it's own, use {@link SwerveDriveOdometry}.
  */
 @Accessors(fluent = true)
