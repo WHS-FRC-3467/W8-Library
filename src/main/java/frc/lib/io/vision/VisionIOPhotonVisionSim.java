@@ -18,7 +18,7 @@ package frc.lib.io.vision;
 import static org.wpilib.units.Units.Radians;
 
 import frc.lib.sensors.AprilTagCamera.CameraProperties;
-
+import java.util.function.Supplier;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
@@ -26,8 +26,6 @@ import org.wpilib.fields.Field;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.units.Units;
-
-import java.util.function.Supplier;
 
 /**
  * Simulated implementation of {@link VisionIOPhotonVision} using the PhotonVision simulation
@@ -68,8 +66,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
 
         simCameraProperties.setFPS(cameraProperties.fps());
         simCameraProperties.setAvgLatencyMs(cameraProperties.latency().in(Units.Milliseconds));
-        simCameraProperties.setLatencyStdDevMs(
-                cameraProperties.latencyStdDev().in(Units.Milliseconds));
+        simCameraProperties.setLatencyStdDevMs(cameraProperties.latencyStdDev().in(Units.Milliseconds));
 
         cameraSim = new PhotonCameraSim(super.photonCamera, simCameraProperties, fieldLayout);
         this.system.addCamera(cameraSim, cameraProperties.robotToCamera());

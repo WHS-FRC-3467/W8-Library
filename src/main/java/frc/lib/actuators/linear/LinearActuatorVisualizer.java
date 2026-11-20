@@ -7,7 +7,7 @@ package frc.lib.actuators.linear;
 import static org.wpilib.units.Units.Meters;
 
 import frc.lib.actuators.linear.LinearActuator.LinearMechCharacteristics;
-
+import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
@@ -16,8 +16,6 @@ import org.wpilib.math.geometry.Rotation3d;
 import org.wpilib.units.measure.Distance;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
-
-import java.util.Optional;
 
 /**
  * A visualizer for linear mechanisms that displays the current distance, trajectory, and goal
@@ -67,65 +65,54 @@ public class LinearActuatorVisualizer {
         mechanism = new LoggedMechanism2d(3.0, 3.0, new Color8Bit(Color.BLACK));
         LoggedMechanismRoot2d root = mechanism.getRoot(name + " root", 1.5, 1.5);
 
-        lowerBound =
-                new LoggedMechanismLigament2d(
-                        name + "lowerBound",
-                        characteristics.minDistance().in(Meters),
-                        visualAngleDegrees,
-                        3,
-                        new Color8Bit(Color.WHITE));
+        lowerBound = new LoggedMechanismLigament2d(
+                name + "lowerBound",
+                characteristics.minDistance().in(Meters),
+                visualAngleDegrees,
+                3,
+                new Color8Bit(Color.WHITE));
 
         lowerBoundArm =
-                new LoggedMechanismLigament2d(
-                        name + "lowerBoundArm", ARM_LENGTH, -90, 3, new Color8Bit(Color.WHITE));
+                new LoggedMechanismLigament2d(name + "lowerBoundArm", ARM_LENGTH, -90, 3, new Color8Bit(Color.WHITE));
 
-        upperBound =
-                new LoggedMechanismLigament2d(
-                        name + "upperBound",
-                        characteristics.maxDistance().in(Meters),
-                        visualAngleDegrees,
-                        3,
-                        new Color8Bit(Color.WHITE));
+        upperBound = new LoggedMechanismLigament2d(
+                name + "upperBound",
+                characteristics.maxDistance().in(Meters),
+                visualAngleDegrees,
+                3,
+                new Color8Bit(Color.WHITE));
 
         upperBoundArm =
-                new LoggedMechanismLigament2d(
-                        name + "upperBoundArm", ARM_LENGTH, -90.0, 3, new Color8Bit(Color.WHITE));
+                new LoggedMechanismLigament2d(name + "upperBoundArm", ARM_LENGTH, -90.0, 3, new Color8Bit(Color.WHITE));
 
-        measured =
-                new LoggedMechanismLigament2d(
-                        name + "measured",
-                        characteristics.startingDistance().in(Meters),
-                        visualAngleDegrees,
-                        3,
-                        new Color8Bit(Color.GREEN));
+        measured = new LoggedMechanismLigament2d(
+                name + "measured",
+                characteristics.startingDistance().in(Meters),
+                visualAngleDegrees,
+                3,
+                new Color8Bit(Color.GREEN));
 
         measuredArm =
-                new LoggedMechanismLigament2d(
-                        name + "measuredArm", ARM_LENGTH, -90, 3, new Color8Bit(Color.GREEN));
+                new LoggedMechanismLigament2d(name + "measuredArm", ARM_LENGTH, -90, 3, new Color8Bit(Color.GREEN));
 
-        trajectory =
-                new LoggedMechanismLigament2d(
-                        name + "trajectory",
-                        characteristics.startingDistance().in(Meters),
-                        visualAngleDegrees,
-                        3,
-                        new Color8Bit(Color.YELLOW));
+        trajectory = new LoggedMechanismLigament2d(
+                name + "trajectory",
+                characteristics.startingDistance().in(Meters),
+                visualAngleDegrees,
+                3,
+                new Color8Bit(Color.YELLOW));
 
         trajectoryArm =
-                new LoggedMechanismLigament2d(
-                        name + "trajectoryArm", ARM_LENGTH, -90, 3, new Color8Bit(Color.YELLOW));
+                new LoggedMechanismLigament2d(name + "trajectoryArm", ARM_LENGTH, -90, 3, new Color8Bit(Color.YELLOW));
 
-        goal =
-                new LoggedMechanismLigament2d(
-                        name + "goal",
-                        characteristics.startingDistance().in(Meters),
-                        visualAngleDegrees,
-                        3,
-                        new Color8Bit(Color.RED));
+        goal = new LoggedMechanismLigament2d(
+                name + "goal",
+                characteristics.startingDistance().in(Meters),
+                visualAngleDegrees,
+                3,
+                new Color8Bit(Color.RED));
 
-        goalArm =
-                new LoggedMechanismLigament2d(
-                        name + "goalArm", ARM_LENGTH, -90, 3, new Color8Bit(Color.RED));
+        goalArm = new LoggedMechanismLigament2d(name + "goalArm", ARM_LENGTH, -90, 3, new Color8Bit(Color.RED));
 
         root.append(lowerBound);
         lowerBound.append(lowerBoundArm);
@@ -177,11 +164,10 @@ public class LinearActuatorVisualizer {
             trajectoryArm.setLength(0.0);
         }
 
-        distance.ifPresent(
-                d -> {
-                    trajectoryArm.setLength(ARM_LENGTH);
-                    trajectory.setLength(d.in(Meters));
-                });
+        distance.ifPresent(d -> {
+            trajectoryArm.setLength(ARM_LENGTH);
+            trajectory.setLength(d.in(Meters));
+        });
 
         update();
     }
@@ -196,11 +182,10 @@ public class LinearActuatorVisualizer {
             goalArm.setLength(0.0);
         }
 
-        distance.ifPresent(
-                d -> {
-                    goalArm.setLength(ARM_LENGTH);
-                    goal.setLength(d.in(Meters));
-                });
+        distance.ifPresent(d -> {
+            goalArm.setLength(ARM_LENGTH);
+            goal.setLength(d.in(Meters));
+        });
 
         update();
     }

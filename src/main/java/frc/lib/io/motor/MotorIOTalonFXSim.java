@@ -23,9 +23,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
-
 import frc.lib.util.Device.CAN;
-
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.system.RobotController;
 import org.wpilib.units.measure.Angle;
@@ -104,19 +102,18 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         Voltage supplyVoltage = Volts.of(RobotController.getBatteryVoltage());
         simState.setSupplyVoltage(supplyVoltage.in(Volts));
 
-        inputs.connected =
-                BaseStatusSignal.refreshAll(
-                                super.position,
-                                super.velocity,
-                                super.supplyVoltage,
-                                super.appliedVoltage,
-                                super.supplyCurrent,
-                                super.torqueCurrent,
-                                super.temperature,
-                                super.closedLoopError,
-                                super.closedLoopReference,
-                                super.closedLoopReferenceSlope)
-                        .isOK();
+        inputs.connected = BaseStatusSignal.refreshAll(
+                        super.position,
+                        super.velocity,
+                        super.supplyVoltage,
+                        super.appliedVoltage,
+                        super.supplyCurrent,
+                        super.torqueCurrent,
+                        super.temperature,
+                        super.closedLoopError,
+                        super.closedLoopReference,
+                        super.closedLoopReferenceSlope)
+                .isOK();
 
         inputs.position = super.position.getValue();
         inputs.velocity = super.velocity.getValue();
@@ -129,10 +126,9 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         inputs.rotorToSensorRatio = super.getRotorToSensorRatio();
         inputs.sensorToMechanismRatio = super.getSensorToMechanismRatio();
         inputs.rotorToMechanismRatio = super.getRotorToMechanismRatio();
-        inputs.motorTorqueConstant =
-                super.getMotorTorqueConstant().isPresent()
-                        ? super.getMotorTorqueConstant().getAsDouble()
-                        : -1.0;
+        inputs.motorTorqueConstant = super.getMotorTorqueConstant().isPresent()
+                ? super.getMotorTorqueConstant().getAsDouble()
+                : -1.0;
 
         // Interpret control-loop status signals conditionally based on current mode
         Double closedLoopErrorValue = super.closedLoopError.getValue();
@@ -142,13 +138,11 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         boolean isRunningMotionMagic = super.isRunningMotionMagic();
         boolean isRunningVelocityControl = super.isRunningVelocityControl();
 
-        inputs.positionError =
-                isRunningPositionControl ? Rotations.of(closedLoopErrorValue) : Rotations.zero();
+        inputs.positionError = isRunningPositionControl ? Rotations.of(closedLoopErrorValue) : Rotations.zero();
 
-        inputs.activeTrajectoryPosition =
-                isRunningPositionControl && isRunningMotionMagic
-                        ? Rotations.of(closedLoopTargetValue)
-                        : Rotations.zero();
+        inputs.activeTrajectoryPosition = isRunningPositionControl && isRunningMotionMagic
+                ? Rotations.of(closedLoopTargetValue)
+                : Rotations.zero();
 
         inputs.goalPosition = isRunningPositionControl ? goalPosition : Rotations.zero();
         inputs.goalVelocity = isRunningVelocityControl ? goalVelocity : RotationsPerSecond.zero();
@@ -158,8 +152,7 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
             inputs.activeTrajectoryVelocity = RotationsPerSecond.of(closedLoopTargetValue);
         } else if (isRunningPositionControl && isRunningMotionMagic) {
             var targetVelocity = closedLoopReferenceSlope.getValue();
-            inputs.velocityError =
-                    RotationsPerSecond.of(targetVelocity - inputs.velocity.in(RotationsPerSecond));
+            inputs.velocityError = RotationsPerSecond.of(targetVelocity - inputs.velocity.in(RotationsPerSecond));
             inputs.activeTrajectoryVelocity = RotationsPerSecond.of(targetVelocity);
         } else {
             inputs.velocityError = RotationsPerSecond.zero();

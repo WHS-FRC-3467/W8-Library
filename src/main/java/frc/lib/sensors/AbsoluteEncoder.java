@@ -17,7 +17,6 @@ package frc.lib.sensors;
 
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIO;
 import frc.lib.io.absoluteencoder.AbsoluteEncoderInputsAutoLogged;
-
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.units.measure.Angle;
 

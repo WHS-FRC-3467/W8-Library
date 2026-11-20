@@ -24,7 +24,6 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
-
 import frc.lib.actuators.flywheel.FlywheelActuator;
 import frc.lib.actuators.flywheel.FlywheelActuatorReal;
 import frc.lib.actuators.flywheel.FlywheelActuatorSim;
@@ -36,7 +35,6 @@ import frc.lib.util.PID;
 import frc.robot.Constants;
 import frc.robot.Ports;
 import frc.robot.Robot;
-
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.Distance;
@@ -106,25 +104,17 @@ public class TowerConstants {
         FlywheelActuator<?> mechanism;
         switch (Constants.CURRENT_MODE) {
             case REAL:
-                mechanism =
-                        new FlywheelActuatorReal(
-                                NAME, new MotorIOTalonFX(NAME, getFXConfig(), Ports.tower));
+                mechanism = new FlywheelActuatorReal(NAME, new MotorIOTalonFX(NAME, getFXConfig(), Ports.tower));
                 break;
             case SIM:
-                mechanism =
-                        new FlywheelActuatorSim(
-                                NAME,
-                                new MotorIOTalonFXSim(
-                                        NAME,
-                                        MotorType.KrakenX44,
-                                        DCMOTOR,
-                                        getFXConfig(),
-                                        Ports.tower),
-                                DCMOTOR,
-                                GEARING,
-                                1,
-                                MOI,
-                                TOLERANCE);
+                mechanism = new FlywheelActuatorSim(
+                        NAME,
+                        new MotorIOTalonFXSim(NAME, MotorType.KrakenX44, DCMOTOR, getFXConfig(), Ports.tower),
+                        DCMOTOR,
+                        GEARING,
+                        1,
+                        MOI,
+                        TOLERANCE);
                 break;
             case REPLAY:
                 mechanism = new FlywheelActuator<>(NAME, new MotorIO() {}) {};

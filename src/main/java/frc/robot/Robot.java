@@ -18,12 +18,10 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
-
 import frc.lib.util.BatteryModel;
 import frc.lib.util.PowerProfiler;
 import frc.robot.Constants.Mode;
 import frc.robot.subsystems.drive.DriveConstants;
-
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -72,8 +70,7 @@ public class Robot extends LoggedRobot {
                 setUseTiming(false); // Run as fast as possible
                 String logPath = LogFileUtil.findReplayLog();
                 Logger.setReplaySource(new WPILOGReader(logPath));
-                Logger.addDataReceiver(
-                        new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+                Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
             }
         }
 
@@ -81,13 +78,9 @@ public class Robot extends LoggedRobot {
         Logger.start();
 
         // Check for valid swerve config
-        var modules =
-                new SwerveModuleConstants[] {
-                    DriveConstants.FrontLeft,
-                    DriveConstants.FrontRight,
-                    DriveConstants.BackLeft,
-                    DriveConstants.BackRight
-                };
+        var modules = new SwerveModuleConstants[] {
+            DriveConstants.FrontLeft, DriveConstants.FrontRight, DriveConstants.BackLeft, DriveConstants.BackRight
+        };
         for (var constants : modules) {
             if (constants.DriveMotorType != DriveMotorArrangement.TalonFX_Integrated
                     || constants.SteerMotorType != SteerMotorArrangement.TalonFX_Integrated) {

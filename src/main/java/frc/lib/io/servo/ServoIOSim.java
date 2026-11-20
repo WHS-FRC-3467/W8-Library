@@ -18,7 +18,6 @@ package frc.lib.io.servo;
 import static org.wpilib.units.Units.Degrees;
 
 import lombok.Getter;
-
 import org.wpilib.units.measure.Angle;
 
 public class ServoIOSim implements ServoIO {
@@ -26,7 +25,8 @@ public class ServoIOSim implements ServoIO {
     private final double minAngle;
     private final double maxAngle;
 
-    @Getter private double goalPosition;
+    @Getter
+    private double goalPosition;
 
     /**
      * Constructs a {@link ServoIOSim} object with the specified name and limits.

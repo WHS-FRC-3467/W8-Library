@@ -41,44 +41,25 @@ public class FlywheelActuatorVisualizer {
         this.name = name;
         mechanism = new LoggedMechanism2d(WIDTH, HEIGHT);
 
-        roller =
-                mechanism
-                        .getRoot("pivotPoint_", WIDTH / 2.0, HEIGHT / 2.0)
-                        .append(
-                                new LoggedMechanismLigament2d(
-                                        "roller ", .2, 0, 0, new Color8Bit(Color.ALICE_BLUE)));
+        roller = mechanism
+                .getRoot("pivotPoint_", WIDTH / 2.0, HEIGHT / 2.0)
+                .append(new LoggedMechanismLigament2d("roller ", .2, 0, 0, new Color8Bit(Color.ALICE_BLUE)));
 
-        LoggedMechanismLigament2d side1 =
-                roller.append(
-                        new LoggedMechanismLigament2d(
-                                "side1 ", 0.15307, 112.5, 6, new Color8Bit(Color.ALICE_BLUE)));
+        LoggedMechanismLigament2d side1 = roller.append(
+                new LoggedMechanismLigament2d("side1 ", 0.15307, 112.5, 6, new Color8Bit(Color.ALICE_BLUE)));
         LoggedMechanismLigament2d side2 =
-                side1.append(
-                        new LoggedMechanismLigament2d(
-                                "side2 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
+                side1.append(new LoggedMechanismLigament2d("side2 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
         LoggedMechanismLigament2d side3 =
-                side2.append(
-                        new LoggedMechanismLigament2d(
-                                "side3 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
+                side2.append(new LoggedMechanismLigament2d("side3 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
         LoggedMechanismLigament2d side4 =
-                side3.append(
-                        new LoggedMechanismLigament2d(
-                                "side4 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
+                side3.append(new LoggedMechanismLigament2d("side4 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
         LoggedMechanismLigament2d side5 =
-                side4.append(
-                        new LoggedMechanismLigament2d(
-                                "side5 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
+                side4.append(new LoggedMechanismLigament2d("side5 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
         LoggedMechanismLigament2d side6 =
-                side5.append(
-                        new LoggedMechanismLigament2d(
-                                "side6 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
+                side5.append(new LoggedMechanismLigament2d("side6 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
         LoggedMechanismLigament2d side7 =
-                side6.append(
-                        new LoggedMechanismLigament2d(
-                                "side7 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
-        side7.append(
-                new LoggedMechanismLigament2d(
-                        "side8 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
+                side6.append(new LoggedMechanismLigament2d("side7 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
+        side7.append(new LoggedMechanismLigament2d("side8 ", 0.15307, 45, 6, new Color8Bit(Color.ALICE_BLUE)));
     }
 
     /**

@@ -10,14 +10,12 @@ import static org.wpilib.units.Units.Radians;
 import frc.lib.actuators.Actuator;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.ControlType;
-
+import java.util.Optional;
 import org.wpilib.math.geometry.Rotation3d;
 import org.wpilib.math.util.MathUtil;
 import org.wpilib.units.BaseUnits;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.Distance;
-
-import java.util.Optional;
 
 /**
  * Abstract class for linear mechanisms, which are mechanisms that move in a straight line. This

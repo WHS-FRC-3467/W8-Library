@@ -15,12 +15,11 @@
 
 package frc.lib.util;
 
-import org.wpilib.hardware.bus.CANPort;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Optional;
+import org.wpilib.hardware.bus.CANPort;
 
 /**
  * Sealed interface representing different types of hardware devices on the robot. Provides
@@ -47,9 +46,7 @@ public sealed interface Device {
         public CAN(int id, String bus) {
             if (id <= 0 || id > 63) {
                 throw new IllegalArgumentException(
-                        "Illegal CAN ID "
-                                + id
-                                + ". IDs must be between 1 and 63 inclusive (ID 0 is reserved).");
+                        "Illegal CAN ID " + id + ". IDs must be between 1 and 63 inclusive (ID 0 is reserved).");
             }
 
             if (!ids.containsKey(bus)) {

@@ -5,7 +5,6 @@
 package frc.lib.util;
 
 import lombok.Getter;
-
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.math.geometry.Pose3d;
 import org.wpilib.math.geometry.Rotation3d;
@@ -37,7 +36,8 @@ public class GamePieceVisualizer {
 
     private final String name;
 
-    @Getter Pose3d gamePiecePose = new Pose3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0));
+    @Getter
+    Pose3d gamePiecePose = new Pose3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0));
 
     /**
      * Creates a new game piece visualizer at the specified pose.

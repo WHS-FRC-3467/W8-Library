@@ -16,7 +16,6 @@ package frc.lib.actuators;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.simulation.DCMotorSim;

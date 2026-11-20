@@ -195,7 +195,7 @@ spotless {
         // Target all Java files
         target '**/*.java'
         targetExclude '**/generated/**', 'third_party/**', 'C2/**'
-        googleJavaFormat().reorderImports(true).aosp()
+        palantirJavaFormat()
         trimTrailingWhitespace()
         endWithNewline()
     }

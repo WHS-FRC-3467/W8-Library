@@ -17,11 +17,9 @@ package frc.lib.sensors;
 
 import frc.lib.io.distancesensor.DistanceSensorIO;
 import frc.lib.io.distancesensor.DistanceSensorInputsAutoLogged;
-
+import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.units.measure.Distance;
-
-import java.util.Optional;
 
 /** Class for simplified DistanceSensorIO implementation */
 public class DistanceSensor {
