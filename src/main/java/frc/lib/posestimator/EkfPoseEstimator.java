@@ -117,8 +117,6 @@ import org.wpilib.units.measure.Time;
  * accepts it. The window is a fraction of recent observations and not a run of consecutive
  * rejections, so a few accepted low-quality observations mixed in cannot hold the filter in the
  * wrong place.
- *
- * <p>See {@code docs/EkfPoseEstimator.md} for the tuning procedure.
  */
 public class EkfPoseEstimator {
     private static final String LOG_PREFIX = "EkfPoseEstimator/";
