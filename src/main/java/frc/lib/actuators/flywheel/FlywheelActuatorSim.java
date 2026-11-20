@@ -38,7 +38,7 @@ import org.wpilib.units.measure.Time;
 import org.wpilib.util.Color;
 
 /**
- * A simulated implementation of the FlywheelMechanism abstract class that uses FlywheelSim to
+ * A simulated implementation of the FlywheelActuator abstract class that uses FlywheelSim to
  * simulate the behavior of a flywheel mechanism.
  */
 public class FlywheelActuatorSim extends FlywheelActuator<MotorIOSim> {

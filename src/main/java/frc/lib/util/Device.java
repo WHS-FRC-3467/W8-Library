@@ -15,8 +15,12 @@
 
 package frc.lib.util;
 
+import org.wpilib.hardware.bus.CANPort;
+
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Sealed interface representing different types of hardware devices on the robot. Provides
@@ -24,10 +28,17 @@ import java.util.HashSet;
  */
 public sealed interface Device {
     /**
+     * Name of the SystemCore native CAN bus that non-CANivore devices are wired to. SystemCore has
+     * no "rio" bus; its native buses are named "can_s0" through "can_s4".
+     */
+    String ONBOARD_CAN_BUS = "can_s0";
+
+    /**
      * CAN bus device with an ID and bus name.
      *
      * @param id the CAN ID of the device
-     * @param bus the name of the CAN bus the device is connected to (e.g., "rio", "Drivetrain")
+     * @param bus the name of the CAN bus the device is connected to (e.g., "can_s0" for a native
+     *     SystemCore bus, or a CANivore name such as "Drivetrain")
      */
     final record CAN(int id, String bus) implements Device {
         // bus -> { ids }
@@ -54,19 +65,33 @@ public sealed interface Device {
             this.id = id;
             this.bus = bus;
         }
+
+        /**
+         * Returns the native SystemCore/MotionCore CAN port for this device's bus, or empty if the
+         * bus is not a native port (e.g. a CANivore).
+         *
+         * @return the matching {@link CANPort}, if any
+         */
+        public Optional<CANPort> canPort() {
+            try {
+                return Optional.of(CANPort.valueOf(bus.toUpperCase(Locale.ROOT)));
+            } catch (IllegalArgumentException e) {
+                return Optional.empty();
+            }
+        }
     }
 
     /**
      * Digital Input/Output device with a port ID.
      *
-     * @param id the DIO port ID on the robot controller
+     * @param id the DIO port ID on the SystemCore
      */
     public final record DIO(int id) implements Device {}
 
     /**
      * Pulse Width Modulation device with a port ID.
      *
-     * @param id the PWM port ID on the robot controller
+     * @param id the PWM port ID on the SystemCore
      */
     public final record PWM(int id) implements Device {}
 }
