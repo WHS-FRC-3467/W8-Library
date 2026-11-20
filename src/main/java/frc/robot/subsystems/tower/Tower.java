@@ -24,6 +24,7 @@ import frc.lib.util.PowerProfiler;
 
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
+import org.wpilib.command3.Scheduler;
 
 /**
  * Subsystem that controls the tower mechanism that transfers game pieces from the indexer to the
@@ -47,6 +48,8 @@ public class Tower implements Mechanism {
      */
     public Tower(FlywheelActuator<?> io) {
         this.io = io;
+
+        Scheduler.getDefault().addPeriodic(this::periodic);
     }
 
     public void periodic() {
