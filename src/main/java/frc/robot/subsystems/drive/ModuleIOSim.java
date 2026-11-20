@@ -20,10 +20,8 @@ import static org.wpilib.units.Units.Amps;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
-
 import frc.lib.actuators.MotorSimCalcs;
 import frc.lib.util.BatteryModel;
-
 import org.wpilib.math.controller.PIDController;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.system.DCMotor;
@@ -99,8 +97,7 @@ public class ModuleIOSim implements ModuleIO {
      */
     public ModuleIOSim(
             String name,
-            SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
-                    constants) {
+            SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         this.name = name;
 
         /*
@@ -120,20 +117,14 @@ public class ModuleIOSim implements ModuleIO {
          */
         // 2027 alpha has no DC-motor model factory; the arm model uses the same plant, so we
         // generate from that method.
-        driveSim =
-                new DCMotorSim(
-                        Models.singleJointedArmFromPhysicalConstants(
-                                DRIVE_MOTOR_MODEL,
-                                constants.DriveInertia,
-                                constants.DriveMotorGearRatio),
-                        DRIVE_MOTOR_MODEL);
-        turnSim =
-                new DCMotorSim(
-                        Models.singleJointedArmFromPhysicalConstants(
-                                TURN_MOTOR_MODEL,
-                                constants.SteerInertia,
-                                constants.SteerMotorGearRatio),
-                        TURN_MOTOR_MODEL);
+        driveSim = new DCMotorSim(
+                Models.singleJointedArmFromPhysicalConstants(
+                        DRIVE_MOTOR_MODEL, constants.DriveInertia, constants.DriveMotorGearRatio),
+                DRIVE_MOTOR_MODEL);
+        turnSim = new DCMotorSim(
+                Models.singleJointedArmFromPhysicalConstants(
+                        TURN_MOTOR_MODEL, constants.SteerInertia, constants.SteerMotorGearRatio),
+                TURN_MOTOR_MODEL);
 
         // Compute drive FF from the actual motor model: V/(rad/s at wheel) = gearRatio
         // / Kv_motor
@@ -148,8 +139,7 @@ public class ModuleIOSim implements ModuleIO {
     public void updateInputs(ModuleIOInputs inputs) {
         /* Run closed-loop control */
         if (driveClosedLoop) {
-            driveUnclampedAppliedVolts =
-                    driveFFVolts + driveController.calculate(driveSim.getAngularVelocity());
+            driveUnclampedAppliedVolts = driveFFVolts + driveController.calculate(driveSim.getAngularVelocity());
         } else {
             driveController.reset();
         }
@@ -176,24 +166,22 @@ public class ModuleIOSim implements ModuleIO {
         turnSupplyCurrentAverageAmps = 0.0;
 
         for (int i = 0; i < SIM_SUBSTEPS; i++) {
-            double driveClampedAppliedVolts =
-                    MotorSimCalcs.clampVoltageToTorqueCurrentLimit(
-                            driveUnclampedAppliedVolts,
-                            driveSim.getAngularVelocity(),
-                            driveSim.getGearing(),
-                            DRIVE_MOTOR_MODEL,
-                            DriveConstants.getKSlipCurrent().in(Amps),
-                            supplyVoltageVolts);
+            double driveClampedAppliedVolts = MotorSimCalcs.clampVoltageToTorqueCurrentLimit(
+                    driveUnclampedAppliedVolts,
+                    driveSim.getAngularVelocity(),
+                    driveSim.getGearing(),
+                    DRIVE_MOTOR_MODEL,
+                    DriveConstants.getKSlipCurrent().in(Amps),
+                    supplyVoltageVolts);
             driveSim.setInputVoltage(driveClampedAppliedVolts);
 
-            double turnClampedAppliedVolts =
-                    MotorSimCalcs.clampVoltageToTorqueCurrentLimit(
-                            turnUnclampedAppliedVolts,
-                            turnSim.getAngularVelocity(),
-                            turnSim.getGearing(),
-                            TURN_MOTOR_MODEL,
-                            DriveConstants.getTurnCurrentMax().in(Amps),
-                            supplyVoltageVolts);
+            double turnClampedAppliedVolts = MotorSimCalcs.clampVoltageToTorqueCurrentLimit(
+                    turnUnclampedAppliedVolts,
+                    turnSim.getAngularVelocity(),
+                    turnSim.getGearing(),
+                    TURN_MOTOR_MODEL,
+                    DriveConstants.getTurnCurrentMax().in(Amps),
+                    supplyVoltageVolts);
             turnSim.setInputVoltage(turnClampedAppliedVolts);
 
             // Substep the sim
@@ -201,16 +189,14 @@ public class ModuleIOSim implements ModuleIO {
             turnSim.update(SIMULATION_STEP_SECONDS / SIM_SUBSTEPS);
 
             // Average supply currents over the substeps for more accurate battery load modeling
-            driveSupplyCurrentAverageAmps +=
-                    MotorSimCalcs.getSupplyCurrentAmps(
-                            supplyVoltageVolts,
-                            driveClampedAppliedVolts,
-                            MotorSimCalcs.getTorqueCurrentAmps(driveSim, DRIVE_MOTOR_MODEL.Kt));
-            turnSupplyCurrentAverageAmps +=
-                    MotorSimCalcs.getSupplyCurrentAmps(
-                            supplyVoltageVolts,
-                            turnClampedAppliedVolts,
-                            MotorSimCalcs.getTorqueCurrentAmps(turnSim, TURN_MOTOR_MODEL.Kt));
+            driveSupplyCurrentAverageAmps += MotorSimCalcs.getSupplyCurrentAmps(
+                    supplyVoltageVolts,
+                    driveClampedAppliedVolts,
+                    MotorSimCalcs.getTorqueCurrentAmps(driveSim, DRIVE_MOTOR_MODEL.Kt));
+            turnSupplyCurrentAverageAmps += MotorSimCalcs.getSupplyCurrentAmps(
+                    supplyVoltageVolts,
+                    turnClampedAppliedVolts,
+                    MotorSimCalcs.getTorqueCurrentAmps(turnSim, TURN_MOTOR_MODEL.Kt));
         }
         driveSupplyCurrentAverageAmps /= SIM_SUBSTEPS;
         turnSupplyCurrentAverageAmps /= SIM_SUBSTEPS;
@@ -224,22 +210,18 @@ public class ModuleIOSim implements ModuleIO {
         // Clamped applied volts
         double driveAppliedVoltageVolts = driveSim.getInputVoltage();
         // Can equivalently calculate torque current via getCurrent(speed, voltage)
-        double driveTorqueCurrentAmps =
-                MotorSimCalcs.getTorqueCurrentAmps(driveSim, DRIVE_MOTOR_MODEL.Kt);
-        double driveSupplyCurrentAmps =
-                MotorSimCalcs.getSupplyCurrentAmps(
-                        supplyVoltageVolts, driveAppliedVoltageVolts, driveTorqueCurrentAmps);
+        double driveTorqueCurrentAmps = MotorSimCalcs.getTorqueCurrentAmps(driveSim, DRIVE_MOTOR_MODEL.Kt);
+        double driveSupplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(
+                supplyVoltageVolts, driveAppliedVoltageVolts, driveTorqueCurrentAmps);
         // A positive supply current is a bus draw and a negative supply current is a bus regen
         isDriveRegenerating = driveSupplyCurrentAmps < 0;
 
         // Clamped applied volts
         double turnAppliedVoltageVolts = turnSim.getInputVoltage();
         // Can equivalently calculate torque current via getCurrent(speed, voltage)
-        double turnTorqueCurrentAmps =
-                MotorSimCalcs.getTorqueCurrentAmps(turnSim, TURN_MOTOR_MODEL.Kt);
+        double turnTorqueCurrentAmps = MotorSimCalcs.getTorqueCurrentAmps(turnSim, TURN_MOTOR_MODEL.Kt);
         double turnSupplyCurrentAmps =
-                MotorSimCalcs.getSupplyCurrentAmps(
-                        supplyVoltageVolts, turnAppliedVoltageVolts, turnTorqueCurrentAmps);
+                MotorSimCalcs.getSupplyCurrentAmps(supplyVoltageVolts, turnAppliedVoltageVolts, turnTorqueCurrentAmps);
         // A positive supply current is a bus draw and a negative supply current is a bus regen
         isTurnRegenerating = turnSupplyCurrentAmps < 0;
 

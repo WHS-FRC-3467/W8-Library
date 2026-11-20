@@ -6,7 +6,6 @@ package frc.lib.actuators.rotary;
 
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIO;
 import frc.lib.io.motor.MotorIO;
-
 import java.util.Optional;
 
 /**

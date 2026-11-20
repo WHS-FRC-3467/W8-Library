@@ -24,10 +24,8 @@ import static org.wpilib.units.Units.RotationsPerSecond;
 import static org.wpilib.units.Units.Volts;
 
 import frc.lib.util.PID;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
 import org.littletonrobotics.junction.AutoLog;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.AngularAcceleration;
@@ -214,10 +212,7 @@ public interface MotorIO extends AutoCloseable {
      * @param acceleration Motion Magic acceleration to use for the motion profile.
      */
     public default void runPosition(
-            Angle position,
-            PIDSlot slot,
-            AngularVelocity cruiseVelocity,
-            AngularAcceleration acceleration) {}
+            Angle position, PIDSlot slot, AngularVelocity cruiseVelocity, AngularAcceleration acceleration) {}
 
     /**
      * Runs the motor to a specific position without a motion profile.
@@ -243,8 +238,7 @@ public interface MotorIO extends AutoCloseable {
      * @param acceleration Motion Magic acceleration used to ramp to target velocity.
      * @param slot PID slot index.
      */
-    public default void runVelocity(
-            AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot) {}
+    public default void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot) {}
 
     /**
      * Sets the motor's internal encoder to interpret the current mechanism position as "position".

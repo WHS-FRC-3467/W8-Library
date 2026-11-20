@@ -26,7 +26,6 @@ import static org.wpilib.units.Units.Volts;
 import frc.lib.actuators.MotorSimCalcs;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.util.BatteryModel;
-
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.math.system.Models;
 import org.wpilib.simulation.FlywheelSim;
@@ -84,8 +83,7 @@ public class FlywheelActuatorSim extends FlywheelActuator<MotorIOSim> {
         super(name, io);
 
         if (!Double.isFinite(rotorToMechanismRatio) || rotorToMechanismRatio <= 0.0) {
-            throw new IllegalArgumentException(
-                    "Rotor-to-mechanism ratio must be greater than zero and finite.");
+            throw new IllegalArgumentException("Rotor-to-mechanism ratio must be greater than zero and finite.");
         }
 
         if (numMotors < 1) {
@@ -104,13 +102,10 @@ public class FlywheelActuatorSim extends FlywheelActuator<MotorIOSim> {
          * Both the sim API and plant require an unreduced DCMotor object with the proper number of motors to properly
          * model the gearbox; gearing is manually applied.
          */
-        sim =
-                new FlywheelSim(
-                        Models.flywheelFromPhysicalConstants(
-                                motor,
-                                momentOfInertia.in(KilogramSquareMeters),
-                                rotorToMechanismRatio),
-                        motor);
+        sim = new FlywheelSim(
+                Models.flywheelFromPhysicalConstants(
+                        motor, momentOfInertia.in(KilogramSquareMeters), rotorToMechanismRatio),
+                motor);
 
         visualizer = new FlywheelActuatorVisualizer(name);
     }
@@ -128,18 +123,16 @@ public class FlywheelActuatorSim extends FlywheelActuator<MotorIOSim> {
          * so the two estimates may differ. The MotorSimCalcs estimate is treated
          * as authoritative for battery simulation.
          */
-        double supplyCurrentAmps =
-                MotorSimCalcs.getSupplyCurrentAmps(
-                                RobotController.getBatteryVoltage(),
-                                inputs.appliedVoltage.in(Volts),
-                                inputs.torqueCurrent.in(Amps))
-                        * numMotors;
+        double supplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(
+                        RobotController.getBatteryVoltage(),
+                        inputs.appliedVoltage.in(Volts),
+                        inputs.torqueCurrent.in(Amps))
+                * numMotors;
         BatteryModel.addCurrentLoad(supplyCurrentAmps);
 
         // Angular displacement kinematic equation (trapezoidal integration of theta)
         AngularVelocity currentVelocity = RadiansPerSecond.of(sim.getAngularVelocity());
-        Angle positionChange =
-                (lastVelocity.plus(currentVelocity).times(Seconds.of(deltaTime))).times(0.5);
+        Angle positionChange = (lastVelocity.plus(currentVelocity).times(Seconds.of(deltaTime))).times(0.5);
 
         lastTime = currentTime;
         simPosition = simPosition.plus(positionChange);
@@ -163,24 +156,20 @@ public class FlywheelActuatorSim extends FlywheelActuator<MotorIOSim> {
         if (!Double.isFinite(getRotorToMechanismRatio())
                 || getRotorToMechanismRatio() <= 0.0
                 || Math.abs(rotorToMechanismRatio - getRotorToMechanismRatio()) > 1e-6) {
-            throw new IllegalStateException(
-                    String.format(
-                            "Inconsistent/invalid rotor-to-mechanism ratio: "
-                                    + "MotorIO reports %.6f, simulation configured %.6f",
-                            getRotorToMechanismRatio(), rotorToMechanismRatio));
+            throw new IllegalStateException(String.format(
+                    "Inconsistent/invalid rotor-to-mechanism ratio: "
+                            + "MotorIO reports %.6f, simulation configured %.6f",
+                    getRotorToMechanismRatio(), rotorToMechanismRatio));
         }
 
         if (numMotors != getNumberOfMotors()) {
-            throw new IllegalStateException(
-                    String.format(
-                            "Inconsistent motor count: "
-                                    + "MotorIO reports %d, simulation configured %d",
-                            getNumberOfMotors(), numMotors));
+            throw new IllegalStateException(String.format(
+                    "Inconsistent motor count: " + "MotorIO reports %d, simulation configured %d",
+                    getNumberOfMotors(), numMotors));
         }
 
         visualizer.setAngle(inputs.position);
-        if (inputs.velocityError != null
-                && inputs.velocityError.isNear(RadiansPerSecond.zero(), tolerance)) {
+        if (inputs.velocityError != null && inputs.velocityError.isNear(RadiansPerSecond.zero(), tolerance)) {
             visualizer.setColor(Color.GREEN);
         } else {
             visualizer.setColor(Color.BLACK);

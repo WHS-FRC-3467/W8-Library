@@ -21,7 +21,6 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.vision.VisionConstants;
-
 import org.wpilib.command3.button.CommandXboxController;
 import org.wpilib.driverstation.GenericHID;
 import org.wpilib.driverstation.XboxController;
@@ -57,8 +56,7 @@ public class RobotContainer {
         registerMechanismsAndGenerics();
 
         GamePieceVisualizer algae =
-                new GamePieceVisualizer(
-                        "Algae", new Pose3d(new Translation3d(3, 3, 1), new Rotation3d(0, 0, 0)));
+                new GamePieceVisualizer("Algae", new Pose3d(new Translation3d(3, 3, 1), new Rotation3d(0, 0, 0)));
     }
 
     /**
@@ -68,12 +66,8 @@ public class RobotContainer {
      * {@link org.wpilib.command2.button.JoystickButton}.
      */
     private void configureButtonBindings() {
-        drive.setDefaultCommand(
-                DriveCommands.joystickDrive(
-                        drive,
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()));
+        drive.setDefaultCommand(DriveCommands.joystickDrive(
+                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX(), () -> -controller.getRightX()));
     }
 
     /** Register all of the subsystems' mechanisms and generic power channels. */

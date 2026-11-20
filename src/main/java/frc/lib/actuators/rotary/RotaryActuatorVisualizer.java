@@ -12,7 +12,7 @@ import static org.wpilib.units.Units.Radians;
 import static org.wpilib.units.Units.Rotations;
 
 import frc.lib.actuators.rotary.RotaryActuator.RotaryMechCharacteristics;
-
+import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
@@ -21,8 +21,6 @@ import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.util.Color;
 import org.wpilib.util.Color8Bit;
-
-import java.util.Optional;
 
 /**
  * A visualizer for rotary mechanisms that displays the current angle, trajectory, and goal angle
@@ -48,62 +46,35 @@ public class RotaryActuatorVisualizer {
         armLength = constants.armLength().in(Meters);
 
         if (constants.maxAngle().minus(constants.minAngle()).in(Rotations) < 1) {
-            lowerBound =
-                    new LoggedMechanismLigament2d(
-                            name + "Lower Bound",
-                            constants.armLength().in(Meters),
-                            constants.minAngle().in(Degrees),
-                            3,
-                            new Color8Bit(Color.WHITE));
+            lowerBound = new LoggedMechanismLigament2d(
+                    name + "Lower Bound",
+                    constants.armLength().in(Meters),
+                    constants.minAngle().in(Degrees),
+                    3,
+                    new Color8Bit(Color.WHITE));
 
-            upperBound =
-                    new LoggedMechanismLigament2d(
-                            name + "Upper Bound",
-                            constants.armLength().in(Meters),
-                            constants.maxAngle().in(Degrees),
-                            3,
-                            new Color8Bit(Color.WHITE));
+            upperBound = new LoggedMechanismLigament2d(
+                    name + "Upper Bound",
+                    constants.armLength().in(Meters),
+                    constants.maxAngle().in(Degrees),
+                    3,
+                    new Color8Bit(Color.WHITE));
         } else {
-            lowerBound =
-                    new LoggedMechanismLigament2d(
-                            name + "Lower Bound",
-                            0.0,
-                            constants.minAngle().in(Degrees),
-                            3,
-                            new Color8Bit(Color.WHITE));
+            lowerBound = new LoggedMechanismLigament2d(
+                    name + "Lower Bound", 0.0, constants.minAngle().in(Degrees), 3, new Color8Bit(Color.WHITE));
 
-            upperBound =
-                    new LoggedMechanismLigament2d(
-                            name + "Upper Bound",
-                            0.0,
-                            constants.maxAngle().in(Degrees),
-                            3,
-                            new Color8Bit(Color.WHITE));
+            upperBound = new LoggedMechanismLigament2d(
+                    name + "Upper Bound", 0.0, constants.maxAngle().in(Degrees), 3, new Color8Bit(Color.WHITE));
         }
 
-        measured =
-                new LoggedMechanismLigament2d(
-                        name + "Measured",
-                        armLength,
-                        constants.startingAngle().in(Degrees),
-                        3,
-                        new Color8Bit(Color.GREEN));
+        measured = new LoggedMechanismLigament2d(
+                name + "Measured", armLength, constants.startingAngle().in(Degrees), 3, new Color8Bit(Color.GREEN));
 
-        trajectory =
-                new LoggedMechanismLigament2d(
-                        name + "Trajectory",
-                        armLength,
-                        constants.startingAngle().in(Degrees),
-                        3,
-                        new Color8Bit(Color.YELLOW));
+        trajectory = new LoggedMechanismLigament2d(
+                name + "Trajectory", armLength, constants.startingAngle().in(Degrees), 3, new Color8Bit(Color.YELLOW));
 
-        goal =
-                new LoggedMechanismLigament2d(
-                        name + "Goal",
-                        armLength,
-                        constants.startingAngle().in(Degrees),
-                        3,
-                        new Color8Bit(Color.RED));
+        goal = new LoggedMechanismLigament2d(
+                name + "Goal", armLength, constants.startingAngle().in(Degrees), 3, new Color8Bit(Color.RED));
 
         root.append(lowerBound);
         root.append(upperBound);
@@ -137,11 +108,10 @@ public class RotaryActuatorVisualizer {
             trajectory.setLength(0.0);
         }
 
-        angle.ifPresent(
-                (a) -> {
-                    trajectory.setLength(armLength);
-                    trajectory.setAngle(a.in(Degrees));
-                });
+        angle.ifPresent((a) -> {
+            trajectory.setLength(armLength);
+            trajectory.setAngle(a.in(Degrees));
+        });
 
         update();
     }
@@ -156,11 +126,10 @@ public class RotaryActuatorVisualizer {
             goal.setLength(0.0);
         }
 
-        angle.ifPresent(
-                (a) -> {
-                    goal.setLength(armLength);
-                    goal.setAngle(a.in(Degrees));
-                });
+        angle.ifPresent((a) -> {
+            goal.setLength(armLength);
+            goal.setAngle(a.in(Degrees));
+        });
 
         update();
     }

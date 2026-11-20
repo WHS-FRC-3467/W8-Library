@@ -17,9 +17,13 @@ package frc.lib.posestimator;
 
 import static org.wpilib.units.Units.Seconds;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
@@ -29,12 +33,6 @@ import org.wpilib.math.kinematics.SwerveDriveKinematics;
 import org.wpilib.math.kinematics.SwerveDriveOdometry;
 import org.wpilib.math.kinematics.SwerveModulePosition;
 import org.wpilib.units.measure.Time;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Predicate;
 
 /**
  * Integrates swerve-drive odometry observations to maintain a continuous estimate of the robot's
@@ -65,9 +63,7 @@ public class SwerveOdometry {
 
         /** Convenience constructor when you are not doing skid detection. */
         public OdometryObservation(
-                Time timestamp,
-                SwerveModulePosition[] swervePositions,
-                Optional<Rotation2d> gyroAngle) {
+                Time timestamp, SwerveModulePosition[] swervePositions, Optional<Rotation2d> gyroAngle) {
             this(timestamp, swervePositions, gyroAngle, null);
         }
     }
@@ -106,22 +102,20 @@ public class SwerveOdometry {
     private final SwerveModulePosition[] scratchCurrent;
 
     /** Stores recent odometry poses for interpolation purposes. */
-    @Getter private final TimeInterpolatableBuffer<Pose2d> odometryBuffer;
+    @Getter
+    private final TimeInterpolatableBuffer<Pose2d> odometryBuffer;
 
     /** Tracks last known module positions for computing motion deltas. */
-    private SwerveModulePosition[] lastModulePositions =
-            new SwerveModulePosition[] {
-                new SwerveModulePosition(),
-                new SwerveModulePosition(),
-                new SwerveModulePosition(),
-                new SwerveModulePosition()
-            };
+    private SwerveModulePosition[] lastModulePositions = new SwerveModulePosition[] {
+        new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition(), new SwerveModulePosition()
+    };
 
     /** The offset from the gyro's 0 at boot and the last reset frame of rotation */
     private Rotation2d gyroOffset = Rotation2d.ZERO;
 
     /** The most recent odometry-based robot pose. */
-    @Getter private Pose2d odometryPose = new Pose2d(1.0, 1.0, gyroOffset);
+    @Getter
+    private Pose2d odometryPose = new Pose2d(1.0, 1.0, gyroOffset);
 
     /** Optional validator for candidate odometry poses. */
     private Predicate<Pose2d> poseValidator = pose -> true;
@@ -150,9 +144,7 @@ public class SwerveOdometry {
      * must be in the same module index order used everywhere else (FL, FR, BL, BR in your code).
      */
     public SwerveOdometry(
-            SwerveDriveKinematics kinematics,
-            Translation2d[] moduleTranslations,
-            Time odometryBufferSize) {
+            SwerveDriveKinematics kinematics, Translation2d[] moduleTranslations, Time odometryBufferSize) {
         this.kinematics = kinematics;
         this.moduleTranslationsOrNull = moduleTranslations;
         odometryBuffer = TimeInterpolatableBuffer.createBuffer(odometryBufferSize.in(Seconds));
@@ -189,8 +181,7 @@ public class SwerveOdometry {
             return;
         }
 
-        Twist2d twist =
-                computeTwist(lastModulePositions, currentPositions, observation.badWheels());
+        Twist2d twist = computeTwist(lastModulePositions, currentPositions, observation.badWheels());
 
         // Copy positions so callers can't accidentally mutate our history.
         lastModulePositions = copyPositions(currentPositions);
@@ -223,11 +214,7 @@ public class SwerveOdometry {
             observation
                     .gyroAngle()
                     .ifPresent(
-                            angle ->
-                                    odometryPose =
-                                            new Pose2d(
-                                                    odometryPose.getTranslation(),
-                                                    angle.plus(gyroOffset)));
+                            angle -> odometryPose = new Pose2d(odometryPose.getTranslation(), angle.plus(gyroOffset)));
             odometryBuffer.addSample(timestampSeconds, odometryPose);
             return;
         }
@@ -235,12 +222,7 @@ public class SwerveOdometry {
         // If gyro angle is available, correct heading drift
         observation
                 .gyroAngle()
-                .ifPresent(
-                        angle ->
-                                odometryPose =
-                                        new Pose2d(
-                                                odometryPose.getTranslation(),
-                                                angle.plus(gyroOffset)));
+                .ifPresent(angle -> odometryPose = new Pose2d(odometryPose.getTranslation(), angle.plus(gyroOffset)));
 
         // Store pose for later interpolation (e.g., vision sync)
         odometryBuffer.addSample(timestampSeconds, odometryPose);
@@ -267,8 +249,7 @@ public class SwerveOdometry {
         return odometryPose;
     }
 
-    private Twist2d computeTwist(
-            SwerveModulePosition[] last, SwerveModulePosition[] current, boolean[] badWheels) {
+    private Twist2d computeTwist(SwerveModulePosition[] last, SwerveModulePosition[] current, boolean[] badWheels) {
 
         if (!canUseBadWheelMask(badWheels)) {
             return kinematics.toTwist2d(last, current);
@@ -324,20 +305,18 @@ public class SwerveOdometry {
 
     private SwerveDriveKinematics getOrCreateSubsetKinematics(int mask, int goodCount) {
 
-        return subsetKinematicsCache.computeIfAbsent(
-                mask,
-                m -> {
-                    Translation2d[] translations = new Translation2d[goodCount];
+        return subsetKinematicsCache.computeIfAbsent(mask, m -> {
+            Translation2d[] translations = new Translation2d[goodCount];
 
-                    int j = 0;
-                    for (int i = 0; i < moduleTranslationsOrNull.length; i++) {
-                        if ((m & (1 << i)) == 0) {
-                            translations[j++] = moduleTranslationsOrNull[i];
-                        }
-                    }
+            int j = 0;
+            for (int i = 0; i < moduleTranslationsOrNull.length; i++) {
+                if ((m & (1 << i)) == 0) {
+                    translations[j++] = moduleTranslationsOrNull[i];
+                }
+            }
 
-                    return new SwerveDriveKinematics(translations);
-                });
+            return new SwerveDriveKinematics(translations);
+        });
     }
 
     private static SwerveModulePosition[] copyPositions(SwerveModulePosition[] positions) {

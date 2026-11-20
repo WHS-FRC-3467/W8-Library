@@ -15,10 +15,9 @@
 
 package frc.lib.io.vision;
 
+import java.util.Optional;
 import org.littletonrobotics.junction.AutoLog;
 import org.wpilib.math.geometry.Pose3d;
-
-import java.util.Optional;
 
 /**
  * Hardware interface for vision cameras that detect AprilTags for robot localization.

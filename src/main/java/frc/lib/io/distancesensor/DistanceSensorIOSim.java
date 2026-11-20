@@ -18,7 +18,6 @@ package frc.lib.io.distancesensor;
 import static org.wpilib.units.Units.Inches;
 
 import frc.lib.util.LoggedTunableNumber;
-
 import org.wpilib.units.measure.Distance;
 
 /** A simulated distance sensor implementation */

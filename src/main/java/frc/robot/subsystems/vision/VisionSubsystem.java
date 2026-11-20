@@ -27,15 +27,6 @@ import frc.lib.util.LoggedTunableNumber;
 import frc.robot.FieldConstants;
 import frc.robot.FieldConstants.AprilTagLayoutType;
 import frc.robot.GlobalPoseEstimator;
-
-import org.littletonrobotics.junction.Logger;
-import org.wpilib.command3.Mechanism;
-import org.wpilib.command3.Scheduler;
-import org.wpilib.driverstation.RobotState;
-import org.wpilib.math.geometry.Pose3d;
-import org.wpilib.math.geometry.Transform3d;
-import org.wpilib.math.kinematics.ChassisVelocities;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -43,6 +34,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.littletonrobotics.junction.Logger;
+import org.wpilib.command3.Mechanism;
+import org.wpilib.command3.Scheduler;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Transform3d;
+import org.wpilib.math.kinematics.ChassisVelocities;
 
 /**
  * The {@code VisionSubsystem} manages all vision-related processing for the robot.
@@ -72,8 +70,7 @@ public class VisionSubsystem implements Mechanism {
     /** Length of the field in meters. */
     public static final double FIELD_LENGTH = FieldConstants.FIELD_LENGTH;
 
-    public static final record VisionPoseRecord(
-            Pose3d pose, List<Integer> tagsUsed, double averageDistanceMeters) {}
+    public static final record VisionPoseRecord(Pose3d pose, List<Integer> tagsUsed, double averageDistanceMeters) {}
 
     private static final LoggedTunableNumber TIMESTAMP_OFFSET =
             new LoggedTunableNumber("VisionSubsystem/TimestampOffset", -0.08);
@@ -111,8 +108,7 @@ public class VisionSubsystem implements Mechanism {
             if (target.ambiguity() > MAX_AMBIGUITY) {
                 return false;
             }
-            if (cameraToTagDistance(target.fiducialId(), target.fieldToCameraPose())
-                    > MAX_DISTANCE_METERS) {
+            if (cameraToTagDistance(target.fiducialId(), target.fieldToCameraPose()) > MAX_DISTANCE_METERS) {
                 return false;
             }
             return true;
@@ -120,14 +116,12 @@ public class VisionSubsystem implements Mechanism {
 
         // Multi-tag frame but no multi-tag solve (e.g., solver disabled/unavailable):
         // fall back to the lowest-ambiguity single tag so usable frames aren't dropped
-        TagObservation best =
-                Arrays.stream(result.tagObservations())
-                        .min(Comparator.comparingDouble(TagObservation::ambiguity))
-                        .orElse(null);
+        TagObservation best = Arrays.stream(result.tagObservations())
+                .min(Comparator.comparingDouble(TagObservation::ambiguity))
+                .orElse(null);
         if (best == null) return false;
         if (best.ambiguity() > MAX_AMBIGUITY) return false;
-        return cameraToTagDistance(best.fiducialId(), best.fieldToCameraPose())
-                <= MAX_DISTANCE_METERS;
+        return cameraToTagDistance(best.fiducialId(), best.fieldToCameraPose()) <= MAX_DISTANCE_METERS;
     }
 
     /**
@@ -201,8 +195,7 @@ public class VisionSubsystem implements Mechanism {
 
                 List<Integer> tagsUsed = getTagsUsed(result);
                 double avgDistanceMeters = getAvgDistanceMeters(result);
-                VisionPoseRecord poseRecord =
-                        new VisionPoseRecord(fieldToRobotPose.get(), tagsUsed, avgDistanceMeters);
+                VisionPoseRecord poseRecord = new VisionPoseRecord(fieldToRobotPose.get(), tagsUsed, avgDistanceMeters);
 
                 if (!postFilter(poseRecord.pose())) {
                     rejectedResults.add(result);
@@ -211,19 +204,16 @@ public class VisionSubsystem implements Mechanism {
                 }
 
                 // captureTimestampUs holds the absolute capture timestamp in microseconds
-                double timestampSeconds =
-                        result.captureTimestampUs() / 1_000_000.0 + TIMESTAMP_OFFSET.get();
-                TrustModel.StdDevs stdDevs =
-                        computeStdDevs(camera, result, poseRecord, timestampSeconds);
+                double timestampSeconds = result.captureTimestampUs() / 1_000_000.0 + TIMESTAMP_OFFSET.get();
+                TrustModel.StdDevs stdDevs = computeStdDevs(camera, result, poseRecord, timestampSeconds);
 
-                robotState.addVisionObservation(
-                        new VisionPoseObservation(
-                                timestampSeconds,
-                                poseRecord.pose().toPose2d(),
-                                poseRecord.averageDistanceMeters(),
-                                poseRecord.tagsUsed(),
-                                stdDevs.xy(),
-                                stdDevs.theta()));
+                robotState.addVisionObservation(new VisionPoseObservation(
+                        timestampSeconds,
+                        poseRecord.pose().toPose2d(),
+                        poseRecord.averageDistanceMeters(),
+                        poseRecord.tagsUsed(),
+                        stdDevs.xy(),
+                        stdDevs.theta()));
 
                 acceptedResults.add(result);
                 acceptedPoses.add(poseRecord.pose());
@@ -242,29 +232,23 @@ public class VisionSubsystem implements Mechanism {
                 tagsRejected.addAll(getTagsUsed(rejected));
             }
 
-            Logger.recordOutput(
-                    cameraLogPrefix + "Poses/Accepted", acceptedPoses.toArray(Pose3d[]::new));
-            Logger.recordOutput(
-                    cameraLogPrefix + "Poses/Rejected", rejectedPoses.toArray(Pose3d[]::new));
+            Logger.recordOutput(cameraLogPrefix + "Poses/Accepted", acceptedPoses.toArray(Pose3d[]::new));
+            Logger.recordOutput(cameraLogPrefix + "Poses/Rejected", rejectedPoses.toArray(Pose3d[]::new));
 
-            List<Pose3d> tagPosesAccepted =
-                    tagsAccepted.stream()
-                            .map(this::getTagPose)
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .toList();
+            List<Pose3d> tagPosesAccepted = tagsAccepted.stream()
+                    .map(this::getTagPose)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .toList();
 
-            List<Pose3d> tagPosesRejected =
-                    tagsRejected.stream()
-                            .map(this::getTagPose)
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .toList();
+            List<Pose3d> tagPosesRejected = tagsRejected.stream()
+                    .map(this::getTagPose)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .toList();
 
-            Logger.recordOutput(
-                    cameraLogPrefix + "TagPoses/Accepted", tagPosesAccepted.toArray(Pose3d[]::new));
-            Logger.recordOutput(
-                    cameraLogPrefix + "TagPoses/Rejected", tagPosesRejected.toArray(Pose3d[]::new));
+            Logger.recordOutput(cameraLogPrefix + "TagPoses/Accepted", tagPosesAccepted.toArray(Pose3d[]::new));
+            Logger.recordOutput(cameraLogPrefix + "TagPoses/Rejected", tagPosesRejected.toArray(Pose3d[]::new));
         }
     }
 
@@ -290,10 +274,9 @@ public class VisionSubsystem implements Mechanism {
 
         if (result.tagObservations().length > 0) {
             // Pick the single tag with the lowest pose ambiguity
-            TagObservation best =
-                    Arrays.stream(result.tagObservations())
-                            .min(Comparator.comparingDouble(TagObservation::ambiguity))
-                            .orElse(null);
+            TagObservation best = Arrays.stream(result.tagObservations())
+                    .min(Comparator.comparingDouble(TagObservation::ambiguity))
+                    .orElse(null);
             if (best == null) return Optional.empty();
             return Optional.of(best.fieldToCameraPose().transformBy(cameraToRobot));
         }
@@ -354,36 +337,24 @@ public class VisionSubsystem implements Mechanism {
      *     heading should be ignored)
      */
     private TrustModel.StdDevs computeStdDevs(
-            AprilTagCamera camera,
-            CameraResult result,
-            VisionPoseRecord poseRecord,
-            double captureTimestampSeconds) {
+            AprilTagCamera camera, CameraResult result, VisionPoseRecord poseRecord, double captureTimestampSeconds) {
         int tagCount = Math.max(1, poseRecord.tagsUsed().size());
 
         // Ambiguity only means something for a single tag
         double ambiguity = Double.NaN;
         if (result.multiTagObservation().isEmpty()) {
-            double rawAmbiguity =
-                    Arrays.stream(result.tagObservations())
-                            .mapToDouble(TagObservation::ambiguity)
-                            .min()
-                            .orElse(1.0);
+            double rawAmbiguity = Arrays.stream(result.tagObservations())
+                    .mapToDouble(TagObservation::ambiguity)
+                    .min()
+                    .orElse(1.0);
             ambiguity = Math.max(0.0, rawAmbiguity);
         }
 
-        TrustModel.Observation observation =
-                new TrustModel.Observation(
-                        tagCount,
-                        poseRecord.averageDistanceMeters(),
-                        ambiguity,
-                        Double.NaN,
-                        Double.NaN,
-                        Double.NaN);
+        TrustModel.Observation observation = new TrustModel.Observation(
+                tagCount, poseRecord.averageDistanceMeters(), ambiguity, Double.NaN, Double.NaN, Double.NaN);
 
-        ChassisVelocities velocity =
-                robotState.getRobotRelativeVelocityAtTime(captureTimestampSeconds);
-        TrustModel.Motion motion =
-                new TrustModel.Motion(Math.hypot(velocity.vx, velocity.vy), velocity.omega);
+        ChassisVelocities velocity = robotState.getRobotRelativeVelocityAtTime(captureTimestampSeconds);
+        TrustModel.Motion motion = new TrustModel.Motion(Math.hypot(velocity.vx, velocity.vy), velocity.omega);
 
         return trustModel.stdDevs(observation, motion, camera.getProperties().stdDevFactor());
     }

@@ -15,7 +15,6 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
-
 import frc.lib.actuators.flywheel.FlywheelActuator;
 import frc.lib.actuators.flywheel.FlywheelActuatorReal;
 import frc.lib.actuators.flywheel.FlywheelActuatorSim;
@@ -28,7 +27,6 @@ import frc.lib.util.PID;
 import frc.robot.Constants;
 import frc.robot.Ports;
 import frc.robot.Robot;
-
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.units.measure.AngularAcceleration;
 import org.wpilib.units.measure.AngularVelocity;
@@ -42,8 +40,7 @@ public class IndexerConstants {
     public static final String NAME = "Indexer";
 
     public static final AngularVelocity MAX_VELOCITY = RotationsPerSecond.of(45.0);
-    public static final AngularAcceleration MAX_ACCELERATION =
-            RotationsPerSecondPerSecond.of(193.0);
+    public static final AngularAcceleration MAX_ACCELERATION = RotationsPerSecondPerSecond.of(193.0);
 
     private static final double GEARING = (42.0 / 26.0);
 
@@ -106,31 +103,26 @@ public class IndexerConstants {
         FlywheelActuator<?> mechanism;
         switch (Constants.CURRENT_MODE) {
             case REAL:
-                mechanism =
-                        new FlywheelActuatorReal(
-                                NAME,
-                                new MotorIOTalonFX(
-                                        NAME,
-                                        getFXConfig(),
-                                        Ports.indexer,
-                                        new TalonFXFollower(Ports.indexerFollower, false)));
+                mechanism = new FlywheelActuatorReal(
+                        NAME,
+                        new MotorIOTalonFX(
+                                NAME, getFXConfig(), Ports.indexer, new TalonFXFollower(Ports.indexerFollower, false)));
                 break;
             case SIM:
-                mechanism =
-                        new FlywheelActuatorSim(
+                mechanism = new FlywheelActuatorSim(
+                        NAME,
+                        new MotorIOTalonFXSim(
                                 NAME,
-                                new MotorIOTalonFXSim(
-                                        NAME,
-                                        MotorType.KrakenX44,
-                                        DCMOTOR,
-                                        getFXConfig(),
-                                        Ports.indexer,
-                                        new TalonFXFollower(Ports.indexerFollower, false)),
+                                MotorType.KrakenX44,
                                 DCMOTOR,
-                                GEARING,
-                                2,
-                                MOI,
-                                TOLERANCE);
+                                getFXConfig(),
+                                Ports.indexer,
+                                new TalonFXFollower(Ports.indexerFollower, false)),
+                        DCMOTOR,
+                        GEARING,
+                        2,
+                        MOI,
+                        TOLERANCE);
                 break;
             case REPLAY:
                 mechanism = new FlywheelActuator<>(NAME, new MotorIO() {}) {};
