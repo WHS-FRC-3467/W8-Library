@@ -15,11 +15,13 @@
 
 package frc.robot;
 
+import static org.wpilib.units.Units.Meters;
 import static org.wpilib.units.Units.MetersPerSecond;
 
 import frc.lib.posestimator.EkfPoseEstimator;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
+import frc.lib.util.FieldUtil;
 import frc.robot.subsystems.drive.Drive;
 import java.util.Optional;
 import lombok.AccessLevel;
@@ -46,8 +48,9 @@ public class GlobalPoseEstimator {
 
     // -------- POSE ESTIMATION --------
 
-    private final EkfPoseEstimator poseEstimator =
-            new EkfPoseEstimator(new SwerveDriveKinematics(Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new)));
+    private final EkfPoseEstimator poseEstimator = new EkfPoseEstimator(
+                    new SwerveDriveKinematics(Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new)))
+            .withPoseValidator(p -> FieldUtil.isPoseInField(p.getTranslation(), Meters.zero()));
 
     @Getter
     @Setter
