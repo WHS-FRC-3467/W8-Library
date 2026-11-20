@@ -22,6 +22,7 @@ import frc.lib.util.PowerProfiler;
 
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
+import org.wpilib.command3.Scheduler;
 import org.wpilib.units.measure.AngularVelocity;
 
 /**
@@ -46,6 +47,8 @@ public class Indexer implements Mechanism {
      */
     public Indexer(FlywheelActuator<?> io) {
         this.io = io;
+
+        Scheduler.getDefault().addPeriodic(this::periodic);
     }
 
     public void periodic() {
@@ -127,15 +130,6 @@ public class Indexer implements Mechanism {
     /** Toggles the indexer supply current limit for brownout protection. */
     public void toggleBrownedOut() {
         setBrownedOut(!brownedOut);
-    }
-
-    /**
-     * Checks if the indexer's velocity error is within tolerance.
-     *
-     * @return true if the velocity error is within tolerance, false otherwise
-     */
-    public boolean nearSetpoint() {
-        return io.getVelocityError().lte(IndexerConstants.TOLERANCE);
     }
 
     /** Closes the indexer actuator and releases resources. */
