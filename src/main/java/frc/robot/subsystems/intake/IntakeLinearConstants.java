@@ -140,10 +140,10 @@ public class IntakeLinearConstants {
     }
 
     /**
-     * Factory method to create a LinearMechanism instance for the intake linear subsystem. Creates
+     * Factory method to create a LinearActuator instance for the intake linear subsystem. Creates
      * the appropriate mechanism based on the current robot mode (REAL, SIM, or REPLAY).
      *
-     * @return A configured LinearMechanism instance
+     * @return A configured LinearActuator instance
      */
     public static LinearActuator<?> getMechanism() {
         LinearActuator<?> mechanism;

@@ -111,7 +111,7 @@ public class IntakeSuperstructure implements Mechanism, AutoCloseable {
     /**
      * Moves the intake to a goal distance using Motion Magic with the given cruise velocity and
      * acceleration. The command completes immediately after issuing the control request. Use {@link
-     * Commands#waitUntil} to block until the goal is reached.
+     * Command#waitUntil} to block until the goal is reached.
      */
     private NeedsNameBuilderStage moveToPosition(
             Distance goal, LinearVelocity cruiseVelocity, LinearAcceleration acceleration) {

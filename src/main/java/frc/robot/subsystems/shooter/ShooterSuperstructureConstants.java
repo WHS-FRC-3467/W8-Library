@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Constants class for creating the ShooterSuperstructure subsystem. Provides factory method to
- * construct the complete shooter with hood and flywheel mechanisms.
+ * construct the complete shooter with hood and flywheel actuators.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ShooterSuperstructureConstants {
@@ -17,8 +17,8 @@ public class ShooterSuperstructureConstants {
     public static final String NAME = "Shooter Superstructure";
 
     /**
-     * Creates and configures a complete ShooterSuperstructure subsystem. Combines hood and both
-     * flywheel mechanisms into a unified shooter system.
+     * Creates and configures a complete ShooterSuperstructure subsystem. Combines the hood and
+     * flywheel actuators into a unified shooter system.
      *
      * @return configured ShooterSuperstructure instance
      */

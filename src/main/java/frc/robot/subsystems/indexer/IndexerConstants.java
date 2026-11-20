@@ -36,7 +36,7 @@ import org.wpilib.units.measure.Current;
 import org.wpilib.units.measure.Distance;
 import org.wpilib.units.measure.MomentOfInertia;
 
-/** Add your docs here. */
+/** Constants and factory methods for the indexer. */
 public class IndexerConstants {
 
     public static final String NAME = "Indexer";
@@ -97,10 +97,10 @@ public class IndexerConstants {
     }
 
     /**
-     * Factory method to create an Indexer subsystem instance. Creates the appropriate mechanism
-     * based on the current robot mode (REAL, SIM, or REPLAY).
+     * Factory method to create the indexer's flywheel actuator. Creates the appropriate
+     * implementation based on the current robot mode (REAL, SIM, or REPLAY).
      *
-     * @return A fully configured Indexer subsystem
+     * @return A fully configured indexer flywheel actuator
      */
     private static FlywheelActuator<?> getMechanism() {
         FlywheelActuator<?> mechanism;
@@ -144,8 +144,8 @@ public class IndexerConstants {
     }
 
     /**
-     * Creates and configures a complete Indexer subsystem. Combines floor and centering flywheel
-     * mechanisms into a unified indexer subsystem.
+     * Creates and configures the Indexer subsystem, driving a single flywheel actuator made of a
+     * leader motor and one follower.
      *
      * @return configured Indexer instance
      */

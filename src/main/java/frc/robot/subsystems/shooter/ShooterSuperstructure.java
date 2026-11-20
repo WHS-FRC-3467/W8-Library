@@ -37,10 +37,10 @@ public class ShooterSuperstructure implements Mechanism, AutoCloseable {
 
     /**
      * Constructs a new ShooterSuperstructure subsystem with the specified hood and flywheel
-     * mechanisms.
+     * actuators.
      *
-     * @param hoodIO the hood mechanism for adjusting shot angle
-     * @param flywheelIO the flywheel mechanism for spinning up shots
+     * @param hoodIO the hood actuator for adjusting shot angle
+     * @param flywheelIO the flywheel actuator for spinning up shots
      */
     public ShooterSuperstructure(RotaryActuator<?, ?> hoodIO, FlywheelActuator<?> flywheelIO) {
         this.hoodIO = hoodIO;
@@ -76,7 +76,7 @@ public class ShooterSuperstructure implements Mechanism, AutoCloseable {
     }
 
     /**
-     * Return the current power draw of the flywheel mechanism based on applied voltage and supply
+     * Return the current power draw of the flywheel actuator based on applied voltage and supply
      * current.
      */
     public Power getFlywheelPowerDraw() {
@@ -100,9 +100,9 @@ public class ShooterSuperstructure implements Mechanism, AutoCloseable {
     }
 
     /**
-     * Creates a command to set the flywheel velocity (alternate spelling).
+     * Creates a command to set the flywheel velocity.
      *
-     * @param velocity the target angular velocity for both flywheels
+     * @param velocity the target angular velocity for the flywheel
      * @return command that sets the flywheel speed
      */
     public Command setFlywheelSpeed(AngularVelocity velocity) {
@@ -130,7 +130,7 @@ public class ShooterSuperstructure implements Mechanism, AutoCloseable {
                 .named("Retract Hood");
     }
 
-    /** Closes all underlying mechanisms and releases resources. */
+    /** Closes all underlying actuators and releases resources. */
     @Override
     public void close() {
         flywheelIO.close();

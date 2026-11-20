@@ -25,9 +25,9 @@ import org.wpilib.command3.Mechanism;
 import org.wpilib.units.measure.AngularVelocity;
 
 /**
- * Subsystem that controls the indexer floor and indexer centering mechanism for moving game pieces
- * within the robot. The indexer can pull game pieces in, expel them, or stop. Uses a flywheel
- * mechanism for velocity control.
+ * Subsystem that controls the indexer for moving game pieces within the robot. The indexer can run
+ * forward to feed game pieces toward the shooter, run in reverse to eject them, or stop. Uses a
+ * flywheel actuator and runs forward and reverse with torque-current control.
  */
 public class Indexer implements Mechanism {
     private final FlywheelActuator<?> io;
@@ -42,7 +42,7 @@ public class Indexer implements Mechanism {
     /**
      * Constructs an Indexer subsystem.
      *
-     * @param io The flywheel mechanism for controlling the indexer floor motors
+     * @param io The flywheel actuator for controlling the indexer motors
      */
     public Indexer(FlywheelActuator<?> io) {
         this.io = io;
@@ -130,15 +130,15 @@ public class Indexer implements Mechanism {
     }
 
     /**
-     * Checks if the indexer velocity is near the current state's setpoint.
+     * Checks if the indexer's velocity error is within tolerance.
      *
-     * @return true if the indexer is within tolerance of the setpoint, false otherwise
+     * @return true if the velocity error is within tolerance, false otherwise
      */
     public boolean nearSetpoint() {
         return io.getVelocityError().lte(IndexerConstants.TOLERANCE);
     }
 
-    /** Closes the indexer mechanism and releases resources. */
+    /** Closes the indexer actuator and releases resources. */
     public void close() {
         io.close();
     }

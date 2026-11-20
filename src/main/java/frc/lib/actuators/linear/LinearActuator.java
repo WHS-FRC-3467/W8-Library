@@ -21,7 +21,7 @@ import java.util.Optional;
 
 /**
  * Abstract class for linear mechanisms, which are mechanisms that move in a straight line. This
- * class extends Mechanism and provides characteristics specific to linear mechanisms. Supports
+ * class extends Actuator and provides characteristics specific to linear mechanisms. Supports
  * mechanisms at any orientation angle, including dynamic angle updates for pivoting mechanisms.
  */
 public abstract class LinearActuator<T extends MotorIO> extends Actuator<T> {

@@ -35,7 +35,7 @@ import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.Distance;
 import org.wpilib.units.measure.MomentOfInertia;
 
-/** Add your docs here. */
+/** Constants and factory methods for the shooter flywheel. */
 public class FlywheelConstants {
 
     public static String NAME = "Flywheel";

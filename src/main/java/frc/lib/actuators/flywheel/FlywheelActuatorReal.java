@@ -18,8 +18,8 @@ package frc.lib.actuators.flywheel;
 import frc.lib.io.motor.MotorIO;
 
 /**
- * A real implementation of the FlywheelMechanism abstract class that interacts with a physical
- * motor through a MotorIO interface.
+ * A real implementation of the FlywheelActuator abstract class that interacts with a physical motor
+ * through a MotorIO interface.
  */
 public class FlywheelActuatorReal extends FlywheelActuator<MotorIO> {
     public FlywheelActuatorReal(String name, MotorIO io) {

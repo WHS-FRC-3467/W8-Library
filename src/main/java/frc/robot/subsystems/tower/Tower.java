@@ -27,8 +27,8 @@ import org.wpilib.command3.Mechanism;
 
 /**
  * Subsystem that controls the tower mechanism that transfers game pieces from the indexer to the
- * shooter. The tower can stop, idle at a slow speed to hold game pieces, or shoot at full speed.
- * Uses a flywheel mechanism for velocity control.
+ * shooter. The tower can stop (brake), shoot to feed game pieces to the shooter, or run in reverse
+ * to eject. Uses a flywheel actuator and runs shoot and eject with torque-current control.
  */
 public class Tower implements Mechanism {
 
@@ -41,9 +41,9 @@ public class Tower implements Mechanism {
     private final FlywheelActuator<?> io;
 
     /**
-     * Constructs a new Tower subsystem with the specified flywheel mechanism.
+     * Constructs a new Tower subsystem with the specified flywheel actuator.
      *
-     * @param io the flywheel mechanism IO implementation for the tower
+     * @param io the flywheel actuator for the tower
      */
     public Tower(FlywheelActuator<?> io) {
         this.io = io;
@@ -58,9 +58,9 @@ public class Tower implements Mechanism {
     }
 
     /**
-     * Checks if the tower is near its current velocity setpoint.
+     * Checks if the tower's velocity error is within tolerance.
      *
-     * @return true if the tower velocity is within tolerance of the setpoint
+     * @return true if the velocity error is within tolerance
      */
     public boolean nearSetpoint() {
         return io.getVelocityError().lte(TowerConstants.TOLERANCE);
@@ -81,10 +81,10 @@ public class Tower implements Mechanism {
     }
 
     /**
-     * Creates a command to run the tower at shooting velocity to transfer game pieces to the
-     * shooter. The tower will stop when the command is interrupted or cancelled.
+     * Creates a command to run the tower forward to transfer game pieces to the shooter. The tower
+     * will stop when the command is interrupted or cancelled.
      *
-     * @return a command that runs the tower at shooting speed
+     * @return a command that runs the tower forward
      */
     public Command shoot() {
         return this.run(c -> io.runCurrent(Amps.of(SHOOT_TORQUE_CURRENT.get())))
@@ -113,7 +113,7 @@ public class Tower implements Mechanism {
         return this.run(c -> io.runBrake()).whenCanceled(this::stop).named("Stop");
     }
 
-    /** Closes the underlying flywheel mechanism and releases resources. */
+    /** Closes the underlying flywheel actuator and releases resources. */
     public void close() {
         io.close();
     }

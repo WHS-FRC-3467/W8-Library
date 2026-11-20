@@ -105,10 +105,10 @@ public class IntakeRollerConstants {
     }
 
     /**
-     * Factory method to create a FlywheelMechanism instance for the intake roller subsystem.
-     * Creates the appropriate mechanism based on the current robot mode (REAL, SIM, or REPLAY).
+     * Factory method to create a FlywheelActuator instance for the intake roller subsystem. Creates
+     * the appropriate mechanism based on the current robot mode (REAL, SIM, or REPLAY).
      *
-     * @return A configured FlywheelMechanism instance
+     * @return A configured FlywheelActuator instance
      */
     public static FlywheelActuator<?> getMechanism() {
         FlywheelActuator<?> mechanism;
