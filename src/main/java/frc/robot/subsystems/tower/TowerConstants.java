@@ -114,7 +114,12 @@ public class TowerConstants {
                 mechanism =
                         new FlywheelActuatorSim(
                                 NAME,
-                                new MotorIOTalonFXSim(NAME, MotorType.KrakenX44, DCMOTOR, getFXConfig(), Ports.tower),
+                                new MotorIOTalonFXSim(
+                                        NAME,
+                                        MotorType.KrakenX44,
+                                        DCMOTOR,
+                                        getFXConfig(),
+                                        Ports.tower),
                                 DCMOTOR,
                                 GEARING,
                                 1,

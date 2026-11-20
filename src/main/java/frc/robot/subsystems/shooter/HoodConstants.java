@@ -16,10 +16,10 @@ import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
 
 import frc.lib.actuators.rotary.RotaryActuator;
-import frc.lib.actuators.rotary.RotaryActuatorReal;
-import frc.lib.actuators.rotary.RotaryActuatorSim;
 import frc.lib.actuators.rotary.RotaryActuator.RotaryAxis;
 import frc.lib.actuators.rotary.RotaryActuator.RotaryMechCharacteristics;
+import frc.lib.actuators.rotary.RotaryActuatorReal;
+import frc.lib.actuators.rotary.RotaryActuatorSim;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorIOTalonFX;
@@ -144,7 +144,12 @@ public class HoodConstants {
                 mechanism =
                         new RotaryActuatorSim(
                                 NAME,
-                                new MotorIOTalonFXSim(NAME, MotorType.KrakenX60, DCMOTOR, getFXConfig(), Ports.hood),
+                                new MotorIOTalonFXSim(
+                                        NAME,
+                                        MotorType.KrakenX60,
+                                        DCMOTOR,
+                                        getFXConfig(),
+                                        Ports.hood),
                                 DCMOTOR,
                                 GEARING,
                                 1,

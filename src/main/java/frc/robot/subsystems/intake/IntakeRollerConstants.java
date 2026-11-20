@@ -122,7 +122,12 @@ public class IntakeRollerConstants {
                 mechanism =
                         new FlywheelActuatorSim(
                                 NAME,
-                                new MotorIOTalonFXSim(NAME, MotorType.KrakenX44, DCMOTOR, getFXConfig(), Ports.intakeRoller),
+                                new MotorIOTalonFXSim(
+                                        NAME,
+                                        MotorType.KrakenX44,
+                                        DCMOTOR,
+                                        getFXConfig(),
+                                        Ports.intakeRoller),
                                 DCMOTOR,
                                 GEARING,
                                 1,

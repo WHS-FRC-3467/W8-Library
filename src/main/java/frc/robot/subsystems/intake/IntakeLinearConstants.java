@@ -30,9 +30,9 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
 
 import frc.lib.actuators.linear.LinearActuator;
+import frc.lib.actuators.linear.LinearActuator.LinearMechCharacteristics;
 import frc.lib.actuators.linear.LinearActuatorReal;
 import frc.lib.actuators.linear.LinearActuatorSim;
-import frc.lib.actuators.linear.LinearActuator.LinearMechCharacteristics;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorIOTalonFX;
@@ -159,7 +159,12 @@ public class IntakeLinearConstants {
                 mechanism =
                         new LinearActuatorSim(
                                 NAME,
-                                new MotorIOTalonFXSim(NAME, MotorType.KrakenX44, DCMOTOR, getFXConfig(), Ports.intakeLinear),
+                                new MotorIOTalonFXSim(
+                                        NAME,
+                                        MotorType.KrakenX44,
+                                        DCMOTOR,
+                                        getFXConfig(),
+                                        Ports.intakeLinear),
                                 DCMOTOR,
                                 GEARING,
                                 1,

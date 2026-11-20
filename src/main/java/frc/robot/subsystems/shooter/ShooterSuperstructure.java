@@ -16,6 +16,7 @@
 package frc.robot.subsystems.shooter;
 
 import static org.wpilib.units.Units.Rotations;
+
 import frc.lib.actuators.flywheel.FlywheelActuator;
 import frc.lib.actuators.rotary.RotaryActuator;
 import frc.lib.io.motor.MotorIO.PIDSlot;
@@ -54,10 +55,7 @@ public class ShooterSuperstructure implements Mechanism, AutoCloseable {
     }
 
     private void setFlywheelVelocity(AngularVelocity velocity) {
-        flywheelIO.runVelocity(
-                velocity,
-                FlywheelConstants.MAX_ACCELERATION,
-                PIDSlot.SLOT_0);
+        flywheelIO.runVelocity(velocity, FlywheelConstants.MAX_ACCELERATION, PIDSlot.SLOT_0);
     }
 
     private void setHoodPosition(Angle angle) {
@@ -127,8 +125,9 @@ public class ShooterSuperstructure implements Mechanism, AutoCloseable {
     public Command retractHood() {
         return setHoodAngle(Rotations.zero())
                 .andThen(
-                        Command.waitUntil(
-                                () -> hoodIO.getPosition().lte(HoodConstants.TOLERANCE)).named("Wait for hood to be within tolerance")).named("Retract Hood");
+                        Command.waitUntil(() -> hoodIO.getPosition().lte(HoodConstants.TOLERANCE))
+                                .named("Wait for hood to be within tolerance"))
+                .named("Retract Hood");
     }
 
     /** Closes all underlying mechanisms and releases resources. */

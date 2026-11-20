@@ -18,12 +18,12 @@ package frc.robot.subsystems.tower;
 import static org.wpilib.units.Units.Amps;
 import static org.wpilib.units.Units.RotationsPerSecond;
 
-import org.wpilib.command3.Command;
-import org.wpilib.command3.Mechanism;
-
 import frc.lib.actuators.flywheel.FlywheelActuator;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.PowerProfiler;
+
+import org.wpilib.command3.Command;
+import org.wpilib.command3.Mechanism;
 
 /**
  * Subsystem that controls the tower mechanism that transfers game pieces from the indexer to the
@@ -87,7 +87,9 @@ public class Tower implements Mechanism {
      * @return a command that runs the tower at shooting speed
      */
     public Command shoot() {
-        return this.run(c -> io.runCurrent(Amps.of(SHOOT_TORQUE_CURRENT.get()))).whenCanceled(this::stop).named("Shoot");
+        return this.run(c -> io.runCurrent(Amps.of(SHOOT_TORQUE_CURRENT.get())))
+                .whenCanceled(this::stop)
+                .named("Shoot");
     }
 
     /**
@@ -97,7 +99,9 @@ public class Tower implements Mechanism {
      * @return a command that runs the tower in reverse
      */
     public Command eject() {
-                return this.run(c -> io.runCurrent(Amps.of(EJECT_TORQUE_CURRENT.get()))).whenCanceled(this::stop).named("Eject");
+        return this.run(c -> io.runCurrent(Amps.of(EJECT_TORQUE_CURRENT.get())))
+                .whenCanceled(this::stop)
+                .named("Eject");
     }
 
     /**

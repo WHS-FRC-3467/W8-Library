@@ -16,18 +16,17 @@ package frc.robot.subsystems.intake;
 
 import static org.wpilib.units.Units.*;
 
-import org.wpilib.command3.Command;
-import org.wpilib.command3.Mechanism;
-import org.wpilib.command3.NeedsNameBuilderStage;
-import org.wpilib.command3.Scheduler;
-import org.wpilib.command3.Trigger;
-
 import frc.lib.actuators.flywheel.FlywheelActuator;
 import frc.lib.actuators.linear.LinearActuator;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.PowerProfiler;
 
+import org.wpilib.command3.Command;
+import org.wpilib.command3.Mechanism;
+import org.wpilib.command3.NeedsNameBuilderStage;
+import org.wpilib.command3.Scheduler;
+import org.wpilib.command3.Trigger;
 import org.wpilib.math.filter.Debouncer;
 import org.wpilib.units.measure.*;
 
@@ -115,14 +114,13 @@ public class IntakeSuperstructure implements Mechanism, AutoCloseable {
      * Commands#waitUntil} to block until the goal is reached.
      */
     private NeedsNameBuilderStage moveToPosition(
-            Distance goal,
-            LinearVelocity cruiseVelocity,
-            LinearAcceleration acceleration) {
+            Distance goal, LinearVelocity cruiseVelocity, LinearAcceleration acceleration) {
         Distance clampedGoal = clampDistance(goal);
-    
-        return this.run(c ->
-            intakeLinearIO.runLinearPosition(clampedGoal, PIDSlot.SLOT_0, cruiseVelocity, acceleration)
-        );
+
+        return this.run(
+                c ->
+                        intakeLinearIO.runLinearPosition(
+                                clampedGoal, PIDSlot.SLOT_0, cruiseVelocity, acceleration));
     }
 
     private Command runRoller() {
@@ -138,35 +136,42 @@ public class IntakeSuperstructure implements Mechanism, AutoCloseable {
     }
 
     public Command intake() {
-        return this.run(c -> {
-            Command extend = moveToPosition(
-                                IntakeLinearConstants.MAX_DISTANCE,
-                                IntakeLinearConstants.CRUISE_VELOCITY,
-                                IntakeLinearConstants.MAX_ACCELERATION)
-                            .named("Extend Intake With Roller");
+        return this.run(
+                        c -> {
+                            Command extend =
+                                    moveToPosition(
+                                                    IntakeLinearConstants.MAX_DISTANCE,
+                                                    IntakeLinearConstants.CRUISE_VELOCITY,
+                                                    IntakeLinearConstants.MAX_ACCELERATION)
+                                            .named("Extend Intake With Roller");
 
-            c.await(extend);
-            c.waitUntil(isRollerSafe);
-            c.await(runRoller());
-            c.waitUntil(isExtended);
-        }).named("Extend Intake With Roller");
+                            c.await(extend);
+                            c.waitUntil(isRollerSafe);
+                            c.await(runRoller());
+                            c.waitUntil(isExtended);
+                        })
+                .named("Extend Intake With Roller");
     }
 
     public Command retractIntake() {
-        return this.run(c -> {
-            Command retract = moveToPosition(
-                                IntakeLinearConstants.MIN_DISTANCE,
-                                IntakeLinearConstants.CRUISE_VELOCITY,
-                                IntakeLinearConstants.MAX_ACCELERATION).named("Retract Linear");
-            
-            c.await(retract);
-            if (isRollerSafe.getAsBoolean()) {
-                c.await(runRoller());
-                c.waitUntil(isRollerSafe.negate());
-                c.await(stopRoller());
-            }
-            c.waitUntil(isRetracted);
-        }).named("Retract Intake With Roller");
+        return this.run(
+                        c -> {
+                            Command retract =
+                                    moveToPosition(
+                                                    IntakeLinearConstants.MIN_DISTANCE,
+                                                    IntakeLinearConstants.CRUISE_VELOCITY,
+                                                    IntakeLinearConstants.MAX_ACCELERATION)
+                                            .named("Retract Linear");
+
+                            c.await(retract);
+                            if (isRollerSafe.getAsBoolean()) {
+                                c.await(runRoller());
+                                c.waitUntil(isRollerSafe.negate());
+                                c.await(stopRoller());
+                            }
+                            c.waitUntil(isRetracted);
+                        })
+                .named("Retract Intake With Roller");
     }
 
     public Command linearCoast() {
@@ -179,11 +184,14 @@ public class IntakeSuperstructure implements Mechanism, AutoCloseable {
         //         .finallyDo(() -> intakeLinearIO.setEncoderPosition(Rotations.of(3.7)))
         //         .withName("Home Linear");
 
-        return this.run(c -> {
-            intakeLinearIO.runDutyCycle(0.25, true);
+        return this.run(
+                        c -> {
+                            intakeLinearIO.runDutyCycle(0.25, true);
 
-            c.park();
-        }).whenCanceled(() -> intakeLinearIO.setEncoderPosition(Rotations.of(3.7))).named("Home Linear");
+                            c.park();
+                        })
+                .whenCanceled(() -> intakeLinearIO.setEncoderPosition(Rotations.of(3.7)))
+                .named("Home Linear");
     }
 
     public void periodic() {

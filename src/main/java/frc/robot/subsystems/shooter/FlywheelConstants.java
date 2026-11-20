@@ -149,10 +149,7 @@ public class FlywheelConstants {
                                 TOLERANCE);
                 break;
             case REPLAY:
-                mechanism =
-                        new FlywheelActuator<>(
-                                NAME,
-                                new MotorIO() {}) {};
+                mechanism = new FlywheelActuator<>(NAME, new MotorIO() {}) {};
                 break;
             default:
                 throw new IllegalStateException("Unrecognized Robot Mode");
