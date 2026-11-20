@@ -53,11 +53,6 @@ public class PoseEstimator {
             double linearStdDev,
             double angularStdDev) {}
 
-    private enum OdometryObservationReason {
-        ACCEPTED,
-        POSE_VALIDATOR_REJECTED
-    }
-
     private enum VisionObservationReason {
         ACCEPTED,
         RESET_LOCKED,
@@ -109,7 +104,6 @@ public class PoseEstimator {
 
         bufferSeconds = odometryBufferSize.in(Seconds);
         odometry = new SwerveOdometry(kinematics, odometryBufferSize);
-        refreshOdometryPoseValidator();
     }
 
     public PoseEstimator(SwerveDriveKinematics kinematics, double linearOdometryStdDev, double angularOdometryStdDev) {
@@ -398,28 +392,7 @@ public class PoseEstimator {
      */
     public PoseEstimator withPoseValidator(Predicate<Pose2d> validator) {
         poseValidator = validator;
-        refreshOdometryPoseValidator();
         return this;
-    }
-
-    private void refreshOdometryPoseValidator() {
-        odometry.setPoseValidator(pose -> {
-            boolean accepted = poseValidator.test(pose);
-            OdometryObservationReason reason =
-                    accepted ? OdometryObservationReason.ACCEPTED : OdometryObservationReason.POSE_VALIDATOR_REJECTED;
-            logOdometryObservation(pose, accepted, reason);
-            return accepted;
-        });
-    }
-
-    private void logOdometryObservation(Pose2d candidatePose, boolean accepted, OdometryObservationReason reason) {
-        Logger.recordOutput(LOG_PREFIX + "Odometry/Accepted", accepted);
-        Logger.recordOutput(LOG_PREFIX + "Odometry/Reason", reason.name());
-        Logger.recordOutput(LOG_PREFIX + "Odometry/CandidatePose", candidatePose);
-        Logger.recordOutput(
-                LOG_PREFIX + "Odometry/AcceptedPose", accepted ? new Pose2d[] {candidatePose} : new Pose2d[] {});
-        Logger.recordOutput(
-                LOG_PREFIX + "Odometry/RejectedPose", accepted ? new Pose2d[] {} : new Pose2d[] {candidatePose});
     }
 
     private void logVisionObservation(
