@@ -15,16 +15,18 @@
 
 package frc.lib.posestimator;
 
-import static org.wpilib.units.Units.Seconds;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.wpilib.units.Units.Seconds;
 
-import org.wpilib.math.linalg.Matrix;
-import org.wpilib.math.util.Nat;
-import org.wpilib.math.linalg.VecBuilder;
+import frc.lib.posestimator.EkfPoseEstimator.Config;
+import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
+import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
+import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
@@ -32,26 +34,19 @@ import org.wpilib.math.geometry.Twist2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
 import org.wpilib.math.kinematics.SwerveDriveKinematics;
 import org.wpilib.math.kinematics.SwerveModulePosition;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.linalg.VecBuilder;
 import org.wpilib.math.numbers.N3;
-
-import frc.lib.posestimator.EkfPoseEstimator.Config;
-import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
-import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
-
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.Optional;
+import org.wpilib.math.util.Nat;
 
 class EkfPoseEstimatorTest {
     private static final double ODOMETRY_PERIOD = 0.01;
 
-    private static final SwerveDriveKinematics KINEMATICS =
-            new SwerveDriveKinematics(
-                    new Translation2d(0.3, 0.3),
-                    new Translation2d(0.3, -0.3),
-                    new Translation2d(-0.3, 0.3),
-                    new Translation2d(-0.3, -0.3));
+    private static final SwerveDriveKinematics KINEMATICS = new SwerveDriveKinematics(
+            new Translation2d(0.3, 0.3),
+            new Translation2d(0.3, -0.3),
+            new Translation2d(-0.3, 0.3),
+            new Translation2d(-0.3, -0.3));
 
     // ---- helpers ----
 
@@ -61,14 +56,12 @@ class EkfPoseEstimatorTest {
         for (int i = 0; i < 4; i++) {
             positions[i] = new SwerveModulePosition(distance, Rotation2d.ZERO);
         }
-        return new OdometryObservation(
-                Seconds.of(timestamp), positions, Optional.of(Rotation2d.ZERO));
+        return new OdometryObservation(Seconds.of(timestamp), positions, Optional.of(Rotation2d.ZERO));
     }
 
     private static VisionPoseObservation vision(
             double timestamp, Pose2d pose, double linearStdDev, double angularStdDev) {
-        return new VisionPoseObservation(
-                timestamp, pose, 2.0, List.of(1), linearStdDev, angularStdDev);
+        return new VisionPoseObservation(timestamp, pose, 2.0, List.of(1), linearStdDev, angularStdDev);
     }
 
     /** Drives straight at 1 m/s from {@code startTime} (inclusive) to {@code endTime}. */
@@ -112,10 +105,7 @@ class EkfPoseEstimatorTest {
                     for (int row = 0; row < 3; row++) {
                         double numeric = (fPlus[row] - fMinus[row]) / (2 * eps);
                         assertEquals(
-                                numeric,
-                                analytic.get(row, col),
-                                1e-6,
-                                "F[" + row + "][" + col + "] theta=" + theta);
+                                numeric, analytic.get(row, col), 1e-6, "F[" + row + "][" + col + "] theta=" + theta);
                     }
                 }
             }
@@ -133,15 +123,9 @@ class EkfPoseEstimatorTest {
             // dx and dy enter linearly, so their columns are exact
             for (int col = 0; col < 2; col++) {
                 Twist2d plus =
-                        new Twist2d(
-                                twist.dx + (col == 0 ? eps : 0),
-                                twist.dy + (col == 1 ? eps : 0),
-                                twist.dtheta);
+                        new Twist2d(twist.dx + (col == 0 ? eps : 0), twist.dy + (col == 1 ? eps : 0), twist.dtheta);
                 Twist2d minus =
-                        new Twist2d(
-                                twist.dx - (col == 0 ? eps : 0),
-                                twist.dy - (col == 1 ? eps : 0),
-                                twist.dtheta);
+                        new Twist2d(twist.dx - (col == 0 ? eps : 0), twist.dy - (col == 1 ? eps : 0), twist.dtheta);
                 double[] fPlus = propagate(base, plus);
                 double[] fMinus = propagate(base, minus);
                 for (int row = 0; row < 3; row++) {
@@ -189,14 +173,13 @@ class EkfPoseEstimatorTest {
     void headingUncertaintyLeaksIntoPositionWhileMoving() {
         // Drive along +x with heading uncertainty: y should become uncertain and correlate with θ
         // even though odometry noise on y alone is tiny.
-        Config config =
-                Config.DEFAULT.toBuilder()
-                        .linearVariancePerMeter(0.0)
-                        .linearVariancePerSecond(0.0)
-                        .angularVariancePerSecond(0.0)
-                        .resetLinearStdDev(0.0)
-                        .resetAngularStdDev(0.1)
-                        .build();
+        Config config = Config.DEFAULT.toBuilder()
+                .linearVariancePerMeter(0.0)
+                .linearVariancePerSecond(0.0)
+                .angularVariancePerSecond(0.0)
+                .resetLinearStdDev(0.0)
+                .resetAngularStdDev(0.1)
+                .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
         estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
 
@@ -219,8 +202,7 @@ class EkfPoseEstimatorTest {
         double sigmaBefore = sigma(estimator, 0);
 
         // Truth at t=1 is x=1, estimate is 1.5
-        estimator.addVisionObservation(
-                vision(1.0, new Pose2d(1.0, 0, Rotation2d.ZERO), 0.05, 0.02));
+        estimator.addVisionObservation(vision(1.0, new Pose2d(1.0, 0, Rotation2d.ZERO), 0.05, 0.02));
 
         assertEquals(1.0, estimator.estimatedPose().getX(), 0.05);
         assertTrue(sigma(estimator, 0) < sigmaBefore);
@@ -236,8 +218,7 @@ class EkfPoseEstimatorTest {
 
         // A frame captured at t=0.5 says we were really at x=0.8 (estimate said 0.5). The robot
         // then drove 0.5 m more, so the corrected present pose is about 1.3, not 0.8.
-        estimator.addVisionObservation(
-                vision(0.5, new Pose2d(0.8, 0, Rotation2d.ZERO), 0.001, 0.001));
+        estimator.addVisionObservation(vision(0.5, new Pose2d(0.8, 0, Rotation2d.ZERO), 0.001, 0.001));
 
         assertEquals(1.3, estimator.estimatedPose().getX(), 0.01);
         // History is corrected too
@@ -253,8 +234,7 @@ class EkfPoseEstimatorTest {
         drive(estimator, 10.0, 15.0); // buffer is 2 s, so t=10 has been dropped
 
         Pose2d before = estimator.estimatedPose();
-        estimator.addVisionObservation(
-                vision(10.0, new Pose2d(5, 5, Rotation2d.ZERO), 0.01, 0.01));
+        estimator.addVisionObservation(vision(10.0, new Pose2d(5, 5, Rotation2d.ZERO), 0.01, 0.01));
 
         assertEquals(before, estimator.estimatedPose());
         assertTrue(estimator.getPoseAtTime(10.0).isEmpty());
@@ -286,21 +266,19 @@ class EkfPoseEstimatorTest {
     void unmeasuredHeadingStillCorrectsThroughCorrelation() {
         // Heading is uncertain and correlated with y after driving, so a pure position measurement
         // should still shrink the heading uncertainty even though it never measures heading.
-        Config config =
-                Config.DEFAULT.toBuilder()
-                        .linearVariancePerMeter(0.0)
-                        .linearVariancePerSecond(0.0)
-                        .angularVariancePerSecond(0.0)
-                        .resetLinearStdDev(0.0)
-                        .resetAngularStdDev(0.1)
-                        .build();
+        Config config = Config.DEFAULT.toBuilder()
+                .linearVariancePerMeter(0.0)
+                .linearVariancePerSecond(0.0)
+                .angularVariancePerSecond(0.0)
+                .resetLinearStdDev(0.0)
+                .resetAngularStdDev(0.1)
+                .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
         estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         drive(estimator, 0.0, 5.0);
         double headingSigmaBefore = sigma(estimator, 2);
 
-        estimator.addVisionObservation(
-                vision(5.0, estimator.estimatedPose(), 0.02, Double.POSITIVE_INFINITY));
+        estimator.addVisionObservation(vision(5.0, estimator.estimatedPose(), 0.02, Double.POSITIVE_INFINITY));
 
         assertTrue(sigma(estimator, 2) < headingSigmaBefore * 0.5);
     }
@@ -316,12 +294,11 @@ class EkfPoseEstimatorTest {
         double nan = Double.NaN;
         double inf = Double.POSITIVE_INFINITY;
         Pose2d good = new Pose2d(before.getX() + 0.01, 0, Rotation2d.ZERO);
-        List<VisionPoseObservation> bad =
-                List.of(
-                        vision(1.0, good, nan, 0.1), // NaN std dev
-                        vision(1.0, good, inf, inf), // nothing measured at all
-                        vision(1.0, new Pose2d(nan, 0, Rotation2d.ZERO), 0.05, 0.1),
-                        vision(1.0, new Pose2d(0, inf, Rotation2d.ZERO), 0.05, 0.1));
+        List<VisionPoseObservation> bad = List.of(
+                vision(1.0, good, nan, 0.1), // NaN std dev
+                vision(1.0, good, inf, inf), // nothing measured at all
+                vision(1.0, new Pose2d(nan, 0, Rotation2d.ZERO), 0.05, 0.1),
+                vision(1.0, new Pose2d(0, inf, Rotation2d.ZERO), 0.05, 0.1));
         for (VisionPoseObservation observation : bad) {
             estimator.addVisionObservation(observation);
         }
@@ -351,8 +328,10 @@ class EkfPoseEstimatorTest {
     @Test
     void singularInnovationCovarianceIsIgnoredInsteadOfThrowing() {
         // Perfectly known state and a perfect measurement: S = 0 is not invertible
-        Config config =
-                Config.DEFAULT.toBuilder().resetLinearStdDev(0.0).resetAngularStdDev(0.0).build();
+        Config config = Config.DEFAULT.toBuilder()
+                .resetLinearStdDev(0.0)
+                .resetAngularStdDev(0.0)
+                .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
         estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         Pose2d before = estimator.estimatedPose();
@@ -368,9 +347,7 @@ class EkfPoseEstimatorTest {
         assertEquals(16.27, EkfPoseEstimator.gateThreshold(3, 16.27), 1e-9);
         assertEquals(13.82, EkfPoseEstimator.gateThreshold(2, 16.27), 0.05);
         assertEquals(10.83, EkfPoseEstimator.gateThreshold(1, 16.27), 0.05);
-        assertEquals(
-                Double.POSITIVE_INFINITY,
-                EkfPoseEstimator.gateThreshold(2, Double.POSITIVE_INFINITY));
+        assertEquals(Double.POSITIVE_INFINITY, EkfPoseEstimator.gateThreshold(2, Double.POSITIVE_INFINITY));
     }
 
     // ---- gating ----
@@ -403,8 +380,7 @@ class EkfPoseEstimatorTest {
         boolean recovered = false;
         for (VisionPoseObservation observation : sequence) {
             estimator.addVisionObservation(observation);
-            if (estimator.lastVisionReason
-                    == EkfPoseEstimator.VisionObservationReason.ACCEPTED_AFTER_GATE_RECOVERY) {
+            if (estimator.lastVisionReason == EkfPoseEstimator.VisionObservationReason.ACCEPTED_AFTER_GATE_RECOVERY) {
                 recovered = true;
             }
         }
@@ -416,14 +392,13 @@ class EkfPoseEstimatorTest {
         // Reproduces a field failure: the filter was wrong and overconfident, so every high-quality
         // frame was gated, while an occasional accepted low-quality frame kept resetting a
         // consecutive-rejection counter and recovery never happened.
-        Config config =
-                Config.DEFAULT.toBuilder()
-                        .linearVariancePerMeter(0.0)
-                        .linearVariancePerSecond(0.0)
-                        .angularVariancePerSecond(0.0)
-                        .resetLinearStdDev(0.05)
-                        .gateRecoveryCount(6)
-                        .build();
+        Config config = Config.DEFAULT.toBuilder()
+                .linearVariancePerMeter(0.0)
+                .linearVariancePerSecond(0.0)
+                .angularVariancePerSecond(0.0)
+                .resetLinearStdDev(0.05)
+                .gateRecoveryCount(6)
+                .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
         estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
 
@@ -439,24 +414,22 @@ class EkfPoseEstimatorTest {
 
     @Test
     void rejectionsOutsideTheRecoveryWindowDoNotAddUp() {
-        Config config =
-                Config.DEFAULT.toBuilder()
-                        .resetLinearStdDev(0.05)
-                        .gateRecoveryCount(3)
-                        .gateRecoveryWindowSeconds(1.0)
-                        .build();
+        Config config = Config.DEFAULT.toBuilder()
+                .resetLinearStdDev(0.05)
+                .gateRecoveryCount(3)
+                .gateRecoveryWindowSeconds(1.0)
+                .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
         estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
 
         Pose2d far = new Pose2d(5, 0, Rotation2d.ZERO);
         // One rejection every 2 s: never 3 inside a 1 s window
-        List<VisionPoseObservation> sequence =
-                List.of(
-                        vision(0, far, 0.05, 0.02),
-                        vision(2, far, 0.05, 0.02),
-                        vision(4, far, 0.05, 0.02),
-                        vision(6, far, 0.05, 0.02),
-                        vision(8, far, 0.05, 0.02));
+        List<VisionPoseObservation> sequence = List.of(
+                vision(0, far, 0.05, 0.02),
+                vision(2, far, 0.05, 0.02),
+                vision(4, far, 0.05, 0.02),
+                vision(6, far, 0.05, 0.02),
+                vision(8, far, 0.05, 0.02));
 
         assertFalse(feed(estimator, sequence));
         assertEquals(0.0, estimator.estimatedPose().getX(), 1e-9);
@@ -464,27 +437,23 @@ class EkfPoseEstimatorTest {
 
     @Test
     void occasionalOutliersAmongGoodFramesDoNotTriggerRecovery() {
-        Config config =
-                Config.DEFAULT.toBuilder()
-                        .resetLinearStdDev(0.05)
-                        .gateRecoveryCount(3)
-                        .gateRecoveryFraction(0.5)
-                        .build();
+        Config config = Config.DEFAULT.toBuilder()
+                .resetLinearStdDev(0.05)
+                .gateRecoveryCount(3)
+                .gateRecoveryFraction(0.5)
+                .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
         estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
 
         VisionPoseObservation good = vision(0.0, new Pose2d(0, 0, Rotation2d.ZERO), 0.05, 0.02);
         VisionPoseObservation outlier = vision(0.0, new Pose2d(5, 0, Rotation2d.ZERO), 0.05, 0.02);
         // Three outliers (the count) but only 3 of 15 observations (below the fraction)
-        List<VisionPoseObservation> sequence =
-                List.of(
-                        good, good, good, good, outlier, good, good, good, good, outlier, good,
-                        good, good, good, outlier);
+        List<VisionPoseObservation> sequence = List.of(
+                good, good, good, good, outlier, good, good, good, good, outlier, good, good, good, good, outlier);
 
         assertFalse(feed(estimator, sequence));
         assertEquals(0.0, estimator.estimatedPose().getX(), 1e-9);
-        assertEquals(
-                EkfPoseEstimator.VisionObservationReason.GATED_OUTLIER, estimator.lastVisionReason);
+        assertEquals(EkfPoseEstimator.VisionObservationReason.GATED_OUTLIER, estimator.lastVisionReason);
     }
 
     @Test
@@ -496,27 +465,23 @@ class EkfPoseEstimatorTest {
 
         // A 0.5 m disagreement is far outside what sigma = 5 cm allows
         var big = VecBuilder.fill(0.5, 0.0, 0.0);
-        assertTrue(
-                EkfPoseEstimator.normalizedInnovationSquared(big, covariance, observation, noise)
-                        > threshold);
-        Matrix<N3, N3> inflated =
-                EkfPoseEstimator.inflateToGate(covariance, big, observation, noise, threshold);
-        double nis =
-                EkfPoseEstimator.normalizedInnovationSquared(big, inflated, observation, noise);
+        assertTrue(EkfPoseEstimator.normalizedInnovationSquared(big, covariance, observation, noise) > threshold);
+        Matrix<N3, N3> inflated = EkfPoseEstimator.inflateToGate(covariance, big, observation, noise, threshold);
+        double nis = EkfPoseEstimator.normalizedInnovationSquared(big, inflated, observation, noise);
         assertTrue(nis <= threshold, "inflated covariance must admit the observation");
         assertTrue(nis > 0.99 * threshold, "and add no more uncertainty than needed, got " + nis);
         assertTrue(inflated.get(0, 0) > covariance.get(0, 0));
 
         // Already inside the gate: nothing to add
         var small = VecBuilder.fill(0.01, 0.0, 0.0);
-        assertEquals(
-                covariance,
-                EkfPoseEstimator.inflateToGate(covariance, small, observation, noise, threshold));
+        assertEquals(covariance, EkfPoseEstimator.inflateToGate(covariance, small, observation, noise, threshold));
     }
 
     @Test
     void gatingCanBeDisabled() {
-        Config config = Config.DEFAULT.toBuilder().gateChiSquared(Double.POSITIVE_INFINITY).build();
+        Config config = Config.DEFAULT.toBuilder()
+                .gateChiSquared(Double.POSITIVE_INFINITY)
+                .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
         estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         drive(estimator, 0.0, 1.0);
@@ -531,14 +496,12 @@ class EkfPoseEstimatorTest {
     void poseValidatorRejectsVisionCorrection() {
         Config config = Config.DEFAULT.toBuilder().resetLinearStdDev(0.5).build();
         EkfPoseEstimator estimator =
-                new EkfPoseEstimator(KINEMATICS, config)
-                        .withPoseValidator(pose -> pose.getX() < 3.0);
+                new EkfPoseEstimator(KINEMATICS, config).withPoseValidator(pose -> pose.getX() < 3.0);
         estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         drive(estimator, 0.0, 1.0);
 
         Pose2d before = estimator.estimatedPose();
-        estimator.addVisionObservation(
-                vision(1.0, new Pose2d(4, 0, Rotation2d.ZERO), 0.001, 0.001));
+        estimator.addVisionObservation(vision(1.0, new Pose2d(4, 0, Rotation2d.ZERO), 0.001, 0.001));
 
         assertEquals(before, estimator.estimatedPose());
     }
@@ -562,11 +525,10 @@ class EkfPoseEstimatorTest {
 
     @Test
     void uncertaintyGrowsWhileTippedSoTheNextFramesPullHarder() {
-        Config config =
-                Config.DEFAULT.toBuilder()
-                        .resetLinearStdDev(0.05)
-                        .linearVariancePerSecond(0.0)
-                        .build();
+        Config config = Config.DEFAULT.toBuilder()
+                .resetLinearStdDev(0.05)
+                .linearVariancePerSecond(0.0)
+                .build();
         EkfPoseEstimator level = new EkfPoseEstimator(KINEMATICS, config);
         EkfPoseEstimator wasTipped = new EkfPoseEstimator(KINEMATICS, config);
         level.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
@@ -592,16 +554,15 @@ class EkfPoseEstimatorTest {
 
     @Test
     void invalidTippedSettingsAreRejected() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> Config.DEFAULT.toBuilder().tippedLinearVariancePerSecond(-1.0).build());
+        assertThrows(IllegalArgumentException.class, () -> Config.DEFAULT.toBuilder()
+                .tippedLinearVariancePerSecond(-1.0)
+                .build());
     }
 
     // ---- velocity at a time ----
 
     /** Adds {@code count} odometry steps of 10 ms starting after {@code startSeconds}. */
-    private static double drive(
-            EkfPoseEstimator estimator, double startSeconds, int count, Twist2d perStep) {
+    private static double drive(EkfPoseEstimator estimator, double startSeconds, int count, Twist2d perStep) {
         double t = startSeconds;
         for (int i = 0; i < count; i++) {
             t += 0.01;

@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import frc.robot.subsystems.vision.TrustModel.Motion;
 import frc.robot.subsystems.vision.TrustModel.Observation;
 import frc.robot.subsystems.vision.TrustModel.StdDevs;
-
 import org.junit.jupiter.api.Test;
 
 class TrustModelTest {
@@ -120,8 +119,7 @@ class TrustModelTest {
     void tagsNearTheImageEdgeAreTrustedLess() {
         // Falls from 1 at 60 px to 3 at the very edge
         assertEquals(1.0, model.qualityFactor(new Observation(2, 3.0, 0.0, 60.0, NAN, NAN)), 1e-12);
-        assertEquals(
-                1.0, model.qualityFactor(new Observation(2, 3.0, 0.0, 200.0, NAN, NAN)), 1e-12);
+        assertEquals(1.0, model.qualityFactor(new Observation(2, 3.0, 0.0, 200.0, NAN, NAN)), 1e-12);
         assertEquals(2.0, model.qualityFactor(new Observation(2, 3.0, 0.0, 30.0, NAN, NAN)), 1e-12);
         assertEquals(3.0, model.qualityFactor(new Observation(2, 3.0, 0.0, 0.0, NAN, NAN)), 1e-12);
     }
@@ -159,6 +157,7 @@ class TrustModelTest {
         Motion motion = new Motion(2.0, 1.0);
 
         // base 0.09 * camera 1.5 * quality 2.0 * motion 1.7
-        assertEquals(0.09 * 1.5 * 2.0 * 1.7, model.stdDevs(observation, motion, 1.5).xy(), 1e-12);
+        assertEquals(
+                0.09 * 1.5 * 2.0 * 1.7, model.stdDevs(observation, motion, 1.5).xy(), 1e-12);
     }
 }

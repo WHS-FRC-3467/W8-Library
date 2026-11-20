@@ -17,28 +17,8 @@ package frc.lib.posestimator;
 
 import static org.wpilib.units.Units.Seconds;
 
-import org.wpilib.math.linalg.MatBuilder;
-import org.wpilib.math.util.MathUtil;
-import org.wpilib.math.linalg.Matrix;
-import org.wpilib.math.util.Nat;
-import org.wpilib.math.linalg.VecBuilder;
-import org.wpilib.math.linalg.Vector;
-import org.wpilib.math.geometry.Pose2d;
-import org.wpilib.math.geometry.Rotation2d;
-import org.wpilib.math.geometry.Twist2d;
-import org.wpilib.math.kinematics.ChassisVelocities;
-import org.wpilib.math.kinematics.SwerveDriveKinematics;
-import org.wpilib.math.numbers.N3;
-import org.wpilib.units.measure.Time;
-
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
-
-import lombok.Builder;
-
-import org.ejml.data.SingularMatrixException;
-import org.littletonrobotics.junction.Logger;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,6 +27,22 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import lombok.Builder;
+import org.ejml.data.SingularMatrixException;
+import org.littletonrobotics.junction.Logger;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.SwerveDriveKinematics;
+import org.wpilib.math.linalg.MatBuilder;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.linalg.Vector;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.util.Nat;
+import org.wpilib.units.measure.Time;
 
 /**
  * Extended Kalman filter (EKF) pose estimator for a swerve drive. Drop-in alternative to {@link
@@ -227,27 +223,26 @@ public class EkfPoseEstimator {
             double tippedLinearVariancePerSecond) {
 
         /** Starting values. Expect to retune them on the real robot. */
-        public static final Config DEFAULT =
-                Config.builder()
-                        // sigma = 14 cm after 1 m and 45 cm after 10 m of unaided odometry
-                        .linearVariancePerMeter(0.02)
-                        // sigma = 2.4 cm after 60 s standing still
-                        .linearVariancePerSecond(1e-5)
-                        // sigma = 0.6 degrees after 10 s
-                        .angularVariancePerSecond(1e-5)
-                        .initialLinearStdDev(1.0)
-                        .initialAngularStdDev(0.5)
-                        .resetLinearStdDev(0.05)
-                        // about 1 degree
-                        .resetAngularStdDev(0.02)
-                        .visionStdDevScale(1.0)
-                        // 99.9% for 3 DOF
-                        .gateChiSquared(16.27)
-                        .gateRecoveryCount(5)
-                        .gateRecoveryWindowSeconds(1.5)
-                        .gateRecoveryFraction(0.5)
-                        .tippedLinearVariancePerSecond(0.5)
-                        .build();
+        public static final Config DEFAULT = Config.builder()
+                // sigma = 14 cm after 1 m and 45 cm after 10 m of unaided odometry
+                .linearVariancePerMeter(0.02)
+                // sigma = 2.4 cm after 60 s standing still
+                .linearVariancePerSecond(1e-5)
+                // sigma = 0.6 degrees after 10 s
+                .angularVariancePerSecond(1e-5)
+                .initialLinearStdDev(1.0)
+                .initialAngularStdDev(0.5)
+                .resetLinearStdDev(0.05)
+                // about 1 degree
+                .resetAngularStdDev(0.02)
+                .visionStdDevScale(1.0)
+                // 99.9% for 3 DOF
+                .gateChiSquared(16.27)
+                .gateRecoveryCount(5)
+                .gateRecoveryWindowSeconds(1.5)
+                .gateRecoveryFraction(0.5)
+                .tippedLinearVariancePerSecond(0.5)
+                .build();
 
         public Config {
             requireNonNegative("linearVariancePerMeter", linearVariancePerMeter);
@@ -264,8 +259,7 @@ public class EkfPoseEstimator {
             }
             if (!(gateRecoveryWindowSeconds > 0.0)) {
                 throw new IllegalArgumentException(
-                        "gateRecoveryWindowSeconds must be positive, got "
-                                + gateRecoveryWindowSeconds);
+                        "gateRecoveryWindowSeconds must be positive, got " + gateRecoveryWindowSeconds);
             }
             requireNonNegative("tippedLinearVariancePerSecond", tippedLinearVariancePerSecond);
             if (!(gateRecoveryFraction > 0.0 && gateRecoveryFraction <= 1.0)) {
@@ -319,8 +313,7 @@ public class EkfPoseEstimator {
      * @param recovered whether gate recovery inflated the covariance to admit it, which the replay
      *     repeats against the new state
      */
-    private record Correction(
-            Pose2d measurement, double[] variances, boolean[] measured, boolean recovered) {}
+    private record Correction(Pose2d measurement, double[] variances, boolean[] measured, boolean recovered) {}
 
     private final SwerveOdometry odometry;
     private final double bufferSeconds;
@@ -362,10 +355,7 @@ public class EkfPoseEstimator {
         this.odometry = new SwerveOdometry(kinematics, bufferSize);
 
         // Initialize to a value not outside the field, same as PoseEstimator
-        seedHistory(
-                new Pose2d(1, 1, Rotation2d.ZERO),
-                config.initialLinearStdDev(),
-                config.initialAngularStdDev());
+        seedHistory(new Pose2d(1, 1, Rotation2d.ZERO), config.initialLinearStdDev(), config.initialAngularStdDev());
     }
 
     // ---------------------------------------------------------------------------------------
@@ -579,16 +569,10 @@ public class EkfPoseEstimator {
         Matrix<N3, N3> innovationInverse;
         double nis;
         try {
-            innovationInverse =
-                    innovationCovarianceInverse(
-                            prior.covariance(), observationMatrix, measurementNoise);
+            innovationInverse = innovationCovarianceInverse(prior.covariance(), observationMatrix, measurementNoise);
             nis = quadraticForm(innovation, innovationInverse);
         } catch (SingularMatrixException e) {
-            logVision(
-                    observation,
-                    VisionObservationReason.SINGULAR_INNOVATION_COVARIANCE,
-                    Double.NaN,
-                    measuredAxes);
+            logVision(observation, VisionObservationReason.SINGULAR_INNOVATION_COVARIANCE, Double.NaN, measuredAxes);
             return;
         }
 
@@ -606,72 +590,51 @@ public class EkfPoseEstimator {
             // the one that is wrong. Admit this observation with the least added uncertainty.
             try {
                 Matrix<N3, N3> inflated =
-                        inflateToGate(
-                                prior.covariance(),
-                                innovation,
-                                observationMatrix,
-                                measurementNoise,
-                                threshold);
-                innovationInverse =
-                        innovationCovarianceInverse(inflated, observationMatrix, measurementNoise);
+                        inflateToGate(prior.covariance(), innovation, observationMatrix, measurementNoise, threshold);
+                innovationInverse = innovationCovarianceInverse(inflated, observationMatrix, measurementNoise);
                 prior = new State(prior.pose(), inflated);
             } catch (SingularMatrixException e) {
-                logVision(
-                        observation,
-                        VisionObservationReason.SINGULAR_INNOVATION_COVARIANCE,
-                        nis,
-                        measuredAxes);
+                logVision(observation, VisionObservationReason.SINGULAR_INNOVATION_COVARIANCE, nis, measuredAxes);
                 return;
             }
             reason = VisionObservationReason.ACCEPTED_AFTER_GATE_RECOVERY;
         }
 
-        State posterior =
-                correct(prior, innovation, observationMatrix, measurementNoise, innovationInverse);
+        State posterior = correct(prior, innovation, observationMatrix, measurementNoise, innovationInverse);
 
         // Replay everything after the measurement so the correction reaches the present.
         // Corrections
         // already applied at later steps are applied again on top of the new state, so a late frame
         // does not erase newer ones.
-        Correction correction =
-                new Correction(
-                        measurement,
-                        variances,
-                        measured,
-                        reason == VisionObservationReason.ACCEPTED_AFTER_GATE_RECOVERY);
+        Correction correction = new Correction(
+                measurement, variances, measured, reason == VisionObservationReason.ACCEPTED_AFTER_GATE_RECOVERY);
         List<Correction> anchorCorrections = new ArrayList<>(anchor.corrections());
         anchorCorrections.add(correction);
         List<Step> replayed = new ArrayList<>(stepsAfter + 1);
-        replayed.add(
-                new Step(
-                        anchor.timestampSeconds(),
-                        anchor.twist(),
-                        anchor.dtSeconds(),
-                        anchor.tipped(),
-                        posterior,
-                        anchorCorrections));
+        replayed.add(new Step(
+                anchor.timestampSeconds(),
+                anchor.twist(),
+                anchor.dtSeconds(),
+                anchor.tipped(),
+                posterior,
+                anchorCorrections));
         State running = posterior;
         for (Step step : newer) {
             running = predict(running, step.twist(), step.dtSeconds(), step.tipped(), config);
             for (Correction later : step.corrections()) {
                 running = reapply(running, later);
             }
-            replayed.add(
-                    new Step(
-                            step.timestampSeconds(),
-                            step.twist(),
-                            step.dtSeconds(),
-                            step.tipped(),
-                            running,
-                            step.corrections()));
+            replayed.add(new Step(
+                    step.timestampSeconds(),
+                    step.twist(),
+                    step.dtSeconds(),
+                    step.tipped(),
+                    running,
+                    step.corrections()));
         }
 
         if (!poseValidator.test(running.pose())) {
-            logVision(
-                    observation,
-                    VisionObservationReason.POSE_VALIDATOR_REJECTED,
-                    nis,
-                    measuredAxes);
+            logVision(observation, VisionObservationReason.POSE_VALIDATOR_REJECTED, nis, measuredAxes);
             return;
         }
 
@@ -700,15 +663,8 @@ public class EkfPoseEstimator {
                 for (boolean m : c.measured()) {
                     axes += m ? 1 : 0;
                 }
-                base =
-                        new State(
-                                prior.pose(),
-                                inflateToGate(
-                                        prior.covariance(),
-                                        innovation,
-                                        h,
-                                        r,
-                                        gateThresholdFor(axes)));
+                base = new State(
+                        prior.pose(), inflateToGate(prior.covariance(), innovation, h, r, gateThresholdFor(axes)));
             }
             return correct(base, innovation, h, r);
         } catch (SingularMatrixException e) {
@@ -751,8 +707,7 @@ public class EkfPoseEstimator {
      *
      * @param tipped whether the robot is tipped, which adds uncertainty at a fixed rate
      */
-    static State predict(
-            State prior, Twist2d twist, double dtSeconds, boolean tipped, Config config) {
+    static State predict(State prior, Twist2d twist, double dtSeconds, boolean tipped, Config config) {
         double theta = prior.pose().getRotation().getRadians();
 
         // F·P·Fᵀ + G·Q·Gᵀ written out on scalars. This runs at odometry rate and again for every
@@ -774,10 +729,9 @@ public class EkfPoseEstimator {
         double g11 = sin * v[1] + cos * v[3];
 
         double distance = Math.hypot(twist.dx, twist.dy);
-        double linearVariance =
-                config.linearVariancePerMeter() * distance
-                        + config.linearVariancePerSecond() * dtSeconds
-                        + (tipped ? config.tippedLinearVariancePerSecond() * dtSeconds : 0.0);
+        double linearVariance = config.linearVariancePerMeter() * distance
+                + config.linearVariancePerSecond() * dtSeconds
+                + (tipped ? config.tippedLinearVariancePerSecond() * dtSeconds : 0.0);
         double angularVariance = config.angularVariancePerSecond() * dtSeconds;
 
         Matrix<N3, N3> p = prior.covariance();
@@ -813,8 +767,7 @@ public class EkfPoseEstimator {
         double r11 = c11 + n11;
         double r22 = p22 + angularVariance;
 
-        Matrix<N3, N3> covariance =
-                MatBuilder.fill(Nat.N3(), Nat.N3(), r00, r01, c02, r01, r11, c12, c02, c12, r22);
+        Matrix<N3, N3> covariance = MatBuilder.fill(Nat.N3(), Nat.N3(), r00, r01, c02, r01, r11, c12, c02, c12, r22);
         return new State(prior.pose().plus(twist.exp()), covariance);
     }
 
@@ -827,17 +780,13 @@ public class EkfPoseEstimator {
      * @throws SingularMatrixException if the innovation covariance cannot be inverted
      */
     static State correct(
-            State prior,
-            Vector<N3> innovation,
-            Matrix<N3, N3> observationMatrix,
-            Matrix<N3, N3> measurementNoise) {
+            State prior, Vector<N3> innovation, Matrix<N3, N3> observationMatrix, Matrix<N3, N3> measurementNoise) {
         return correct(
                 prior,
                 innovation,
                 observationMatrix,
                 measurementNoise,
-                innovationCovarianceInverse(
-                        prior.covariance(), observationMatrix, measurementNoise));
+                innovationCovarianceInverse(prior.covariance(), observationMatrix, measurementNoise));
     }
 
     /**
@@ -855,17 +804,15 @@ public class EkfPoseEstimator {
         Matrix<N3, N3> gain = p.times(h.transpose()).times(innovationInverse);
 
         Vector<N3> correction = new Vector<>(gain.times(innovation));
-        Pose2d pose =
-                new Pose2d(
-                        prior.pose().getX() + correction.get(0),
-                        prior.pose().getY() + correction.get(1),
-                        prior.pose().getRotation().plus(Rotation2d.fromRadians(correction.get(2))));
+        Pose2d pose = new Pose2d(
+                prior.pose().getX() + correction.get(0),
+                prior.pose().getY() + correction.get(1),
+                prior.pose().getRotation().plus(Rotation2d.fromRadians(correction.get(2))));
 
         Matrix<N3, N3> iMinusKh = Matrix.eye(Nat.N3()).minus(gain.times(h));
-        Matrix<N3, N3> covariance =
-                iMinusKh.times(p)
-                        .times(iMinusKh.transpose())
-                        .plus(gain.times(measurementNoise).times(gain.transpose()));
+        Matrix<N3, N3> covariance = iMinusKh.times(p)
+                .times(iMinusKh.transpose())
+                .plus(gain.times(measurementNoise).times(gain.transpose()));
 
         return new State(pose, symmetrize(covariance));
     }
@@ -879,9 +826,8 @@ public class EkfPoseEstimator {
                 measured[0] ? measurement.getX() - estimate.getX() : 0.0,
                 measured[1] ? measurement.getY() - estimate.getY() : 0.0,
                 measured[2]
-                        ? MathUtil.angleModulus(
-                                measurement.getRotation().getRadians()
-                                        - estimate.getRotation().getRadians())
+                        ? MathUtil.angleModulus(measurement.getRotation().getRadians()
+                                - estimate.getRotation().getRadians())
                         : 0.0);
     }
 
@@ -901,11 +847,7 @@ public class EkfPoseEstimator {
         double low = 1.0;
         double high = 1.0;
         while (high < 1e12
-                && normalizedInnovationSquared(
-                                innovation,
-                                covariance.times(high),
-                                observationMatrix,
-                                measurementNoise)
+                && normalizedInnovationSquared(innovation, covariance.times(high), observationMatrix, measurementNoise)
                         > threshold) {
             low = high;
             high *= 2.0;
@@ -913,8 +855,7 @@ public class EkfPoseEstimator {
         for (int i = 0; i < 40; i++) {
             double mid = 0.5 * (low + high);
             double nis =
-                    normalizedInnovationSquared(
-                            innovation, covariance.times(mid), observationMatrix, measurementNoise);
+                    normalizedInnovationSquared(innovation, covariance.times(mid), observationMatrix, measurementNoise);
             if (nis > threshold) {
                 low = mid;
             } else {
@@ -936,9 +877,7 @@ public class EkfPoseEstimator {
      */
     static Matrix<N3, N3> measurementNoise(double[] variances, boolean[] measured) {
         return diagonal(
-                measured[0] ? variances[0] : 1.0,
-                measured[1] ? variances[1] : 1.0,
-                measured[2] ? variances[2] : 1.0);
+                measured[0] ? variances[0] : 1.0, measured[1] ? variances[1] : 1.0, measured[2] ? variances[2] : 1.0);
     }
 
     /**
@@ -953,9 +892,7 @@ public class EkfPoseEstimator {
             Matrix<N3, N3> covariance,
             Matrix<N3, N3> observationMatrix,
             Matrix<N3, N3> measurementNoise) {
-        return quadraticForm(
-                innovation,
-                innovationCovarianceInverse(covariance, observationMatrix, measurementNoise));
+        return quadraticForm(innovation, innovationCovarianceInverse(covariance, observationMatrix, measurementNoise));
     }
 
     /**
@@ -964,9 +901,7 @@ public class EkfPoseEstimator {
      * @throws SingularMatrixException if it cannot be inverted
      */
     static Matrix<N3, N3> innovationCovarianceInverse(
-            Matrix<N3, N3> covariance,
-            Matrix<N3, N3> observationMatrix,
-            Matrix<N3, N3> measurementNoise) {
+            Matrix<N3, N3> covariance, Matrix<N3, N3> observationMatrix, Matrix<N3, N3> measurementNoise) {
         Matrix<N3, N3> h = observationMatrix;
         return h.times(covariance).times(h.transpose()).plus(measurementNoise).inv();
     }
@@ -1052,8 +987,7 @@ public class EkfPoseEstimator {
         double sin = Math.sin(theta);
         double fieldDx = local[0] * cos - local[1] * sin;
         double fieldDy = local[0] * sin + local[1] * cos;
-        return MatBuilder.fill(
-                Nat.N3(), Nat.N3(), 1.0, 0.0, -fieldDy, 0.0, 1.0, fieldDx, 0.0, 0.0, 1.0);
+        return MatBuilder.fill(Nat.N3(), Nat.N3(), 1.0, 0.0, -fieldDy, 0.0, 1.0, fieldDx, 0.0, 0.0, 1.0);
     }
 
     /**
@@ -1117,23 +1051,14 @@ public class EkfPoseEstimator {
 
     private void seedHistory(Pose2d pose, double linearStdDev, double angularStdDev) {
         history.clear();
-        double timestamp =
-                Double.isNaN(lastTimestampSeconds)
-                        ? Double.NEGATIVE_INFINITY
-                        : lastTimestampSeconds;
-        history.add(
-                new Step(
-                        timestamp,
-                        new Twist2d(),
-                        0.0,
-                        false,
-                        new State(
-                                pose,
-                                diagonal(
-                                        square(linearStdDev),
-                                        square(linearStdDev),
-                                        square(angularStdDev))),
-                        List.of()));
+        double timestamp = Double.isNaN(lastTimestampSeconds) ? Double.NEGATIVE_INFINITY : lastTimestampSeconds;
+        history.add(new Step(
+                timestamp,
+                new Twist2d(),
+                0.0,
+                false,
+                new State(pose, diagonal(square(linearStdDev), square(linearStdDev), square(angularStdDev))),
+                List.of()));
     }
 
     private void predictFromOdometry(Pose2d lastOdometryPose, double timestampSeconds) {
@@ -1145,17 +1070,12 @@ public class EkfPoseEstimator {
      * from a recorded stream of twists.
      */
     void applyOdometryTwist(Twist2d twist, double timestampSeconds) {
-        if (!Double.isFinite(twist.dx)
-                || !Double.isFinite(twist.dy)
-                || !Double.isFinite(twist.dtheta)) {
+        if (!Double.isFinite(twist.dx) || !Double.isFinite(twist.dy) || !Double.isFinite(twist.dtheta)) {
             // Bad module or gyro data must not poison the covariance with NaN
             Logger.recordOutput(LOG_PREFIX + "Odometry/NonFiniteTwistSkipped", true);
             return;
         }
-        double dt =
-                Double.isNaN(lastTimestampSeconds)
-                        ? 0.0
-                        : Math.max(0.0, timestampSeconds - lastTimestampSeconds);
+        double dt = Double.isNaN(lastTimestampSeconds) ? 0.0 : Math.max(0.0, timestampSeconds - lastTimestampSeconds);
         lastTimestampSeconds = timestampSeconds;
 
         State next = predict(latest().state(), twist, dt, tipped, config);
@@ -1215,15 +1135,11 @@ public class EkfPoseEstimator {
     }
 
     private void logVision(
-            VisionPoseObservation observation,
-            VisionObservationReason reason,
-            double nis,
-            int measuredAxes) {
+            VisionPoseObservation observation, VisionObservationReason reason, double nis, int measuredAxes) {
         lastVisionReason = reason;
         lastNis = nis;
-        boolean accepted =
-                reason == VisionObservationReason.ACCEPTED
-                        || reason == VisionObservationReason.ACCEPTED_AFTER_GATE_RECOVERY;
+        boolean accepted = reason == VisionObservationReason.ACCEPTED
+                || reason == VisionObservationReason.ACCEPTED_AFTER_GATE_RECOVERY;
         Matrix<N3, N3> p = covariance();
 
         Logger.recordOutput(LOG_PREFIX + "Vision/Accepted", accepted);
