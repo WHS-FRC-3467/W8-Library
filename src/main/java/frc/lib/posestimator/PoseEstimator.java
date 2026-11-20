@@ -385,7 +385,7 @@ public class PoseEstimator {
     }
 
     /**
-     * Sets a validator that applies to both odometry and vision-fused poses.
+     * Sets a validator that applies to vision-corrected poses.
      *
      * @param validator predicate that returns {@code true} for acceptable poses
      * @return this

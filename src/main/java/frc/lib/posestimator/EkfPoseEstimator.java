@@ -684,7 +684,7 @@ public class EkfPoseEstimator {
     }
 
     /**
-     * Sets a validator applied to both odometry and vision-corrected poses.
+     * Sets a validator applied to vision-corrected poses.
      *
      * @param validator returns {@code true} for acceptable poses
      * @return this
