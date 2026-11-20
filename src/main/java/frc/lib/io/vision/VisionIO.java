@@ -28,7 +28,7 @@ import java.util.Optional;
  * (PhotonVision, Limelight, etc.) while the rest of the robot code remains hardware-agnostic.
  */
 public interface VisionIO {
-    /** Identifier for the type of raw packet we are recieving in {@link VisionIOInputs#} */
+    /** Identifier for the type of raw packet we are receiving in {@link VisionIOInputs}. */
     public static enum NativePacketType {
         UNKNOWN,
         PHOTON

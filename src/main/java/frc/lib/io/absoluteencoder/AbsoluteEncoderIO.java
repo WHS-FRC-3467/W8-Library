@@ -27,9 +27,9 @@ public interface AbsoluteEncoderIO extends AutoCloseable {
         public boolean connected = false;
 
         /**
-         * Measured angle in mechanism-space. min <= r < max/encoderToMechanismRatio with r = angle
-         * (in rotations), where min and max are set as the minimum and maximum angles of the
-         * configured CANcoder range. If 0 to 1, 0 <= r < 1/encoderToMechanismRatio.
+         * Measured angle in mechanism-space. {@code min <= r < max/encoderToMechanismRatio} with r
+         * = angle (in rotations), where min and max are set as the minimum and maximum angles of
+         * the configured CANcoder range. If 0 to 1, {@code 0 <= r < 1/encoderToMechanismRatio}.
          */
         public Angle angle = null;
     }

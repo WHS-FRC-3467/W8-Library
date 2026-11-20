@@ -44,7 +44,7 @@ import java.util.Optional;
  * <p>This class owns the IO interface for one physical camera. It calls {@link
  * VisionIO#updateInputs} each cycle to flush raw bytes into the AdvantageKit-logged {@link
  * frc.lib.io.vision.VisionIO.VisionIOInputs}, then delegates decoding to {@link
- * VisionIO#decodeResults} so that all format-specific logic stays in the IO layer.
+ * VisionIOPhotonVision#decodeResults} so that all format-specific logic stays in the IO layer.
  */
 public class AprilTagCamera {
     /**
@@ -108,7 +108,8 @@ public class AprilTagCamera {
      * Polls the camera for new results.
      *
      * <p>Calls {@link VisionIO#updateInputs} to read raw bytes (logged by AdvantageKit for replay),
-     * then calls {@link VisionIO#decodeResults} to convert them to {@link CameraResult} records.
+     * then calls {@link VisionIOPhotonVision#decodeResults} to convert them to {@link CameraResult}
+     * records.
      *
      * @return an {@link Optional} containing decoded results, or {@link Optional#empty()} if the
      *     camera is disconnected
