@@ -37,29 +37,36 @@ class PepperC1ProtocolTest {
 
     @Test
     void testCrcMatchesManualExample() {
-        assertEquals(0x6473, PepperC1Protocol.crc16(MANUAL_BODY),
+        assertEquals(
+                0x6473,
+                PepperC1Protocol.crc16(MANUAL_BODY),
                 "CRC of the manual's example body should be 0x6473 (sent as 73 64)");
     }
 
     @Test
     void testEncodeMatchesManualExample() {
-        assertArrayEquals(MANUAL_FRAME, PepperC1Protocol.encode(MANUAL_BODY),
+        assertArrayEquals(
+                MANUAL_FRAME,
+                PepperC1Protocol.encode(MANUAL_BODY),
                 "Encoding the manual's example body should produce the manual's example frame");
     }
 
     @Test
     void testEncodeGetTagCount() {
         // len = 1 body byte + 2 CRC = 3, inverted = 0xFFFC, CRC of {02} = 0xC1B2
-        assertArrayEquals(hex("F50300FCFF02B2C1"),
+        assertArrayEquals(
+                hex("F50300FCFF02B2C1"),
                 PepperC1Protocol.encode((byte) PepperC1Protocol.GET_TAG_COUNT),
                 "GET_TAG_COUNT frame should have the expected header and CRC");
     }
 
     @Test
     void testDecodeLengthRejectsBadInverse() {
-        assertTrue(PepperC1Protocol.decodeLength(hex("0A00F5FF")).isPresent(),
+        assertTrue(
+                PepperC1Protocol.decodeLength(hex("0A00F5FF")).isPresent(),
                 "A correct length header should decode");
-        assertTrue(PepperC1Protocol.decodeLength(hex("0A00F5FE")).isEmpty(),
+        assertTrue(
+                PepperC1Protocol.decodeLength(hex("0A00F5FE")).isEmpty(),
                 "A length header whose inverted copy doesn't match should be rejected");
     }
 
@@ -97,12 +104,17 @@ class PepperC1ProtocolTest {
     @Test
     void testParseRepliesFromManual() {
         // Section 10.1.4: ACK, GET_TAG_COUNT, 1 tag
-        assertEquals(1, PepperC1Protocol.parseTagCount(hex("000201")).getAsInt(),
+        assertEquals(
+                1,
+                PepperC1Protocol.parseTagCount(hex("000201")).getAsInt(),
                 "Tag count reply should report 1 tag");
         // Section 10.1.5: ACK, GET_TAG_UID, type, SAK, UID 74 54 12 65
-        assertEquals("74541265", PepperC1Protocol.parseTagUid(hex("0003012074541265")).get(),
+        assertEquals(
+                "74541265",
+                PepperC1Protocol.parseTagUid(hex("0003012074541265")).get(),
                 "UID reply should parse to uppercase hex");
-        assertTrue(PepperC1Protocol.parseTagUid(hex("0103")).isEmpty(),
+        assertTrue(
+                PepperC1Protocol.parseTagUid(hex("0103")).isEmpty(),
                 "An error reply should not parse as a UID");
     }
 }

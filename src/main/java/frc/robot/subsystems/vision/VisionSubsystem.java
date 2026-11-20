@@ -15,25 +15,26 @@
 
 package frc.robot.subsystems.vision;
 
-import static edu.wpi.first.units.Units.Meters;
+import static org.wpilib.units.Units.Meters;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-import frc.lib.devices.AprilTagCamera;
 import frc.lib.io.vision.VisionIO.CameraResult;
 import frc.lib.io.vision.VisionIO.MultiTagObservation;
 import frc.lib.io.vision.VisionIO.TagObservation;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
+import frc.lib.sensors.AprilTagCamera;
 import frc.lib.util.FieldUtil;
 import frc.lib.util.LoggedTunableNumber;
 import frc.robot.FieldConstants;
 import frc.robot.FieldConstants.AprilTagLayoutType;
-import frc.robot.RobotState;
+import frc.robot.GlobalPoseEstimator;
 
 import org.littletonrobotics.junction.Logger;
+import org.wpilib.command3.Mechanism;
+import org.wpilib.command3.Scheduler;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Transform3d;
+import org.wpilib.math.kinematics.ChassisVelocities;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,16 +55,7 @@ import java.util.Set;
  * <p>The subsystem periodically polls cameras for new results and logs both accepted and rejected
  * vision observations.
  */
-public class VisionSubsystem extends SubsystemBase {
-
-    /** Baseline linear standard deviation used for vision observations. */
-    public static final double LINEAR_STDDEV_BASELINE = 0.03;
-
-    /** Baseline angular standard deviation used for vision observations. */
-    public static final double ANGULAR_STDDEV_BASELINE = 0.10;
-
-    /** Ignore rotation corrections from single-tag solves. */
-    public static final double SINGLE_TAG_ANGULAR_STDDEV = Double.POSITIVE_INFINITY;
+public class VisionSubsystem implements Mechanism {
 
     /** Maximum allowable height (Z-axis) of a detected pose to be considered valid. */
     public static final double MAX_Z_METERS = 0.3;
@@ -73,23 +65,6 @@ public class VisionSubsystem extends SubsystemBase {
 
     /** Maximum ambiguity ratio allowed in a result */
     public static final double MAX_AMBIGUITY = 0.2;
-
-    /** Minimum distance used when computing vision standard deviation scaling. */
-    public static final double MIN_STDDEV_DISTANCE_METERS = 0.5;
-
-    /** Maximum unread results processed per camera cycle. */
-    public static final int MAX_UNREAD_RESULTS = 5;
-
-    /** Weight applied to ambiguity when scaling vision standard deviation. */
-    public static final double STDDEV_AMBIGUITY_WEIGHT = 2.5;
-
-    /** Exponent for tag count influence on standard deviation scaling. */
-    public static final double STDDEV_TAGCOUNT_EXPONENT = 0.5;
-
-    /** Clamp range for the computed standard deviation factor. */
-    public static final double STDDEV_FACTOR_MIN = 0.35;
-
-    public static final double STDDEV_FACTOR_MAX = 8.0;
 
     /** Width of the field in meters. */
     public static final double FIELD_WIDTH = FieldConstants.FIELD_WIDTH;
@@ -101,9 +76,13 @@ public class VisionSubsystem extends SubsystemBase {
             Pose3d pose, List<Integer> tagsUsed, double averageDistanceMeters) {}
 
     private static final LoggedTunableNumber TIMESTAMP_OFFSET =
-            new LoggedTunableNumber("VisionSubsystem/TimestampOffset", -(1.0 / 45.0));
+            new LoggedTunableNumber("VisionSubsystem/TimestampOffset", -0.08);
 
-    private final RobotState robotState = RobotState.getInstance();
+    private final GlobalPoseEstimator robotState = GlobalPoseEstimator.getInstance();
+
+    /** How much each accepted pose is trusted. See {@link TrustModel}. */
+    private final TrustModel trustModel = TrustModel.recommended();
+
     private final AprilTagCamera[] cameras;
 
     /**
@@ -182,13 +161,14 @@ public class VisionSubsystem extends SubsystemBase {
      */
     public VisionSubsystem(AprilTagCamera... cameras) {
         this.cameras = cameras;
+
+        Scheduler.getDefault().addPeriodic(this::periodic);
     }
 
     /**
      * Periodically processes vision results from all cameras. Filters, validates, and adds pose
      * observations to RobotState for localization.
      */
-    @Override
     public void periodic() {
         for (int c = 0; c < cameras.length; c++) {
             AprilTagCamera camera = cameras[c];
@@ -198,11 +178,6 @@ public class VisionSubsystem extends SubsystemBase {
             CameraResult[] results = camera.getUnreadResults().orElse(null);
             if (results == null) {
                 continue;
-            }
-            if (results.length > MAX_UNREAD_RESULTS) {
-                results =
-                        Arrays.copyOfRange(
-                                results, results.length - MAX_UNREAD_RESULTS, results.length);
             }
 
             ArrayList<CameraResult> acceptedResults = new ArrayList<>();
@@ -235,25 +210,20 @@ public class VisionSubsystem extends SubsystemBase {
                     continue;
                 }
 
-                double stdDevFactor = computeStdDevFactor(camera, result, poseRecord);
-
-                double linearStdDev = LINEAR_STDDEV_BASELINE * stdDevFactor;
-                double angularStdDev =
-                        poseRecord.tagsUsed().size() == 1
-                                ? SINGLE_TAG_ANGULAR_STDDEV
-                                : ANGULAR_STDDEV_BASELINE * stdDevFactor;
-
                 // captureTimestampUs holds the absolute capture timestamp in microseconds
                 double timestampSeconds =
                         result.captureTimestampUs() / 1_000_000.0 + TIMESTAMP_OFFSET.get();
+                TrustModel.StdDevs stdDevs =
+                        computeStdDevs(camera, result, poseRecord, timestampSeconds);
+
                 robotState.addVisionObservation(
                         new VisionPoseObservation(
                                 timestampSeconds,
                                 poseRecord.pose().toPose2d(),
                                 poseRecord.averageDistanceMeters(),
                                 poseRecord.tagsUsed(),
-                                linearStdDev,
-                                angularStdDev));
+                                stdDevs.xy(),
+                                stdDevs.theta()));
 
                 acceptedResults.add(result);
                 acceptedPoses.add(poseRecord.pose());
@@ -368,40 +338,54 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     /**
-     * Computes a standard deviation scaling heuristic for a vision measurement.
+     * Computes how much to trust a vision measurement, using {@link TrustModel}.
+     *
+     * <p>The model's edge-distance term is skipped because {@link CameraResult} carries no corner
+     * data, and so is its reprojection-error term: the multi-tag error is a pixel reprojection
+     * error from PhotonVision, but the C2 backend does not document its unit. The decision margin
+     * is not available from either camera.
      *
      * @param camera camera used to produce the measurement
      * @param result standardized camera result
      * @param poseRecord estimated pose record
-     * @return clamped standard deviation scaling factor
+     * @param captureTimestampSeconds when the frame was captured, used to look up how fast the
+     *     robot was moving then
+     * @return standard deviations for x and y (meters) and heading (radians, infinite when the
+     *     heading should be ignored)
      */
-    private double computeStdDevFactor(
-            AprilTagCamera camera, CameraResult result, VisionPoseRecord poseRecord) {
-        double distanceMeters =
-                Math.max(poseRecord.averageDistanceMeters(), MIN_STDDEV_DISTANCE_METERS);
+    private TrustModel.StdDevs computeStdDevs(
+            AprilTagCamera camera,
+            CameraResult result,
+            VisionPoseRecord poseRecord,
+            double captureTimestampSeconds) {
         int tagCount = Math.max(1, poseRecord.tagsUsed().size());
-        boolean hasMultiTag = result.multiTagObservation().isPresent();
-        double ambiguity = 0.0;
-        if (!hasMultiTag) {
+
+        // Ambiguity only means something for a single tag
+        double ambiguity = Double.NaN;
+        if (result.multiTagObservation().isEmpty()) {
             double rawAmbiguity =
                     Arrays.stream(result.tagObservations())
                             .mapToDouble(TagObservation::ambiguity)
                             .min()
                             .orElse(1.0);
-            ambiguity = rawAmbiguity < 0.0 ? 0.0 : rawAmbiguity;
+            ambiguity = Math.max(0.0, rawAmbiguity);
         }
 
-        double distanceFactor = Math.pow(distanceMeters, 2.0);
-        double tagFactor = 1.0 / Math.pow(tagCount, STDDEV_TAGCOUNT_EXPONENT);
-        double ambiguityFactor =
-                1.0 + STDDEV_AMBIGUITY_WEIGHT * Math.pow(ambiguity / MAX_AMBIGUITY, 2.0);
-        double stdDevFactor =
-                distanceFactor
-                        * tagFactor
-                        * ambiguityFactor
-                        * camera.getProperties().stdDevFactor();
+        TrustModel.Observation observation =
+                new TrustModel.Observation(
+                        tagCount,
+                        poseRecord.averageDistanceMeters(),
+                        ambiguity,
+                        Double.NaN,
+                        Double.NaN,
+                        Double.NaN);
 
-        return MathUtil.clamp(stdDevFactor, STDDEV_FACTOR_MIN, STDDEV_FACTOR_MAX);
+        ChassisVelocities velocity =
+                robotState.getRobotRelativeVelocityAtTime(captureTimestampSeconds);
+        TrustModel.Motion motion =
+                new TrustModel.Motion(Math.hypot(velocity.vx, velocity.vy), velocity.omega);
+
+        return trustModel.stdDevs(observation, motion, camera.getProperties().stdDevFactor());
     }
 
     /**

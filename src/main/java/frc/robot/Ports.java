@@ -50,5 +50,4 @@ public class Ports {
     public static final Device.PWM servo1 = new PWM(1);
 
     public static final Device.USB batteryReader = new USB(1);
-
 }

@@ -19,17 +19,16 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
-
 import frc.lib.util.PID;
 import frc.lib.util.PowerProfiler;
 
 import org.littletonrobotics.junction.Logger;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.kinematics.SwerveModulePosition;
+import org.wpilib.math.kinematics.SwerveModuleVelocity;
+import org.wpilib.math.util.Units;
+import org.wpilib.util.Alert;
+import org.wpilib.util.Alert.Level;
 
 public class Module {
     private final ModuleIO io;
@@ -56,20 +55,23 @@ public class Module {
                     constants) {
         this.io = io;
         this.name = io.getName();
-        this.constants = constants; 
+        this.constants = constants;
 
         driveDisconnectedAlert =
                 new Alert(
+                        "drivetrain_drive_motor_" + name + "_disconnect",
                         "Disconnected drive motor on module " + name + ".",
-                        AlertType.kError);
+                        Level.HIGH);
         turnDisconnectedAlert =
                 new Alert(
+                        "drivetrain_azimuth_motor_" + name + "_disconnect",
                         "Disconnected turn motor on module " + name + ".",
-                        AlertType.kError);
+                        Level.HIGH);
         turnEncoderDisconnectedAlert =
                 new Alert(
+                        "drivetrain_encoder_" + name + "_disconnect",
                         "Disconnected turn encoder on module " + name + ".",
-                        AlertType.kError);
+                        Level.HIGH);
     }
 
     /** Updates inputs, processes odometry data, and updates connection alerts. */
@@ -93,18 +95,20 @@ public class Module {
     }
 
     /**
-     * Runs the module with the specified setpoint state. Mutates the state to optimize it.
+     * Runs the module with the specified setpoint state and returns the optimized state.
      *
-     * @param state Desired module state (speed and angle), will be optimized
+     * @param state Desired module state (speed and angle)
+     * @return Optimized and cosine-scaled module state
      */
-    public void runSetpoint(SwerveModuleState state) {
+    public SwerveModuleVelocity runSetpoint(SwerveModuleVelocity state) {
         // Optimize velocity setpoint
-        state.optimize(getAngle());
-        state.cosineScale(inputs.turnPosition);
+        state = state.optimize(getAngle());
+        state = state.cosineScale(inputs.turnPosition);
 
         // Apply setpoints
-        io.setDriveVelocity(state.speedMetersPerSecond / constants.WheelRadius);
+        io.setDriveVelocity(state.velocity / constants.WheelRadius);
         io.setTurnPosition(state.angle);
+        return state;
     }
 
     /**
@@ -164,8 +168,8 @@ public class Module {
      *
      * @return Module state containing angle and velocity
      */
-    public SwerveModuleState getState() {
-        return new SwerveModuleState(getVelocityMetersPerSec(), getAngle());
+    public SwerveModuleVelocity getState() {
+        return new SwerveModuleVelocity(getVelocityMetersPerSec(), getAngle());
     }
 
     /**
@@ -224,13 +228,19 @@ public class Module {
 
     /**
      * Registers the module's drive and turn current and voltage to the power profiler.
-     * 
+     *
      * @param key The key to use for the module in the power profiler
      * @param powerProfiler The power profiler to register the module's current and voltage to
      */
     public void registerModules(String key, PowerProfiler powerProfiler) {
-        powerProfiler.registerGeneric(key + "/Drive", () -> inputs.driveSupplyCurrentAmps, () -> inputs.driveSupplyVoltageVolts);
-        powerProfiler.registerGeneric(key + "/Turn", () -> inputs.turnSupplyCurrentAmps, () -> inputs.turnSupplyVoltageVolts);
+        powerProfiler.registerGeneric(
+                key + "/Drive",
+                () -> inputs.driveSupplyCurrentAmps,
+                () -> inputs.driveSupplyVoltageVolts);
+        powerProfiler.registerGeneric(
+                key + "/Turn",
+                () -> inputs.turnSupplyCurrentAmps,
+                () -> inputs.turnSupplyVoltageVolts);
     }
 
     /** Return the name of the {@link ModuleIO} object associated with this module. */

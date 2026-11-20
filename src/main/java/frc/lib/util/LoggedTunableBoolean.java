@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 /**
  * A tunable boolean value that can be adjusted from the dashboard during tuning.
  *
- * <p>When {@link frc.robot.Constants#tuningMode} is enabled, this class reads values from
+ * <p>When {@link frc.robot.Constants#TUNING_MODE} is enabled, this class reads values from
  * NetworkTables, allowing real-time tuning without redeploying code. When tuning mode is disabled,
  * it returns the default value.
  *
@@ -72,7 +72,7 @@ public class LoggedTunableBoolean implements BooleanSupplier {
         if (!hasDefault) {
             hasDefault = true;
             this.defaultValue = defaultValue;
-            if (Constants.tuningMode) {
+            if (Constants.TUNING_MODE) {
                 dashboardBoolean = new LoggedNetworkBoolean(key, defaultValue);
             }
         }
@@ -87,7 +87,7 @@ public class LoggedTunableBoolean implements BooleanSupplier {
         if (!hasDefault) {
             return false;
         } else {
-            return Constants.tuningMode ? dashboardBoolean.get() : defaultValue;
+            return Constants.TUNING_MODE ? dashboardBoolean.get() : defaultValue;
         }
     }
 

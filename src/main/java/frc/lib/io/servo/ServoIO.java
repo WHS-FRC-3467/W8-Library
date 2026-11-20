@@ -15,7 +15,7 @@
 
 package frc.lib.io.servo;
 
-import edu.wpi.first.units.measure.Angle;
+import org.wpilib.units.measure.Angle;
 
 /**
  * Hardware abstraction interface for servo motors. Provides methods for controlling servo position

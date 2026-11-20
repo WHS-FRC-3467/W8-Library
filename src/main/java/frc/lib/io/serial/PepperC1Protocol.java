@@ -110,8 +110,9 @@ public final class PepperC1Protocol {
             return Optional.empty();
         }
         byte[] body = Arrays.copyOf(bodyAndCrc, bodyAndCrc.length - 2);
-        int receivedCrc = (bodyAndCrc[bodyAndCrc.length - 2] & 0xFF)
-                | ((bodyAndCrc[bodyAndCrc.length - 1] & 0xFF) << 8);
+        int receivedCrc =
+                (bodyAndCrc[bodyAndCrc.length - 2] & 0xFF)
+                        | ((bodyAndCrc[bodyAndCrc.length - 1] & 0xFF) << 8);
         return crc16(body) == receivedCrc ? Optional.of(body) : Optional.empty();
     }
 
@@ -142,11 +143,12 @@ public final class PepperC1Protocol {
     }
 
     /**
-     * Parses a reply to {@link #GET_TAG_UID}. The body is ACK, command, tag type, SAK/DSFID, then
-     * 4 to 8 UID bytes.
+     * Parses a reply to {@link #GET_TAG_UID}. The body is ACK, command, tag type, SAK/DSFID, then 4
+     * to 8 UID bytes.
      *
      * @param body a decoded reply body
-     * @return the UID as uppercase hex (e.g. {@code "54D4F82A"}), or empty if this is not a UID reply
+     * @return the UID as uppercase hex (e.g. {@code "54D4F82A"}), or empty if this is not a UID
+     *     reply
      */
     public static Optional<String> parseTagUid(byte[] body) {
         if (!isAckFor(body, GET_TAG_UID) || body.length < 5) {
@@ -195,8 +197,7 @@ public final class PepperC1Protocol {
                     return Optional.empty(); // wait for the rest of the header
                 }
 
-                OptionalInt length =
-                        decodeLength(Arrays.copyOfRange(buffer, 1, 1 + LENGTH_BYTES));
+                OptionalInt length = decodeLength(Arrays.copyOfRange(buffer, 1, 1 + LENGTH_BYTES));
                 if (length.isEmpty()) {
                     // This 0xF5 was a data byte, not a real frame start. Skip it and look again.
                     buffer = Arrays.copyOfRange(buffer, 1, buffer.length);
@@ -228,8 +229,8 @@ public final class PepperC1Protocol {
     }
 
     /**
-     * CRC-16/CCITT as the reader expects it: polynomial 0x1021, starting value 0xFFFF, no final
-     * XOR (manual section 5.3).
+     * CRC-16/CCITT as the reader expects it: polynomial 0x1021, starting value 0xFFFF, no final XOR
+     * (manual section 5.3).
      *
      * @param data the bytes to check
      * @return the 16-bit CRC

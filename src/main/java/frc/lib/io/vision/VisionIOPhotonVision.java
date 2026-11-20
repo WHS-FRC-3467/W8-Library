@@ -15,16 +15,15 @@
 
 package frc.lib.io.vision;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Pose3d;
-
-import frc.lib.devices.AprilTagCamera.CameraProperties;
 import frc.lib.io.vision.VisionIO.CameraResult;
+import frc.lib.sensors.AprilTagCamera.CameraProperties;
 
 import org.photonvision.PhotonCamera;
 import org.photonvision.common.dataflow.structures.Packet;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
+import org.wpilib.fields.Field;
+import org.wpilib.math.geometry.Pose3d;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,18 +68,16 @@ public class VisionIOPhotonVision implements VisionIO {
         }
 
         var unreadResults = photonCamera.getAllUnreadResults();
-        inputs.rawResults =
-                unreadResults.stream()
-                        .map(VisionIOPhotonVision::packPhotonResult)
-                        .toArray(byte[][]::new);
-        inputs.captureTimestampsUs =
-                unreadResults.stream()
-                        .mapToLong(result -> result.metadata.captureTimestampMicros)
-                        .toArray();
-        inputs.publishTimestampsUs =
-                unreadResults.stream()
-                        .mapToLong(result -> result.metadata.publishTimestampMicros)
-                        .toArray();
+        int n = unreadResults.size();
+        inputs.rawResults = new byte[n][];
+        inputs.captureTimestampsUs = new long[n];
+        inputs.publishTimestampsUs = new long[n];
+        for (int i = 0; i < n; i++) {
+            var result = unreadResults.get(i);
+            inputs.rawResults[i] = packPhotonResult(result);
+            inputs.captureTimestampsUs[i] = result.metadata.captureTimestampNanos / 1000;
+            inputs.publishTimestampsUs[i] = result.metadata.publishTimestampNanos / 1000;
+        }
     }
 
     /**
@@ -90,8 +87,7 @@ public class VisionIOPhotonVision implements VisionIO {
      * <p>Each raw byte array is unpacked from the PhotonVision struct format, then each tracked
      * target's field-to-camera pose is reconstructed using the known tag field positions.
      */
-    public static CameraResult[] decodeResults(
-            VisionIOInputs inputs, AprilTagFieldLayout tagLayout) {
+    public static CameraResult[] decodeResults(VisionIOInputs inputs, Field tagLayout) {
         ArrayList<CameraResult> results = new ArrayList<>(inputs.rawResults.length);
         for (int i = 0; i < inputs.rawResults.length; i++) {
             byte[] raw = inputs.rawResults[i];
@@ -133,7 +129,7 @@ public class VisionIOPhotonVision implements VisionIO {
             PhotonPipelineResult photon,
             long captureTimestampUs,
             long publishTimestampUs,
-            AprilTagFieldLayout tagLayout) {
+            Field tagLayout) {
         ArrayList<TagObservation> tagObs = new ArrayList<>(photon.getTargets().size());
         for (PhotonTrackedTarget target : photon.getTargets()) {
             int tagId = target.getFiducialId();

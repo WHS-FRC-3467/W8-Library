@@ -15,9 +15,9 @@
 
 package frc.lib.io.beambreak;
 
-import edu.wpi.first.wpilibj.DigitalInput;
-
 import frc.lib.util.Device;
+
+import org.wpilib.hardware.discrete.DigitalInput;
 
 /** A beam break implementation that uses any DIO input */
 public class BeamBreakIODIO implements BeamBreakIO {

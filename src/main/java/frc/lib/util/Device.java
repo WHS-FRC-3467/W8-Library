@@ -59,23 +59,23 @@ public sealed interface Device {
     /**
      * Digital Input/Output device with a port ID.
      *
-     * @param id the DIO port ID on the roboRIO
+     * @param id the DIO port ID on the robot controller
      */
     public final record DIO(int id) implements Device {}
 
     /**
      * Pulse Width Modulation device with a port ID.
      *
-     * @param id the PWM port ID on the roboRIO
+     * @param id the PWM port ID on the robot controller
      */
     public final record PWM(int id) implements Device {}
 
     /**
      * USB serial device (a USB-to-serial adapter such as the Pepper C1 RFID reader).
      *
-     * <p>2027 / Systemcore: Systemcore has 4 USB-A ports, but WPILib 2027's {@code SerialPort} still
-     * only names USB 1 and 2. If that changes (or we switch to opening {@code /dev/tty*} paths
-     * directly), widen or replace the range check here. See {@code SerialIOUSB} for the full list.
+     * <p>Systemcore has 4 USB-A ports, but WPILib 2027's {@code SerialPort} still only names USB 1
+     * and 2. If that changes (or we switch to opening {@code /dev/tty*} paths directly), widen or
+     * replace the range check here. See {@code SerialIOUSB} for the full list.
      *
      * @param id which USB serial port the device is on, 1 or 2 (WPILib only exposes two)
      */

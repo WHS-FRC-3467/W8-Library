@@ -81,8 +81,11 @@ public class SerialIOPepperC1Sim implements SerialIO {
         }
         Optional<byte[]> uid = currentUid();
         switch (command[0] & 0xFF) {
-            case PepperC1Protocol.GET_TAG_COUNT -> reply(
-                    PepperC1Protocol.ACK, PepperC1Protocol.GET_TAG_COUNT, uid.isPresent() ? 1 : 0);
+            case PepperC1Protocol.GET_TAG_COUNT ->
+                    reply(
+                            PepperC1Protocol.ACK,
+                            PepperC1Protocol.GET_TAG_COUNT,
+                            uid.isPresent() ? 1 : 0);
             case PepperC1Protocol.GET_TAG_UID -> {
                 if (uid.isEmpty()) {
                     // Real reader answers with an error frame here; any non-ACK first byte works.

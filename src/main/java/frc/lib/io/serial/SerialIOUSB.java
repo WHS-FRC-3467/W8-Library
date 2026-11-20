@@ -15,50 +15,39 @@
 
 package frc.lib.io.serial;
 
-import static edu.wpi.first.units.Units.Seconds;
-
-import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.SerialPort;
-import edu.wpi.first.wpilibj.Timer;
+import static org.wpilib.units.Units.Seconds;
 
 import frc.lib.util.Device;
+
+import org.wpilib.driverstation.DriverStationErrors;
+import org.wpilib.hardware.bus.SerialPort;
+import org.wpilib.system.Timer;
+import org.wpilib.units.measure.Time;
 
 /**
  * A {@link SerialIO} for a device plugged into a USB port through a USB-to-serial adapter, using
  * WPILib's {@link SerialPort}. Settings are 8 data bits, no parity, 1 stop bit, no flow control,
  * which is what almost every hobby serial device uses.
  *
- * <p>If the device is unplugged, the port is reopened about once a second instead of every loop,
- * so a missing device costs the robot loop almost nothing.
+ * <p>If the device is unplugged, the port is reopened about once a second instead of every loop, so
+ * a missing device costs the robot loop almost nothing.
  *
- * <h2>Moving to WPILib 2027 / Systemcore</h2>
+ * <h2>Systemcore: still to check on real hardware</h2>
  *
- * <p>This is the only serial file that touches WPILib hardware, so most of the port happens here.
- * Everything below was checked against the 2027 alphas (Nov 2026); re-check before relying on it.
+ * <p>The code is ported to WPILib 2027, but none of this has run on a Systemcore yet:
  *
  * <ol>
- *   <li><b>Imports:</b> {@code edu.wpi.first.wpilibj.SerialPort} becomes {@code
- *       org.wpilib.hardware.bus.SerialPort}. Enum values are ALL_CAPS in 2027, so {@code
- *       Port.kUSB1}/{@code kUSB2} become {@code Port.USB_1}/{@code USB_2}.
- *   <li><b>Does it work at all?</b> Not confirmed: the 2027 {@code SerialPort} still has USB ports,
- *       but nobody has confirmed it reaches a USB-to-serial adapter on Systemcore. Test it first. If
- *       it doesn't, replace the {@code SerialPort} calls here with jSerialComm (a Maven dependency)
- *       opening the Linux device directly. Find its name over SSH with {@code ls /dev/tty*} (likely
- *       {@code /dev/ttyUSB0} or {@code /dev/ttyACM0}).
+ *   <li><b>Does it work at all?</b> Not confirmed that WPILib's {@code SerialPort} reaches a
+ *       USB-to-serial adapter on Systemcore. Test it first. If it doesn't, replace the {@code
+ *       SerialPort} calls here with jSerialComm (a Maven dependency) opening the Linux device
+ *       directly. Find its name over SSH with {@code ls /dev/tty*} (likely {@code /dev/ttyUSB0} or
+ *       {@code /dev/ttyACM0}).
  *   <li><b>Hotplug:</b> WPILib doesn't reconnect USB serial devices on Systemcore yet (allwpilib
  *       issue #8635). The reopen-once-a-second logic here is our workaround; keep it.
  *   <li><b>Permissions:</b> robot code runs as the {@code systemcore} Linux user, which may not be
  *       allowed to open serial devices. If opening fails with a permission error, that user needs
  *       to be in the {@code dialout} group (or a udev rule). Unverified.
- *   <li><b>Timestamps:</b> there is no FPGA on Systemcore. Check what {@code
- *       Timer.getFPGATimestamp()} became and switch to it.
- *   <li><b>Warnings:</b> {@code DriverStation} is split into {@code MatchState} and {@code
- *       RobotState} in 2027. Find where {@code reportWarning} went (or log through an Alert).
  * </ol>
- *
- * <p>Classes built on {@link SerialIO} ({@code BatteryReader}, {@code SerialIOPepperC1Sim}, {@code
- * PepperC1Protocol}) only need the usual import renames; the protocol itself doesn't change.
  */
 public class SerialIOUSB implements SerialIO {
     private static final Time REOPEN_PERIOD = Seconds.of(1.0);
@@ -81,7 +70,7 @@ public class SerialIOUSB implements SerialIO {
     public SerialIOUSB(String name, Device.USB usb, int baudRate) {
         this.name = name;
         this.baudRate = baudRate;
-        this.portId = usb.id() == 1 ? SerialPort.Port.kUSB1 : SerialPort.Port.kUSB2;
+        this.portId = usb.id() == 1 ? SerialPort.Port.USB_1 : SerialPort.Port.USB_2;
     }
 
     @Override
@@ -128,7 +117,7 @@ public class SerialIOUSB implements SerialIO {
     }
 
     private void tryOpen() {
-        double now = Timer.getFPGATimestamp();
+        double now = Timer.getTimestamp();
         if (now - lastOpenAttemptSeconds < REOPEN_PERIOD.in(Seconds)) {
             return;
         }
@@ -147,7 +136,7 @@ public class SerialIOUSB implements SerialIO {
         // Only report once so an unplugged device doesn't flood the console.
         if (!reportedFailure) {
             reportedFailure = true;
-            DriverStation.reportWarning(
+            DriverStationErrors.reportWarning(
                     name + ": serial port " + portId + " failed: " + e.getMessage(), false);
         }
     }
