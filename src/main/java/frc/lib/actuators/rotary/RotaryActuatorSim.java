@@ -28,7 +28,7 @@ import org.wpilib.units.measure.MomentOfInertia;
 import org.wpilib.units.measure.Time;
 
 /**
- * A simulated implementation of the RotaryMechanism base class that uses SingleJointedArmSim to
+ * A simulated implementation of the RotaryActuator base class that uses SingleJointedArmSim to
  * simulate the behavior of a rotary mechanism.
  */
 public class RotaryActuatorSim extends RotaryActuator<MotorIOSim, AbsoluteEncoderIOSim> {

@@ -9,7 +9,7 @@ import frc.lib.io.motor.MotorIO;
 import java.util.Optional;
 
 /**
- * A real implementation of the generic RotaryMechanism base class that interacts with a physical
+ * A real implementation of the generic RotaryActuator base class that interacts with a physical
  * motor through a MotorIO interface.
  */
 public class RotaryActuatorReal extends RotaryActuator<MotorIO, AbsoluteEncoderIO> {

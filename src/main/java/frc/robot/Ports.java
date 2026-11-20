@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Windham Windup
+ * Copyright (C) 2026 Windham Windup
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation, either version 3 of the
@@ -18,35 +18,34 @@ package frc.robot;
 import com.ctre.phoenix6.CANBus;
 import frc.lib.util.Device;
 import frc.lib.util.Device.CAN;
-import frc.lib.util.Device.DIO;
-import frc.lib.util.Device.PWM;
 import frc.lib.util.Device.USB;
 
+/**
+ * Hardware port definitions for all CAN devices and other I/O ports on the robot. Contains CAN IDs
+ * for motor controllers, sensors, and other devices connected to the robot.
+ */
 public class Ports {
     /*
      * LIST OF CHANNEL AND CAN IDS
      */
     public static final CANBus DRIVETRAIN_BUS = new CANBus("Drivetrain");
 
-    public static final Device.CAN laserCAN1 = new CAN(20, "rio");
-    public static final Device.CAN lights = new CAN(1, "rio");
+    public static final Device.CAN pdh = new CAN(40, Device.ONBOARD_CAN_BUS);
 
-    public static final Device.CAN linear = new CAN(5, "rio");
+    public static final Device.CAN topLeftFlywheel = new CAN(18, Device.ONBOARD_CAN_BUS);
+    public static final Device.CAN topRightFlywheel = new CAN(16, Device.ONBOARD_CAN_BUS);
+    public static final Device.CAN bottomLeftFlywheel = new CAN(21, Device.ONBOARD_CAN_BUS);
+    public static final Device.CAN bottomRightFlywheel = new CAN(22, Device.ONBOARD_CAN_BUS);
 
-    public static final Device.DIO diobeambreak = new DIO(0);
+    public static final Device.CAN hood = new CAN(19, Device.ONBOARD_CAN_BUS);
 
-    public static final Device.CAN pdh = new CAN(50, "rio");
+    public static final Device.CAN tower = new CAN(20, Device.ONBOARD_CAN_BUS);
 
-    public static final Device.CAN RotarySubsystemMotorMain = new CAN(3, "rio");
-    public static final Device.CAN RotarySubsystemMotorFollower = new CAN(4, "rio");
-    public static final Device.CAN RotarySubsystemEncoder = new CAN(6, "rio");
+    public static final Device.CAN indexer = new CAN(25, Device.ONBOARD_CAN_BUS);
+    public static final Device.CAN indexerFollower = new CAN(26, Device.ONBOARD_CAN_BUS);
 
-    public static final Device.CAN turret = new CAN(17, "rio");
-    public static final Device.CAN flywheel = new CAN(2, "rio");
-    public static final Device.CAN indexer = new CAN(18, "rio");
-    public static final Device.CAN indexerLaserCAN = new CAN(19, "rio");
-
-    public static final Device.PWM servo1 = new PWM(1);
+    public static final Device.CAN intakeLinear = new CAN(27, Device.ONBOARD_CAN_BUS);
+    public static final Device.CAN intakeRoller = new CAN(28, Device.ONBOARD_CAN_BUS);
 
     public static final Device.USB batteryReader = new USB(1);
 }

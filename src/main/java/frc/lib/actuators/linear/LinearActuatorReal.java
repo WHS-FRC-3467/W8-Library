@@ -18,7 +18,7 @@ package frc.lib.actuators.linear;
 import frc.lib.io.motor.MotorIO;
 
 /**
- * A real implementation of the LinearMechanism class that interacts with a physical motor through a
+ * A real implementation of the LinearActuator class that interacts with a physical motor through a
  * MotorIO interface.
  */
 public class LinearActuatorReal extends LinearActuator<MotorIO> {

@@ -80,9 +80,9 @@ public final class BatteryModel {
 
     /**
      * Set the simulated battery's loaded supply voltage by utilizing the total current load
-     * accumulated through {@link #addCurrentLoad} calls within each existing mechanism subclass
-     * periodic. Uses {@link RoboRioSim#setVInVoltage(double)} to set the simulated battery voltage,
-     * which can then be retrieved with the {@link
+     * accumulated through {@link #addCurrentLoad} calls from each simulated actuator's and drive
+     * module's periodic. Uses {@link RoboRioSim#setVInVoltage(double)} to set the simulated battery
+     * voltage, which can then be retrieved with the {@link
      * org.wpilib.system.RobotController#getBatteryVoltage()} method. This function assumes a
      * nominal voltage of {@link #BATTERY_NOMINAL_VOLTAGE_VOLTS} and a resistance {@link
      * #BATTERY_INTERNAL_RESISTANCE_OHMS}.
