@@ -21,7 +21,6 @@ import frc.lib.actuators.linear.LinearActuator;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.PowerProfiler;
-
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.NeedsNameBuilderStage;
@@ -39,15 +38,12 @@ public class IntakeSuperstructure implements Mechanism, AutoCloseable {
     private final Trigger isRetracted;
     private final Trigger isRollerSafe;
 
-    private final Debouncer rollerSafeDebouncer =
-            new Debouncer(0.02, Debouncer.DebounceType.RISING);
+    private final Debouncer rollerSafeDebouncer = new Debouncer(0.02, Debouncer.DebounceType.RISING);
 
     private static final LoggedTunableNumber MIN_SAFE_ROLLER_DISTANCE =
-            new LoggedTunableNumber(
-                    IntakeLinearConstants.NAME + "/MinSafeRollerDistanceInches", 5.0);
+            new LoggedTunableNumber(IntakeLinearConstants.NAME + "/MinSafeRollerDistanceInches", 5.0);
 
-    public IntakeSuperstructure(
-            LinearActuator<?> intakeLinearIO, FlywheelActuator<?> intakeRollerIO) {
+    public IntakeSuperstructure(LinearActuator<?> intakeLinearIO, FlywheelActuator<?> intakeRollerIO) {
 
         this.intakeLinearIO = intakeLinearIO;
         this.intakeRollerIO = intakeRollerIO;
@@ -59,47 +55,30 @@ public class IntakeSuperstructure implements Mechanism, AutoCloseable {
                 IntakeLinearConstants.CRUISE_VELOCITY,
                 IntakeLinearConstants.MAX_ACCELERATION);
 
-        isExtended =
-                new Trigger(
-                        () ->
-                                intakeLinearIO
-                                        .getLinearPosition()
-                                        .isNear(
-                                                IntakeLinearConstants.MAX_DISTANCE,
-                                                IntakeLinearConstants.TOLERANCE));
+        isExtended = new Trigger(() -> intakeLinearIO
+                .getLinearPosition()
+                .isNear(IntakeLinearConstants.MAX_DISTANCE, IntakeLinearConstants.TOLERANCE));
 
-        isRetracted =
-                new Trigger(
-                        () ->
-                                intakeLinearIO
-                                        .getLinearPosition()
-                                        .isNear(
-                                                IntakeLinearConstants.MIN_DISTANCE,
-                                                IntakeLinearConstants.TOLERANCE));
+        isRetracted = new Trigger(() -> intakeLinearIO
+                .getLinearPosition()
+                .isNear(IntakeLinearConstants.MIN_DISTANCE, IntakeLinearConstants.TOLERANCE));
 
-        isRollerSafe =
-                new Trigger(
-                        () ->
-                                rollerSafeDebouncer.calculate(
-                                        intakeLinearIO
-                                                .getLinearPosition()
-                                                .gte(Inches.of(MIN_SAFE_ROLLER_DISTANCE.get()))));
+        isRollerSafe = new Trigger(() -> rollerSafeDebouncer.calculate(
+                intakeLinearIO.getLinearPosition().gte(Inches.of(MIN_SAFE_ROLLER_DISTANCE.get()))));
 
         Scheduler.getDefault().addPeriodic(this::periodic);
     }
 
     /** Returns true if the intake roller is running and the intake is extended. */
     public boolean isIntaking() {
-        return intakeRollerIO.getVelocity().in(RotationsPerSecond) > 1.0
-                && isExtended.getAsBoolean();
+        return intakeRollerIO.getVelocity().in(RotationsPerSecond) > 1.0 && isExtended.getAsBoolean();
     }
 
     private Distance clampDistance(Distance goal) {
-        return Meters.of(
-                Math.clamp(
-                        goal.in(Meters),
-                        IntakeLinearConstants.MIN_DISTANCE.in(Meters),
-                        IntakeLinearConstants.MAX_DISTANCE.in(Meters)));
+        return Meters.of(Math.clamp(
+                goal.in(Meters),
+                IntakeLinearConstants.MIN_DISTANCE.in(Meters),
+                IntakeLinearConstants.MAX_DISTANCE.in(Meters)));
     }
 
     /** Register the Intake subsystem with the power profiler. */
@@ -118,9 +97,7 @@ public class IntakeSuperstructure implements Mechanism, AutoCloseable {
         Distance clampedGoal = clampDistance(goal);
 
         return this.run(
-                c ->
-                        intakeLinearIO.runLinearPosition(
-                                clampedGoal, PIDSlot.SLOT_0, cruiseVelocity, acceleration));
+                c -> intakeLinearIO.runLinearPosition(clampedGoal, PIDSlot.SLOT_0, cruiseVelocity, acceleration));
     }
 
     private Command runRoller() {
@@ -136,41 +113,37 @@ public class IntakeSuperstructure implements Mechanism, AutoCloseable {
     }
 
     public Command intake() {
-        return this.run(
-                        c -> {
-                            Command extend =
-                                    moveToPosition(
-                                                    IntakeLinearConstants.MAX_DISTANCE,
-                                                    IntakeLinearConstants.CRUISE_VELOCITY,
-                                                    IntakeLinearConstants.MAX_ACCELERATION)
-                                            .named("Extend Intake");
+        return this.run(c -> {
+                    Command extend = moveToPosition(
+                                    IntakeLinearConstants.MAX_DISTANCE,
+                                    IntakeLinearConstants.CRUISE_VELOCITY,
+                                    IntakeLinearConstants.MAX_ACCELERATION)
+                            .named("Extend Intake");
 
-                            c.await(extend);
-                            c.waitUntil(isRollerSafe);
-                            c.await(runRoller());
-                            c.waitUntil(isExtended);
-                        })
+                    c.await(extend);
+                    c.waitUntil(isRollerSafe);
+                    c.await(runRoller());
+                    c.waitUntil(isExtended);
+                })
                 .named("Extend Intake With Roller");
     }
 
     public Command retractIntake() {
-        return this.run(
-                        c -> {
-                            Command retract =
-                                    moveToPosition(
-                                                    IntakeLinearConstants.MIN_DISTANCE,
-                                                    IntakeLinearConstants.CRUISE_VELOCITY,
-                                                    IntakeLinearConstants.MAX_ACCELERATION)
-                                            .named("Retract Linear");
+        return this.run(c -> {
+                    Command retract = moveToPosition(
+                                    IntakeLinearConstants.MIN_DISTANCE,
+                                    IntakeLinearConstants.CRUISE_VELOCITY,
+                                    IntakeLinearConstants.MAX_ACCELERATION)
+                            .named("Retract Linear");
 
-                            c.await(retract);
-                            if (isRollerSafe.getAsBoolean()) {
-                                c.await(runRoller());
-                                c.waitUntil(isRollerSafe.negate());
-                                c.await(stopRoller());
-                            }
-                            c.waitUntil(isRetracted);
-                        })
+                    c.await(retract);
+                    if (isRollerSafe.getAsBoolean()) {
+                        c.await(runRoller());
+                        c.waitUntil(isRollerSafe.negate());
+                        c.await(stopRoller());
+                    }
+                    c.waitUntil(isRetracted);
+                })
                 .named("Retract Intake With Roller");
     }
 
@@ -179,12 +152,11 @@ public class IntakeSuperstructure implements Mechanism, AutoCloseable {
     }
 
     public Command homeLinear() {
-        return this.run(
-                        c -> {
-                            intakeLinearIO.runDutyCycle(0.25, true);
+        return this.run(c -> {
+                    intakeLinearIO.runDutyCycle(0.25, true);
 
-                            c.park();
-                        })
+                    c.park();
+                })
                 .whenCanceled(() -> intakeLinearIO.setEncoderPosition(Rotations.of(3.7)))
                 .named("Home Linear");
     }

@@ -21,7 +21,6 @@ import static org.wpilib.units.Units.RotationsPerSecond;
 import frc.lib.actuators.flywheel.FlywheelActuator;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.PowerProfiler;
-
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.Scheduler;
@@ -81,11 +80,10 @@ public class Tower implements Mechanism {
      * @return a command that runs the tower forward
      */
     public Command shoot() {
-        return this.run(
-                        c -> {
-                            io.runCurrent(Amps.of(SHOOT_TORQUE_CURRENT.get()));
-                            c.park();
-                        })
+        return this.run(c -> {
+                    io.runCurrent(Amps.of(SHOOT_TORQUE_CURRENT.get()));
+                    c.park();
+                })
                 .whenCanceled(this::stop)
                 .named("Shoot");
     }
@@ -97,11 +95,10 @@ public class Tower implements Mechanism {
      * @return a command that runs the tower in reverse
      */
     public Command eject() {
-        return this.run(
-                        c -> {
-                            io.runCurrent(Amps.of(EJECT_TORQUE_CURRENT.get()));
-                            c.park();
-                        })
+        return this.run(c -> {
+                    io.runCurrent(Amps.of(EJECT_TORQUE_CURRENT.get()));
+                    c.park();
+                })
                 .whenCanceled(this::stop)
                 .named("Eject");
     }
@@ -112,11 +109,10 @@ public class Tower implements Mechanism {
      * @return a command that stops the tower
      */
     public Command stopCommand() {
-        return this.run(
-                        c -> {
-                            io.runBrake();
-                            c.park();
-                        })
+        return this.run(c -> {
+                    io.runBrake();
+                    c.park();
+                })
                 .whenCanceled(this::stop)
                 .named("Stop");
     }

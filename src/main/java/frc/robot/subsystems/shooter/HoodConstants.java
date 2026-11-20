@@ -14,7 +14,6 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
-
 import frc.lib.actuators.rotary.RotaryActuator;
 import frc.lib.actuators.rotary.RotaryActuator.RotaryAxis;
 import frc.lib.actuators.rotary.RotaryActuator.RotaryMechCharacteristics;
@@ -28,18 +27,15 @@ import frc.lib.util.PID;
 import frc.robot.Constants;
 import frc.robot.Ports;
 import frc.robot.Robot;
-
+import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-
 import org.wpilib.framework.RobotBase;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.units.Units;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.Distance;
 import org.wpilib.units.measure.MomentOfInertia;
-
-import java.util.Optional;
 
 /**
  * Defines configuration and physical constants for the turret hood mechanism, including motion
@@ -63,8 +59,7 @@ public class HoodConstants {
     public static final Distance ARM_LENGTH = Inches.of(6.9);
 
     public static final RotaryMechCharacteristics CONSTANTS =
-            new RotaryMechCharacteristics(
-                    ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE, RotaryAxis.PITCH);
+            new RotaryMechCharacteristics(ARM_LENGTH, MIN_ANGLE, MAX_ANGLE, STARTING_ANGLE, RotaryAxis.PITCH);
 
     public static final DCMotor DCMOTOR = DCMotor.getKrakenX60(1);
     public static final MomentOfInertia MOI = KilogramSquareMeters.of(0.01);
@@ -114,10 +109,9 @@ public class HoodConstants {
 
         config.Feedback.SensorToMechanismRatio = GEARING;
 
-        config.Slot0 =
-                Slot0Configs.from(SLOT0_PID.toSlotConfigs())
-                        .withGravityType(GravityTypeValue.Arm_Cosine)
-                        .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
+        config.Slot0 = Slot0Configs.from(SLOT0_PID.toSlotConfigs())
+                .withGravityType(GravityTypeValue.Arm_Cosine)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
 
         return config;
     }
@@ -132,37 +126,24 @@ public class HoodConstants {
         RotaryActuator<?, ?> mechanism;
         switch (Constants.CURRENT_MODE) {
             case REAL:
-                mechanism =
-                        new RotaryActuatorReal(
-                                NAME,
-                                new MotorIOTalonFX(NAME, getFXConfig(), Ports.hood),
-                                CONSTANTS,
-                                Optional.empty(),
-                                "");
+                mechanism = new RotaryActuatorReal(
+                        NAME, new MotorIOTalonFX(NAME, getFXConfig(), Ports.hood), CONSTANTS, Optional.empty(), "");
                 break;
             case SIM:
-                mechanism =
-                        new RotaryActuatorSim(
-                                NAME,
-                                new MotorIOTalonFXSim(
-                                        NAME,
-                                        MotorType.KrakenX60,
-                                        DCMOTOR,
-                                        getFXConfig(),
-                                        Ports.hood),
-                                DCMOTOR,
-                                GEARING,
-                                1,
-                                MOI,
-                                false,
-                                CONSTANTS,
-                                Optional.empty(),
-                                "");
+                mechanism = new RotaryActuatorSim(
+                        NAME,
+                        new MotorIOTalonFXSim(NAME, MotorType.KrakenX60, DCMOTOR, getFXConfig(), Ports.hood),
+                        DCMOTOR,
+                        GEARING,
+                        1,
+                        MOI,
+                        false,
+                        CONSTANTS,
+                        Optional.empty(),
+                        "");
                 break;
             case REPLAY:
-                mechanism =
-                        new RotaryActuator<>(
-                                NAME, CONSTANTS, new MotorIO() {}, Optional.empty(), "") {};
+                mechanism = new RotaryActuator<>(NAME, CONSTANTS, new MotorIO() {}, Optional.empty(), "") {};
                 break;
             default:
                 throw new IllegalStateException("Unrecognized Robot Mode");

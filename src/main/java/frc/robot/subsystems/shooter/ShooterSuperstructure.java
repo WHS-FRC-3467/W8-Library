@@ -21,7 +21,6 @@ import frc.lib.actuators.flywheel.FlywheelActuator;
 import frc.lib.actuators.rotary.RotaryActuator;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.util.PowerProfiler;
-
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.Scheduler;
@@ -124,9 +123,8 @@ public class ShooterSuperstructure implements Mechanism, AutoCloseable {
      */
     public Command retractHood() {
         return setHoodAngle(Rotations.zero())
-                .andThen(
-                        Command.waitUntil(() -> hoodIO.getPosition().lte(HoodConstants.TOLERANCE))
-                                .named("Wait for hood to be within tolerance"))
+                .andThen(Command.waitUntil(() -> hoodIO.getPosition().lte(HoodConstants.TOLERANCE))
+                        .named("Wait for hood to be within tolerance"))
                 .named("Retract Hood");
     }
 

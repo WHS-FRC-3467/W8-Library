@@ -19,7 +19,6 @@ import static org.wpilib.units.Units.Amps;
 import frc.lib.actuators.flywheel.FlywheelActuator;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.PowerProfiler;
-
 import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.Scheduler;
@@ -80,12 +79,11 @@ public class Indexer implements Mechanism {
      * @return a command that runs the indexer at shooting speed
      */
     public Command shoot() {
-        return this.run(
-                        c -> {
-                            io.runCurrent(Amps.of(SHOOT_TORQUE_CURRENT.get()));
+        return this.run(c -> {
+                    io.runCurrent(Amps.of(SHOOT_TORQUE_CURRENT.get()));
 
-                            c.park();
-                        })
+                    c.park();
+                })
                 .whenCanceled(this::stop)
                 .named("Shoot");
     }
@@ -97,12 +95,11 @@ public class Indexer implements Mechanism {
      * @return a command that runs the indexer in reverse
      */
     public Command eject() {
-        return this.run(
-                        c -> {
-                            io.runCurrent(Amps.of(EJECT_TORQUE_CURRENT.get()));
+        return this.run(c -> {
+                    io.runCurrent(Amps.of(EJECT_TORQUE_CURRENT.get()));
 
-                            c.park();
-                        })
+                    c.park();
+                })
                 .whenCanceled(this::stop)
                 .named("Eject");
     }
@@ -122,9 +119,7 @@ public class Indexer implements Mechanism {
         }
         this.brownedOut = brownedOut;
         io.setSupplyCurrentLimit(
-                brownedOut
-                        ? IndexerConstants.BROWNOUT_SUPPLY_CURRENT_LIMIT
-                        : IndexerConstants.SUPPLY_CURRENT_LIMIT);
+                brownedOut ? IndexerConstants.BROWNOUT_SUPPLY_CURRENT_LIMIT : IndexerConstants.SUPPLY_CURRENT_LIMIT);
     }
 
     /** Toggles the indexer supply current limit for brownout protection. */
