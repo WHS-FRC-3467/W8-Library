@@ -26,7 +26,6 @@ import static org.wpilib.units.Units.Volts;
 import frc.lib.actuators.MotorSimCalcs;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.util.BatteryModel;
-
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.simulation.ElevatorSim;
 import org.wpilib.system.RobotController;
@@ -83,8 +82,7 @@ public class LinearActuatorSim extends LinearActuator<MotorIOSim> {
         super(name, characteristics, io);
 
         if (!Double.isFinite(rotorToMechanismRatio) || rotorToMechanismRatio <= 0.0) {
-            throw new IllegalArgumentException(
-                    "Rotor-to-mechanism ratio must be greater than zero and finite.");
+            throw new IllegalArgumentException("Rotor-to-mechanism ratio must be greater than zero and finite.");
         }
 
         if (numMotors < 1) {
@@ -105,16 +103,15 @@ public class LinearActuatorSim extends LinearActuator<MotorIOSim> {
          * is vertical (pitch = -90° for upward, 90° for downward), or when useGravity=false for
          * horizontal mechanisms.
          */
-        sim =
-                new ElevatorSim(
-                        motor,
-                        rotorToMechanismRatio,
-                        mass.in(Kilograms),
-                        characteristics.drumRadius().in(Meters),
-                        characteristics.minDistance().in(Meters),
-                        characteristics.maxDistance().in(Meters),
-                        useGravity,
-                        characteristics.startingDistance().in(Meters));
+        sim = new ElevatorSim(
+                motor,
+                rotorToMechanismRatio,
+                mass.in(Kilograms),
+                characteristics.drumRadius().in(Meters),
+                characteristics.minDistance().in(Meters),
+                characteristics.maxDistance().in(Meters),
+                useGravity,
+                characteristics.startingDistance().in(Meters));
     }
 
     @Override
@@ -138,12 +135,11 @@ public class LinearActuatorSim extends LinearActuator<MotorIOSim> {
          * so the two estimates may differ. The MotorSimCalcs estimate is treated
          * as authoritative for battery simulation.
          */
-        double supplyCurrentAmps =
-                MotorSimCalcs.getSupplyCurrentAmps(
-                                RobotController.getBatteryVoltage(),
-                                inputs.appliedVoltage.in(Volts),
-                                inputs.torqueCurrent.in(Amps))
-                        * numMotors;
+        double supplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(
+                        RobotController.getBatteryVoltage(),
+                        inputs.appliedVoltage.in(Volts),
+                        inputs.torqueCurrent.in(Amps))
+                * numMotors;
         BatteryModel.addCurrentLoad(supplyCurrentAmps);
 
         AngularVelocity currentVelocity = toAngle(Meters.of(sim.getVelocity())).per(Seconds);
@@ -175,19 +171,16 @@ public class LinearActuatorSim extends LinearActuator<MotorIOSim> {
         if (!Double.isFinite(getRotorToMechanismRatio())
                 || getRotorToMechanismRatio() <= 0.0
                 || Math.abs(rotorToMechanismRatio - getRotorToMechanismRatio()) > 1e-6) {
-            throw new IllegalStateException(
-                    String.format(
-                            "Inconsistent/invalid rotor-to-mechanism ratio: "
-                                    + "MotorIO reports %.6f, simulation configured %.6f",
-                            getRotorToMechanismRatio(), rotorToMechanismRatio));
+            throw new IllegalStateException(String.format(
+                    "Inconsistent/invalid rotor-to-mechanism ratio: "
+                            + "MotorIO reports %.6f, simulation configured %.6f",
+                    getRotorToMechanismRatio(), rotorToMechanismRatio));
         }
 
         if (numMotors != getNumberOfMotors()) {
-            throw new IllegalStateException(
-                    String.format(
-                            "Inconsistent motor count: "
-                                    + "MotorIO reports %d, simulation configured %d",
-                            getNumberOfMotors(), numMotors));
+            throw new IllegalStateException(String.format(
+                    "Inconsistent motor count: " + "MotorIO reports %d, simulation configured %d",
+                    getNumberOfMotors(), numMotors));
         }
     }
 

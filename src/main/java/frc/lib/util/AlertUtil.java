@@ -15,10 +15,9 @@
 
 package frc.lib.util;
 
-import org.wpilib.util.Alert;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.wpilib.util.Alert;
 
 /**
  * Helpers for WPILib 2027 {@link Alert}s.

@@ -20,9 +20,8 @@ import frc.lib.io.vision.VisionIO.CameraResult;
 import frc.lib.io.vision.VisionIOInputsAutoLogged;
 import frc.lib.io.vision.VisionIOPhotonVision;
 import frc.lib.util.AlertUtil;
-
+import java.util.Optional;
 import lombok.Getter;
-
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.fields.Field;
@@ -35,8 +34,6 @@ import org.wpilib.math.numbers.N8;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.Time;
 import org.wpilib.util.Alert;
-
-import java.util.Optional;
 
 /**
  * Represents a single AprilTag camera on the robot.
@@ -84,7 +81,8 @@ public class AprilTagCamera {
     private final Debouncer disconnectDebouncer = new Debouncer(0.25);
 
     /** The camera's properties, including intrinsics and transform relative to the robot. */
-    @Getter private final CameraProperties properties;
+    @Getter
+    private final CameraProperties properties;
 
     /**
      * Constructs a new {@code AprilTagCamera}.
@@ -96,11 +94,10 @@ public class AprilTagCamera {
     public AprilTagCamera(CameraProperties properties, VisionIO io, Field fieldLayout) {
         this.properties = properties;
         this.io = io;
-        this.disconnectAlert =
-                AlertUtil.create(
-                        "Camera " + properties.name() + " is Disconnected!",
-                        "Camera " + properties.name() + " is Disconnected!",
-                        Alert.Level.HIGH);
+        this.disconnectAlert = AlertUtil.create(
+                "Camera " + properties.name() + " is Disconnected!",
+                "Camera " + properties.name() + " is Disconnected!",
+                Alert.Level.HIGH);
         this.fieldLayout = fieldLayout;
     }
 
@@ -124,8 +121,7 @@ public class AprilTagCamera {
 
         return switch (inputs.rawPacketType) {
             case UNKNOWN -> {
-                DriverStationErrors.reportError(
-                        "Unknown/Invalid Vision Packet Type Reported. Ignoring.", null);
+                DriverStationErrors.reportError("Unknown/Invalid Vision Packet Type Reported. Ignoring.", null);
                 yield Optional.empty();
             }
             case PHOTON -> Optional.of(VisionIOPhotonVision.decodeResults(inputs, fieldLayout));

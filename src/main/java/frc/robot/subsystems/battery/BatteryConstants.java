@@ -22,13 +22,10 @@ import frc.lib.io.serial.SerialIOPepperC1Sim;
 import frc.lib.io.serial.SerialIOUSB;
 import frc.robot.Constants;
 import frc.robot.Ports;
-
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-
 import org.wpilib.units.measure.Time;
-
-import java.util.Map;
 
 /** Configuration and factory for the {@link Battery} subsystem. */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -45,8 +42,7 @@ public class BatteryConstants {
      * Tag UID to battery name. To add a battery: stick a tag on it, put it in the robot, boot, read
      * {@code Battery/UID} from the log, and add a line here.
      */
-    public static final Map<String, String> KNOWN_BATTERIES =
-            Map.of("54D4F82A", "Example Battery 1");
+    public static final Map<String, String> KNOWN_BATTERIES = Map.of("54D4F82A", "Example Battery 1");
 
     /**
      * Creates the Battery subsystem with IO implementations for the current robot mode.

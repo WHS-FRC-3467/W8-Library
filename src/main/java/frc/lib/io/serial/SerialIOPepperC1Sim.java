@@ -15,12 +15,11 @@
 
 package frc.lib.io.serial;
 
-import org.littletonrobotics.junction.networktables.LoggedNetworkString;
-
 import java.io.ByteArrayOutputStream;
 import java.util.HexFormat;
 import java.util.Optional;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.networktables.LoggedNetworkString;
 
 /**
  * Pretends to be a Pepper C1 RFID reader on a serial port. It answers the same binary commands the
@@ -68,9 +67,7 @@ public class SerialIOPepperC1Sim implements SerialIO {
     @Override
     public void write(byte[] data) {
         commandReader.add(data);
-        for (Optional<byte[]> command = commandReader.next();
-                command.isPresent();
-                command = commandReader.next()) {
+        for (Optional<byte[]> command = commandReader.next(); command.isPresent(); command = commandReader.next()) {
             respondTo(command.get());
         }
     }
@@ -82,10 +79,7 @@ public class SerialIOPepperC1Sim implements SerialIO {
         Optional<byte[]> uid = currentUid();
         switch (command[0] & 0xFF) {
             case PepperC1Protocol.GET_TAG_COUNT ->
-                    reply(
-                            PepperC1Protocol.ACK,
-                            PepperC1Protocol.GET_TAG_COUNT,
-                            uid.isPresent() ? 1 : 0);
+                reply(PepperC1Protocol.ACK, PepperC1Protocol.GET_TAG_COUNT, uid.isPresent() ? 1 : 0);
             case PepperC1Protocol.GET_TAG_UID -> {
                 if (uid.isEmpty()) {
                     // Real reader answers with an error frame here; any non-ACK first byte works.

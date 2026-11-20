@@ -18,7 +18,6 @@ package frc.lib.io.serial;
 import static org.wpilib.units.Units.Seconds;
 
 import frc.lib.util.Device;
-
 import org.wpilib.driverstation.DriverStationErrors;
 import org.wpilib.hardware.bus.SerialPort;
 import org.wpilib.system.Timer;
@@ -136,8 +135,7 @@ public class SerialIOUSB implements SerialIO {
         // Only report once so an unplugged device doesn't flood the console.
         if (!reportedFailure) {
             reportedFailure = true;
-            DriverStationErrors.reportWarning(
-                    name + ": serial port " + portId + " failed: " + e.getMessage(), false);
+            DriverStationErrors.reportWarning(name + ": serial port " + portId + " failed: " + e.getMessage(), false);
         }
     }
 }

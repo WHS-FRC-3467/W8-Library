@@ -16,7 +16,6 @@
 package frc.lib.sensors;
 
 import frc.lib.io.servo.ServoIO;
-
 import org.wpilib.units.measure.Angle;
 
 /**

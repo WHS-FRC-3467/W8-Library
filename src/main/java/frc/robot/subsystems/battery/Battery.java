@@ -17,11 +17,9 @@ package frc.robot.subsystems.battery;
 
 import frc.lib.io.serial.SerialIO;
 import frc.lib.sensors.BatteryReader;
-
+import java.util.Optional;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.Scheduler;
-
-import java.util.Optional;
 
 /** Reads which battery is in the robot at boot from the RFID tag stuck on it. */
 public class Battery implements Mechanism {
@@ -33,12 +31,8 @@ public class Battery implements Mechanism {
      * @param io the serial port the RFID reader is on
      */
     public Battery(SerialIO io) {
-        reader =
-                new BatteryReader(
-                        BatteryConstants.NAME,
-                        io,
-                        BatteryConstants.KNOWN_BATTERIES,
-                        BatteryConstants.READ_TIMEOUT);
+        reader = new BatteryReader(
+                BatteryConstants.NAME, io, BatteryConstants.KNOWN_BATTERIES, BatteryConstants.READ_TIMEOUT);
 
         Scheduler.getDefault().addPeriodic(this::periodic);
     }

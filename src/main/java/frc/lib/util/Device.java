@@ -36,9 +36,7 @@ public sealed interface Device {
         public CAN(int id, String bus) {
             if (id <= 0 || id > 63) {
                 throw new IllegalArgumentException(
-                        "Illegal CAN ID "
-                                + id
-                                + ". IDs must be between 1 and 63 inclusive (ID 0 is reserved).");
+                        "Illegal CAN ID " + id + ". IDs must be between 1 and 63 inclusive (ID 0 is reserved).");
             }
 
             if (!ids.containsKey(bus)) {
@@ -82,8 +80,7 @@ public sealed interface Device {
     public final record USB(int id) implements Device {
         public USB {
             if (id < 1 || id > 2) {
-                throw new IllegalArgumentException(
-                        "Illegal USB serial port " + id + ". Ports must be 1 or 2.");
+                throw new IllegalArgumentException("Illegal USB serial port " + id + ". Ports must be 1 or 2.");
             }
         }
     }

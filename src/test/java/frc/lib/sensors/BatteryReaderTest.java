@@ -21,15 +21,13 @@ import static org.wpilib.units.Units.Seconds;
 
 import frc.lib.io.serial.SerialIO;
 import frc.lib.io.serial.SerialIOPepperC1Sim;
-
+import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.wpilib.hardware.hal.HAL;
 import org.wpilib.system.Timer;
-
-import java.util.Map;
-import java.util.Optional;
 
 class BatteryReaderTest {
     static final Map<String, String> KNOWN = Map.of("54D4F82A", "Battery 7");
@@ -73,10 +71,7 @@ class BatteryReaderTest {
         run(reader, 0.6);
 
         assertEquals(Optional.of("54D4F82A"), reader.getUid(), "The tag's UID should be read");
-        assertEquals(
-                Optional.of("Battery 7"),
-                reader.getBatteryName(),
-                "A known UID should map to its battery name");
+        assertEquals(Optional.of("Battery 7"), reader.getBatteryName(), "A known UID should map to its battery name");
     }
 
     @Test
@@ -108,10 +103,7 @@ class BatteryReaderTest {
         tagInRange = "01020304"; // tag "changes" without a reboot
         run(reader, 0.6);
 
-        assertEquals(
-                Optional.of("54D4F82A"),
-                reader.getUid(),
-                "The first tag read after boot should stay locked in");
+        assertEquals(Optional.of("54D4F82A"), reader.getUid(), "The first tag read after boot should stay locked in");
     }
 
     @Test

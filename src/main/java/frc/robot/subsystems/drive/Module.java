@@ -18,10 +18,8 @@ package frc.robot.subsystems.drive;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
-
 import frc.lib.util.PID;
 import frc.lib.util.PowerProfiler;
-
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.kinematics.SwerveModulePosition;
@@ -33,9 +31,7 @@ import org.wpilib.util.Alert.Level;
 public class Module {
     private final ModuleIO io;
     private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
-    private final SwerveModuleConstants<
-                    TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
-            constants;
+    private final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants;
     private final String name;
 
     private final Alert driveDisconnectedAlert;
@@ -51,27 +47,23 @@ public class Module {
      */
     public Module(
             ModuleIO io,
-            SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
-                    constants) {
+            SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         this.io = io;
         this.name = io.getName();
         this.constants = constants;
 
-        driveDisconnectedAlert =
-                new Alert(
-                        "drivetrain_drive_motor_" + name + "_disconnect",
-                        "Disconnected drive motor on module " + name + ".",
-                        Level.HIGH);
-        turnDisconnectedAlert =
-                new Alert(
-                        "drivetrain_azimuth_motor_" + name + "_disconnect",
-                        "Disconnected turn motor on module " + name + ".",
-                        Level.HIGH);
-        turnEncoderDisconnectedAlert =
-                new Alert(
-                        "drivetrain_encoder_" + name + "_disconnect",
-                        "Disconnected turn encoder on module " + name + ".",
-                        Level.HIGH);
+        driveDisconnectedAlert = new Alert(
+                "drivetrain_drive_motor_" + name + "_disconnect",
+                "Disconnected drive motor on module " + name + ".",
+                Level.HIGH);
+        turnDisconnectedAlert = new Alert(
+                "drivetrain_azimuth_motor_" + name + "_disconnect",
+                "Disconnected turn motor on module " + name + ".",
+                Level.HIGH);
+        turnEncoderDisconnectedAlert = new Alert(
+                "drivetrain_encoder_" + name + "_disconnect",
+                "Disconnected turn encoder on module " + name + ".",
+                Level.HIGH);
     }
 
     /** Updates inputs, processes odometry data, and updates connection alerts. */
@@ -234,13 +226,9 @@ public class Module {
      */
     public void registerModules(String key, PowerProfiler powerProfiler) {
         powerProfiler.registerGeneric(
-                key + "/Drive",
-                () -> inputs.driveSupplyCurrentAmps,
-                () -> inputs.driveSupplyVoltageVolts);
+                key + "/Drive", () -> inputs.driveSupplyCurrentAmps, () -> inputs.driveSupplyVoltageVolts);
         powerProfiler.registerGeneric(
-                key + "/Turn",
-                () -> inputs.turnSupplyCurrentAmps,
-                () -> inputs.turnSupplyVoltageVolts);
+                key + "/Turn", () -> inputs.turnSupplyCurrentAmps, () -> inputs.turnSupplyVoltageVolts);
     }
 
     /** Return the name of the {@link ModuleIO} object associated with this module. */

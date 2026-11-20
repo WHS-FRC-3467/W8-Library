@@ -16,7 +16,6 @@
 package frc.lib.io.beambreak;
 
 import frc.lib.util.Device;
-
 import org.wpilib.hardware.discrete.DigitalInput;
 
 /** A beam break implementation that uses any DIO input */

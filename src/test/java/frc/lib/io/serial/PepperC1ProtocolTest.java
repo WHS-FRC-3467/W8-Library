@@ -19,11 +19,10 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Optional;
+import org.junit.jupiter.api.Test;
 
 class PepperC1ProtocolTest {
     /** Example frame from the C1 software manual, section 9.1.5: an async GET_UID report. */
@@ -62,9 +61,7 @@ class PepperC1ProtocolTest {
 
     @Test
     void testDecodeLengthRejectsBadInverse() {
-        assertTrue(
-                PepperC1Protocol.decodeLength(hex("0A00F5FF")).isPresent(),
-                "A correct length header should decode");
+        assertTrue(PepperC1Protocol.decodeLength(hex("0A00F5FF")).isPresent(), "A correct length header should decode");
         assertTrue(
                 PepperC1Protocol.decodeLength(hex("0A00F5FE")).isEmpty(),
                 "A length header whose inverted copy doesn't match should be rejected");
@@ -105,16 +102,12 @@ class PepperC1ProtocolTest {
     void testParseRepliesFromManual() {
         // Section 10.1.4: ACK, GET_TAG_COUNT, 1 tag
         assertEquals(
-                1,
-                PepperC1Protocol.parseTagCount(hex("000201")).getAsInt(),
-                "Tag count reply should report 1 tag");
+                1, PepperC1Protocol.parseTagCount(hex("000201")).getAsInt(), "Tag count reply should report 1 tag");
         // Section 10.1.5: ACK, GET_TAG_UID, type, SAK, UID 74 54 12 65
         assertEquals(
                 "74541265",
                 PepperC1Protocol.parseTagUid(hex("0003012074541265")).get(),
                 "UID reply should parse to uppercase hex");
-        assertTrue(
-                PepperC1Protocol.parseTagUid(hex("0103")).isEmpty(),
-                "An error reply should not parse as a UID");
+        assertTrue(PepperC1Protocol.parseTagUid(hex("0103")).isEmpty(), "An error reply should not parse as a UID");
     }
 }

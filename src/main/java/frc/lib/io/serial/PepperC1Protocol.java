@@ -15,13 +15,12 @@
 
 package frc.lib.io.serial;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Optional;
 import java.util.OptionalInt;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * Encodes and decodes frames for the Eccel Pepper C1 RFID reader's binary protocol. This class
@@ -111,8 +110,7 @@ public final class PepperC1Protocol {
         }
         byte[] body = Arrays.copyOf(bodyAndCrc, bodyAndCrc.length - 2);
         int receivedCrc =
-                (bodyAndCrc[bodyAndCrc.length - 2] & 0xFF)
-                        | ((bodyAndCrc[bodyAndCrc.length - 1] & 0xFF) << 8);
+                (bodyAndCrc[bodyAndCrc.length - 2] & 0xFF) | ((bodyAndCrc[bodyAndCrc.length - 1] & 0xFF) << 8);
         return crc16(body) == receivedCrc ? Optional.of(body) : Optional.empty();
     }
 
@@ -208,8 +206,7 @@ public final class PepperC1Protocol {
                 if (buffer.length < frameEnd) {
                     return Optional.empty(); // wait for the rest of the frame
                 }
-                Optional<byte[]> body =
-                        decodeBody(Arrays.copyOfRange(buffer, 1 + LENGTH_BYTES, frameEnd));
+                Optional<byte[]> body = decodeBody(Arrays.copyOfRange(buffer, 1 + LENGTH_BYTES, frameEnd));
                 buffer = Arrays.copyOfRange(buffer, frameEnd, buffer.length);
                 if (body.isPresent()) {
                     return body;

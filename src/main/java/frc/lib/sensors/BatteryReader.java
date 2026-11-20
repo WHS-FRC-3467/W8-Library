@@ -20,15 +20,13 @@ import static org.wpilib.units.Units.Seconds;
 import frc.lib.io.serial.PepperC1Protocol;
 import frc.lib.io.serial.SerialIO;
 import frc.lib.io.serial.SerialInputsAutoLogged;
-
+import java.util.Map;
+import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.system.Timer;
 import org.wpilib.units.measure.Time;
 import org.wpilib.util.Alert;
 import org.wpilib.util.Alert.Level;
-
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Identifies which battery is in the robot by reading an RFID tag stuck on it with an Eccel Pepper
@@ -71,8 +69,7 @@ public class BatteryReader {
      * @param knownBatteries tag UID (uppercase hex, e.g. "54D4F82A") to battery name
      * @param readTimeout how long after boot to wait for a tag before raising an alert
      */
-    public BatteryReader(
-            String name, SerialIO io, Map<String, String> knownBatteries, Time readTimeout) {
+    public BatteryReader(String name, SerialIO io, Map<String, String> knownBatteries, Time readTimeout) {
         this.name = name;
         this.io = io;
         this.knownBatteries = Map.copyOf(knownBatteries);
@@ -133,21 +130,15 @@ public class BatteryReader {
 
     private void handleReplies() {
         frameReader.add(inputs.received);
-        for (Optional<byte[]> body = frameReader.next();
-                body.isPresent() && uid.isEmpty();
-                body = frameReader.next()) {
+        for (Optional<byte[]> body = frameReader.next(); body.isPresent() && uid.isEmpty(); body = frameReader.next()) {
             readerResponded = true;
 
             // A tag is in range: ask for its UID right away instead of waiting for the next poll.
-            PepperC1Protocol.parseTagCount(body.get())
-                    .ifPresent(
-                            count -> {
-                                if (count > 0) {
-                                    send(
-                                            PepperC1Protocol.GET_TAG_UID,
-                                            0x00); // tag 0: only one battery
-                                }
-                            });
+            PepperC1Protocol.parseTagCount(body.get()).ifPresent(count -> {
+                if (count > 0) {
+                    send(PepperC1Protocol.GET_TAG_UID, 0x00); // tag 0: only one battery
+                }
+            });
 
             PepperC1Protocol.parseTagUid(body.get()).ifPresent(tag -> uid = Optional.of(tag));
         }
@@ -172,8 +163,7 @@ public class BatteryReader {
         }
         notReadAlert.set(timedOut);
 
-        unknownBatteryAlert.setText(
-                name + ": battery tag " + uid.orElse("") + " is not in the known battery list");
+        unknownBatteryAlert.setText(name + ": battery tag " + uid.orElse("") + " is not in the known battery list");
         unknownBatteryAlert.set(uid.isPresent() && getBatteryName().isEmpty());
     }
 }

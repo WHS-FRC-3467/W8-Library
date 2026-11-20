@@ -18,7 +18,6 @@ package frc.robot.subsystems.drive;
 import static org.wpilib.units.Units.*;
 
 import com.ctre.phoenix6.configs.SlotConfigs;
-
 import frc.lib.actuators.Actuator.TunablePidConfig;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
@@ -28,7 +27,11 @@ import frc.lib.util.PowerProfiler;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.GlobalPoseEstimator;
-
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.command3.Mechanism;
@@ -47,48 +50,25 @@ import org.wpilib.units.measure.LinearAcceleration;
 import org.wpilib.util.Alert;
 import org.wpilib.util.Alert.Level;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 public class Drive implements Mechanism {
     public final GlobalPoseEstimator globalPoseEstimator = GlobalPoseEstimator.getInstance();
 
     // TunerConstants doesn't include these constants, so they are declared locally
-    static final double ODOMETRY_FREQUENCY =
-            DriveConstants.drivetrainConstants.Network.isNetworkFD() ? 250.0 : 100.0;
+    static final double ODOMETRY_FREQUENCY = DriveConstants.drivetrainConstants.Network.isNetworkFD() ? 250.0 : 100.0;
 
-    public static final double DRIVE_BASE_RADIUS =
+    public static final double DRIVE_BASE_RADIUS = Math.max(
             Math.max(
-                    Math.max(
-                            Math.hypot(
-                                    DriveConstants.FrontLeft.LocationX,
-                                    DriveConstants.FrontLeft.LocationY),
-                            Math.hypot(
-                                    DriveConstants.FrontRight.LocationX,
-                                    DriveConstants.FrontRight.LocationY)),
-                    Math.max(
-                            Math.hypot(
-                                    DriveConstants.BackLeft.LocationX,
-                                    DriveConstants.BackLeft.LocationY),
-                            Math.hypot(
-                                    DriveConstants.BackRight.LocationX,
-                                    DriveConstants.BackRight.LocationY)));
+                    Math.hypot(DriveConstants.FrontLeft.LocationX, DriveConstants.FrontLeft.LocationY),
+                    Math.hypot(DriveConstants.FrontRight.LocationX, DriveConstants.FrontRight.LocationY)),
+            Math.max(
+                    Math.hypot(DriveConstants.BackLeft.LocationX, DriveConstants.BackLeft.LocationY),
+                    Math.hypot(DriveConstants.BackRight.LocationX, DriveConstants.BackRight.LocationY)));
 
-    public static final List<Translation2d> MODULE_TRANSLATIONS =
-            List.of(
-                    new Translation2d(
-                            DriveConstants.FrontLeft.LocationX, DriveConstants.FrontLeft.LocationY),
-                    new Translation2d(
-                            DriveConstants.FrontRight.LocationX,
-                            DriveConstants.FrontRight.LocationY),
-                    new Translation2d(
-                            DriveConstants.BackLeft.LocationX, DriveConstants.BackLeft.LocationY),
-                    new Translation2d(
-                            DriveConstants.BackRight.LocationX,
-                            DriveConstants.BackRight.LocationY));
+    public static final List<Translation2d> MODULE_TRANSLATIONS = List.of(
+            new Translation2d(DriveConstants.FrontLeft.LocationX, DriveConstants.FrontLeft.LocationY),
+            new Translation2d(DriveConstants.FrontRight.LocationX, DriveConstants.FrontRight.LocationY),
+            new Translation2d(DriveConstants.BackLeft.LocationX, DriveConstants.BackLeft.LocationY),
+            new Translation2d(DriveConstants.BackRight.LocationX, DriveConstants.BackRight.LocationY));
 
     static final Lock odometryLock = new ReentrantLock();
 
@@ -98,12 +78,9 @@ public class Drive implements Mechanism {
             new LoggedTunableNumber("Drive/AutoTranslationPID/kI", 0.0);
     private static final LoggedTunableNumber AUTO_TRANSLATION_KD =
             new LoggedTunableNumber("Drive/AutoTranslationPID/kD", 0.0);
-    private static final LoggedTunableNumber AUTO_THETA_KP =
-            new LoggedTunableNumber("Drive/AutoThetaPID/kP", 8.0);
-    private static final LoggedTunableNumber AUTO_THETA_KI =
-            new LoggedTunableNumber("Drive/AutoThetaPID/kI", 0.0);
-    private static final LoggedTunableNumber AUTO_THETA_KD =
-            new LoggedTunableNumber("Drive/AutoThetaPID/kD", 0.1);
+    private static final LoggedTunableNumber AUTO_THETA_KP = new LoggedTunableNumber("Drive/AutoThetaPID/kP", 8.0);
+    private static final LoggedTunableNumber AUTO_THETA_KI = new LoggedTunableNumber("Drive/AutoThetaPID/kI", 0.0);
+    private static final LoggedTunableNumber AUTO_THETA_KD = new LoggedTunableNumber("Drive/AutoThetaPID/kD", 0.1);
 
     private static final double loop_period_seconds = Constants.LOOP_PERIOD.in(Seconds);
 
@@ -113,10 +90,7 @@ public class Drive implements Mechanism {
     private final Module[] modules = new Module[4]; // FL, FR, BL, BR
 
     private final Alert gyroDisconnectedAlert =
-            new Alert(
-                    "drivetrain_gyro_disconnect",
-                    "Disconnected gyro, using kinematics as fallback.",
-                    Level.HIGH);
+            new Alert("drivetrain_gyro_disconnect", "Disconnected gyro, using kinematics as fallback.", Level.HIGH);
 
     private SwerveDriveKinematics kinematics =
             new SwerveDriveKinematics(MODULE_TRANSLATIONS.toArray(Translation2d[]::new));
@@ -125,33 +99,20 @@ public class Drive implements Mechanism {
     private final TunablePidConfig steerTunablePID;
 
     private final PIDController autoXController =
-            new PIDController(
-                    AUTO_TRANSLATION_KP.get(),
-                    AUTO_TRANSLATION_KI.get(),
-                    AUTO_TRANSLATION_KD.get());
+            new PIDController(AUTO_TRANSLATION_KP.get(), AUTO_TRANSLATION_KI.get(), AUTO_TRANSLATION_KD.get());
     private final PIDController autoYController =
-            new PIDController(
-                    AUTO_TRANSLATION_KP.get(),
-                    AUTO_TRANSLATION_KI.get(),
-                    AUTO_TRANSLATION_KD.get());
+            new PIDController(AUTO_TRANSLATION_KP.get(), AUTO_TRANSLATION_KI.get(), AUTO_TRANSLATION_KD.get());
     private final PIDController autoThetaController =
             new PIDController(AUTO_THETA_KP.get(), AUTO_THETA_KI.get(), AUTO_THETA_KD.get());
 
     private TunablePidConfig makeTunablePID(String prefix, PID defaultPid) {
-        LoggedTunableNumber kp =
-                new LoggedTunableNumber("Drive/PID/" + prefix + "/kP", defaultPid.P());
-        LoggedTunableNumber ki =
-                new LoggedTunableNumber("Drive/PID/" + prefix + "/kI", defaultPid.I());
-        LoggedTunableNumber kd =
-                new LoggedTunableNumber("Drive/PID/" + prefix + "/kD", defaultPid.D());
-        LoggedTunableNumber ka =
-                new LoggedTunableNumber("Drive/PID/" + prefix + "/kA", defaultPid.A());
-        LoggedTunableNumber kv =
-                new LoggedTunableNumber("Drive/PID/" + prefix + "/kV", defaultPid.V());
-        LoggedTunableNumber kg =
-                new LoggedTunableNumber("Drive/PID/" + prefix + "/kG", defaultPid.G());
-        LoggedTunableNumber ks =
-                new LoggedTunableNumber("Drive/PID/" + prefix + "/kS", defaultPid.S());
+        LoggedTunableNumber kp = new LoggedTunableNumber("Drive/PID/" + prefix + "/kP", defaultPid.P());
+        LoggedTunableNumber ki = new LoggedTunableNumber("Drive/PID/" + prefix + "/kI", defaultPid.I());
+        LoggedTunableNumber kd = new LoggedTunableNumber("Drive/PID/" + prefix + "/kD", defaultPid.D());
+        LoggedTunableNumber ka = new LoggedTunableNumber("Drive/PID/" + prefix + "/kA", defaultPid.A());
+        LoggedTunableNumber kv = new LoggedTunableNumber("Drive/PID/" + prefix + "/kV", defaultPid.V());
+        LoggedTunableNumber kg = new LoggedTunableNumber("Drive/PID/" + prefix + "/kG", defaultPid.G());
+        LoggedTunableNumber ks = new LoggedTunableNumber("Drive/PID/" + prefix + "/kS", defaultPid.S());
         int id = Objects.hash(this, prefix);
         return new TunablePidConfig(PIDSlot.SLOT_0, kp, ki, kd, ka, kv, kg, ks, id);
     }
@@ -165,12 +126,7 @@ public class Drive implements Mechanism {
      * @param blModuleIO IO interface for the back left module
      * @param brModuleIO IO interface for the back right module
      */
-    public Drive(
-            GyroIO gyroIO,
-            ModuleIO flModuleIO,
-            ModuleIO frModuleIO,
-            ModuleIO blModuleIO,
-            ModuleIO brModuleIO) {
+    public Drive(GyroIO gyroIO, ModuleIO flModuleIO, ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO) {
         this.gyroIO = gyroIO;
 
         modules[0] = new Module(flModuleIO, DriveConstants.FrontLeft);
@@ -181,14 +137,8 @@ public class Drive implements Mechanism {
         // Start odometry thread
         PhoenixOdometryThread.getInstance().start();
 
-        driveTunablePID =
-                makeTunablePID(
-                        "Drive",
-                        new PID(SlotConfigs.from(DriveConstants.FrontLeft.DriveMotorGains)));
-        steerTunablePID =
-                makeTunablePID(
-                        "Steer",
-                        new PID(SlotConfigs.from(DriveConstants.FrontLeft.SteerMotorGains)));
+        driveTunablePID = makeTunablePID("Drive", new PID(SlotConfigs.from(DriveConstants.FrontLeft.DriveMotorGains)));
+        steerTunablePID = makeTunablePID("Steer", new PID(SlotConfigs.from(DriveConstants.FrontLeft.SteerMotorGains)));
         autoThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
         Scheduler.getDefault().addPeriodic(this::periodic);
@@ -221,15 +171,14 @@ public class Drive implements Mechanism {
                 driveTunablePID.id,
                 () -> {
                     for (Module module : modules) {
-                        module.setDrivePID(
-                                new PID(
-                                        driveTunablePID.kp.get(),
-                                        driveTunablePID.ki.get(),
-                                        driveTunablePID.kd.get(),
-                                        driveTunablePID.ka.get(),
-                                        driveTunablePID.kv.get(),
-                                        driveTunablePID.kg.get(),
-                                        driveTunablePID.ks.get()));
+                        module.setDrivePID(new PID(
+                                driveTunablePID.kp.get(),
+                                driveTunablePID.ki.get(),
+                                driveTunablePID.kd.get(),
+                                driveTunablePID.ka.get(),
+                                driveTunablePID.kv.get(),
+                                driveTunablePID.kg.get(),
+                                driveTunablePID.ks.get()));
                     }
                 },
                 driveTunablePID.kp,
@@ -244,15 +193,14 @@ public class Drive implements Mechanism {
                 steerTunablePID.id,
                 () -> {
                     for (Module module : modules) {
-                        module.setTurnPID(
-                                new PID(
-                                        steerTunablePID.kp.get(),
-                                        steerTunablePID.ki.get(),
-                                        steerTunablePID.kd.get(),
-                                        steerTunablePID.ka.get(),
-                                        steerTunablePID.kv.get(),
-                                        steerTunablePID.kg.get(),
-                                        steerTunablePID.ks.get()));
+                        module.setTurnPID(new PID(
+                                steerTunablePID.kp.get(),
+                                steerTunablePID.ki.get(),
+                                steerTunablePID.kd.get(),
+                                steerTunablePID.ka.get(),
+                                steerTunablePID.kv.get(),
+                                steerTunablePID.kg.get(),
+                                steerTunablePID.ks.get()));
                     }
                 },
                 steerTunablePID.kp,
@@ -267,13 +215,9 @@ public class Drive implements Mechanism {
                 hashCode(),
                 () -> {
                     autoXController.setPID(
-                            AUTO_TRANSLATION_KP.get(),
-                            AUTO_TRANSLATION_KI.get(),
-                            AUTO_TRANSLATION_KD.get());
+                            AUTO_TRANSLATION_KP.get(), AUTO_TRANSLATION_KI.get(), AUTO_TRANSLATION_KD.get());
                     autoYController.setPID(
-                            AUTO_TRANSLATION_KP.get(),
-                            AUTO_TRANSLATION_KI.get(),
-                            AUTO_TRANSLATION_KD.get());
+                            AUTO_TRANSLATION_KP.get(), AUTO_TRANSLATION_KI.get(), AUTO_TRANSLATION_KD.get());
                 },
                 AUTO_TRANSLATION_KP,
                 AUTO_TRANSLATION_KI,
@@ -281,9 +225,7 @@ public class Drive implements Mechanism {
 
         LoggedTunableNumber.ifChanged(
                 hashCode(),
-                () ->
-                        autoThetaController.setPID(
-                                AUTO_THETA_KP.get(), AUTO_THETA_KI.get(), AUTO_THETA_KD.get()),
+                () -> autoThetaController.setPID(AUTO_THETA_KP.get(), AUTO_THETA_KI.get(), AUTO_THETA_KD.get()),
                 AUTO_THETA_KP,
                 AUTO_THETA_KI,
                 AUTO_THETA_KD);
@@ -305,21 +247,17 @@ public class Drive implements Mechanism {
                 gyroAngle = Optional.of(gyroInputs.yawPosition);
             }
 
-            globalPoseEstimator.addOdometryObservation(
-                    new OdometryObservation(
-                            Seconds.of(sampleTimestamps[sampleIndex]),
-                            modulePositions,
-                            gyroAngle,
-                            new boolean[] {false, false, false, false}));
+            globalPoseEstimator.addOdometryObservation(new OdometryObservation(
+                    Seconds.of(sampleTimestamps[sampleIndex]), modulePositions, gyroAngle, new boolean[] {
+                        false, false, false, false
+                    }));
         }
 
         // Update RobotState velocity
         globalPoseEstimator.setRobotRelativeVelocity(getChassisVelocities());
 
         Logger.recordOutput(
-                "Drive/Speed",
-                new Translation2d(getChassisVelocities().vx, getChassisVelocities().vy).getNorm()
-                        * -1);
+                "Drive/Speed", new Translation2d(getChassisVelocities().vx, getChassisVelocities().vy).getNorm() * -1);
     }
 
     /**
@@ -332,8 +270,7 @@ public class Drive implements Mechanism {
         ChassisVelocities discreteSpeeds = speeds.discretize(loop_period_seconds);
         SwerveModuleVelocity[] setpointStates = kinematics.toSwerveModuleVelocities(discreteSpeeds);
         setpointStates =
-                SwerveDriveKinematics.desaturateWheelVelocities(
-                        setpointStates, DriveConstants.kSpeedAt12Volts);
+                SwerveDriveKinematics.desaturateWheelVelocities(setpointStates, DriveConstants.kSpeedAt12Volts);
 
         // Log unoptimized setpoints and setpoint speeds
         Logger.recordOutput("SwerveStates/Setpoints", setpointStates);

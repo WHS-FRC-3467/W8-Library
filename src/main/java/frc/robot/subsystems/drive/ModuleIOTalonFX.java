@@ -33,11 +33,12 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
-
 import frc.lib.util.CANUpdateThread;
 import frc.lib.util.PID;
 import frc.robot.Ports;
-
+import java.util.Queue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.wpilib.math.filter.Debouncer;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.util.Units;
@@ -45,10 +46,6 @@ import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.Current;
 import org.wpilib.units.measure.Voltage;
-
-import java.util.Queue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Module IO implementation for Talon FX drive motor controller, Talon FX turn motor controller, and
@@ -60,9 +57,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     private final String name;
     private static final Logger LOGGER = Logger.getLogger(ModuleIOTalonFX.class.getName());
 
-    private final SwerveModuleConstants<
-                    TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
-            constants;
+    private final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants;
 
     // Hardware objects
     private final TalonFX driveTalon;
@@ -76,10 +71,8 @@ public class ModuleIOTalonFX implements ModuleIO {
 
     // Torque-current control requests
     private final TorqueCurrentFOC torqueCurrentRequest = new TorqueCurrentFOC(0);
-    private final PositionTorqueCurrentFOC positionTorqueCurrentRequest =
-            new PositionTorqueCurrentFOC(0.0);
-    private final VelocityTorqueCurrentFOC velocityTorqueCurrentRequest =
-            new VelocityTorqueCurrentFOC(0.0);
+    private final PositionTorqueCurrentFOC positionTorqueCurrentRequest = new PositionTorqueCurrentFOC(0.0);
+    private final VelocityTorqueCurrentFOC velocityTorqueCurrentRequest = new VelocityTorqueCurrentFOC(0.0);
 
     // Timestamp inputs from Phoenix thread
     private final Queue<Double> timestampQueue;
@@ -122,8 +115,7 @@ public class ModuleIOTalonFX implements ModuleIO {
      */
     public ModuleIOTalonFX(
             String name,
-            SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
-                    constants) {
+            SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         this.name = name;
         this.constants = constants;
         driveTalon = new TalonFX(constants.DriveMotorId, Ports.DRIVETRAIN_BUS);
@@ -137,75 +129,66 @@ public class ModuleIOTalonFX implements ModuleIO {
         driveConfig.Feedback.SensorToMechanismRatio = constants.DriveMotorGearRatio;
         driveConfig.TorqueCurrent.PeakForwardTorqueCurrent = constants.SlipCurrent;
         driveConfig.TorqueCurrent.PeakReverseTorqueCurrent = -constants.SlipCurrent;
-        driveConfig.MotorOutput.Inverted =
-                constants.DriveMotorInverted
-                        ? InvertedValue.Clockwise_Positive
-                        : InvertedValue.CounterClockwise_Positive;
+        driveConfig.MotorOutput.Inverted = constants.DriveMotorInverted
+                ? InvertedValue.Clockwise_Positive
+                : InvertedValue.CounterClockwise_Positive;
 
         this.driveConfig = driveConfig;
         updateThread
                 .ctreCheckErrorAndRetry(() -> driveTalon.getConfigurator().apply(driveConfig, 0.25))
-                .exceptionally(
-                        ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
-                            return null;
-                        });
+                .exceptionally(ex -> {
+                    LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                    return null;
+                });
         updateThread
                 .ctreCheckErrorAndRetry(() -> driveTalon.setPosition(0.0, 0.25))
-                .exceptionally(
-                        ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
-                            return null;
-                        });
+                .exceptionally(ex -> {
+                    LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                    return null;
+                });
 
         // Configure turn motor
         var turnConfig = new TalonFXConfiguration();
         turnConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         turnConfig.Slot0 = constants.SteerMotorGains;
         turnConfig.Feedback.FeedbackRemoteSensorID = constants.EncoderId;
-        turnConfig.Feedback.FeedbackSensorSource =
-                switch (constants.FeedbackSource) {
-                    case RemoteCANcoder -> FeedbackSensorSourceValue.RemoteCANcoder;
-                    case FusedCANcoder -> FeedbackSensorSourceValue.FusedCANcoder;
-                    case SyncCANcoder -> FeedbackSensorSourceValue.SyncCANcoder;
-                    default ->
-                            throw new RuntimeException(
-                                    "You are using an unsupported swerve configuration, which this"
-                                            + " template does not support without manual customization."
-                                            + " The 2025 release of Phoenix supports some swerve"
-                                            + " configurations which were not available during 2025"
-                                            + " beta testing, preventing any development and support"
-                                            + " from the AdvantageKit developers.");
-                };
+        turnConfig.Feedback.FeedbackSensorSource = switch (constants.FeedbackSource) {
+            case RemoteCANcoder -> FeedbackSensorSourceValue.RemoteCANcoder;
+            case FusedCANcoder -> FeedbackSensorSourceValue.FusedCANcoder;
+            case SyncCANcoder -> FeedbackSensorSourceValue.SyncCANcoder;
+            default ->
+                throw new RuntimeException("You are using an unsupported swerve configuration, which this"
+                        + " template does not support without manual customization."
+                        + " The 2025 release of Phoenix supports some swerve"
+                        + " configurations which were not available during 2025"
+                        + " beta testing, preventing any development and support"
+                        + " from the AdvantageKit developers.");
+        };
         turnConfig.Feedback.RotorToSensorRatio = constants.SteerMotorGearRatio;
         turnConfig.MotionMagic.MotionMagicCruiseVelocity = 100.0 / constants.SteerMotorGearRatio;
-        turnConfig.MotionMagic.MotionMagicAcceleration =
-                turnConfig.MotionMagic.MotionMagicCruiseVelocity / 0.100;
+        turnConfig.MotionMagic.MotionMagicAcceleration = turnConfig.MotionMagic.MotionMagicCruiseVelocity / 0.100;
         turnConfig.MotionMagic.MotionMagicExpo_kV = 0.12 * constants.SteerMotorGearRatio;
         turnConfig.MotionMagic.MotionMagicExpo_kA = 0.1;
         turnConfig.ClosedLoopGeneral.ContinuousWrap = true;
-        turnConfig.MotorOutput.Inverted =
-                constants.SteerMotorInverted
-                        ? InvertedValue.Clockwise_Positive
-                        : InvertedValue.CounterClockwise_Positive;
+        turnConfig.MotorOutput.Inverted = constants.SteerMotorInverted
+                ? InvertedValue.Clockwise_Positive
+                : InvertedValue.CounterClockwise_Positive;
 
         this.turnConfig = turnConfig;
 
         updateThread
                 .ctreCheckErrorAndRetry(() -> turnTalon.getConfigurator().apply(turnConfig, 0.25))
-                .exceptionally(
-                        ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
-                            return null;
-                        });
+                .exceptionally(ex -> {
+                    LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                    return null;
+                });
 
         // Configure CANCoder
         CANcoderConfiguration cancoderConfig = constants.EncoderInitialConfigs;
         cancoderConfig.MagnetSensor.MagnetOffset = constants.EncoderOffset;
-        cancoderConfig.MagnetSensor.SensorDirection =
-                constants.EncoderInverted
-                        ? SensorDirectionValue.Clockwise_Positive
-                        : SensorDirectionValue.CounterClockwise_Positive;
+        cancoderConfig.MagnetSensor.SensorDirection = constants.EncoderInverted
+                ? SensorDirectionValue.Clockwise_Positive
+                : SensorDirectionValue.CounterClockwise_Positive;
         cancoder.getConfigurator().apply(cancoderConfig);
 
         // Create timestamp queue
@@ -213,8 +196,7 @@ public class ModuleIOTalonFX implements ModuleIO {
 
         // Create drive status signals
         drivePosition = driveTalon.getPosition();
-        drivePositionQueue =
-                PhoenixOdometryThread.getInstance().registerSignal(driveTalon.getPosition());
+        drivePositionQueue = PhoenixOdometryThread.getInstance().registerSignal(driveTalon.getPosition());
         driveVelocity = driveTalon.getVelocity();
         driveSupplyVolts = driveTalon.getSupplyVoltage();
         driveAppliedVolts = driveTalon.getMotorVoltage();
@@ -224,8 +206,7 @@ public class ModuleIOTalonFX implements ModuleIO {
         // Create turn status signals
         turnAbsolutePosition = cancoder.getAbsolutePosition();
         turnPosition = turnTalon.getPosition();
-        turnPositionQueue =
-                PhoenixOdometryThread.getInstance().registerSignal(turnTalon.getPosition());
+        turnPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(turnTalon.getPosition());
         turnVelocity = turnTalon.getVelocity();
         turnSupplyVolts = turnTalon.getSupplyVoltage();
         turnAppliedVolts = turnTalon.getMotorVoltage();
@@ -254,22 +235,15 @@ public class ModuleIOTalonFX implements ModuleIO {
     @Override
     public void updateInputs(ModuleIOInputs inputs) {
         // Refresh all signals
-        var driveStatus =
-                BaseStatusSignal.refreshAll(
-                        drivePosition,
-                        driveVelocity,
-                        driveSupplyVolts,
-                        driveAppliedVolts,
-                        driveSupplyCurrent,
-                        driveTorqueCurrent);
-        var turnStatus =
-                BaseStatusSignal.refreshAll(
-                        turnPosition,
-                        turnVelocity,
-                        turnSupplyVolts,
-                        turnAppliedVolts,
-                        turnSupplyCurrent,
-                        turnTorqueCurrent);
+        var driveStatus = BaseStatusSignal.refreshAll(
+                drivePosition,
+                driveVelocity,
+                driveSupplyVolts,
+                driveAppliedVolts,
+                driveSupplyCurrent,
+                driveTorqueCurrent);
+        var turnStatus = BaseStatusSignal.refreshAll(
+                turnPosition, turnVelocity, turnSupplyVolts, turnAppliedVolts, turnSupplyCurrent, turnTorqueCurrent);
         var turnEncoderStatus = BaseStatusSignal.refreshAll(turnAbsolutePosition);
 
         // Update drive inputs
@@ -283,10 +257,8 @@ public class ModuleIOTalonFX implements ModuleIO {
 
         // Update turn inputs
         inputs.turnConnected = turnConnectedDebounce.calculate(turnStatus.isOK());
-        inputs.turnEncoderConnected =
-                turnEncoderConnectedDebounce.calculate(turnEncoderStatus.isOK());
-        inputs.turnAbsolutePosition =
-                Rotation2d.fromRotations(turnAbsolutePosition.getValueAsDouble());
+        inputs.turnEncoderConnected = turnEncoderConnectedDebounce.calculate(turnEncoderStatus.isOK());
+        inputs.turnAbsolutePosition = Rotation2d.fromRotations(turnAbsolutePosition.getValueAsDouble());
         inputs.turnPosition = Rotation2d.fromRotations(turnPosition.getValueAsDouble());
         inputs.turnVelocityRadPerSec = Units.rotationsToRadians(turnVelocity.getValueAsDouble());
         inputs.turnSupplyVoltageVolts = turnSupplyVolts.getValueAsDouble();
@@ -297,14 +269,12 @@ public class ModuleIOTalonFX implements ModuleIO {
         // Update odometry inputs
         inputs.odometryTimestamps =
                 timestampQueue.stream().mapToDouble((Double value) -> value).toArray();
-        inputs.odometryDrivePositionsRad =
-                drivePositionQueue.stream()
-                        .mapToDouble((Double value) -> Units.rotationsToRadians(value))
-                        .toArray();
-        inputs.odometryTurnPositions =
-                turnPositionQueue.stream()
-                        .map((Double value) -> Rotation2d.fromRotations(value))
-                        .toArray(Rotation2d[]::new);
+        inputs.odometryDrivePositionsRad = drivePositionQueue.stream()
+                .mapToDouble((Double value) -> Units.rotationsToRadians(value))
+                .toArray();
+        inputs.odometryTurnPositions = turnPositionQueue.stream()
+                .map((Double value) -> Rotation2d.fromRotations(value))
+                .toArray(Rotation2d[]::new);
         timestampQueue.clear();
         drivePositionQueue.clear();
         turnPositionQueue.clear();
@@ -334,8 +304,7 @@ public class ModuleIOTalonFX implements ModuleIO {
         driveTalon.setControl(
                 switch (constants.DriveMotorClosedLoopOutput) {
                     case Voltage -> velocityVoltageRequest.withVelocity(velocityRotPerSec);
-                    case TorqueCurrentFOC ->
-                            velocityTorqueCurrentRequest.withVelocity(velocityRotPerSec);
+                    case TorqueCurrentFOC -> velocityTorqueCurrentRequest.withVelocity(velocityRotPerSec);
                 });
     }
 
@@ -344,8 +313,7 @@ public class ModuleIOTalonFX implements ModuleIO {
         turnTalon.setControl(
                 switch (constants.SteerMotorClosedLoopOutput) {
                     case Voltage -> positionVoltageRequest.withPosition(rotation.getRotations());
-                    case TorqueCurrentFOC ->
-                            positionTorqueCurrentRequest.withPosition(rotation.getRotations());
+                    case TorqueCurrentFOC -> positionTorqueCurrentRequest.withPosition(rotation.getRotations());
                 });
     }
 
@@ -363,11 +331,10 @@ public class ModuleIOTalonFX implements ModuleIO {
 
         updateThread
                 .ctreCheckErrorAndRetry(() -> driveTalon.getConfigurator().apply(driveConfig))
-                .exceptionally(
-                        ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
-                            return null;
-                        });
+                .exceptionally(ex -> {
+                    LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                    return null;
+                });
     }
 
     @Override
@@ -384,11 +351,10 @@ public class ModuleIOTalonFX implements ModuleIO {
 
         updateThread
                 .ctreCheckErrorAndRetry(() -> turnTalon.getConfigurator().apply(turnConfig))
-                .exceptionally(
-                        ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
-                            return null;
-                        });
+                .exceptionally(ex -> {
+                    LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                    return null;
+                });
     }
 
     @Override

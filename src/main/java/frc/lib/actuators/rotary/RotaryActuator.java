@@ -9,14 +9,12 @@ import frc.lib.io.absoluteencoder.AbsoluteEncoderIO;
 import frc.lib.io.absoluteencoder.AbsoluteEncoderInputsAutoLogged;
 import frc.lib.io.motor.MotorIO;
 import frc.lib.io.motor.MotorIO.ControlType;
-
+import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.math.util.MathUtil;
 import org.wpilib.units.BaseUnits;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.Distance;
-
-import java.util.Optional;
 
 /**
  * Abstract base class for rotary mechanisms that pivot around an axis. Examples include arms,
@@ -26,8 +24,7 @@ import java.util.Optional;
  * @param <T> the type of MotorIO implementation used by this mechanism
  * @param <E> the type of AbsoluteEncoderIO implementation (if used)
  */
-public abstract class RotaryActuator<T extends MotorIO, E extends AbsoluteEncoderIO>
-        extends Actuator<T> {
+public abstract class RotaryActuator<T extends MotorIO, E extends AbsoluteEncoderIO> extends Actuator<T> {
 
     public enum RotaryAxis {
         PITCH,
@@ -36,14 +33,9 @@ public abstract class RotaryActuator<T extends MotorIO, E extends AbsoluteEncode
     }
 
     public static record RotaryMechCharacteristics(
-            Distance armLength,
-            Angle minAngle,
-            Angle maxAngle,
-            Angle startingAngle,
-            RotaryAxis axis) {}
+            Distance armLength, Angle minAngle, Angle maxAngle, Angle startingAngle, RotaryAxis axis) {}
 
-    protected final AbsoluteEncoderInputsAutoLogged absoluteEncoderInputs =
-            new AbsoluteEncoderInputsAutoLogged();
+    protected final AbsoluteEncoderInputsAutoLogged absoluteEncoderInputs = new AbsoluteEncoderInputsAutoLogged();
     protected final Optional<E> absoluteEncoder;
     private final String encoderName;
 
@@ -96,11 +88,10 @@ public abstract class RotaryActuator<T extends MotorIO, E extends AbsoluteEncode
         visualizer.setGoalAngle(getGoalAngle());
 
         // Finally, update and log absolute encoder inputs if present.
-        absoluteEncoder.ifPresent(
-                encoder -> {
-                    encoder.updateInputs(absoluteEncoderInputs);
-                    Logger.processInputs(encoderName, absoluteEncoderInputs);
-                });
+        absoluteEncoder.ifPresent(encoder -> {
+            encoder.updateInputs(absoluteEncoderInputs);
+            Logger.processInputs(encoderName, absoluteEncoderInputs);
+        });
     }
 
     @Override

@@ -22,20 +22,17 @@ import frc.lib.posestimator.PoseEstimator;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.robot.subsystems.drive.Drive;
-
+import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
 import org.wpilib.math.kinematics.SwerveDriveKinematics;
 import org.wpilib.units.measure.LinearVelocity;
-
-import java.util.Optional;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class GlobalPoseEstimator {
@@ -53,16 +50,16 @@ public class GlobalPoseEstimator {
 
     // -------- POSE ESTIMATION --------
 
-    private final PoseEstimator poseEstimator =
-            new PoseEstimator(
-                    new SwerveDriveKinematics(
-                            Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new)),
-                    Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new),
-                    Seconds.of(2),
-                    LINEAR_ODOMETRY_STD_DEV,
-                    ANGULAR_ODOMETRY_STD_DEV);
+    private final PoseEstimator poseEstimator = new PoseEstimator(
+            new SwerveDriveKinematics(Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new)),
+            Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new),
+            Seconds.of(2),
+            LINEAR_ODOMETRY_STD_DEV,
+            ANGULAR_ODOMETRY_STD_DEV);
 
-    @Getter @Setter private ChassisVelocities robotRelativeVelocity = new ChassisVelocities();
+    @Getter
+    @Setter
+    private ChassisVelocities robotRelativeVelocity = new ChassisVelocities();
 
     /**
      * Returns the robot's odometry-only pose (without vision corrections).
@@ -121,9 +118,7 @@ public class GlobalPoseEstimator {
      * @return the velocity, or zero velocity if the odometry history does not reach that time
      */
     public ChassisVelocities getRobotRelativeVelocityAtTime(double timestampSeconds) {
-        return poseEstimator
-                .getVelocityAtTime(timestampSeconds)
-                .orElseGet(() -> new ChassisVelocities(0, 0, 0));
+        return poseEstimator.getVelocityAtTime(timestampSeconds).orElseGet(() -> new ChassisVelocities(0, 0, 0));
     }
 
     /**

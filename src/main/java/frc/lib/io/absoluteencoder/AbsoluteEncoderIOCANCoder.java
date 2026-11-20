@@ -20,14 +20,11 @@ import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
-
 import frc.lib.util.CANUpdateThread;
 import frc.lib.util.Device;
-
-import org.wpilib.units.measure.Angle;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.wpilib.units.measure.Angle;
 
 /**
  * Real hardware implementation of AbsoluteEncoderIO using CTRE CANcoder.
@@ -37,8 +34,7 @@ import java.util.logging.Logger;
  * Uses Phoenix 6 API with signal-based updates.
  */
 public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
-    private static final Logger LOGGER =
-            Logger.getLogger(AbsoluteEncoderIOCANCoder.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AbsoluteEncoderIOCANCoder.class.getName());
 
     protected final CANcoder CANCoder;
 
@@ -63,23 +59,19 @@ public class AbsoluteEncoderIOCANCoder implements AbsoluteEncoderIO {
 
         updateThread
                 .ctreCheckErrorAndRetry(() -> CANCoder.getConfigurator().apply(configuration))
-                .exceptionally(
-                        ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
-                            return null;
-                        });
+                .exceptionally(ex -> {
+                    LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                    return null;
+                });
 
         this.encoderToMechanismRatio = encoderToMechanismRatio;
 
         angle = CANCoder.getAbsolutePosition();
 
-        updateThread
-                .ctreCheckErrorAndRetry(() -> angle.setUpdateFrequency(200))
-                .exceptionally(
-                        ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
-                            return null;
-                        });
+        updateThread.ctreCheckErrorAndRetry(() -> angle.setUpdateFrequency(200)).exceptionally(ex -> {
+            LOGGER.log(Level.SEVERE, ex.toString(), ex);
+            return null;
+        });
     }
 
     @Override

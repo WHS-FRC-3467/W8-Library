@@ -17,7 +17,7 @@ import frc.lib.actuators.MotorSimCalcs;
 import frc.lib.io.absoluteencoder.AbsoluteEncoderIOSim;
 import frc.lib.io.motor.MotorIOSim;
 import frc.lib.util.BatteryModel;
-
+import java.util.Optional;
 import org.wpilib.math.system.DCMotor;
 import org.wpilib.simulation.SingleJointedArmSim;
 import org.wpilib.system.RobotController;
@@ -26,8 +26,6 @@ import org.wpilib.units.measure.AngularAcceleration;
 import org.wpilib.units.measure.AngularVelocity;
 import org.wpilib.units.measure.MomentOfInertia;
 import org.wpilib.units.measure.Time;
-
-import java.util.Optional;
 
 /**
  * A simulated implementation of the RotaryMechanism base class that uses SingleJointedArmSim to
@@ -81,8 +79,7 @@ public class RotaryActuatorSim extends RotaryActuator<MotorIOSim, AbsoluteEncode
         super(name, characteristics, io, absoluteEncoder, encoderName);
 
         if (!Double.isFinite(rotorToMechanismRatio) || rotorToMechanismRatio <= 0.0) {
-            throw new IllegalArgumentException(
-                    "Rotor-to-mechanism ratio must be greater than zero and finite.");
+            throw new IllegalArgumentException("Rotor-to-mechanism ratio must be greater than zero and finite.");
         }
 
         if (numMotors < 1) {
@@ -100,16 +97,15 @@ public class RotaryActuatorSim extends RotaryActuator<MotorIOSim, AbsoluteEncode
          * Both the sim requires an unreduced DCMotor object with the proper number of motors to properly
          * model the gearbox; gearing is manually applied.
          */
-        sim =
-                new SingleJointedArmSim(
-                        motor,
-                        rotorToMechanismRatio,
-                        momentOfInertia.in(KilogramSquareMeters),
-                        characteristics.armLength().in(Meters),
-                        characteristics.minAngle().in(Radians),
-                        characteristics.maxAngle().in(Radians),
-                        useGravity,
-                        characteristics.startingAngle().in(Radians));
+        sim = new SingleJointedArmSim(
+                motor,
+                rotorToMechanismRatio,
+                momentOfInertia.in(KilogramSquareMeters),
+                characteristics.armLength().in(Meters),
+                characteristics.minAngle().in(Radians),
+                characteristics.maxAngle().in(Radians),
+                useGravity,
+                characteristics.startingAngle().in(Radians));
     }
 
     @Override
@@ -125,12 +121,11 @@ public class RotaryActuatorSim extends RotaryActuator<MotorIOSim, AbsoluteEncode
          * so the two estimates may differ. The MotorSimCalcs estimate is treated
          * as authoritative for battery simulation.
          */
-        double supplyCurrentAmps =
-                MotorSimCalcs.getSupplyCurrentAmps(
-                                RobotController.getBatteryVoltage(),
-                                inputs.appliedVoltage.in(Volts),
-                                inputs.torqueCurrent.in(Amps))
-                        * numMotors;
+        double supplyCurrentAmps = MotorSimCalcs.getSupplyCurrentAmps(
+                        RobotController.getBatteryVoltage(),
+                        inputs.appliedVoltage.in(Volts),
+                        inputs.torqueCurrent.in(Amps))
+                * numMotors;
         BatteryModel.addCurrentLoad(supplyCurrentAmps);
 
         AngularVelocity currentVelocity = RadiansPerSecond.of(sim.getVelocity());
@@ -149,10 +144,9 @@ public class RotaryActuatorSim extends RotaryActuator<MotorIOSim, AbsoluteEncode
         io.setMechanismVelocity(currentVelocity);
         io.setMechanismAcceleration(currentAcceleration);
 
-        absoluteEncoder.ifPresent(
-                encoderSim -> {
-                    encoderSim.setMechanismAngle(Radians.of(sim.getAngle()));
-                });
+        absoluteEncoder.ifPresent(encoderSim -> {
+            encoderSim.setMechanismAngle(Radians.of(sim.getAngle()));
+        });
 
         /*
          * Enforce consistency between the gear ratio and number of motors used to construct this mechanism's state-space model and that
@@ -168,19 +162,16 @@ public class RotaryActuatorSim extends RotaryActuator<MotorIOSim, AbsoluteEncode
         if (!Double.isFinite(getRotorToMechanismRatio())
                 || getRotorToMechanismRatio() <= 0.0
                 || Math.abs(rotorToMechanismRatio - getRotorToMechanismRatio()) > 1e-6) {
-            throw new IllegalStateException(
-                    String.format(
-                            "Inconsistent/invalid rotor-to-mechanism ratio: "
-                                    + "MotorIO reports %.6f, simulation configured %.6f",
-                            getRotorToMechanismRatio(), rotorToMechanismRatio));
+            throw new IllegalStateException(String.format(
+                    "Inconsistent/invalid rotor-to-mechanism ratio: "
+                            + "MotorIO reports %.6f, simulation configured %.6f",
+                    getRotorToMechanismRatio(), rotorToMechanismRatio));
         }
 
         if (numMotors != getNumberOfMotors()) {
-            throw new IllegalStateException(
-                    String.format(
-                            "Inconsistent motor count: "
-                                    + "MotorIO reports %d, simulation configured %d",
-                            getNumberOfMotors(), numMotors));
+            throw new IllegalStateException(String.format(
+                    "Inconsistent motor count: " + "MotorIO reports %d, simulation configured %d",
+                    getNumberOfMotors(), numMotors));
         }
     }
 

@@ -7,7 +7,6 @@ package frc.lib.util;
 import static org.wpilib.units.Units.Meters;
 
 import frc.robot.FieldConstants;
-
 import org.wpilib.driverstation.Alliance;
 import org.wpilib.driverstation.MatchState;
 import org.wpilib.math.geometry.Pose2d;
@@ -67,9 +66,7 @@ public class FieldUtil {
      * @return The pose in the current alliance frame
      */
     public static Pose2d apply(Pose2d pose) {
-        return shouldFlip()
-                ? new Pose2d(apply(pose.getTranslation()), apply(pose.getRotation()))
-                : pose;
+        return shouldFlip() ? new Pose2d(apply(pose.getTranslation()), apply(pose.getRotation())) : pose;
     }
 
     /**
@@ -94,8 +91,7 @@ public class FieldUtil {
      * @return The 3D translation in the current alliance frame
      */
     public static Translation3d apply(Translation3d translation) {
-        return new Translation3d(
-                applyX(translation.getX()), applyY(translation.getY()), translation.getZ());
+        return new Translation3d(applyX(translation.getX()), applyY(translation.getY()), translation.getZ());
     }
 
     /**
@@ -124,8 +120,7 @@ public class FieldUtil {
      * @return True if on red alliance, false if on blue alliance
      */
     public static boolean shouldFlip() {
-        return MatchState.getAlliance().isPresent()
-                && MatchState.getAlliance().get() == Alliance.RED;
+        return MatchState.getAlliance().isPresent() && MatchState.getAlliance().get() == Alliance.RED;
     }
 
     public static boolean isPoseInField(Translation2d translation, Distance margin) {

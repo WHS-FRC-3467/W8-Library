@@ -16,7 +16,6 @@
 package frc.lib.util;
 
 import com.ctre.phoenix6.StatusCode;
-
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -34,8 +33,7 @@ public class CANUpdateThread implements AutoCloseable {
     private static final int MAX_RETRIES = 5;
 
     private final BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
-    private final ThreadPoolExecutor executor =
-            new ThreadPoolExecutor(1, 1, 5, TimeUnit.MILLISECONDS, queue);
+    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 5, TimeUnit.MILLISECONDS, queue);
 
     /**
      * Attempts a CTRE status-returning action up to MAX_RETRIES times.

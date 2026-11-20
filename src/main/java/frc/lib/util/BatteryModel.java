@@ -16,7 +16,6 @@ package frc.lib.util;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-
 import org.wpilib.simulation.RoboRioSim;
 import org.wpilib.system.RobotController;
 
@@ -75,8 +74,7 @@ public final class BatteryModel {
      * @param currentAmps signed supply current in Amps
      */
     public static void addCurrentLoad(double currentAmps) {
-        double correctedCurrentAmps =
-                currentAmps < 0 ? BUS_REGENERATION_EFFICIENCY * currentAmps : currentAmps;
+        double correctedCurrentAmps = currentAmps < 0 ? BUS_REGENERATION_EFFICIENCY * currentAmps : currentAmps;
         simCurrentSumAmps += correctedCurrentAmps;
     }
 
@@ -92,18 +90,13 @@ public final class BatteryModel {
     public static void setSimulatedBatteryLoadedVoltage() {
         // Calculate the target loaded battery voltage based on the nominal voltage, internal
         // resistance, and total current draw
-        double targetLoadedBatteryVoltageVolts =
-                calculateDefaultBatteryLoadedVoltage(
-                        BATTERY_NOMINAL_VOLTAGE_VOLTS,
-                        BATTERY_INTERNAL_RESISTANCE_OHMS,
-                        simCurrentSumAmps);
+        double targetLoadedBatteryVoltageVolts = calculateDefaultBatteryLoadedVoltage(
+                BATTERY_NOMINAL_VOLTAGE_VOLTS, BATTERY_INTERNAL_RESISTANCE_OHMS, simCurrentSumAmps);
         // LPF the battery voltage to avoid sudden jumps in voltage when the current draw changes
-        double alpha =
-                LOOP_TIME_SECONDS / (LOOP_TIME_SECONDS + BATTERY_VOLTAGE_TIME_CONSTANT_SECONDS);
+        double alpha = LOOP_TIME_SECONDS / (LOOP_TIME_SECONDS + BATTERY_VOLTAGE_TIME_CONSTANT_SECONDS);
         double previousVoltageVolts = RobotController.getBatteryVoltage();
         double filteredVoltageVolts =
-                previousVoltageVolts
-                        + alpha * (targetLoadedBatteryVoltageVolts - previousVoltageVolts);
+                previousVoltageVolts + alpha * (targetLoadedBatteryVoltageVolts - previousVoltageVolts);
         RoboRioSim.setVInVoltage(filteredVoltageVolts);
         zeroCurrents();
     }
@@ -127,9 +120,7 @@ public final class BatteryModel {
         double targetLoadedBatteryVoltage = nominalVoltageVolts - voltageSagVolts;
         // Limit regenerative overvoltage above nominal and prevent voltage from falling below zero
         return Math.clamp(
-                targetLoadedBatteryVoltage,
-                0.0,
-                nominalVoltageVolts + BATTERY_NOMINAL_VOLTAGE_OVERHEAD_VOLTS);
+                targetLoadedBatteryVoltage, 0.0, nominalVoltageVolts + BATTERY_NOMINAL_VOLTAGE_OVERHEAD_VOLTS);
     }
 
     private static void zeroCurrents() {

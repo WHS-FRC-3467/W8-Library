@@ -27,9 +27,11 @@ import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.io.motor.MotorIOInputsAutoLogged;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.PID;
-
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.OptionalDouble;
 import lombok.Getter;
-
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.units.measure.Angle;
 import org.wpilib.units.measure.AngularAcceleration;
@@ -40,11 +42,6 @@ import org.wpilib.units.measure.LinearAcceleration;
 import org.wpilib.units.measure.LinearVelocity;
 import org.wpilib.units.measure.Voltage;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.OptionalDouble;
-
 /**
  * Abstract base class for all robot mechanisms that use motors. Provides common functionality for
  * motor control, PID tuning, logging, and visualization. Mechanisms include flywheels, linear
@@ -53,7 +50,9 @@ import java.util.OptionalDouble;
  * @param <T> the type of MotorIO implementation used by this mechanism
  */
 public abstract class Actuator<T extends MotorIO> {
-    @Getter protected final String name;
+    @Getter
+    protected final String name;
+
     protected final MotorIOInputsAutoLogged inputs = new MotorIOInputsAutoLogged();
     protected final T io;
     private final List<TunablePidConfig> tunablePidConfigs = new ArrayList<>();
@@ -136,20 +135,13 @@ public abstract class Actuator<T extends MotorIO> {
      * @param defaultPid The default PID values
      */
     public void enableTunablePID(PIDSlot slot, PID defaultPid) {
-        LoggedTunableNumber kp =
-                new LoggedTunableNumber(name + "/PID/" + slot + "/kP", defaultPid.P());
-        LoggedTunableNumber ki =
-                new LoggedTunableNumber(name + "/PID/" + slot + "/kI", defaultPid.I());
-        LoggedTunableNumber kd =
-                new LoggedTunableNumber(name + "/PID/" + slot + "/kD", defaultPid.D());
-        LoggedTunableNumber ka =
-                new LoggedTunableNumber(name + "/PID/" + slot + "/kA", defaultPid.A());
-        LoggedTunableNumber kv =
-                new LoggedTunableNumber(name + "/PID/" + slot + "/kV", defaultPid.V());
-        LoggedTunableNumber kg =
-                new LoggedTunableNumber(name + "/PID/" + slot + "/kG", defaultPid.G());
-        LoggedTunableNumber ks =
-                new LoggedTunableNumber(name + "/PID/" + slot + "/kS", defaultPid.S());
+        LoggedTunableNumber kp = new LoggedTunableNumber(name + "/PID/" + slot + "/kP", defaultPid.P());
+        LoggedTunableNumber ki = new LoggedTunableNumber(name + "/PID/" + slot + "/kI", defaultPid.I());
+        LoggedTunableNumber kd = new LoggedTunableNumber(name + "/PID/" + slot + "/kD", defaultPid.D());
+        LoggedTunableNumber ka = new LoggedTunableNumber(name + "/PID/" + slot + "/kA", defaultPid.A());
+        LoggedTunableNumber kv = new LoggedTunableNumber(name + "/PID/" + slot + "/kV", defaultPid.V());
+        LoggedTunableNumber kg = new LoggedTunableNumber(name + "/PID/" + slot + "/kG", defaultPid.G());
+        LoggedTunableNumber ks = new LoggedTunableNumber(name + "/PID/" + slot + "/kS", defaultPid.S());
         int id = Objects.hash(this, slot);
         tunablePidConfigs.add(new TunablePidConfig(slot, kp, ki, kd, ka, kv, kg, ks, id));
     }
@@ -159,17 +151,16 @@ public abstract class Actuator<T extends MotorIO> {
         for (TunablePidConfig config : tunablePidConfigs) {
             LoggedTunableNumber.ifChanged(
                     config.id,
-                    () ->
-                            io.setPID(
-                                    config.slot,
-                                    new PID(
-                                            config.kp.get(),
-                                            config.ki.get(),
-                                            config.kd.get(),
-                                            config.ka.get(),
-                                            config.kv.get(),
-                                            config.kg.get(),
-                                            config.ks.get())),
+                    () -> io.setPID(
+                            config.slot,
+                            new PID(
+                                    config.kp.get(),
+                                    config.ki.get(),
+                                    config.kd.get(),
+                                    config.ka.get(),
+                                    config.kv.get(),
+                                    config.kg.get(),
+                                    config.ks.get())),
                     config.kp,
                     config.ki,
                     config.kd,
@@ -256,10 +247,7 @@ public abstract class Actuator<T extends MotorIO> {
      * @param acceleration Motion Magic acceleration.
      */
     public void runPosition(
-            Angle position,
-            PIDSlot slot,
-            AngularVelocity cruiseVelocity,
-            AngularAcceleration acceleration) {
+            Angle position, PIDSlot slot, AngularVelocity cruiseVelocity, AngularAcceleration acceleration) {
         io.runPosition(position, slot, cruiseVelocity, acceleration);
     }
 
@@ -291,8 +279,7 @@ public abstract class Actuator<T extends MotorIO> {
      * @param acceleration Motion Magic acceleration used to ramp to target velocity.
      * @param slot PID slot index.
      */
-    public void runVelocity(
-            AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot) {
+    public void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot) {
         io.runVelocity(velocity, acceleration, slot);
     }
 
@@ -362,8 +349,7 @@ public abstract class Actuator<T extends MotorIO> {
      * @return The configured radius of the mechanism in meters (empty if radius not configured).
      */
     public OptionalDouble getRadius() {
-        OptionalDouble radius =
-                this.hasRadius() ? OptionalDouble.of(this.radiusMeters) : OptionalDouble.empty();
+        OptionalDouble radius = this.hasRadius() ? OptionalDouble.of(this.radiusMeters) : OptionalDouble.empty();
         return radius;
     }
 
@@ -465,11 +451,10 @@ public abstract class Actuator<T extends MotorIO> {
      */
     private void requireRadius() {
         if (radiusMeters == null) {
-            throw new IllegalStateException(
-                    "Mechanism '"
-                            + name
-                            + "' has no radius configured. Call withRadius() before using linear"
-                            + " control methods.");
+            throw new IllegalStateException("Mechanism '"
+                    + name
+                    + "' has no radius configured. Call withRadius() before using linear"
+                    + " control methods.");
         }
     }
 
@@ -498,17 +483,12 @@ public abstract class Actuator<T extends MotorIO> {
      * @throws IllegalStateException if {@link #withRadius} was never called
      */
     public void runLinearPosition(
-            Distance position,
-            PIDSlot slot,
-            LinearVelocity cruiseVelocity,
-            LinearAcceleration acceleration) {
+            Distance position, PIDSlot slot, LinearVelocity cruiseVelocity, LinearAcceleration acceleration) {
         requireRadius();
         Angle angle = Radians.of(position.in(Meters) / radiusMeters);
-        AngularVelocity angularCruiseVelocity =
-                RadiansPerSecond.of(cruiseVelocity.in(MetersPerSecond) / radiusMeters);
+        AngularVelocity angularCruiseVelocity = RadiansPerSecond.of(cruiseVelocity.in(MetersPerSecond) / radiusMeters);
         AngularAcceleration angularAcceleration =
-                RadiansPerSecondPerSecond.of(
-                        acceleration.in(MetersPerSecondPerSecond) / radiusMeters);
+                RadiansPerSecondPerSecond.of(acceleration.in(MetersPerSecondPerSecond) / radiusMeters);
         runPosition(angle, slot, angularCruiseVelocity, angularAcceleration);
     }
 
@@ -534,8 +514,7 @@ public abstract class Actuator<T extends MotorIO> {
      */
     public void runLinearVelocity(LinearVelocity velocity, PIDSlot slot) {
         requireRadius();
-        AngularVelocity angularVelocity =
-                RadiansPerSecond.of(velocity.in(MetersPerSecond) / radiusMeters);
+        AngularVelocity angularVelocity = RadiansPerSecond.of(velocity.in(MetersPerSecond) / radiusMeters);
         runVelocity(angularVelocity, slot);
     }
 
@@ -549,14 +528,11 @@ public abstract class Actuator<T extends MotorIO> {
      * @param acceleration Motion Magic acceleration in linear units used to ramp to target velocity
      * @throws IllegalStateException if {@link #withRadius} was never called
      */
-    public void runLinearVelocity(
-            LinearVelocity velocity, PIDSlot slot, LinearAcceleration acceleration) {
+    public void runLinearVelocity(LinearVelocity velocity, PIDSlot slot, LinearAcceleration acceleration) {
         requireRadius();
-        AngularVelocity angularVelocity =
-                RadiansPerSecond.of(velocity.in(MetersPerSecond) / radiusMeters);
+        AngularVelocity angularVelocity = RadiansPerSecond.of(velocity.in(MetersPerSecond) / radiusMeters);
         AngularAcceleration angularacceleration =
-                RadiansPerSecondPerSecond.of(
-                        acceleration.in(MetersPerSecondPerSecond) / radiusMeters);
+                RadiansPerSecondPerSecond.of(acceleration.in(MetersPerSecondPerSecond) / radiusMeters);
         runVelocity(angularVelocity, angularacceleration, slot);
     }
 
