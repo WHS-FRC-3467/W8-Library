@@ -58,15 +58,6 @@ public class Tower implements Mechanism {
     }
 
     /**
-     * Checks if the tower's velocity error is within tolerance.
-     *
-     * @return true if the velocity error is within tolerance
-     */
-    public boolean nearSetpoint() {
-        return io.getVelocityError().lte(TowerConstants.TOLERANCE);
-    }
-
-    /**
      * Gets the current velocity of the tower motor.
      *
      * @return The velocity in rotations per second
@@ -87,7 +78,11 @@ public class Tower implements Mechanism {
      * @return a command that runs the tower forward
      */
     public Command shoot() {
-        return this.run(c -> io.runCurrent(Amps.of(SHOOT_TORQUE_CURRENT.get())))
+        return this.run(
+                        c -> {
+                            io.runCurrent(Amps.of(SHOOT_TORQUE_CURRENT.get()));
+                            c.park();
+                        })
                 .whenCanceled(this::stop)
                 .named("Shoot");
     }
@@ -99,7 +94,11 @@ public class Tower implements Mechanism {
      * @return a command that runs the tower in reverse
      */
     public Command eject() {
-        return this.run(c -> io.runCurrent(Amps.of(EJECT_TORQUE_CURRENT.get())))
+        return this.run(
+                        c -> {
+                            io.runCurrent(Amps.of(EJECT_TORQUE_CURRENT.get()));
+                            c.park();
+                        })
                 .whenCanceled(this::stop)
                 .named("Eject");
     }
@@ -110,7 +109,13 @@ public class Tower implements Mechanism {
      * @return a command that stops the tower
      */
     public Command stopCommand() {
-        return this.run(c -> io.runBrake()).whenCanceled(this::stop).named("Stop");
+        return this.run(
+                        c -> {
+                            io.runBrake();
+                            c.park();
+                        })
+                .whenCanceled(this::stop)
+                .named("Stop");
     }
 
     /** Closes the underlying flywheel actuator and releases resources. */
