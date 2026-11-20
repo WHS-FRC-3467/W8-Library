@@ -124,7 +124,7 @@ public class IntakeRollerConstants {
                                 NAME,
                                 new MotorIOTalonFXSim(
                                         NAME,
-                                        MotorType.KrakenX44,
+                                        MotorType.KrakenX60,
                                         DCMOTOR,
                                         getFXConfig(),
                                         Ports.intakeRoller),

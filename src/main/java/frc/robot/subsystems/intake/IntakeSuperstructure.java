@@ -143,7 +143,7 @@ public class IntakeSuperstructure implements Mechanism, AutoCloseable {
                                                     IntakeLinearConstants.MAX_DISTANCE,
                                                     IntakeLinearConstants.CRUISE_VELOCITY,
                                                     IntakeLinearConstants.MAX_ACCELERATION)
-                                            .named("Extend Intake With Roller");
+                                            .named("Extend Intake");
 
                             c.await(extend);
                             c.waitUntil(isRollerSafe);
@@ -179,11 +179,6 @@ public class IntakeSuperstructure implements Mechanism, AutoCloseable {
     }
 
     public Command homeLinear() {
-        // return Commands.sequence(
-        //                 this.runOnce(() -> intakeLinearIO.runDutyCycle(0.25, true)), this.idle())
-        //         .finallyDo(() -> intakeLinearIO.setEncoderPosition(Rotations.of(3.7)))
-        //         .withName("Home Linear");
-
         return this.run(
                         c -> {
                             intakeLinearIO.runDutyCycle(0.25, true);
