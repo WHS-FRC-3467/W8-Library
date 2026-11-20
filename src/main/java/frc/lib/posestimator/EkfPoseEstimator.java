@@ -15,21 +15,21 @@
 
 package frc.lib.posestimator;
 
-import static edu.wpi.first.units.Units.Seconds;
+import static org.wpilib.units.Units.Seconds;
 
-import edu.wpi.first.math.MatBuilder;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.measure.Time;
+import org.wpilib.math.linalg.MatBuilder;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.util.Nat;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.linalg.Vector;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.SwerveDriveKinematics;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.units.measure.Time;
 
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
@@ -363,7 +363,7 @@ public class EkfPoseEstimator {
 
         // Initialize to a value not outside the field, same as PoseEstimator
         seedHistory(
-                new Pose2d(1, 1, Rotation2d.kZero),
+                new Pose2d(1, 1, Rotation2d.ZERO),
                 config.initialLinearStdDev(),
                 config.initialAngularStdDev());
     }
@@ -476,7 +476,7 @@ public class EkfPoseEstimator {
      * @param timestampSeconds the time to look up, in the same timebase as odometry samples
      * @return the velocity, or empty if the retained history does not reach that time
      */
-    public Optional<ChassisSpeeds> getVelocityAtTime(double timestampSeconds) {
+    public Optional<ChassisVelocities> getVelocityAtTime(double timestampSeconds) {
         double from = timestampSeconds - VELOCITY_WINDOW_SECONDS / 2.0;
         double to = timestampSeconds + VELOCITY_WINDOW_SECONDS / 2.0;
 
@@ -519,7 +519,7 @@ public class EkfPoseEstimator {
             dtheta = fallback.twist().dtheta;
             seconds = fallback.dtSeconds();
         }
-        return Optional.of(new ChassisSpeeds(dx / seconds, dy / seconds, dtheta / seconds));
+        return Optional.of(new ChassisVelocities(dx / seconds, dy / seconds, dtheta / seconds));
     }
 
     /**
@@ -815,7 +815,7 @@ public class EkfPoseEstimator {
 
         Matrix<N3, N3> covariance =
                 MatBuilder.fill(Nat.N3(), Nat.N3(), r00, r01, c02, r01, r11, c12, c02, c12, r22);
-        return new State(prior.pose().exp(twist), covariance);
+        return new State(prior.pose().plus(twist.exp()), covariance);
     }
 
     /**
@@ -1137,7 +1137,7 @@ public class EkfPoseEstimator {
     }
 
     private void predictFromOdometry(Pose2d lastOdometryPose, double timestampSeconds) {
-        applyOdometryTwist(lastOdometryPose.log(odometry.odometryPose()), timestampSeconds);
+        applyOdometryTwist(odometry.odometryPose().minus(lastOdometryPose).log(), timestampSeconds);
     }
 
     /**

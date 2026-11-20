@@ -15,27 +15,24 @@
 
 package frc.lib.io.motor;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Celsius;
-import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.Rotations;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.Volts;
-
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Temperature;
-import edu.wpi.first.units.measure.Voltage;
+import static org.wpilib.units.Units.Amps;
+import static org.wpilib.units.Units.Celsius;
+import static org.wpilib.units.Units.Radians;
+import static org.wpilib.units.Units.RadiansPerSecond;
+import static org.wpilib.units.Units.Rotations;
+import static org.wpilib.units.Units.RotationsPerSecond;
+import static org.wpilib.units.Units.Volts;
 
 import frc.lib.util.PID;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
 import org.littletonrobotics.junction.AutoLog;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularAcceleration;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Current;
+import org.wpilib.units.measure.Temperature;
+import org.wpilib.units.measure.Voltage;
 
 /**
  * Standardized interface for motor controllers used in FRC. Supports multiple control modes and
@@ -63,8 +60,15 @@ public interface MotorIO extends AutoCloseable {
         VELOCITY
     }
 
+    /**
+     * Motor inputs class carrying information including motor telemetry, control variables,
+     * configuration/parameters. Configuration/parameters (e.g. rotorToMechanismRatio) are
+     * continuously written to the inputs structure by the MotorIO implementation despite being
+     * static metadata. This is because raw getters in the IO layer may not be consistent with
+     * replay.
+     */
     @AutoLog
-    abstract class MotorInputs {
+    abstract class MotorIOInputs {
         /** Whether the motor is connected. */
         public boolean connected = false;
 
@@ -74,19 +78,24 @@ public interface MotorIO extends AutoCloseable {
         /** Mechanism velocity. */
         public AngularVelocity velocity = RadiansPerSecond.of(0.0);
 
-        /** Motor supply (bus) voltage. */
+        /** Motor supply (bus) voltage. Approximately applies to all motors in the motor group. */
         public Voltage supplyVoltage = Volts.of(0.0);
 
-        /** Motor applied (output) voltage. */
+        /**
+         * Motor applied (output) voltage. Approximately applies to all motors in the motor group.
+         */
         public Voltage appliedVoltage = Volts.of(0.0);
 
-        /** Total supply current to the motor. */
+        /** Total supply current to the motor. Only applies to the leader of the motor group. */
         public Current supplyCurrent = Amps.of(0.0);
 
-        /** Torque-producing (stator) current through the motor. */
+        /**
+         * Torque-producing (stator) current through the motor. Only applies to the leader of the
+         * motor group.
+         */
         public Current torqueCurrent = Amps.of(0.0);
 
-        /** Motor temperature in degrees. */
+        /** Motor temperature in degrees. Approximately applies to all motors in the motor group. */
         public Temperature temperature = Celsius.of(0.0);
 
         /** Error in mechanism position. */
@@ -109,15 +118,34 @@ public interface MotorIO extends AutoCloseable {
 
         /** Current control type. */
         public ControlType controlType = ControlType.BRAKE;
+
+        /** The number of motors associated with the motor object (leader + all followers). */
+        public int numberOfMotors = 1;
+
+        /** The ratio of motor rotor rotations to feedback sensor rotations. */
+        public double rotorToSensorRatio = 1.0;
+
+        /** The ratio of feedback sensor rotations to mechanism output rotations. */
+        public double sensorToMechanismRatio = 1.0;
+
+        /**
+         * The ratio of motor rotor rotations to mechanism output rotations. Equal to
+         * rotorToSensorRatio * sensorToMechanismRatio.
+         */
+        public double rotorToMechanismRatio = 1.0;
+
+        /** The motor's torque constant Kt ((N*m)/A). Returns -1.0 when a Kt is not set. */
+        public double motorTorqueConstant = -1.0;
     }
 
     /**
-     * Updates the provided {@link MotorInputs} instance with the latest sensor readings. If the
-     * sensor is not connected, it populates the fields with default values.
+     * Updates the provided {@link MotorIOInputs} instance with the latest sensor readings and motor
+     * configuration metadata such as motor count, gearing, and torque constant. If the sensor is
+     * not connected, it populates the fields with default values.
      *
      * @param inputs The structure to populate with updated sensor values.
      */
-    public default void updateInputs(MotorInputs inputs) {}
+    public default void updateInputs(MotorIOInputs inputs) {}
 
     /** Sets the motor to coast mode. */
     public default void runCoast() {}
@@ -184,10 +212,7 @@ public interface MotorIO extends AutoCloseable {
      * @param acceleration Motion Magic acceleration to use for the motion profile.
      */
     public default void runPosition(
-            Angle position,
-            PIDSlot slot,
-            AngularVelocity cruiseVelocity,
-            AngularAcceleration acceleration) {}
+            Angle position, PIDSlot slot, AngularVelocity cruiseVelocity, AngularAcceleration acceleration) {}
 
     /**
      * Runs the motor to a specific position without a motion profile.
@@ -213,15 +238,15 @@ public interface MotorIO extends AutoCloseable {
      * @param acceleration Motion Magic acceleration used to ramp to target velocity.
      * @param slot PID slot index.
      */
-    public default void runVelocity(
-            AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot) {}
+    public default void runVelocity(AngularVelocity velocity, AngularAcceleration acceleration, PIDSlot slot) {}
 
-    /** Sets the motor's internal encoder to interpret the current mechanism position as "position". 
-     * For example, if you call MotorIO.setEncoderPosition(Rotations.of(0.0)), the motor's internal 
+    /**
+     * Sets the motor's internal encoder to interpret the current mechanism position as "position".
+     * For example, if you call MotorIO.setEncoderPosition(Rotations.of(0.0)), the motor's internal
      * encoder will read the current mechanism position as zero.
-     * 
+     *
      * @param position The new encoder reading for the current mechanism position.
-    */
+     */
     public default void setEncoderPosition(Angle position) {}
 
     /**
@@ -238,42 +263,6 @@ public interface MotorIO extends AutoCloseable {
      * @param currentLimit Desired supply current limit.
      */
     public default void setSupplyCurrentLimit(Current currentLimit) {}
-
-    /**
-     * Return the total number of motors associated with this motor object
-     *
-     * @return The number of motors associated with the motor object (leader + all followers)
-     */
-    public default int getNumberOfMotors() {
-        return 1;
-    }
-
-    /** 
-     * Return the ratio of rotor rotations to the motor's internal encoder rotations
-     * 
-     * @return The ratio of rotor rotations to motor's internal encoder rotations
-     */
-    public default double getRotorToSensorRatio() {
-        return 1.0;
-    }
-
-    /**  
-     * Return the ratio of the motor's internal encoder rotations to mechanism rotations
-     * 
-     * @return The ratio of the motor's internal encoder rotations to mechanism rotations
-     */
-    public default double getSensorToMechanismRatio() {
-        return 1.0;
-    }
-
-    /** 
-     * Return the ratio of rotor rotations to mechanism rotations
-     * 
-     * @return The ratio of rotor rotations to mechanism rotations
-     */
-    public default double getRotorToMechanismRatio() {
-        return getRotorToSensorRatio() * getSensorToMechanismRatio();
-    }
 
     @Override
     public default void close() {}

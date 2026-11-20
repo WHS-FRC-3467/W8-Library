@@ -15,20 +15,17 @@
 
 package frc.lib.io.vision;
 
-import static edu.wpi.first.units.Units.Radians;
+import static org.wpilib.units.Units.Radians;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.units.Units;
-
-import frc.lib.devices.AprilTagCamera.CameraProperties;
-
+import frc.lib.sensors.AprilTagCamera.CameraProperties;
+import java.util.function.Supplier;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
-
-import java.util.function.Supplier;
+import org.wpilib.fields.Field;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.units.Units;
 
 /**
  * Simulated implementation of {@link VisionIOPhotonVision} using the PhotonVision simulation
@@ -48,7 +45,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
             CameraProperties cameraProperties,
             VisionSystemSim system,
             Supplier<Pose2d> poseSupplier,
-            AprilTagFieldLayout fieldLayout) {
+            Field fieldLayout) {
         super(cameraProperties);
         this.poseSupplier = poseSupplier;
         this.system = system;
@@ -69,8 +66,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
 
         simCameraProperties.setFPS(cameraProperties.fps());
         simCameraProperties.setAvgLatencyMs(cameraProperties.latency().in(Units.Milliseconds));
-        simCameraProperties.setLatencyStdDevMs(
-                cameraProperties.latencyStdDev().in(Units.Milliseconds));
+        simCameraProperties.setLatencyStdDevMs(cameraProperties.latencyStdDev().in(Units.Milliseconds));
 
         cameraSim = new PhotonCameraSim(super.photonCamera, simCameraProperties, fieldLayout);
         this.system.addCamera(cameraSim, cameraProperties.robotToCamera());

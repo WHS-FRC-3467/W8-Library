@@ -7,19 +7,17 @@ package frc.lib.util;
 // license that can be found in the LICENSE file at
 // the root directory of this project.
 import frc.robot.Constants;
-
-import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 /**
  * A tunable boolean value that can be adjusted from the dashboard during tuning.
  *
- * <p>When {@link frc.robot.Constants#tuningMode} is enabled, this class reads values from
+ * <p>When {@link frc.robot.Constants#TUNING_MODE} is enabled, this class reads values from
  * NetworkTables, allowing real-time tuning without redeploying code. When tuning mode is disabled,
  * it returns the default value.
  *
@@ -72,7 +70,7 @@ public class LoggedTunableBoolean implements BooleanSupplier {
         if (!hasDefault) {
             hasDefault = true;
             this.defaultValue = defaultValue;
-            if (Constants.tuningMode) {
+            if (Constants.TUNING_MODE) {
                 dashboardBoolean = new LoggedNetworkBoolean(key, defaultValue);
             }
         }
@@ -87,7 +85,7 @@ public class LoggedTunableBoolean implements BooleanSupplier {
         if (!hasDefault) {
             return false;
         } else {
-            return Constants.tuningMode ? dashboardBoolean.get() : defaultValue;
+            return Constants.TUNING_MODE ? dashboardBoolean.get() : defaultValue;
         }
     }
 
@@ -119,14 +117,11 @@ public class LoggedTunableBoolean implements BooleanSupplier {
      *     booleans in order inputted in method
      * @param tunableBooleans All tunable booleans to check
      */
-    public static void ifChanged(
-            int id, Consumer<boolean[]> action, LoggedTunableBoolean... tunableBooleans) {
-        if (Arrays.stream(tunableBooleans)
-                .anyMatch(tunableBoolean -> tunableBoolean.hasChanged(id))) {
-            Boolean[] array =
-                    Arrays.stream(tunableBooleans)
-                            .map(LoggedTunableBoolean::get)
-                            .toArray(Boolean[]::new);
+    public static void ifChanged(int id, Consumer<boolean[]> action, LoggedTunableBoolean... tunableBooleans) {
+        if (Arrays.stream(tunableBooleans).anyMatch(tunableBoolean -> tunableBoolean.hasChanged(id))) {
+            Boolean[] array = Arrays.stream(tunableBooleans)
+                    .map(LoggedTunableBoolean::get)
+                    .toArray(Boolean[]::new);
             boolean[] array2 = new boolean[array.length];
             for (int i = 0; i < array.length; i++) {
                 array2[i] = array[i].booleanValue();

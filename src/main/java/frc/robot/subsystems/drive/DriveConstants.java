@@ -1,43 +1,37 @@
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.*;
+import static org.wpilib.units.Units.*;
 
 import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.hardware.*;
 import com.ctre.phoenix6.signals.*;
 import com.ctre.phoenix6.swerve.*;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.*;
-
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.measure.*;
-
 import frc.robot.Constants;
 import frc.robot.Ports;
+import lombok.Getter;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.numbers.N1;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.units.measure.*;
 
 /**
  * Configuration constants for the swerve drivetrain.
  *
- * <p>
- * This class contains all hardware configuration for the swerve drive system,
- * including:
+ * <p>This class contains all hardware configuration for the swerve drive system, including:
  *
  * <ul>
- * <li>PID gains for drive and steer motors
- * <li>Physical dimensions (wheel radius, gear ratios, module positions)
- * <li>Module-specific configurations (encoder offsets, motor IDs, inversions)
- * <li>Simulation parameters (inertia, friction voltages)
+ *   <li>PID gains for drive and steer motors
+ *   <li>Physical dimensions (wheel radius, gear ratios, module positions)
+ *   <li>Module-specific configurations (encoder offsets, motor IDs, inversions)
+ *   <li>Simulation parameters (inertia, friction voltages)
  * </ul>
  *
- * <p>
- * Generated using CTRE Tuner X Swerve Project Generator. Module encoder offsets
- * should be
+ * <p>Generated using CTRE Tuner X Swerve Project Generator. Module encoder offsets should be
  * re-calibrated when encoders are changed or modules are rebuilt.
  *
- * @see <a href=
- *      "https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/tuner-swerve/index.html">
- *      CTRE Tuner X Swerve Documentation</a>
+ * @see <a href= "https://v6.docs.ctr-electronics.com/en/stable/docs/tuner/tuner-swerve/index.html">
+ *     CTRE Tuner X Swerve Documentation</a>
  */
 public class DriveConstants {
     // Both sets of gains need to be tuned to your individual robot.
@@ -51,7 +45,8 @@ public class DriveConstants {
             .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
     // When using closed-loop control, the drive motor uses the control
     // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
-    private static final Slot0Configs driveGains = new Slot0Configs().withKP(60.0).withKS(7.26299);
+    private static final Slot0Configs driveGains =
+            new Slot0Configs().withKP(60.0).withKS(7.26299);
 
     // The closed-loop output type to use for the steer motors;
     // This affects the PID/FF gains for the steer motors
@@ -72,20 +67,23 @@ public class DriveConstants {
 
     // The stator current at which the wheels start to slip;
     // This needs to be tuned to your individual robot
+    @Getter
     private static final Current kSlipCurrent = Amps.of(94.0);
+
+    @Getter
+    private static final Current turnCurrentMax = Amps.of(60.0);
 
     private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration();
     private static final TalonFXConfiguration steerInitialConfigs = new TalonFXConfiguration()
-            .withCurrentLimits(
-                    new CurrentLimitsConfigs()
-                            // Swerve azimuth does not require much torque output, so we can
-                            // set a
-                            // relatively
-                            // low
-                            // stator current limit to help avoid brownouts without
-                            // impacting performance.
-                            .withStatorCurrentLimit(Amps.of(60))
-                            .withStatorCurrentLimitEnable(true));
+            .withCurrentLimits(new CurrentLimitsConfigs()
+                    // Swerve azimuth does not require much torque output, so we can
+                    // set a
+                    // relatively
+                    // low
+                    // stator current limit to help avoid brownouts without
+                    // impacting performance.
+                    .withStatorCurrentLimit(turnCurrentMax)
+                    .withStatorCurrentLimitEnable(true));
     private static final CANcoderConfiguration encoderInitialConfigs = new CANcoderConfiguration();
     // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs
     private static final Pigeon2Configuration pigeonConfigs = null;
@@ -108,38 +106,41 @@ public class DriveConstants {
     private static final int kPigeonId = 14;
 
     // These are only used for simulation
+    private static final Mass kWheelMass = Kilograms.of(0.25);
     private static final MomentOfInertia kSteerInertia = KilogramSquareMeters.of(0.004);
-    private static final MomentOfInertia kDriveInertia = KilogramSquareMeters.of(0.025);
+    private static final MomentOfInertia kDriveInertia = calculateDriveOutputInertia();
     // Simulated voltage necessary to overcome friction
     private static final Voltage kSteerFrictionVoltage = Volts.of(0.2);
     private static final Voltage kDriveFrictionVoltage = Volts.of(0.2);
 
     public static final SwerveDrivetrainConstants drivetrainConstants = new SwerveDrivetrainConstants()
-            .withCANBusName(Ports.DRIVETRAIN_BUS.getName())
+            .withNetwork(Ports.DRIVETRAIN_BUS)
             .withPigeon2Id(kPigeonId)
             .withPigeon2Configs(pigeonConfigs);
 
-    private static final SwerveModuleConstantsFactory<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> ConstantCreator = new SwerveModuleConstantsFactory<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>()
-            .withDriveMotorGearRatio(kDriveGearRatio)
-            .withSteerMotorGearRatio(kSteerGearRatio)
-            .withCouplingGearRatio(kCoupleRatio)
-            .withWheelRadius(kWheelRadius)
-            .withSteerMotorGains(steerGains)
-            .withDriveMotorGains(driveGains)
-            .withSteerMotorClosedLoopOutput(kSteerClosedLoopOutput)
-            .withDriveMotorClosedLoopOutput(kDriveClosedLoopOutput)
-            .withSlipCurrent(kSlipCurrent)
-            .withSpeedAt12Volts(kSpeedAt12Volts)
-            .withDriveMotorType(kDriveMotorType)
-            .withSteerMotorType(kSteerMotorType)
-            .withFeedbackSource(kSteerFeedbackType)
-            .withDriveMotorInitialConfigs(driveInitialConfigs)
-            .withSteerMotorInitialConfigs(steerInitialConfigs)
-            .withEncoderInitialConfigs(encoderInitialConfigs)
-            .withSteerInertia(kSteerInertia)
-            .withDriveInertia(kDriveInertia)
-            .withSteerFrictionVoltage(kSteerFrictionVoltage)
-            .withDriveFrictionVoltage(kDriveFrictionVoltage);
+    private static final SwerveModuleConstantsFactory<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+            ConstantCreator = new SwerveModuleConstantsFactory<
+                            TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>()
+                    .withDriveMotorGearRatio(kDriveGearRatio)
+                    .withSteerMotorGearRatio(kSteerGearRatio)
+                    .withCouplingGearRatio(kCoupleRatio)
+                    .withWheelRadius(kWheelRadius)
+                    .withSteerMotorGains(steerGains)
+                    .withDriveMotorGains(driveGains)
+                    .withSteerMotorClosedLoopOutput(kSteerClosedLoopOutput)
+                    .withDriveMotorClosedLoopOutput(kDriveClosedLoopOutput)
+                    .withSlipCurrent(kSlipCurrent)
+                    .withSpeedAt12Volts(kSpeedAt12Volts)
+                    .withDriveMotorType(kDriveMotorType)
+                    .withSteerMotorType(kSteerMotorType)
+                    .withFeedbackSource(kSteerFeedbackType)
+                    .withDriveMotorInitialConfigs(driveInitialConfigs)
+                    .withSteerMotorInitialConfigs(steerInitialConfigs)
+                    .withEncoderInitialConfigs(encoderInitialConfigs)
+                    .withSteerInertia(kSteerInertia)
+                    .withDriveInertia(kDriveInertia)
+                    .withSteerFrictionVoltage(kSteerFrictionVoltage)
+                    .withDriveFrictionVoltage(kDriveFrictionVoltage);
 
     // Front Left
     private static final int kFrontLeftDriveMotorId = 4;
@@ -185,8 +186,8 @@ public class DriveConstants {
     private static final Distance kBackRightXPos = Inches.of(-11);
     private static final Distance kBackRightYPos = Inches.of(-11);
 
-    public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> FrontLeft = ConstantCreator
-            .createModuleConstants(
+    public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+            FrontLeft = ConstantCreator.createModuleConstants(
                     kFrontLeftSteerMotorId,
                     kFrontLeftDriveMotorId,
                     kFrontLeftEncoderId,
@@ -196,8 +197,8 @@ public class DriveConstants {
                     kInvertLeftSide,
                     kFrontLeftSteerMotorInverted,
                     kFrontLeftEncoderInverted);
-    public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> FrontRight = ConstantCreator
-            .createModuleConstants(
+    public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+            FrontRight = ConstantCreator.createModuleConstants(
                     kFrontRightSteerMotorId,
                     kFrontRightDriveMotorId,
                     kFrontRightEncoderId,
@@ -207,8 +208,8 @@ public class DriveConstants {
                     kInvertRightSide,
                     kFrontRightSteerMotorInverted,
                     kFrontRightEncoderInverted);
-    public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> BackLeft = ConstantCreator
-            .createModuleConstants(
+    public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+            BackLeft = ConstantCreator.createModuleConstants(
                     kBackLeftSteerMotorId,
                     kBackLeftDriveMotorId,
                     kBackLeftEncoderId,
@@ -218,8 +219,8 @@ public class DriveConstants {
                     kInvertLeftSide,
                     kBackLeftSteerMotorInverted,
                     kBackLeftEncoderInverted);
-    public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> BackRight = ConstantCreator
-            .createModuleConstants(
+    public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+            BackRight = ConstantCreator.createModuleConstants(
                     kBackRightSteerMotorId,
                     kBackRightDriveMotorId,
                     kBackRightEncoderId,
@@ -231,12 +232,11 @@ public class DriveConstants {
                     kBackRightEncoderInverted);
 
     // Gyro
-    public static final Pigeon2Configuration PIGEON_CONFIGURATION = new Pigeon2Configuration()
-            .withMountPose(new MountPoseConfigs().withMountPoseRoll(Degrees.of(180.0)));
+    public static final Pigeon2Configuration PIGEON_CONFIGURATION =
+            new Pigeon2Configuration().withMountPose(new MountPoseConfigs().withMountPoseRoll(Degrees.of(180.0)));
 
     /**
-     * Creates a CommandSwerveDrivetrain instance. This should only be called once
-     * in your robot
+     * Creates a CommandSwerveDrivetrain instance. This should only be called once in your robot
      * program,.
      */
     // public static CommandSwerveDrivetrain createDrivetrain() {
@@ -245,84 +245,58 @@ public class DriveConstants {
     // }
 
     /**
-     * Swerve Drive class utilizing CTR Electronics' Phoenix 6 API with the selected
-     * device types.
+     * Swerve Drive class utilizing CTR Electronics' Phoenix 6 API with the selected device types.
      */
     public static class TunerSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder> {
         /**
          * Constructs a CTRE SwerveDrivetrain using the specified constants.
          *
-         * <p>
-         * This constructs the underlying hardware devices, so users should not
-         * construct the
-         * devices themselves. If they need the devices, they can access them through
-         * getters in the
+         * <p>This constructs the underlying hardware devices, so users should not construct the
+         * devices themselves. If they need the devices, they can access them through getters in the
          * classes.
          *
          * @param drivetrainConstants Drivetrain-wide constants for the swerve drive
-         * @param modules             Constants for each specific module
+         * @param modules Constants for each specific module
          */
         public TunerSwerveDrivetrain(
-                SwerveDrivetrainConstants drivetrainConstants,
-                SwerveModuleConstants<?, ?, ?>... modules) {
+                SwerveDrivetrainConstants drivetrainConstants, SwerveModuleConstants<?, ?, ?>... modules) {
             super(TalonFX::new, TalonFX::new, CANcoder::new, drivetrainConstants, modules);
         }
 
         /**
          * Constructs a CTRE SwerveDrivetrain using the specified constants.
          *
-         * <p>
-         * This constructs the underlying hardware devices, so users should not
-         * construct the
-         * devices themselves. If they need the devices, they can access them through
-         * getters in the
+         * <p>This constructs the underlying hardware devices, so users should not construct the
+         * devices themselves. If they need the devices, they can access them through getters in the
          * classes.
          *
-         * @param drivetrainConstants     Drivetrain-wide constants for the swerve drive
-         * @param odometryUpdateFrequency The frequency to run the odometry loop. If
-         *                                unspecified or
-         *                                set to 0 Hz, this is 250 Hz on CAN FD, and 100
-         *                                Hz on CAN 2.0.
-         * @param modules                 Constants for each specific module
+         * @param drivetrainConstants Drivetrain-wide constants for the swerve drive
+         * @param odometryUpdateFrequency The frequency to run the odometry loop. If unspecified or
+         *     set to 0 Hz, this is 250 Hz on CAN FD, and 100 Hz on CAN 2.0.
+         * @param modules Constants for each specific module
          */
         public TunerSwerveDrivetrain(
                 SwerveDrivetrainConstants drivetrainConstants,
                 double odometryUpdateFrequency,
                 SwerveModuleConstants<?, ?, ?>... modules) {
-            super(
-                    TalonFX::new,
-                    TalonFX::new,
-                    CANcoder::new,
-                    drivetrainConstants,
-                    odometryUpdateFrequency,
-                    modules);
+            super(TalonFX::new, TalonFX::new, CANcoder::new, drivetrainConstants, odometryUpdateFrequency, modules);
         }
 
         /**
          * Constructs a CTRE SwerveDrivetrain using the specified constants.
          *
-         * <p>
-         * This constructs the underlying hardware devices, so users should not
-         * construct the
-         * devices themselves. If they need the devices, they can access them through
-         * getters in the
+         * <p>This constructs the underlying hardware devices, so users should not construct the
+         * devices themselves. If they need the devices, they can access them through getters in the
          * classes.
          *
-         * @param drivetrainConstants       Drivetrain-wide constants for the swerve
-         *                                  drive
-         * @param odometryUpdateFrequency   The frequency to run the odometry loop. If
-         *                                  unspecified or
-         *                                  set to 0 Hz, this is 250 Hz on CAN FD, and
-         *                                  100 Hz on CAN 2.0.
-         * @param odometryStandardDeviation The standard deviation for odometry
-         *                                  calculation in the
-         *                                  form [x, y, theta]ᵀ, with units in meters
-         *                                  and radians
-         * @param visionStandardDeviation   The standard deviation for vision
-         *                                  calculation in the form
-         *                                  [x, y, theta]ᵀ, with units in meters and
-         *                                  radians
-         * @param modules                   Constants for each specific module
+         * @param drivetrainConstants Drivetrain-wide constants for the swerve drive
+         * @param odometryUpdateFrequency The frequency to run the odometry loop. If unspecified or
+         *     set to 0 Hz, this is 250 Hz on CAN FD, and 100 Hz on CAN 2.0.
+         * @param odometryStandardDeviation The standard deviation for odometry calculation in the
+         *     form [x, y, theta]ᵀ, with units in meters and radians
+         * @param visionStandardDeviation The standard deviation for vision calculation in the form
+         *     [x, y, theta]ᵀ, with units in meters and radians
+         * @param modules Constants for each specific module
          */
         public TunerSwerveDrivetrain(
                 SwerveDrivetrainConstants drivetrainConstants,
@@ -348,33 +322,47 @@ public class DriveConstants {
      * @return Drive subsystem instance with appropriate IO implementations
      */
     public static Drive get() {
-        switch (Constants.currentMode) {
+        switch (Constants.CURRENT_MODE) {
             case REAL:
                 return new Drive(
                         new GyroIOPigeon2(),
-                        new ModuleIOTalonFX(DriveConstants.FrontLeft),
-                        new ModuleIOTalonFX(DriveConstants.FrontRight),
-                        new ModuleIOTalonFX(DriveConstants.BackLeft),
-                        new ModuleIOTalonFX(DriveConstants.BackRight));
+                        new ModuleIOTalonFX("FrontLeft", DriveConstants.FrontLeft),
+                        new ModuleIOTalonFX("FrontRight", DriveConstants.FrontRight),
+                        new ModuleIOTalonFX("BackLeft", DriveConstants.BackLeft),
+                        new ModuleIOTalonFX("BackRight", DriveConstants.BackRight));
             case SIM:
                 return new Drive(
-                        new GyroIO() {
-                        },
-                        new ModuleIOSim(DriveConstants.FrontLeft),
-                        new ModuleIOSim(DriveConstants.FrontRight),
-                        new ModuleIOSim(DriveConstants.BackLeft),
-                        new ModuleIOSim(DriveConstants.BackRight));
+                        new GyroIO() {},
+                        new ModuleIOSim("FrontLeft", DriveConstants.FrontLeft),
+                        new ModuleIOSim("FrontRight", DriveConstants.FrontRight),
+                        new ModuleIOSim("BackLeft", DriveConstants.BackLeft),
+                        new ModuleIOSim("BackRight", DriveConstants.BackRight));
             case REPLAY:
                 return new Drive(
-                        new GyroIO() {
+                        new GyroIO() {},
+                        new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "FrontLeft";
+                            }
                         },
                         new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "FrontRight";
+                            }
                         },
                         new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "BackLeft";
+                            }
                         },
                         new ModuleIO() {
-                        },
-                        new ModuleIO() {
+                            @Override
+                            public String getName() {
+                                return "BackRight";
+                            }
                         });
             default:
                 throw new IllegalStateException("Unrecognized Robot Mode");
@@ -382,12 +370,34 @@ public class DriveConstants {
     }
 
     /**
-     * Maximum absolute pitch/roll angle at which the drivetrain is still considered
-     * level. When the
-     * robot's pitch/roll exceeds this threshold, the drivetrain is treated as
-     * angled and
-     * vision-based pose updates are ignored to prevent inaccurate pose estimation
-     * while the robot
+     * Returns the approximate output-side inertia seen by one drive motor at the wheel shaft.
+     *
+     * <p>This includes the wheel's own spin inertia plus the equivalent rotational inertia needed
+     * to accelerate one quarter of the robot mass through the wheel radius:
+     *
+     * <pre>
+     * a = alpha * r
+     * F = m_eff * a
+     * tau = F * r
+     * tau = m_eff * r^2 * alpha
+     * J_equiv = m_eff * r^2 ~ reflected translational inertia onto the wheel
+     * </pre>
+     */
+    private static MomentOfInertia calculateDriveOutputInertia() {
+        // MOI of solid center-driven wheel
+        MomentOfInertia wheelInertia =
+                KilogramSquareMeters.of(0.5 * kWheelMass.in(Kilograms) * Math.pow(kWheelRadius.in(Meters), 2));
+        // Equivalent MOI of robot mass seen at wheel shaft (1/4 of robot mass per wheel)
+        MomentOfInertia robotInertia = KilogramSquareMeters.of(
+                Constants.FULL_ROBOT_MASS.in(Kilograms) / 4.0 * Math.pow(kWheelRadius.in(Meters), 2));
+        // MOIs referencing same axis of rotation are additive
+        return wheelInertia.plus(robotInertia);
+    }
+
+    /**
+     * Maximum absolute pitch/roll angle at which the drivetrain is still considered level. When the
+     * robot's pitch/roll exceeds this threshold, the drivetrain is treated as angled and
+     * vision-based pose updates are ignored to prevent inaccurate pose estimation while the robot
      * is on an incline or bump.
      */
     public static final Angle ANGLED_TOLERANCE = Degrees.of(3.0);

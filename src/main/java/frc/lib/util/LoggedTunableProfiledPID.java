@@ -4,8 +4,8 @@
 
 package frc.lib.util;
 
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import org.wpilib.math.controller.ProfiledPIDController;
+import org.wpilib.math.trajectory.TrapezoidProfile;
 
 /**
  * A ProfiledPIDController with tunable gains that can be adjusted from the dashboard.
@@ -47,8 +47,7 @@ public class LoggedTunableProfiledPID extends ProfiledPIDController {
      * @param maxV Maximum velocity
      * @param maxA Maximum acceleration
      */
-    public LoggedTunableProfiledPID(
-            String name, double kP, double kI, double kD, double maxV, double maxA) {
+    public LoggedTunableProfiledPID(String name, double kP, double kI, double kD, double maxV, double maxA) {
         this(name, kP, kI, kD, maxV, maxA, .02);
     }
 
@@ -64,13 +63,7 @@ public class LoggedTunableProfiledPID extends ProfiledPIDController {
      * @param period Loop period in seconds
      */
     public LoggedTunableProfiledPID(
-            String name,
-            double p,
-            double i,
-            double d,
-            double maxVelocity,
-            double maxAcceleration,
-            double period) {
+            String name, double p, double i, double d, double maxVelocity, double maxAcceleration, double period) {
         super(p, i, d, new TrapezoidProfile.Constraints(maxVelocity, maxAcceleration), period);
 
         // Tunable numbers for PID and motion gain constants
@@ -90,8 +83,7 @@ public class LoggedTunableProfiledPID extends ProfiledPIDController {
         }
 
         if (maxVelocity.hasChanged(hashCode()) || maxAcceleration.hasChanged(hashCode())) {
-            this.setConstraints(
-                    new TrapezoidProfile.Constraints(maxVelocity.get(), maxAcceleration.get()));
+            this.setConstraints(new TrapezoidProfile.Constraints(maxVelocity.get(), maxAcceleration.get()));
         }
     }
 }

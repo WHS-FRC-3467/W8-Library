@@ -15,24 +15,24 @@
 
 package frc.lib.posestimator;
 
-import static edu.wpi.first.units.Units.Seconds;
+import static org.wpilib.units.Units.Seconds;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.numbers.N3;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.util.Nat;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.SwerveDriveKinematics;
+import org.wpilib.math.kinematics.SwerveModulePosition;
+import org.wpilib.math.numbers.N3;
 
 import frc.lib.posestimator.EkfPoseEstimator.Config;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
@@ -59,10 +59,10 @@ class EkfPoseEstimatorTest {
     private static OdometryObservation odometry(double timestamp, double distance) {
         SwerveModulePosition[] positions = new SwerveModulePosition[4];
         for (int i = 0; i < 4; i++) {
-            positions[i] = new SwerveModulePosition(distance, Rotation2d.kZero);
+            positions[i] = new SwerveModulePosition(distance, Rotation2d.ZERO);
         }
         return new OdometryObservation(
-                Seconds.of(timestamp), positions, Optional.of(Rotation2d.kZero));
+                Seconds.of(timestamp), positions, Optional.of(Rotation2d.ZERO));
     }
 
     private static VisionPoseObservation vision(
@@ -158,7 +158,7 @@ class EkfPoseEstimatorTest {
     }
 
     private static double[] propagate(double[] state, Twist2d twist) {
-        Pose2d next = new Pose2d(state[0], state[1], Rotation2d.fromRadians(state[2])).exp(twist);
+        Pose2d next = new Pose2d(state[0], state[1], Rotation2d.fromRadians(state[2])).plus(twist.exp());
         // Unwrapped heading so finite differences do not see a 2π jump
         return new double[] {next.getX(), next.getY(), state[2] + twist.dtheta};
     }
@@ -168,7 +168,7 @@ class EkfPoseEstimatorTest {
     @Test
     void covarianceGrowsWhileDrivingAndStaysSymmetricPositive() {
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         double before = sigma(estimator, 0);
 
         drive(estimator, 0.0, 10.0);
@@ -198,7 +198,7 @@ class EkfPoseEstimatorTest {
                         .resetAngularStdDev(0.1)
                         .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
 
         drive(estimator, 0.0, 5.0);
 
@@ -213,14 +213,14 @@ class EkfPoseEstimatorTest {
     void visionPullsEstimateAndShrinksCovariance() {
         Config config = Config.DEFAULT.toBuilder().resetLinearStdDev(0.5).build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
-        estimator.resetPose(new Pose2d(0.5, 0.0, Rotation2d.kZero)); // truth starts at x=0
+        estimator.resetPose(new Pose2d(0.5, 0.0, Rotation2d.ZERO)); // truth starts at x=0
 
         drive(estimator, 0.0, 1.0);
         double sigmaBefore = sigma(estimator, 0);
 
         // Truth at t=1 is x=1, estimate is 1.5
         estimator.addVisionObservation(
-                vision(1.0, new Pose2d(1.0, 0, Rotation2d.kZero), 0.05, 0.02));
+                vision(1.0, new Pose2d(1.0, 0, Rotation2d.ZERO), 0.05, 0.02));
 
         assertEquals(1.0, estimator.estimatedPose().getX(), 0.05);
         assertTrue(sigma(estimator, 0) < sigmaBefore);
@@ -230,14 +230,14 @@ class EkfPoseEstimatorTest {
     void lateVisionFrameIsReplayedToThePresent() {
         Config config = Config.DEFAULT.toBuilder().resetLinearStdDev(0.5).build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
 
         drive(estimator, 0.0, 1.0);
 
         // A frame captured at t=0.5 says we were really at x=0.8 (estimate said 0.5). The robot
         // then drove 0.5 m more, so the corrected present pose is about 1.3, not 0.8.
         estimator.addVisionObservation(
-                vision(0.5, new Pose2d(0.8, 0, Rotation2d.kZero), 0.001, 0.001));
+                vision(0.5, new Pose2d(0.8, 0, Rotation2d.ZERO), 0.001, 0.001));
 
         assertEquals(1.3, estimator.estimatedPose().getX(), 0.01);
         // History is corrected too
@@ -249,12 +249,12 @@ class EkfPoseEstimatorTest {
     @Test
     void visionOlderThanRetainedHistoryIsIgnored() {
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         drive(estimator, 10.0, 15.0); // buffer is 2 s, so t=10 has been dropped
 
         Pose2d before = estimator.estimatedPose();
         estimator.addVisionObservation(
-                vision(10.0, new Pose2d(5, 5, Rotation2d.kZero), 0.01, 0.01));
+                vision(10.0, new Pose2d(5, 5, Rotation2d.ZERO), 0.01, 0.01));
 
         assertEquals(before, estimator.estimatedPose());
         assertTrue(estimator.getPoseAtTime(10.0).isEmpty());
@@ -267,7 +267,7 @@ class EkfPoseEstimatorTest {
         // VisionSubsystem reports +∞ angular std dev for single-tag solves ("ignore rotation")
         Config config = Config.DEFAULT.toBuilder().resetLinearStdDev(0.5).build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
-        estimator.resetPose(new Pose2d(0.5, 0.0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0.5, 0.0, Rotation2d.ZERO));
         drive(estimator, 0.0, 1.0);
         double headingSigmaBefore = sigma(estimator, 2);
 
@@ -295,7 +295,7 @@ class EkfPoseEstimatorTest {
                         .resetAngularStdDev(0.1)
                         .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         drive(estimator, 0.0, 5.0);
         double headingSigmaBefore = sigma(estimator, 2);
 
@@ -308,20 +308,20 @@ class EkfPoseEstimatorTest {
     @Test
     void nonFiniteObservationsAreIgnoredInsteadOfThrowing() {
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         drive(estimator, 0.0, 1.0);
         Pose2d before = estimator.estimatedPose();
         Matrix<N3, N3> covarianceBefore = estimator.covariance();
 
         double nan = Double.NaN;
         double inf = Double.POSITIVE_INFINITY;
-        Pose2d good = new Pose2d(before.getX() + 0.01, 0, Rotation2d.kZero);
+        Pose2d good = new Pose2d(before.getX() + 0.01, 0, Rotation2d.ZERO);
         List<VisionPoseObservation> bad =
                 List.of(
                         vision(1.0, good, nan, 0.1), // NaN std dev
                         vision(1.0, good, inf, inf), // nothing measured at all
-                        vision(1.0, new Pose2d(nan, 0, Rotation2d.kZero), 0.05, 0.1),
-                        vision(1.0, new Pose2d(0, inf, Rotation2d.kZero), 0.05, 0.1));
+                        vision(1.0, new Pose2d(nan, 0, Rotation2d.ZERO), 0.05, 0.1),
+                        vision(1.0, new Pose2d(0, inf, Rotation2d.ZERO), 0.05, 0.1));
         for (VisionPoseObservation observation : bad) {
             estimator.addVisionObservation(observation);
         }
@@ -333,7 +333,7 @@ class EkfPoseEstimatorTest {
     @Test
     void nonFiniteOdometryDoesNotPoisonTheCovariance() {
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         drive(estimator, 0.0, 1.0);
         Pose2d before = estimator.estimatedPose();
 
@@ -354,10 +354,10 @@ class EkfPoseEstimatorTest {
         Config config =
                 Config.DEFAULT.toBuilder().resetLinearStdDev(0.0).resetAngularStdDev(0.0).build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         Pose2d before = estimator.estimatedPose();
 
-        estimator.addVisionObservation(vision(0.0, new Pose2d(1, 1, Rotation2d.kZero), 0.0, 0.0));
+        estimator.addVisionObservation(vision(0.0, new Pose2d(1, 1, Rotation2d.ZERO), 0.0, 0.0));
 
         assertEquals(before, estimator.estimatedPose());
     }
@@ -379,11 +379,11 @@ class EkfPoseEstimatorTest {
     void outlierIsRejectedThenRecoveredAfterRepeatedDisagreement() {
         Config config = Config.DEFAULT.toBuilder().gateRecoveryCount(3).build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         drive(estimator, 0.0, 1.0);
 
         Pose2d before = estimator.estimatedPose();
-        Pose2d far = new Pose2d(before.getX() + 5.0, 3.0, Rotation2d.kZero);
+        Pose2d far = new Pose2d(before.getX() + 5.0, 3.0, Rotation2d.ZERO);
 
         // First two are gated and leave the estimate alone
         for (int i = 0; i < 2; i++) {
@@ -425,9 +425,9 @@ class EkfPoseEstimatorTest {
                         .gateRecoveryCount(6)
                         .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
 
-        Pose2d truth = new Pose2d(1.0, 0, Rotation2d.kZero);
+        Pose2d truth = new Pose2d(1.0, 0, Rotation2d.ZERO);
         VisionPoseObservation good = vision(0.0, truth, 0.05, 0.02);
         VisionPoseObservation weak = vision(0.0, truth, 0.8, 0.5);
         List<VisionPoseObservation> sequence =
@@ -446,9 +446,9 @@ class EkfPoseEstimatorTest {
                         .gateRecoveryWindowSeconds(1.0)
                         .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
 
-        Pose2d far = new Pose2d(5, 0, Rotation2d.kZero);
+        Pose2d far = new Pose2d(5, 0, Rotation2d.ZERO);
         // One rejection every 2 s: never 3 inside a 1 s window
         List<VisionPoseObservation> sequence =
                 List.of(
@@ -471,10 +471,10 @@ class EkfPoseEstimatorTest {
                         .gateRecoveryFraction(0.5)
                         .build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
 
-        VisionPoseObservation good = vision(0.0, new Pose2d(0, 0, Rotation2d.kZero), 0.05, 0.02);
-        VisionPoseObservation outlier = vision(0.0, new Pose2d(5, 0, Rotation2d.kZero), 0.05, 0.02);
+        VisionPoseObservation good = vision(0.0, new Pose2d(0, 0, Rotation2d.ZERO), 0.05, 0.02);
+        VisionPoseObservation outlier = vision(0.0, new Pose2d(5, 0, Rotation2d.ZERO), 0.05, 0.02);
         // Three outliers (the count) but only 3 of 15 observations (below the fraction)
         List<VisionPoseObservation> sequence =
                 List.of(
@@ -518,11 +518,11 @@ class EkfPoseEstimatorTest {
     void gatingCanBeDisabled() {
         Config config = Config.DEFAULT.toBuilder().gateChiSquared(Double.POSITIVE_INFINITY).build();
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS, config);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         drive(estimator, 0.0, 1.0);
 
         Pose2d before = estimator.estimatedPose();
-        estimator.addVisionObservation(vision(1.0, new Pose2d(5, 3, Rotation2d.kZero), 0.05, 0.02));
+        estimator.addVisionObservation(vision(1.0, new Pose2d(5, 3, Rotation2d.ZERO), 0.05, 0.02));
 
         assertFalse(before.equals(estimator.estimatedPose()));
     }
@@ -533,12 +533,12 @@ class EkfPoseEstimatorTest {
         EkfPoseEstimator estimator =
                 new EkfPoseEstimator(KINEMATICS, config)
                         .withPoseValidator(pose -> pose.getX() < 3.0);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         drive(estimator, 0.0, 1.0);
 
         Pose2d before = estimator.estimatedPose();
         estimator.addVisionObservation(
-                vision(1.0, new Pose2d(4, 0, Rotation2d.kZero), 0.001, 0.001));
+                vision(1.0, new Pose2d(4, 0, Rotation2d.ZERO), 0.001, 0.001));
 
         assertEquals(before, estimator.estimatedPose());
     }
@@ -569,8 +569,8 @@ class EkfPoseEstimatorTest {
                         .build();
         EkfPoseEstimator level = new EkfPoseEstimator(KINEMATICS, config);
         EkfPoseEstimator wasTipped = new EkfPoseEstimator(KINEMATICS, config);
-        level.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
-        wasTipped.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        level.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
+        wasTipped.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         stepStationary(level, 1, 16);
         wasTipped.setTipped(true);
         stepStationary(wasTipped, 1, 8); // tipped for the first second
@@ -582,7 +582,7 @@ class EkfPoseEstimatorTest {
         assertTrue(sigma(level, 0) < 0.1, "sigma " + sigma(level, 0));
 
         // The same modest vision frame (0.3 m off, std 0.1) after both
-        Pose2d off = new Pose2d(0.3, 0, Rotation2d.kZero);
+        Pose2d off = new Pose2d(0.3, 0, Rotation2d.ZERO);
         level.addVisionObservation(vision(16 * TIP_STEP, off, 0.1, 0.02));
         wasTipped.addVisionObservation(vision(16 * TIP_STEP, off, 0.1, 0.02));
 
@@ -613,35 +613,35 @@ class EkfPoseEstimatorTest {
     @Test
     void velocityAtATimeIsTheSpeedThenNotTheSpeedNow() {
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         estimator.applyOdometryTwist(new Twist2d(), 0.0);
         // 1 m/s for the first second, then 3 m/s for the next
         double t = drive(estimator, 0.0, 100, new Twist2d(0.01, 0.0, 0.0));
         drive(estimator, t, 100, new Twist2d(0.03, 0.0, 0.0));
 
-        assertEquals(1.0, estimator.getVelocityAtTime(0.5).get().vxMetersPerSecond, 1e-9);
-        assertEquals(3.0, estimator.getVelocityAtTime(1.5).get().vxMetersPerSecond, 1e-9);
+        assertEquals(1.0, estimator.getVelocityAtTime(0.5).get().vx, 1e-9);
+        assertEquals(3.0, estimator.getVelocityAtTime(1.5).get().vx, 1e-9);
     }
 
     @Test
     void velocityAtATimeIncludesTurnRateAndSidewaysMotion() {
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         estimator.applyOdometryTwist(new Twist2d(), 0.0);
         // 2 m/s forward, 1 m/s left, turning at 3 rad/s
         drive(estimator, 0.0, 100, new Twist2d(0.02, 0.01, 0.03));
 
-        ChassisSpeeds velocity = estimator.getVelocityAtTime(0.5).get();
+        ChassisVelocities velocity = estimator.getVelocityAtTime(0.5).get();
 
-        assertEquals(2.0, velocity.vxMetersPerSecond, 1e-9);
-        assertEquals(1.0, velocity.vyMetersPerSecond, 1e-9);
-        assertEquals(3.0, velocity.omegaRadiansPerSecond, 1e-9);
+        assertEquals(2.0, velocity.vx, 1e-9);
+        assertEquals(1.0, velocity.vy, 1e-9);
+        assertEquals(3.0, velocity.omega, 1e-9);
     }
 
     @Test
     void velocityIsAveragedOverAShortWindowNotReadFromOneNoisyStep() {
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         estimator.applyOdometryTwist(new Twist2d(), 0.0);
         // Steps alternate 0.5 and 1.5 m/s, so any single step is far from the true 1 m/s
         double t = 0.0;
@@ -652,13 +652,13 @@ class EkfPoseEstimatorTest {
 
         // A single step is 0.5 m/s off. An odd number of steps in the window cannot cancel the
         // alternation exactly, so allow 0.15
-        assertEquals(1.0, estimator.getVelocityAtTime(0.5).get().vxMetersPerSecond, 0.15);
+        assertEquals(1.0, estimator.getVelocityAtTime(0.5).get().vx, 0.15);
     }
 
     @Test
     void velocityIsUnknownWhereTheHistoryDoesNotReach() {
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         estimator.applyOdometryTwist(new Twist2d(), 10.0);
         drive(estimator, 10.0, 10, new Twist2d(0.01, 0.0, 0.0));
 
@@ -670,11 +670,11 @@ class EkfPoseEstimatorTest {
     @Test
     void aTimeAfterTheLatestStepUsesTheLatestVelocity() {
         EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS);
-        estimator.resetPose(new Pose2d(0, 0, Rotation2d.kZero));
+        estimator.resetPose(new Pose2d(0, 0, Rotation2d.ZERO));
         estimator.applyOdometryTwist(new Twist2d(), 0.0);
         drive(estimator, 0.0, 50, new Twist2d(0.02, 0.0, 0.0));
 
-        assertEquals(2.0, estimator.getVelocityAtTime(5.0).get().vxMetersPerSecond, 1e-9);
+        assertEquals(2.0, estimator.getVelocityAtTime(5.0).get().vx, 1e-9);
     }
 
     @Test

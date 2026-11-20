@@ -15,16 +15,14 @@
 
 package frc.lib.util;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
+import frc.robot.GlobalPoseEstimator;
 import frc.robot.Robot;
-import frc.robot.RobotState;
-
 import org.littletonrobotics.junction.Logger;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Transform2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.util.MathUtil;
 
 /**
  * Attempts to semi-autonomously characterize both vision and odometry covariance diagonals for use
@@ -32,7 +30,7 @@ import org.littletonrobotics.junction.Logger;
  * further tuned empirically as necessary.
  */
 public class VisionOdometryCharacterizer {
-    private static final RobotState robotState = RobotState.getInstance();
+    private static final GlobalPoseEstimator robotState = GlobalPoseEstimator.getInstance();
 
     /** Static limits for tuning */
     private static final int MINIMUM_VISION_SAMPLE_SIZE = 2000;
@@ -96,16 +94,14 @@ public class VisionOdometryCharacterizer {
      * @param predictedPose pose predicted by state estimator (model) at time t (x_k|k-1).
      * @param observation vision observation containing pure vision pose at time t (z_k).
      */
-    public static void recordVisionCorrection(
-            Pose2d predictedPose, VisionPoseObservation observation) {
+    public static void recordVisionCorrection(Pose2d predictedPose, VisionPoseObservation observation) {
         if (!validVisionMeasurement(predictedPose, observation)) return;
 
         Transform2d innovation = observation.robotPose().minus(predictedPose);
         double errX = innovation.getX() + generateSimNoise();
         double errY = innovation.getY() + generateSimNoise();
-        double errTheta =
-                MathUtil.angleModulus(innovation.getRotation().getRadians())
-                        + generateSimNoise(); // Prevent wrapping issues
+        double errTheta = MathUtil.angleModulus(innovation.getRotation().getRadians())
+                + generateSimNoise(); // Prevent wrapping issues
 
         // Welford update
         nVis++;
@@ -141,17 +137,15 @@ public class VisionOdometryCharacterizer {
      * measurements contributing to the correction since variance scales with 1/N such that sigma^2
      * ~ d^2 / N.
      */
-    private static boolean validVisionMeasurement(
-            Pose2d predictedPose, VisionPoseObservation observation) {
+    private static boolean validVisionMeasurement(Pose2d predictedPose, VisionPoseObservation observation) {
         // Verify enabled & valid poses
         if (!enabled || predictedPose == null || observation.robotPose() == null) {
             return false;
         }
         // Verify robot is approximately stationary to ensure innovation covariance approximates
         // measurement covariance
-        ChassisSpeeds vel = robotState.getFieldRelativeVelocity();
-        if (Math.hypot(vel.vxMetersPerSecond, vel.vyMetersPerSecond) > 0.1
-                || Math.abs(vel.omegaRadiansPerSecond) > 0.35) {
+        ChassisVelocities vel = robotState.getFieldRelativeVelocity();
+        if (Math.hypot(vel.vx, vel.vy) > 0.1 || Math.abs(vel.omega) > 0.35) {
             return false;
         }
         // Verify measurement is within typical bounds to ensure we are characterizing expected
@@ -194,8 +188,7 @@ public class VisionOdometryCharacterizer {
      * vision delta. The noise in the motion model predicted delta can be abstracted as P (process
      * noise covariance) in the Kalman filter, which is crucial for predicting Kalman filter gain.
      */
-    public static void recordOdometryCorrection(
-            Pose2d odometryPoseAtTimestamp, VisionPoseObservation observation) {
+    public static void recordOdometryCorrection(Pose2d odometryPoseAtTimestamp, VisionPoseObservation observation) {
         if (!validOdometryMeasurement(odometryPoseAtTimestamp, observation)) return;
 
         // Initialization
@@ -212,11 +205,9 @@ public class VisionOdometryCharacterizer {
         // Estimate error in motion model
         double errX = odoDelta.getX() - visDelta.getX() + generateSimNoise();
         double errY = odoDelta.getY() - visDelta.getY() + generateSimNoise();
-        double errTheta =
-                MathUtil.angleModulus(
-                                odoDelta.getRotation().getRadians()
-                                        - visDelta.getRotation().getRadians())
-                        + generateSimNoise(); // Prevent wrapping issues
+        double errTheta = MathUtil.angleModulus(odoDelta.getRotation().getRadians()
+                        - visDelta.getRotation().getRadians())
+                + generateSimNoise(); // Prevent wrapping issues
 
         // Welford update
         nOdo++;
@@ -249,17 +240,15 @@ public class VisionOdometryCharacterizer {
      * <p>TODO: Complete docstring. Explore udpating model to include camera FPS normalization.
      * Verify math.
      */
-    private static boolean validOdometryMeasurement(
-            Pose2d odometryPoseAtTimestamp, VisionPoseObservation observation) {
+    private static boolean validOdometryMeasurement(Pose2d odometryPoseAtTimestamp, VisionPoseObservation observation) {
         // Verify enabled & valid poses
         if (!enabled || odometryPoseAtTimestamp == null || observation.robotPose() == null) {
             return false;
         }
         // Verify robot is in motion to ensure we are capturing odometry covariance (wheel slip,
         // encoder quantization, kinematic linearization, gyro noise, etc.)
-        ChassisSpeeds vel = robotState.getFieldRelativeVelocity();
-        if (Math.hypot(vel.vxMetersPerSecond, vel.vyMetersPerSecond) < 0.3
-                && Math.abs(vel.omegaRadiansPerSecond) < 1.0) {
+        ChassisVelocities vel = robotState.getFieldRelativeVelocity();
+        if (Math.hypot(vel.vx, vel.vy) < 0.3 && Math.abs(vel.omega) < 1.0) {
             return false;
         }
         // Assume vision is "ground truth" only if it is a high confidence measurement (multiple

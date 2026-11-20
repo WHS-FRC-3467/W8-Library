@@ -15,30 +15,30 @@
 
 package frc.lib.io.motor;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularAcceleration;
+import org.wpilib.units.measure.AngularVelocity;
 
 public interface MotorIOSim extends MotorIO {
     /**
-     * Setter for the position of the mechanism associated with this motor group, typically taken from a WPILib mechanism
-     * simulation
+     * Setter for the position of the mechanism associated with this motor group, typically taken
+     * from a WPILib mechanism simulation
      *
      * @param position The new mechanism position (in mechanism-space)
      */
     public default void setMechanismPosition(Angle position) {}
 
     /**
-     * Setter for the velocity of the mechanism associated with this motor group, typically taken from a WPILib mechanism
-     * simulation
+     * Setter for the velocity of the mechanism associated with this motor group, typically taken
+     * from a WPILib mechanism simulation
      *
      * @param velocity The new mechanism velocity (in mechanism-space)
      */
     public default void setMechanismVelocity(AngularVelocity velocity) {}
 
     /**
-     * Setter for the acceleration of the mechanism associated with this motor group, typically taken from a WPILib mechanism
-     * simulation
+     * Setter for the acceleration of the mechanism associated with this motor group, typically
+     * taken from a WPILib mechanism simulation
      *
      * @param acceleration The new mechanism acceleration (in mechanism-space)
      */

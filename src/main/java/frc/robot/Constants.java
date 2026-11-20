@@ -15,24 +15,28 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Inches;
+import static org.wpilib.units.Units.Degrees;
+import static org.wpilib.units.Units.Inches;
+import static org.wpilib.units.Units.Kilograms;
+import static org.wpilib.units.Units.Seconds;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.RobotBase;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.Distance;
+import org.wpilib.units.measure.Mass;
+import org.wpilib.units.measure.Time;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
- * on a roboRIO. Change the value of "simMode" to switch between "sim" (physics sim) and "replay"
+ * on a SystemCore. Change the value of "simMode" to switch between "sim" (physics sim) and "replay"
  * (log replay from a file).
  */
 public final class Constants {
-    public static final Mode simMode = Mode.SIM;
-    public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+    public static final Mode SIM_MODE = Mode.SIM;
+    public static final Mode CURRENT_MODE = RobotBase.isReal() ? Mode.REAL : SIM_MODE;
 
-    public static final boolean tuningMode = true;
-    public static final boolean disableHAL = false;
+    public static final boolean TUNING_MODE = true;
+    public static final Time LOOP_PERIOD = Seconds.of(1.0 / 50.0);
 
     public static enum Mode {
         /** Running on a real robot. */
@@ -50,5 +54,6 @@ public final class Constants {
 
     public static final Distance FULL_ROBOT_WIDTH = Inches.of(27.0 + 3.25);
     public static final Distance FULL_ROBOT_LENGTH = Inches.of(27.0 + 3.25);
+    public static final Mass FULL_ROBOT_MASS = Kilograms.of(65.0);
     public static final Distance BUMPER_HEIGHT = Inches.of(4.0);
 }

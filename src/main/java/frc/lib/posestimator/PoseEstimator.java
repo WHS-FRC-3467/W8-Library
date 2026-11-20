@@ -15,31 +15,32 @@
 
 package frc.lib.posestimator;
 
-import static edu.wpi.first.units.Units.Seconds;
-
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.measure.Time;
+import static org.wpilib.units.Units.Seconds;
 
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.robot.FieldConstants.AprilTagLayoutType;
-
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
-import org.littletonrobotics.junction.Logger;
-
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import lombok.Getter;
+import lombok.experimental.Accessors;
+import org.littletonrobotics.junction.Logger;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Transform2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.SwerveDriveKinematics;
+import org.wpilib.math.linalg.Matrix;
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.numbers.N3;
+import org.wpilib.math.util.Nat;
+import org.wpilib.units.measure.Time;
 
 @Accessors(fluent = true)
 public class PoseEstimator {
@@ -53,6 +54,11 @@ public class PoseEstimator {
             double linearStdDev,
             double angularStdDev) {}
 
+    private enum OdometryObservationReason {
+        ACCEPTED,
+        POSE_VALIDATOR_REJECTED
+    }
+
     private enum VisionObservationReason {
         ACCEPTED,
         RESET_LOCKED,
@@ -63,15 +69,44 @@ public class PoseEstimator {
 
     private static final double DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS = 2;
 
+    /*
+     * When wheels are skidding, wheel odometry is less reliable. We inflate the
+     * odometry standard
+     * deviation used during vision fusion so vision has more authority during skid.
+     *
+     * These are multipliers on standard deviation. Variance is scaled by
+     * multiplier^2.
+     */
+    private static final double ODOMETRY_STDDEV_MULTIPLIER_PER_BAD_WHEEL_LINEAR = 0.75;
+    private static final double ODOMETRY_STDDEV_MULTIPLIER_PER_BAD_WHEEL_ANGULAR = 0.50;
+    private static final double ODOMETRY_STDDEV_MULTIPLIER_MAX_LINEAR = 4.0;
+    private static final double ODOMETRY_STDDEV_MULTIPLIER_MAX_ANGULAR = 3.0;
+
+    /**
+     * Width of the window {@link #getVelocityAtTime} averages over, centered on the requested time.
+     * One odometry step is a few milliseconds, which is too noisy to read a velocity from.
+     */
+    private static final double VELOCITY_WINDOW_SECONDS = 0.05;
+
+    /** One odometry sample's robot-frame twist and the time it covered. */
+    private record VelocityStep(double timestampSeconds, Twist2d twist, double dtSeconds) {}
+
     private final SwerveOdometry odometry;
+    private final double bufferSeconds;
+    private final Deque<VelocityStep> velocityHistory = new ArrayDeque<>();
+    private double lastOdometryTimestampSeconds = Double.NaN;
 
     /** Base odometry variances */
     private final double[] odometryVariances;
 
+    private double odometryStdDevMultiplierLinear = 1.0;
+    private double odometryStdDevMultiplierAngular = 1.0;
+
     private Predicate<Pose2d> poseValidator = pose -> true;
 
     // Initialize to value not outside the field
-    @Getter private Pose2d estimatedPose = new Pose2d(1, 1, new Rotation2d());
+    @Getter
+    private Pose2d estimatedPose = new Pose2d(1, 1, new Rotation2d());
 
     // private Pose2d odometryPoseAtReset = new Pose2d(1, 1, new Rotation2d());
 
@@ -80,28 +115,35 @@ public class PoseEstimator {
             Time odometryBufferSize,
             double linearOdometryStdDev,
             double angularOdometryStdDev) {
+        this(kinematics, null, odometryBufferSize, linearOdometryStdDev, angularOdometryStdDev);
+    }
+
+    /**
+     * If module translations are provided, odometry can ignore skidding wheels using the {@code
+     * badWheels} array in {@link OdometryObservation}.
+     */
+    public PoseEstimator(
+            SwerveDriveKinematics kinematics,
+            Translation2d[] moduleTranslations,
+            Time odometryBufferSize,
+            double linearOdometryStdDev,
+            double angularOdometryStdDev) {
         double linearOdometryVariance = Math.pow(linearOdometryStdDev, 2);
         double angularOdometryVariance = Math.pow(angularOdometryStdDev, 2);
 
-        odometryVariances =
-                new double[] {
-                    linearOdometryVariance, // X axis
-                    linearOdometryVariance, // Y axis
-                    angularOdometryVariance // Rotation
-                };
+        odometryVariances = new double[] {
+            linearOdometryVariance, // X axis
+            linearOdometryVariance, // Y axis
+            angularOdometryVariance // Rotation
+        };
 
-        odometry = new SwerveOdometry(kinematics, odometryBufferSize);
+        bufferSeconds = odometryBufferSize.in(Seconds);
+        odometry = new SwerveOdometry(kinematics, moduleTranslations, odometryBufferSize);
+        refreshOdometryPoseValidator();
     }
 
-    public PoseEstimator(
-            SwerveDriveKinematics kinematics,
-            double linearOdometryStdDev,
-            double angularOdometryStdDev) {
-        this(
-                kinematics,
-                Seconds.of(DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS),
-                linearOdometryStdDev,
-                angularOdometryStdDev);
+    public PoseEstimator(SwerveDriveKinematics kinematics, double linearOdometryStdDev, double angularOdometryStdDev) {
+        this(kinematics, Seconds.of(DEFAULT_ODOMETRY_BUFFER_SIZE_SECONDS), linearOdometryStdDev, angularOdometryStdDev);
     }
 
     public Pose2d odometryPose() {
@@ -119,13 +161,16 @@ public class PoseEstimator {
      *     contains information about the robot's movement such as displacement and rotation.
      */
     public void addOdometryObservation(OdometryObservation observation) {
+        updateOdometryStdDevMultipliersFromSkid(observation.badWheels());
+
         Pose2d lastOdometryPose = odometry.odometryPose();
         odometry.addOdometryObservation(observation);
         Pose2d newOdometryPose = odometry.odometryPose();
 
-        Twist2d twist = lastOdometryPose.log(newOdometryPose);
+        Twist2d twist = newOdometryPose.minus(lastOdometryPose).log();
 
-        estimatedPose = estimatedPose.exp(twist);
+        estimatedPose = estimatedPose.plus(twist.exp());
+        recordVelocityStep(twist, observation.timestamp().in(Seconds));
     }
 
     /**
@@ -144,9 +189,104 @@ public class PoseEstimator {
         odometry.addGyroObservation(observation);
         Pose2d newOdometryPose = odometry.odometryPose();
 
-        Twist2d twist = lastOdometryPose.log(newOdometryPose);
+        Twist2d twist = newOdometryPose.minus(lastOdometryPose).log();
 
-        estimatedPose = estimatedPose.exp(twist);
+        estimatedPose = estimatedPose.plus(twist.exp());
+        recordVelocityStep(twist, observation.timestamp().in(Seconds));
+    }
+
+    private void recordVelocityStep(Twist2d twist, double timestampSeconds) {
+        if (!Double.isFinite(twist.dx) || !Double.isFinite(twist.dy) || !Double.isFinite(twist.dtheta)) {
+            return;
+        }
+        double dt = Double.isNaN(lastOdometryTimestampSeconds)
+                ? 0.0
+                : Math.max(0.0, timestampSeconds - lastOdometryTimestampSeconds);
+        lastOdometryTimestampSeconds = timestampSeconds;
+        velocityHistory.addLast(new VelocityStep(timestampSeconds, twist, dt));
+
+        double cutoff = timestampSeconds - bufferSeconds;
+        while (!velocityHistory.isEmpty() && velocityHistory.peekFirst().timestampSeconds() < cutoff) {
+            velocityHistory.pollFirst();
+        }
+    }
+
+    /**
+     * The robot's velocity around a past time, from the odometry steps near it, so a camera frame
+     * can be judged by how fast the robot was moving when it was captured and not when it arrived.
+     *
+     * <p>The velocity is robot-relative, averaged over the steps within {@value
+     * #VELOCITY_WINDOW_SECONDS} s centered on {@code timestampSeconds}. If no step falls in that
+     * window, the nearest earlier step is used.
+     *
+     * @param timestampSeconds the time to look up, in the same timebase as odometry samples
+     * @return the velocity, or empty if the retained history does not reach that time
+     */
+    public Optional<ChassisVelocities> getVelocityAtTime(double timestampSeconds) {
+        double from = timestampSeconds - VELOCITY_WINDOW_SECONDS / 2.0;
+        double to = timestampSeconds + VELOCITY_WINDOW_SECONDS / 2.0;
+
+        double dx = 0.0;
+        double dy = 0.0;
+        double dtheta = 0.0;
+        double seconds = 0.0;
+        // Nearest step at or before the time that covers some time, used if the window is empty
+        VelocityStep fallback = null;
+        boolean reached = false;
+        // Newest to oldest, stopping once past the window, so only the recent steps are visited
+        for (Iterator<VelocityStep> it = velocityHistory.descendingIterator(); it.hasNext(); ) {
+            VelocityStep step = it.next();
+            double stamp = step.timestampSeconds();
+            if (stamp <= timestampSeconds) {
+                reached = true;
+                if (fallback == null && step.dtSeconds() > 0.0) {
+                    fallback = step;
+                }
+            }
+            if (stamp >= from && stamp <= to && step.dtSeconds() > 0.0) {
+                dx += step.twist().dx;
+                dy += step.twist().dy;
+                dtheta += step.twist().dtheta;
+                seconds += step.dtSeconds();
+            }
+            if (stamp < from && fallback != null) {
+                break;
+            }
+        }
+        if (!reached) {
+            return Optional.empty();
+        }
+        if (seconds <= 0.0) {
+            if (fallback == null) {
+                return Optional.empty();
+            }
+            dx = fallback.twist().dx;
+            dy = fallback.twist().dy;
+            dtheta = fallback.twist().dtheta;
+            seconds = fallback.dtSeconds();
+        }
+        return Optional.of(new ChassisVelocities(dx / seconds, dy / seconds, dtheta / seconds));
+    }
+
+    private void updateOdometryStdDevMultipliersFromSkid(boolean[] badWheels) {
+        if (badWheels == null) {
+            odometryStdDevMultiplierLinear = 1.0;
+            odometryStdDevMultiplierAngular = 1.0;
+            return;
+        }
+
+        int badCount = 0;
+        for (boolean bad : badWheels) {
+            if (bad) {
+                badCount++;
+            }
+        }
+
+        double linear = 1.0 + (badCount * ODOMETRY_STDDEV_MULTIPLIER_PER_BAD_WHEEL_LINEAR);
+        double angular = 1.0 + (badCount * ODOMETRY_STDDEV_MULTIPLIER_PER_BAD_WHEEL_ANGULAR);
+
+        odometryStdDevMultiplierLinear = Math.min(linear, ODOMETRY_STDDEV_MULTIPLIER_MAX_LINEAR);
+        odometryStdDevMultiplierAngular = Math.min(angular, ODOMETRY_STDDEV_MULTIPLIER_MAX_ANGULAR);
     }
 
     /**
@@ -180,8 +320,7 @@ public class PoseEstimator {
      *     or an empty {@code Optional} if the pose cannot be determined.
      */
     public Optional<Pose2d> getPoseAtTime(double timestampSeconds) {
-        return getPoseDeltaThenToNow(timestampSeconds)
-                .map(thenToNow -> estimatedPose.plus(thenToNow.inverse()));
+        return getPoseDeltaThenToNow(timestampSeconds).map(thenToNow -> estimatedPose.plus(thenToNow.inverse()));
     }
 
     /**
@@ -199,12 +338,7 @@ public class PoseEstimator {
                 getPoseDeltaThenToNow(observation.timestampSeconds).orElse(null);
         if (poseDeltaThenToNow == null) {
             logVisionObservation(
-                    observation,
-                    null,
-                    false,
-                    VisionObservationReason.MISSING_ODOMETRY_SAMPLE,
-                    Double.NaN,
-                    Double.NaN);
+                    observation, null, false, VisionObservationReason.MISSING_ODOMETRY_SAMPLE, Double.NaN, Double.NaN);
             return;
         }
 
@@ -233,6 +367,15 @@ public class PoseEstimator {
             visionAngularVariance
         }; // Rotation
 
+        double linearVarianceMultiplier = odometryStdDevMultiplierLinear * odometryStdDevMultiplierLinear;
+        double angularVarianceMultiplier = odometryStdDevMultiplierAngular * odometryStdDevMultiplierAngular;
+
+        double[] effectiveOdometryVariances = {
+            odometryVariances[0] * linearVarianceMultiplier, // X axis
+            odometryVariances[1] * linearVarianceMultiplier, // Y axis
+            odometryVariances[2] * angularVarianceMultiplier // Rotation
+        };
+
         // Transform between our best estimated pose at the time the frame was captured
         // to where the
         // camera is saying we should be, unscaled (without any Kalman gain applied)
@@ -240,13 +383,10 @@ public class PoseEstimator {
         // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/edu/wpi/first/math/estimator/PoseEstimator.java#L276-L292
         Transform2d unscaledVisionCorrection = new Transform2d(oldPose, newVisionPose);
 
-        double translationSigma =
-                Math.sqrt(Math.max(visionLinearVariance + odometryVariances[0], 1.0e-9));
-        double rotationSigma =
-                Math.sqrt(Math.max(visionAngularVariance + odometryVariances[2], 1.0e-9));
+        double translationSigma = Math.sqrt(Math.max(visionLinearVariance + effectiveOdometryVariances[0], 1.0e-9));
+        double rotationSigma = Math.sqrt(Math.max(visionAngularVariance + effectiveOdometryVariances[2], 1.0e-9));
 
-        double translationMag =
-                Math.hypot(unscaledVisionCorrection.getX(), unscaledVisionCorrection.getY());
+        double translationMag = Math.hypot(unscaledVisionCorrection.getX(), unscaledVisionCorrection.getY());
         double rotationMag = Math.abs(unscaledVisionCorrection.getRotation().getRadians());
 
         double translationNSigma = translationMag / translationSigma;
@@ -254,38 +394,31 @@ public class PoseEstimator {
 
         Matrix<N3, N3> visionKalmanGain = new Matrix<>(Nat.N3(), Nat.N3());
         for (int row = 0; row < 3; ++row) {
-            double odometryVariance = odometryVariances[row];
+            double odometryVariance = effectiveOdometryVariances[row];
             if (odometryVariance == 0.0) {
                 visionKalmanGain.set(row, row, 0.0);
             } else {
                 visionKalmanGain.set(
                         row,
                         row,
-                        odometryVariance
-                                / (odometryVariance
-                                        + Math.sqrt(odometryVariance * visionVariances[row])));
+                        odometryVariance / (odometryVariance + Math.sqrt(odometryVariance * visionVariances[row])));
             }
         }
 
         // Scale the vision correction by the Kalman gain
-        var scaledVisionCorrectionVector =
-                visionKalmanGain.times(
-                        VecBuilder.fill(
-                                unscaledVisionCorrection.getX(),
-                                unscaledVisionCorrection.getY(),
-                                unscaledVisionCorrection.getRotation().getRadians()));
+        var scaledVisionCorrectionVector = visionKalmanGain.times(VecBuilder.fill(
+                unscaledVisionCorrection.getX(),
+                unscaledVisionCorrection.getY(),
+                unscaledVisionCorrection.getRotation().getRadians()));
 
         // Convert to Transform2d
-        Transform2d scaledVisionCorrection =
-                new Transform2d(
-                        scaledVisionCorrectionVector.get(0, 0),
-                        scaledVisionCorrectionVector.get(1, 0),
-                        Rotation2d.fromRadians(scaledVisionCorrectionVector.get(2, 0)));
+        Transform2d scaledVisionCorrection = new Transform2d(
+                scaledVisionCorrectionVector.get(0, 0),
+                scaledVisionCorrectionVector.get(1, 0),
+                Rotation2d.fromRadians(scaledVisionCorrectionVector.get(2, 0)));
 
-        Pose2d candidatePose =
-                oldPose.transformBy(scaledVisionCorrection) // Adjust by the correction
-                        .transformBy(
-                                poseDeltaThenToNow); // Bring back to present time (latency comp)
+        Pose2d candidatePose = oldPose.transformBy(scaledVisionCorrection) // Adjust by the correction
+                .transformBy(poseDeltaThenToNow); // Bring back to present time (latency comp)
 
         if (!poseValidator.test(candidatePose)) {
             logVisionObservation(
@@ -300,12 +433,7 @@ public class PoseEstimator {
 
         estimatedPose = candidatePose;
         logVisionObservation(
-                observation,
-                candidatePose,
-                true,
-                VisionObservationReason.ACCEPTED,
-                translationNSigma,
-                rotationNSigma);
+                observation, candidatePose, true, VisionObservationReason.ACCEPTED, translationNSigma, rotationNSigma);
     }
 
     /**
@@ -320,6 +448,11 @@ public class PoseEstimator {
     public void resetPose(Pose2d pose) {
         odometry.resetPose(pose);
         estimatedPose = pose;
+        velocityHistory.clear();
+        lastOdometryTimestampSeconds = Double.NaN;
+
+        odometryStdDevMultiplierLinear = 1.0;
+        odometryStdDevMultiplierAngular = 1.0;
     }
 
     /**
@@ -330,7 +463,28 @@ public class PoseEstimator {
      */
     public PoseEstimator withPoseValidator(Predicate<Pose2d> validator) {
         poseValidator = validator;
+        refreshOdometryPoseValidator();
         return this;
+    }
+
+    private void refreshOdometryPoseValidator() {
+        odometry.setPoseValidator(pose -> {
+            boolean accepted = poseValidator.test(pose);
+            OdometryObservationReason reason =
+                    accepted ? OdometryObservationReason.ACCEPTED : OdometryObservationReason.POSE_VALIDATOR_REJECTED;
+            logOdometryObservation(pose, accepted, reason);
+            return accepted;
+        });
+    }
+
+    private void logOdometryObservation(Pose2d candidatePose, boolean accepted, OdometryObservationReason reason) {
+        Logger.recordOutput(LOG_PREFIX + "Odometry/Accepted", accepted);
+        Logger.recordOutput(LOG_PREFIX + "Odometry/Reason", reason.name());
+        Logger.recordOutput(LOG_PREFIX + "Odometry/CandidatePose", candidatePose);
+        Logger.recordOutput(
+                LOG_PREFIX + "Odometry/AcceptedPose", accepted ? new Pose2d[] {candidatePose} : new Pose2d[] {});
+        Logger.recordOutput(
+                LOG_PREFIX + "Odometry/RejectedPose", accepted ? new Pose2d[] {} : new Pose2d[] {candidatePose});
     }
 
     private void logVisionObservation(
@@ -340,25 +494,22 @@ public class PoseEstimator {
             VisionObservationReason reason,
             double translationNSigma,
             double rotationNSigma) {
-        int[] seenTagIds =
-                observation.seenTagIds() != null
-                        ? observation.seenTagIds().stream().mapToInt(Integer::intValue).toArray()
-                        : new int[] {};
+        int[] seenTagIds = observation.seenTagIds() != null
+                ? observation.seenTagIds().stream().mapToInt(Integer::intValue).toArray()
+                : new int[] {};
         Pose3d[] seenTagPoses = new Pose3d[seenTagIds.length];
         for (int i = 0; i < seenTagIds.length; i++) {
-            seenTagPoses[i] =
-                    AprilTagLayoutType.OFFICIAL
-                            .getLayout()
-                            .getTagPose(seenTagIds[i])
-                            .orElse(Pose3d.kZero);
+            seenTagPoses[i] = AprilTagLayoutType.OFFICIAL
+                    .getLayout()
+                    .getTagPose(seenTagIds[i])
+                    .orElse(Pose3d.ZERO);
         }
 
         Logger.recordOutput(LOG_PREFIX + "Vision/Accepted", accepted);
         Logger.recordOutput(LOG_PREFIX + "Vision/Reason", reason.name());
         Logger.recordOutput(LOG_PREFIX + "Vision/ObservationPose", observation.robotPose());
         Logger.recordOutput(LOG_PREFIX + "Vision/TimestampSeconds", observation.timestampSeconds());
-        Logger.recordOutput(
-                LOG_PREFIX + "Vision/AvgTagDistanceMeters", observation.avgTagDistance());
+        Logger.recordOutput(LOG_PREFIX + "Vision/AvgTagDistanceMeters", observation.avgTagDistance());
         Logger.recordOutput(LOG_PREFIX + "Vision/SeenTagIds", seenTagIds);
         Logger.recordOutput(LOG_PREFIX + "Vision/SeenTagPoses", seenTagPoses);
         Logger.recordOutput(LOG_PREFIX + "Vision/LinearStdDev", observation.linearStdDev());
@@ -367,7 +518,7 @@ public class PoseEstimator {
         Logger.recordOutput(LOG_PREFIX + "Vision/RotationNSigma", rotationNSigma);
         Logger.recordOutput(
                 LOG_PREFIX + "Vision/CandidatePose",
-                new Pose2d[] {candidatePose != null ? candidatePose : Pose2d.kZero});
+                new Pose2d[] {candidatePose != null ? candidatePose : Pose2d.ZERO});
         if (accepted && candidatePose != null) {
             Logger.recordOutput(LOG_PREFIX + "Vision/AcceptedPose", new Pose2d[] {candidatePose});
         } else {

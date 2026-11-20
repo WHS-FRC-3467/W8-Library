@@ -15,11 +15,10 @@
 
 package frc.lib.util;
 
-import edu.wpi.first.math.geometry.Translation2d;
-
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.List;
+import org.wpilib.math.geometry.Translation2d;
 
 /**
  * Utility class for checking if a point lies within a polygon boundary. Uses the ray casting

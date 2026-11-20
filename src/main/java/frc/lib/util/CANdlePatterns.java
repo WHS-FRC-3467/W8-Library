@@ -14,21 +14,20 @@
  */
 package frc.lib.util;
 
-import static edu.wpi.first.units.Units.Hertz;
-import static edu.wpi.first.units.Units.InchesPerSecond;
-import static edu.wpi.first.units.Units.Microseconds;
-import static edu.wpi.first.units.Units.Milliseconds;
-import static edu.wpi.first.units.Units.Seconds;
-
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.LEDPattern;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.util.Color;
+import static org.wpilib.units.Units.Hertz;
+import static org.wpilib.units.Units.InchesPerSecond;
+import static org.wpilib.units.Units.Microseconds;
+import static org.wpilib.units.Units.Milliseconds;
+import static org.wpilib.units.Units.Seconds;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.random.RandomGenerator;
+import org.wpilib.hardware.led.LEDPattern;
+import org.wpilib.system.RobotController;
+import org.wpilib.units.measure.Distance;
+import org.wpilib.util.Color;
 
 public class CANdlePatterns {
 
@@ -54,9 +53,8 @@ public class CANdlePatterns {
         return (reader, writer) -> {
             int bufLen = reader.getLength();
 
-            final double periodMicros =
-                    Hertz.of(velocity).asPeriod().in(Microseconds)
-                            * bufLen; // needs to be multiplied by the length of the buffer because
+            final double periodMicros = Hertz.of(velocity).asPeriod().in(Microseconds)
+                    * bufLen; // needs to be multiplied by the length of the buffer because
             // CTRE defines the velocity as the amount of time it takes
             // for one LED to be filled and WPIlib defines this as the
             // amount of time it takes for all the LEDs to be filled
@@ -69,7 +67,7 @@ public class CANdlePatterns {
             }
 
             for (int led = max; led < bufLen; led++) {
-                writer.setLED(led, Color.kBlack);
+                writer.setLED(led, Color.BLACK);
             }
         };
     }
@@ -84,13 +82,9 @@ public class CANdlePatterns {
      */
     public LEDPattern fireScroll(double frameRate, Distance ledSpacing) {
         double random = RandomGenerator.getDefault().nextDouble();
-        LEDPattern fireScroll =
-                LEDPattern.gradient(
-                                LEDPattern.GradientType.kContinuous,
-                                Color.kOrange,
-                                Color.kOrangeRed)
-                        .scrollAtAbsoluteSpeed(InchesPerSecond.of(frameRate), ledSpacing)
-                        .blink(Seconds.of((random == 0.0 ? 5.0 : random) * 3), Milliseconds.of(8));
+        LEDPattern fireScroll = LEDPattern.gradient(LEDPattern.GradientType.CONTINUOUS, Color.ORANGE, Color.ORANGE_RED)
+                .scrollAtAbsoluteVelocity(InchesPerSecond.of(frameRate), ledSpacing)
+                .blink(Seconds.of((random == 0.0 ? 5.0 : random) * 3), Milliseconds.of(8));
         fireScroll.breathe(Seconds.of(3));
         return fireScroll;
     }
@@ -107,8 +101,7 @@ public class CANdlePatterns {
      *     com.ctre.phoenix6.signals.LarsonBounceValue}
      * @return WPIlib LEDPattern
      */
-    public LEDPattern larsonPattern(
-            double velocity, Color color, int size, int buffer, String bounceMode) {
+    public LEDPattern larsonPattern(double velocity, Color color, int size, int buffer, String bounceMode) {
 
         return (reader, writer) -> {
             long now = RobotController.getTime();
@@ -116,16 +109,14 @@ public class CANdlePatterns {
             int bufLen = reader.getLength();
 
             double wereToBounce = 0; // Where the scanner should bounce
-            wereToBounce =
-                    switch (bounceMode) {
-                        case "Front" -> bufLen - size;
-                        case "Back" -> bufLen + size;
-                        case "Center" -> Math.floor(bufLen / 2.0);
-                        default -> 0;
-                    };
+            wereToBounce = switch (bounceMode) {
+                case "Front" -> bufLen - size;
+                case "Back" -> bufLen + size;
+                case "Center" -> Math.floor(bufLen / 2.0);
+                default -> 0;
+            };
 
-            final double periodMicros =
-                    Hertz.of(velocity).asPeriod().in(Microseconds) * wereToBounce;
+            final double periodMicros = Hertz.of(velocity).asPeriod().in(Microseconds) * wereToBounce;
             double t = (now % (long) periodMicros) / periodMicros;
             int max = (int) (wereToBounce * t);
 
@@ -159,10 +150,10 @@ public class CANdlePatterns {
                 }
                 if (max < bufLen) {
                     if (reversed.get(buffer)) {
-                        writer.setLED(bufLen - 2 - i, Color.kBlack);
+                        writer.setLED(bufLen - 2 - i, Color.BLACK);
 
                     } else {
-                        writer.setLED(i, Color.kBlack);
+                        writer.setLED(i, Color.BLACK);
                     }
                 }
             }

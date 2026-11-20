@@ -1,9 +1,8 @@
 package frc.lib.util;
 
-import edu.wpi.first.wpilibj.Timer;
-
 import java.util.ArrayDeque;
 import java.util.function.BooleanSupplier;
+import org.wpilib.system.Timer;
 
 /**
  * Counts the number of times a boolean supplier becomes true (rising edge) within a sliding time

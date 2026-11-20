@@ -15,20 +15,17 @@
 
 package frc.lib.io.vision;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.geometry.Pose3d;
-
-import frc.lib.devices.AprilTagCamera.CameraProperties;
 import frc.lib.io.vision.VisionIO.CameraResult;
-
+import frc.lib.sensors.AprilTagCamera.CameraProperties;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Optional;
 import org.photonvision.PhotonCamera;
 import org.photonvision.common.dataflow.structures.Packet;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Optional;
+import org.wpilib.fields.Field;
+import org.wpilib.math.geometry.Pose3d;
 
 /**
  * Real hardware implementation of VisionIO using PhotonVision.
@@ -69,18 +66,16 @@ public class VisionIOPhotonVision implements VisionIO {
         }
 
         var unreadResults = photonCamera.getAllUnreadResults();
-        inputs.rawResults =
-                unreadResults.stream()
-                        .map(VisionIOPhotonVision::packPhotonResult)
-                        .toArray(byte[][]::new);
-        inputs.captureTimestampsUs =
-                unreadResults.stream()
-                        .mapToLong(result -> result.metadata.captureTimestampMicros)
-                        .toArray();
-        inputs.publishTimestampsUs =
-                unreadResults.stream()
-                        .mapToLong(result -> result.metadata.publishTimestampMicros)
-                        .toArray();
+        int n = unreadResults.size();
+        inputs.rawResults = new byte[n][];
+        inputs.captureTimestampsUs = new long[n];
+        inputs.publishTimestampsUs = new long[n];
+        for (int i = 0; i < n; i++) {
+            var result = unreadResults.get(i);
+            inputs.rawResults[i] = packPhotonResult(result);
+            inputs.captureTimestampsUs[i] = result.metadata.captureTimestampNanos / 1000;
+            inputs.publishTimestampsUs[i] = result.metadata.publishTimestampNanos / 1000;
+        }
     }
 
     /**
@@ -90,8 +85,7 @@ public class VisionIOPhotonVision implements VisionIO {
      * <p>Each raw byte array is unpacked from the PhotonVision struct format, then each tracked
      * target's field-to-camera pose is reconstructed using the known tag field positions.
      */
-    public static CameraResult[] decodeResults(
-            VisionIOInputs inputs, AprilTagFieldLayout tagLayout) {
+    public static CameraResult[] decodeResults(VisionIOInputs inputs, Field tagLayout) {
         ArrayList<CameraResult> results = new ArrayList<>(inputs.rawResults.length);
         for (int i = 0; i < inputs.rawResults.length; i++) {
             byte[] raw = inputs.rawResults[i];
@@ -100,10 +94,8 @@ public class VisionIOPhotonVision implements VisionIO {
             PhotonPipelineResult photon = unpackPhotonResult(raw);
             if (photon == null) continue;
 
-            long captureTs =
-                    i < inputs.captureTimestampsUs.length ? inputs.captureTimestampsUs[i] : 0;
-            long publishTs =
-                    i < inputs.publishTimestampsUs.length ? inputs.publishTimestampsUs[i] : 0;
+            long captureTs = i < inputs.captureTimestampsUs.length ? inputs.captureTimestampsUs[i] : 0;
+            long publishTs = i < inputs.publishTimestampsUs.length ? inputs.publishTimestampsUs[i] : 0;
 
             results.add(toCameraResult(photon, captureTs, publishTs, tagLayout));
         }
@@ -130,10 +122,7 @@ public class VisionIOPhotonVision implements VisionIO {
      * fieldToCamera = fieldToTag * inverse(cameraToTag)}.
      */
     private static CameraResult toCameraResult(
-            PhotonPipelineResult photon,
-            long captureTimestampUs,
-            long publishTimestampUs,
-            AprilTagFieldLayout tagLayout) {
+            PhotonPipelineResult photon, long captureTimestampUs, long publishTimestampUs, Field tagLayout) {
         ArrayList<TagObservation> tagObs = new ArrayList<>(photon.getTargets().size());
         for (PhotonTrackedTarget target : photon.getTargets()) {
             int tagId = target.getFiducialId();
@@ -142,40 +131,24 @@ public class VisionIOPhotonVision implements VisionIO {
             Pose3d tagPose = tagPoseOpt.get();
 
             // fieldToCamera = fieldToTag * (cameraToTag)^-1
-            Pose3d fieldToCamera = tagPose.transformBy(target.getBestCameraToTarget().inverse());
+            Pose3d fieldToCamera =
+                    tagPose.transformBy(target.getBestCameraToTarget().inverse());
             Pose3d altFieldToCamera =
                     tagPose.transformBy(target.getAlternateCameraToTarget().inverse());
 
-            tagObs.add(
-                    new TagObservation(
-                            tagId,
-                            fieldToCamera,
-                            Optional.of(altFieldToCamera),
-                            target.getArea(),
-                            target.getPoseAmbiguity()));
+            tagObs.add(new TagObservation(
+                    tagId, fieldToCamera, Optional.of(altFieldToCamera), target.getArea(), target.getPoseAmbiguity()));
         }
 
-        Optional<MultiTagObservation> multiTag =
-                photon.getMultiTagResult()
-                        .map(
-                                mt -> {
-                                    Pose3d fieldToCamPose =
-                                            new Pose3d(
-                                                    mt.estimatedPose.best.getTranslation(),
-                                                    mt.estimatedPose.best.getRotation());
-                                    int[] ids =
-                                            mt.fiducialIDsUsed.stream()
-                                                    .mapToInt(Short::intValue)
-                                                    .toArray();
-                                    return new MultiTagObservation(
-                                            ids, fieldToCamPose, mt.estimatedPose.bestReprojErr);
-                                });
+        Optional<MultiTagObservation> multiTag = photon.getMultiTagResult().map(mt -> {
+            Pose3d fieldToCamPose =
+                    new Pose3d(mt.estimatedPose.best.getTranslation(), mt.estimatedPose.best.getRotation());
+            int[] ids = mt.fiducialIDsUsed.stream().mapToInt(Short::intValue).toArray();
+            return new MultiTagObservation(ids, fieldToCamPose, mt.estimatedPose.bestReprojErr);
+        });
 
-        return new CameraResult(
-                tagObs.toArray(TagObservation[]::new),
-                multiTag,
-                (double) captureTimestampUs,
-                (double) publishTimestampUs);
+        return new CameraResult(tagObs.toArray(TagObservation[]::new), multiTag, (double) captureTimestampUs, (double)
+                publishTimestampUs);
     }
 
     private static byte[] packPhotonResult(PhotonPipelineResult result) {

@@ -4,19 +4,18 @@
 
 package frc.lib.util;
 
-import static edu.wpi.first.units.Units.Meters;
+import static org.wpilib.units.Units.Meters;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.wpilibj.DriverStation;
-
-import frc.robot.Constants;
 import frc.robot.FieldConstants;
+import org.wpilib.driverstation.Alliance;
+import org.wpilib.driverstation.MatchState;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Translation3d;
+import org.wpilib.units.measure.Distance;
 
 /** Utility class for field-related methods. */
 public class FieldUtil {
@@ -57,7 +56,7 @@ public class FieldUtil {
      * @return The rotation in the current alliance frame
      */
     public static Rotation2d apply(Rotation2d rotation) {
-        return shouldFlip() ? rotation.rotateBy(Rotation2d.kPi) : rotation;
+        return shouldFlip() ? rotation.rotateBy(Rotation2d.PI) : rotation;
     }
 
     /**
@@ -67,9 +66,7 @@ public class FieldUtil {
      * @return The pose in the current alliance frame
      */
     public static Pose2d apply(Pose2d pose) {
-        return shouldFlip()
-                ? new Pose2d(apply(pose.getTranslation()), apply(pose.getRotation()))
-                : pose;
+        return shouldFlip() ? new Pose2d(apply(pose.getTranslation()), apply(pose.getRotation())) : pose;
     }
 
     /**
@@ -94,8 +91,7 @@ public class FieldUtil {
      * @return The 3D translation in the current alliance frame
      */
     public static Translation3d apply(Translation3d translation) {
-        return new Translation3d(
-                applyX(translation.getX()), applyY(translation.getY()), translation.getZ());
+        return new Translation3d(applyX(translation.getX()), applyY(translation.getY()), translation.getZ());
     }
 
     /**
@@ -124,9 +120,7 @@ public class FieldUtil {
      * @return True if on red alliance, false if on blue alliance
      */
     public static boolean shouldFlip() {
-        return !Constants.disableHAL
-                && DriverStation.getAlliance().isPresent()
-                && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
+        return MatchState.getAlliance().isPresent() && MatchState.getAlliance().get() == Alliance.RED;
     }
 
     public static boolean isPoseInField(Translation2d translation, Distance margin) {
@@ -144,8 +138,8 @@ public class FieldUtil {
     // */
     // public static boolean shouldFlip()
     // {
-    // return DriverStation.getAlliance().isPresent()
-    // && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
+    // return MatchState.getAlliance().isPresent()
+    // && MatchState.getAlliance().get() == Alliance.RED;
     // }
 
     // public static Pose2d handleAllianceFlip(Pose2d blue_pose)

@@ -20,14 +20,11 @@ import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANrangeConfiguration;
 import com.ctre.phoenix6.hardware.CANrange;
-
-import edu.wpi.first.units.measure.Distance;
-
 import frc.lib.util.CANUpdateThread;
 import frc.lib.util.Device;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.wpilib.units.measure.Distance;
 
 /** A distance sensor implementation that uses a CANRange */
 public class DistanceSensorIOCANRange implements DistanceSensorIO {
@@ -52,11 +49,10 @@ public class DistanceSensorIOCANRange implements DistanceSensorIO {
 
         updateThread
                 .ctreCheckErrorAndRetry(() -> CANRange.getConfigurator().apply(config))
-                .exceptionally(
-                        ex -> {
-                            LOGGER.log(Level.SEVERE, ex.toString(), ex);
-                            return null;
-                        });
+                .exceptionally(ex -> {
+                    LOGGER.log(Level.SEVERE, ex.toString(), ex);
+                    return null;
+                });
 
         ambientSignal = CANRange.getAmbientSignal();
         distance = CANRange.getDistance();

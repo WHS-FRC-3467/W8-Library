@@ -4,13 +4,11 @@
 
 package frc.lib.util;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
-
 import lombok.Getter;
-
 import org.littletonrobotics.junction.Logger;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation3d;
+import org.wpilib.math.geometry.Translation3d;
 
 /**
  * Utility for tracking and visualizing game piece positions in simulation.
@@ -38,7 +36,8 @@ public class GamePieceVisualizer {
 
     private final String name;
 
-    @Getter Pose3d gamePiecePose = new Pose3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0));
+    @Getter
+    Pose3d gamePiecePose = new Pose3d(new Translation3d(0, 0, 0), new Rotation3d(0, 0, 0));
 
     /**
      * Creates a new game piece visualizer at the specified pose.

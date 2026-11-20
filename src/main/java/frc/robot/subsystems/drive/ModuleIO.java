@@ -15,28 +15,34 @@
 
 package frc.robot.subsystems.drive;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-
 import frc.lib.util.PID;
-
 import org.littletonrobotics.junction.AutoLog;
+import org.wpilib.math.geometry.Rotation2d;
 
+/**
+ * An interface representing a swerve module's required capabilities, consisting of a single geared
+ * drive motor and a single geared turn motor.
+ */
 public interface ModuleIO {
     @AutoLog
     public static class ModuleIOInputs {
         public boolean driveConnected = false;
         public double drivePositionRad = 0.0;
         public double driveVelocityRadPerSec = 0.0;
-        public double driveAppliedVolts = 0.0;
-        public double driveCurrentAmps = 0.0;
+        public double driveSupplyVoltageVolts = 0.0;
+        public double driveAppliedVoltageVolts = 0.0;
+        public double driveSupplyCurrentAmps = 0.0;
+        public double driveTorqueCurrentAmps = 0.0;
 
         public boolean turnConnected = false;
         public boolean turnEncoderConnected = false;
         public Rotation2d turnAbsolutePosition = new Rotation2d();
         public Rotation2d turnPosition = new Rotation2d();
         public double turnVelocityRadPerSec = 0.0;
-        public double turnAppliedVolts = 0.0;
-        public double turnCurrentAmps = 0.0;
+        public double turnSupplyVoltageVolts = 0.0;
+        public double turnAppliedVoltageVolts = 0.0;
+        public double turnSupplyCurrentAmps = 0.0;
+        public double turnTorqueCurrentAmps = 0.0;
 
         public double[] odometryTimestamps = new double[] {};
         public double[] odometryDrivePositionsRad = new double[] {};
@@ -44,66 +50,60 @@ public interface ModuleIO {
     }
 
     /** Updates the set of loggable inputs. */
-    public default void updateInputs(ModuleIOInputs inputs) {
-    }
+    public default void updateInputs(ModuleIOInputs inputs) {}
 
     /**
      * Run the drive motor at the specified open loop value.
      *
      * @param output Open loop output value (-12 to 12 volts)
      */
-    public default void setDriveOpenLoop(double output) {
-    }
+    public default void setDriveOpenLoop(double output) {}
 
     /**
      * Run the turn motor at the specified open loop value.
      *
      * @param output Open loop output value (-12 to 12 volts)
      */
-    public default void setTurnOpenLoop(double output) {
-    }
+    public default void setTurnOpenLoop(double output) {}
 
     /**
      * Run the drive motor at the specified velocity.
      *
      * @param velocityRadPerSec Target velocity in radians per second
      */
-    public default void setDriveVelocity(double velocityRadPerSec) {
-    }
+    public default void setDriveVelocity(double velocityRadPerSec) {}
 
     /**
      * Run the turn motor to the specified rotation.
      *
      * @param rotation Target rotation angle
      */
-    public default void setTurnPosition(Rotation2d rotation) {
-    }
+    public default void setTurnPosition(Rotation2d rotation) {}
 
     /**
      * Updates the main PID slot on the drive motor
      *
      * @param pid The PID to set
      */
-    public default void setDrivePID(PID pid) {
-    }
+    public default void setDrivePID(PID pid) {}
 
     /**
      * Updates the main PID slot on the turn motor
      *
      * @param pid The PID to set
      */
-    public default void setTurnPID(PID pid) {
-    }
+    public default void setTurnPID(PID pid) {}
 
     /**
      * Updates the drive motor current limit for brownout protection.
      *
      * @param brownedOut True when the robot is actively browned out
      */
-    public default void setBrownedOut(boolean brownedOut) {
-    }
+    public default void setBrownedOut(boolean brownedOut) {}
 
     /** Toggles the drive motor current limit for brownout protection. */
-    public default void toggleBrownedOut() {
-    }
+    public default void toggleBrownedOut() {}
+
+    /** Return the module name. */
+    public String getName();
 }
