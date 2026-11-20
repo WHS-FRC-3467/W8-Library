@@ -59,14 +59,14 @@ public sealed interface Device {
     /**
      * Digital Input/Output device with a port ID.
      *
-     * @param id the DIO port ID on the roboRIO
+     * @param id the DIO port ID on the robot controller
      */
     public final record DIO(int id) implements Device {}
 
     /**
      * Pulse Width Modulation device with a port ID.
      *
-     * @param id the PWM port ID on the roboRIO
+     * @param id the PWM port ID on the robot controller
      */
     public final record PWM(int id) implements Device {}
 }

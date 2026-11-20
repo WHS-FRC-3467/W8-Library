@@ -7,14 +7,14 @@
 
 package frc.lib.util;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Transform2d;
+import org.wpilib.math.geometry.Transform3d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
 
 /** Geometry utilities for working with translations, rotations, transforms, and poses. */
 public class GeomUtil {
@@ -25,7 +25,7 @@ public class GeomUtil {
      * @return The resulting transform
      */
     public static Transform2d toTransform2d(Translation2d translation) {
-        return new Transform2d(translation, Rotation2d.kZero);
+        return new Transform2d(translation, Rotation2d.ZERO);
     }
 
     /**
@@ -36,7 +36,7 @@ public class GeomUtil {
      * @return The resulting transform
      */
     public static Transform2d toTransform2d(double x, double y) {
-        return new Transform2d(x, y, Rotation2d.kZero);
+        return new Transform2d(x, y, Rotation2d.ZERO);
     }
 
     /**
@@ -46,7 +46,7 @@ public class GeomUtil {
      * @return The resulting transform
      */
     public static Transform2d toTransform2d(Rotation2d rotation) {
-        return new Transform2d(Translation2d.kZero, rotation);
+        return new Transform2d(Translation2d.ZERO, rotation);
     }
 
     /**
@@ -89,7 +89,7 @@ public class GeomUtil {
      * @return The resulting pose
      */
     public static Pose2d toPose2d(Translation2d translation) {
-        return new Pose2d(translation, Rotation2d.kZero);
+        return new Pose2d(translation, Rotation2d.ZERO);
     }
 
     /**
@@ -99,7 +99,7 @@ public class GeomUtil {
      * @return The resulting pose
      */
     public static Pose2d toPose2d(Rotation2d rotation) {
-        return new Pose2d(Translation2d.kZero, rotation);
+        return new Pose2d(Translation2d.ZERO, rotation);
     }
 
     /**
@@ -135,14 +135,13 @@ public class GeomUtil {
     }
 
     /**
-     * Converts a ChassisSpeeds to a Twist2d by extracting two dimensions (Y and Z). chain
+     * Converts a ChassisVelocities to a Twist2d by extracting two dimensions (Y and Z). chain
      *
      * @param speeds The original translation
      * @return The resulting translation
      */
-    public static Twist2d toTwist2d(ChassisSpeeds speeds) {
-        return new Twist2d(
-                speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
+    public static Twist2d toTwist2d(ChassisVelocities speeds) {
+        return new Twist2d(speeds.vx, speeds.vy, speeds.omega);
     }
 
     /**

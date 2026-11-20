@@ -15,13 +15,10 @@
 
 package frc.lib.util;
 
-import au.grapplerobotics.ConfigurationFailedException;
-
 import com.ctre.phoenix6.StatusCode;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -59,34 +56,6 @@ public class CANUpdateThread implements AutoCloseable {
                     }
 
                     throw new RuntimeException("CTRE config failed: " + lastStatus);
-                },
-                executor);
-    }
-
-    /**
-     * Attempts a LaserCAN configuration action up to MAX_RETRIES times.
-     *
-     * @param action Runnable that may throw ConfigurationFailedException
-     * @return CompletableFuture that completes when successful or throws on persistent failure
-     */
-    public CompletableFuture<Void> laserCANCheckErrorAndRetry(
-            ThrowingRunnable<ConfigurationFailedException> action) {
-        return CompletableFuture.runAsync(
-                () -> {
-                    ConfigurationFailedException lastException = null;
-
-                    for (int i = 0; i < MAX_RETRIES; i++) {
-                        try {
-                            action.run();
-                            return; // success
-                        } catch (ConfigurationFailedException e) {
-                            lastException = e;
-                        } catch (Exception e) {
-                            throw new CompletionException(e);
-                        }
-                    }
-
-                    throw new CompletionException(lastException);
                 },
                 executor);
     }

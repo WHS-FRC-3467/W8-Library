@@ -15,7 +15,7 @@
 
 package frc.lib.util;
 
-import edu.wpi.first.units.measure.Time;
+import org.wpilib.units.measure.Time;
 
 import java.util.function.Supplier;
 

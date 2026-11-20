@@ -15,12 +15,11 @@
 
 package frc.lib.io.servo;
 
-import static edu.wpi.first.units.Units.Degrees;
-
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.units.measure.Angle;
+import static org.wpilib.units.Units.Degrees;
 
 import lombok.Getter;
+
+import org.wpilib.units.measure.Angle;
 
 public class ServoIOSim implements ServoIO {
 
@@ -47,7 +46,7 @@ public class ServoIOSim implements ServoIO {
      */
     public void setScaledPosition(double value) {
         double servoAngleRange = maxAngle - minAngle;
-        goalPosition = MathUtil.clamp(value, 0.0, 1.0) * servoAngleRange + minAngle;
+        goalPosition = Math.clamp(value, 0.0, 1.0) * servoAngleRange + minAngle;
     }
 
     /**
@@ -61,7 +60,7 @@ public class ServoIOSim implements ServoIO {
      * @param degrees The angle in degrees to set the servo.
      */
     public void setAngle(double degrees) {
-        goalPosition = MathUtil.clamp(degrees, minAngle, maxAngle);
+        goalPosition = Math.clamp(degrees, minAngle, maxAngle);
     }
 
     /**
@@ -76,6 +75,6 @@ public class ServoIOSim implements ServoIO {
      */
     @Override
     public void setAngle(Angle angle) {
-        goalPosition = MathUtil.clamp(angle.in(Degrees), minAngle, maxAngle);
+        goalPosition = Math.clamp(angle.in(Degrees), minAngle, maxAngle);
     }
 }

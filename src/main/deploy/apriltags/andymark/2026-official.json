@@ -1,5 +1,9 @@
 {
-  "tags": [
+  "name": "2026 FRC Rebuilt andymark official",
+  "season": "2026",
+  "game": "Rebuilt",
+  "program": "frc",
+  "field-tags": [
     {
       "ID": 1,
       "pose": {
@@ -577,7 +581,7 @@
       }
     }
   ],
-  "field": {
+  "field-dimensions": {
     "length": 16.518,
     "width": 8.043
   }

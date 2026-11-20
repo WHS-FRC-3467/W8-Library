@@ -1,5 +1,9 @@
 {
-  "tags": [
+  "name": "2026 FRC Rebuilt welded notrench",
+  "season": "2026",
+  "game": "Rebuilt",
+  "program": "frc",
+  "field-tags": [
     {
       "ID": 2,
       "pose": {
@@ -433,7 +437,7 @@
       }
     }
   ],
-  "field": {
+  "field-dimensions": {
     "length": 16.541,
     "width": 8.069
   }

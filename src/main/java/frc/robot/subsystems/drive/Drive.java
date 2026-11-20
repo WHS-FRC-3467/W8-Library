@@ -15,44 +15,37 @@
 
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.*;
+import static org.wpilib.units.Units.*;
 
-import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.SlotConfigs;
 
-import edu.wpi.first.hal.FRCNetComm.tInstances;
-import edu.wpi.first.hal.FRCNetComm.tResourceType;
-import edu.wpi.first.hal.HAL;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.units.measure.LinearAcceleration;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
+import frc.lib.actuators.Actuator.TunablePidConfig;
 import frc.lib.io.motor.MotorIO.PIDSlot;
-import frc.lib.mechanisms.Mechanism.TunablePidConfig;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
 import frc.lib.util.LoggedTunableNumber;
-import frc.lib.util.LoggerHelper;
 import frc.lib.util.PID;
 import frc.lib.util.PowerProfiler;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
-import frc.robot.RobotState;
+import frc.robot.GlobalPoseEstimator;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+import org.wpilib.command3.Mechanism;
+import org.wpilib.command3.Scheduler;
+import org.wpilib.driverstation.RobotState;
+import org.wpilib.framework.RobotBase;
+import org.wpilib.math.controller.PIDController;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.SwerveDriveKinematics;
+import org.wpilib.math.kinematics.SwerveModulePosition;
+import org.wpilib.math.kinematics.SwerveModuleVelocity;
+import org.wpilib.math.util.MathUtil;
+import org.wpilib.units.measure.LinearAcceleration;
+import org.wpilib.util.Alert;
+import org.wpilib.util.Alert.Level;
 
 import java.util.List;
 import java.util.Objects;
@@ -60,12 +53,12 @@ import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class Drive extends SubsystemBase {
-    public final RobotState robotState = RobotState.getInstance();
+public class Drive implements Mechanism {
+    public final GlobalPoseEstimator globalPoseEstimator = GlobalPoseEstimator.getInstance();
 
     // TunerConstants doesn't include these constants, so they are declared locally
     static final double ODOMETRY_FREQUENCY =
-            new CANBus(DriveConstants.drivetrainConstants.CANBusName).isNetworkFD() ? 250.0 : 100.0;
+            DriveConstants.drivetrainConstants.Network.isNetworkFD() ? 250.0 : 100.0;
 
     public static final double DRIVE_BASE_RADIUS =
             Math.max(
@@ -112,15 +105,18 @@ public class Drive extends SubsystemBase {
     private static final LoggedTunableNumber AUTO_THETA_KD =
             new LoggedTunableNumber("Drive/AutoThetaPID/kD", 0.1);
 
+    private static final double loop_period_seconds = Constants.LOOP_PERIOD.in(Seconds);
+
     private final GyroIO gyroIO;
     private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 
     private final Module[] modules = new Module[4]; // FL, FR, BL, BR
 
-    private final SysIdRoutine sysId;
-
     private final Alert gyroDisconnectedAlert =
-            new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
+            new Alert(
+                    "drivetrain_gyro_disconnect",
+                    "Disconnected gyro, using kinematics as fallback.",
+                    Level.HIGH);
 
     private SwerveDriveKinematics kinematics =
             new SwerveDriveKinematics(MODULE_TRANSLATIONS.toArray(Translation2d[]::new));
@@ -182,23 +178,8 @@ public class Drive extends SubsystemBase {
         modules[2] = new Module(blModuleIO, DriveConstants.BackLeft);
         modules[3] = new Module(brModuleIO, DriveConstants.BackRight);
 
-        // Usage reporting for swerve template
-        HAL.report(
-                tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_AdvantageKit);
-
         // Start odometry thread
         PhoenixOdometryThread.getInstance().start();
-        // Configure SysId
-        sysId =
-                new SysIdRoutine(
-                        new SysIdRoutine.Config(
-                                null,
-                                null,
-                                null,
-                                (state) ->
-                                        Logger.recordOutput("Drive/SysIdState", state.toString())),
-                        new SysIdRoutine.Mechanism(
-                                (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
 
         driveTunablePID =
                 makeTunablePID(
@@ -209,13 +190,12 @@ public class Drive extends SubsystemBase {
                         "Steer",
                         new PID(SlotConfigs.from(DriveConstants.FrontLeft.SteerMotorGains)));
         autoThetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+        Scheduler.getDefault().addPeriodic(this::periodic);
     }
 
-    @Override
     @SuppressWarnings("LockNotBeforeTry")
     public void periodic() {
-        LoggerHelper.recordCurrentCommand("Drive", this);
-
         odometryLock.lock(); // Prevents odometry updates while reading data
         gyroIO.updateInputs(gyroInputs);
         Logger.processInputs("Drive/Gyro", gyroInputs);
@@ -225,16 +205,16 @@ public class Drive extends SubsystemBase {
         odometryLock.unlock();
 
         // Stop moving when disabled
-        if (DriverStation.isDisabled()) {
+        if (RobotState.isDisabled()) {
             for (var module : modules) {
                 module.stop();
             }
         }
 
         // Log empty setpoint states when disabled
-        if (DriverStation.isDisabled()) {
-            Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
-            Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
+        if (RobotState.isDisabled()) {
+            Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleVelocity[] {});
+            Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleVelocity[] {});
         }
 
         LoggedTunableNumber.ifChanged(
@@ -309,7 +289,7 @@ public class Drive extends SubsystemBase {
                 AUTO_THETA_KD);
 
         // Update gyro alert
-        gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
+        gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.CURRENT_MODE != Mode.SIM);
 
         double[] sampleTimestamps = modules[0].getOdometryTimestamps();
         int sampleCount = sampleTimestamps.length;
@@ -325,7 +305,7 @@ public class Drive extends SubsystemBase {
                 gyroAngle = Optional.of(gyroInputs.yawPosition);
             }
 
-            robotState.addOdometryObservation(
+            globalPoseEstimator.addOdometryObservation(
                     new OdometryObservation(
                             Seconds.of(sampleTimestamps[sampleIndex]),
                             modulePositions,
@@ -334,14 +314,11 @@ public class Drive extends SubsystemBase {
         }
 
         // Update RobotState velocity
-        robotState.setRobotRelativeVelocity(getChassisSpeeds());
+        globalPoseEstimator.setRobotRelativeVelocity(getChassisVelocities());
 
         Logger.recordOutput(
                 "Drive/Speed",
-                new Translation2d(
-                                        getChassisSpeeds().vxMetersPerSecond,
-                                        getChassisSpeeds().vyMetersPerSecond)
-                                .getNorm()
+                new Translation2d(getChassisVelocities().vx, getChassisVelocities().vy).getNorm()
                         * -1);
     }
 
@@ -350,22 +327,24 @@ public class Drive extends SubsystemBase {
      *
      * @param speeds Speeds in meters/sec
      */
-    public void runVelocity(ChassisSpeeds speeds) {
+    public void runVelocity(ChassisVelocities speeds) {
         // Calculate module setpoints
-        ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
-        SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(discreteSpeeds);
-        SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, DriveConstants.kSpeedAt12Volts);
+        ChassisVelocities discreteSpeeds = speeds.discretize(loop_period_seconds);
+        SwerveModuleVelocity[] setpointStates = kinematics.toSwerveModuleVelocities(discreteSpeeds);
+        setpointStates =
+                SwerveDriveKinematics.desaturateWheelVelocities(
+                        setpointStates, DriveConstants.kSpeedAt12Volts);
 
         // Log unoptimized setpoints and setpoint speeds
         Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
-        Logger.recordOutput("SwerveChassisSpeeds/Setpoints", discreteSpeeds);
+        Logger.recordOutput("SwerveChassisVelocities/Setpoints", discreteSpeeds);
 
         // Send setpoints to modules
         for (int i = 0; i < 4; i++) {
-            modules[i].runSetpoint(setpointStates[i]);
+            setpointStates[i] = modules[i].runSetpoint(setpointStates[i]);
         }
 
-        // Log optimized setpoints (runSetpoint mutates each state)
+        // Log optimized setpoints returned by each module
         Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStates);
     }
 
@@ -382,7 +361,7 @@ public class Drive extends SubsystemBase {
 
     /** Stops the drive. */
     public void stop() {
-        runVelocity(new ChassisSpeeds());
+        runVelocity(new ChassisVelocities());
     }
 
     /** Resets the internal PID state used for trajectory following. */
@@ -399,42 +378,17 @@ public class Drive extends SubsystemBase {
     public void stopWithX() {
         Rotation2d[] headings = new Rotation2d[4];
         for (int i = 0; i < 4; i++) {
-            headings[i] = MODULE_TRANSLATIONS.get(i).getAngle();
+            // SAFETY: We define MODULE_TRANSLATIONS to be nonzero
+            headings[i] = MODULE_TRANSLATIONS.get(i).getAngle().get();
         }
         kinematics.resetHeadings(headings);
         stop();
     }
 
-    /**
-     * Returns a command to run a quasistatic test in the specified direction.
-     *
-     * @param direction Direction to run the test (forward or reverse)
-     * @return Command that runs the quasistatic test
-     */
-    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return run(() -> runCharacterization(0.0))
-                .withTimeout(1.0)
-                .andThen(sysId.quasistatic(direction))
-                .withName("SysId Quasistatic " + direction.toString());
-    }
-
-    /**
-     * Returns a command to run a dynamic test in the specified direction.
-     *
-     * @param direction Direction to run the test (forward or reverse)
-     * @return Command that runs the dynamic test
-     */
-    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return run(() -> runCharacterization(0.0))
-                .withTimeout(1.0)
-                .andThen(sysId.dynamic(direction))
-                .withName("SysId Dynamic " + direction.toString());
-    }
-
     /** Returns the module states (turn angles and drive velocities) for all of the modules. */
     @AutoLogOutput(key = "SwerveStates/Measured")
-    private SwerveModuleState[] getModuleStates() {
-        SwerveModuleState[] states = new SwerveModuleState[4];
+    private SwerveModuleVelocity[] getModuleStates() {
+        SwerveModuleVelocity[] states = new SwerveModuleVelocity[4];
         for (int i = 0; i < 4; i++) {
             states[i] = modules[i].getState();
         }
@@ -459,9 +413,9 @@ public class Drive extends SubsystemBase {
      *
      * @return Current chassis speeds in meters per second and radians per second
      */
-    @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
-    public ChassisSpeeds getChassisSpeeds() {
-        return kinematics.toChassisSpeeds(getModuleStates());
+    @AutoLogOutput(key = "SwerveChassisVelocities/Measured")
+    public ChassisVelocities getChassisVelocities() {
+        return kinematics.toChassisVelocities(getModuleStates());
     }
 
     /**
@@ -555,7 +509,7 @@ public class Drive extends SubsystemBase {
 
     /**
      * Registers the module's drive and turn current and voltage to the power profiler.
-     * 
+     *
      * @param powerProfiler The power profiler to register the module's current and voltage to
      */
     public void registerModules(PowerProfiler powerProfiler) {

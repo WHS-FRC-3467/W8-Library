@@ -15,11 +15,11 @@
 
 package frc.lib.io.distancesensor;
 
-import static edu.wpi.first.units.Units.Inches;
-
-import edu.wpi.first.units.measure.Distance;
+import static org.wpilib.units.Units.Inches;
 
 import frc.lib.util.LoggedTunableNumber;
+
+import org.wpilib.units.measure.Distance;
 
 /** A simulated distance sensor implementation */
 public class DistanceSensorIOSim implements DistanceSensorIO {

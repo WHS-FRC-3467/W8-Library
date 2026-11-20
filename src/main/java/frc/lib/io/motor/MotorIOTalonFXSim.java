@@ -15,23 +15,23 @@
 
 package frc.lib.io.motor;
 
-import static edu.wpi.first.units.Units.Rotations;
-import static edu.wpi.first.units.Units.RotationsPerSecond; 
-import static edu.wpi.first.units.Units.Volts;
+import static org.wpilib.units.Units.Rotations;
+import static org.wpilib.units.Units.RotationsPerSecond;
+import static org.wpilib.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 import com.ctre.phoenix6.sim.TalonFXSimState.MotorType;
 
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.RobotController;
-
 import frc.lib.util.Device.CAN;
+
+import org.wpilib.math.system.DCMotor;
+import org.wpilib.system.RobotController;
+import org.wpilib.units.measure.Angle;
+import org.wpilib.units.measure.AngularAcceleration;
+import org.wpilib.units.measure.AngularVelocity;
+import org.wpilib.units.measure.Voltage;
 
 /**
  * Abstraction for a simulated CTRE TalonFX motor implementing the {@link MotorIOSim} interface.
@@ -45,24 +45,31 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
      *
      * @param name The name of the motor(s)
      * @param motorType The motor type (e.g. X44, X60). This should match motorModel.
-     * @param motorModel The bare (i.e. unreduced) qty 1 {@link DCMotor} object representing the motor,
-     * often constructed through DCMotor.getX(1). For example, DCMotor.getKrakenX60Foc(1).
+     * @param motorModel The bare (i.e. unreduced) qty 1 {@link DCMotor} object representing the
+     *     motor, often constructed through DCMotor.getX(1). For example,
+     *     DCMotor.getKrakenX60Foc(1).
      * @param config Configuration to apply to the motor(s)
      * @param main CAN ID of the main motor
      * @param followerData Configuration data for the follower(s)
      */
     public MotorIOTalonFXSim(
-            String name, MotorType motorType, DCMotor motorModel, TalonFXConfiguration config, CAN main, TalonFXFollower... followerData) {
+            String name,
+            MotorType motorType,
+            DCMotor motorModel,
+            TalonFXConfiguration config,
+            CAN main,
+            TalonFXFollower... followerData) {
         super(name, motorModel, config, main, followerData);
 
         simState = super.motor.getSimState();
-        // The motor type is required for CTRE sim to properly simulate electrical performance 
+        // The motor type is required for CTRE sim to properly simulate electrical performance
         simState.setMotorType(motorType);
     }
 
-    /** Setter for the position of the mechanism associated with this motor group, typically taken from a WPILib mechanism
-     * simulation
-     * 
+    /**
+     * Setter for the position of the mechanism associated with this motor group, typically taken
+     * from a WPILib mechanism simulation
+     *
      * @param position The new mechanism position (in mechanism-space)
      */
     @Override
@@ -70,19 +77,21 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         simState.setRawRotorPosition(position.times(getRotorToMechanismRatio()));
     }
 
-    /** Setter for the velocity of the mechanism associated with this motor group, typically taken from a WPILib mechanism
-     * simulation
-     * 
+    /**
+     * Setter for the velocity of the mechanism associated with this motor group, typically taken
+     * from a WPILib mechanism simulation
+     *
      * @param velocity The new mechanism velocity (in mechanism-space)
      */
-    @Override 
+    @Override
     public void setMechanismVelocity(AngularVelocity velocity) {
         simState.setRotorVelocity(velocity.times(getRotorToMechanismRatio()));
     }
 
-    /** Setter for the acceleration of the mechanism associated with this motor group, typically taken from a WPILib mechanism
-     * simulation
-     * 
+    /**
+     * Setter for the acceleration of the mechanism associated with this motor group, typically
+     * taken from a WPILib mechanism simulation
+     *
      * @param acceleration The new mechanism acceleration (in mechanism-space)
      */
     @Override
@@ -91,8 +100,8 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
     }
 
     @Override
-    public void updateInputs(MotorInputs inputs) {
-        Voltage supplyVoltage = Volts.of(RobotController.getBatteryVoltage()); 
+    public void updateInputs(MotorIOInputs inputs) {
+        Voltage supplyVoltage = Volts.of(RobotController.getBatteryVoltage());
         simState.setSupplyVoltage(supplyVoltage.in(Volts));
 
         inputs.connected =
@@ -120,8 +129,10 @@ public class MotorIOTalonFXSim extends MotorIOTalonFX implements MotorIOSim {
         inputs.rotorToSensorRatio = super.getRotorToSensorRatio();
         inputs.sensorToMechanismRatio = super.getSensorToMechanismRatio();
         inputs.rotorToMechanismRatio = super.getRotorToMechanismRatio();
-        inputs.motorTorqueConstant = super.getMotorTorqueConstant().isPresent() ? 
-        super.getMotorTorqueConstant().getAsDouble() : -1.0;
+        inputs.motorTorqueConstant =
+                super.getMotorTorqueConstant().isPresent()
+                        ? super.getMotorTorqueConstant().getAsDouble()
+                        : -1.0;
 
         // Interpret control-loop status signals conditionally based on current mode
         Double closedLoopErrorValue = super.closedLoopError.getValue();

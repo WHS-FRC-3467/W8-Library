@@ -15,12 +15,11 @@
 
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
-
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.units.measure.LinearAcceleration;
+import static org.wpilib.units.Units.MetersPerSecondPerSecond;
 
 import org.littletonrobotics.junction.AutoLog;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.units.measure.LinearAcceleration;
 
 public interface GyroIO {
     @AutoLog
@@ -41,6 +40,5 @@ public interface GyroIO {
      *
      * @param inputs Logged inputs object to update with current sensor readings
      */
-    public default void updateInputs(GyroIOInputs inputs) {
-    }
+    public default void updateInputs(GyroIOInputs inputs) {}
 }

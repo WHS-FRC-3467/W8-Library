@@ -15,9 +15,8 @@
 
 package frc.lib.io.vision;
 
-import edu.wpi.first.math.geometry.Pose3d;
-
 import org.littletonrobotics.junction.AutoLog;
+import org.wpilib.math.geometry.Pose3d;
 
 import java.util.Optional;
 
@@ -29,10 +28,9 @@ import java.util.Optional;
  * (PhotonVision, Limelight, etc.) while the rest of the robot code remains hardware-agnostic.
  */
 public interface VisionIO {
-    /** Identifier for the type of raw packet we are recieving in {@link VisionIOInputs#} */
+    /** Identifier for the type of raw packet we are receiving in {@link VisionIOInputs}. */
     public static enum NativePacketType {
         UNKNOWN,
-        C2,
         PHOTON
     }
 

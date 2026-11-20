@@ -15,20 +15,20 @@
 
 package frc.lib.posestimator;
 
-import static edu.wpi.first.units.Units.Seconds;
-
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.units.measure.Time;
+import static org.wpilib.units.Units.Seconds;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
+
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.math.geometry.Twist2d;
+import org.wpilib.math.interpolation.TimeInterpolatableBuffer;
+import org.wpilib.math.kinematics.SwerveDriveKinematics;
+import org.wpilib.math.kinematics.SwerveDriveOdometry;
+import org.wpilib.math.kinematics.SwerveModulePosition;
+import org.wpilib.units.measure.Time;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -118,7 +118,7 @@ public class SwerveOdometry {
             };
 
     /** The offset from the gyro's 0 at boot and the last reset frame of rotation */
-    private Rotation2d gyroOffset = Rotation2d.kZero;
+    private Rotation2d gyroOffset = Rotation2d.ZERO;
 
     /** The most recent odometry-based robot pose. */
     @Getter private Pose2d odometryPose = new Pose2d(1.0, 1.0, gyroOffset);
@@ -196,7 +196,7 @@ public class SwerveOdometry {
         lastModulePositions = copyPositions(currentPositions);
 
         // Integrate twist into odometry pose
-        Pose2d candidatePose = odometryPose.exp(twist);
+        Pose2d candidatePose = odometryPose.plus(twist.exp());
 
         // If gyro angle is available, correct heading drift
         if (observation.gyroAngle().isPresent()) {
