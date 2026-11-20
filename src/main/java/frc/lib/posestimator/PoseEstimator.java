@@ -380,7 +380,7 @@ public class PoseEstimator {
 
         // Solve Kalman gain matrix given observation standard deviations
         // Logic is copied from:
-        // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/org.wpilib.math/estimator/PoseEstimator.java#L93-L109
+        // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/edu/wpi/first/math/estimator/PoseEstimator.java#L93-L109
         double[] visionVariances = {
             visionLinearVariance, // X axis
             visionLinearVariance, // Y axis
@@ -402,7 +402,7 @@ public class PoseEstimator {
         // to where the
         // camera is saying we should be, unscaled (without any Kalman gain applied)
         // Logic is copied from:
-        // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/org.wpilib.math/estimator/PoseEstimator.java#L276-L292
+        // https://github.com/wpilibsuite/allwpilib/blob/b8d6bc2eb1b6cea10d1179939114d041945e172a/wpimath/src/main/java/edu/wpi/first/math/estimator/PoseEstimator.java#L276-L292
         Transform2d unscaledVisionCorrection = new Transform2d(oldPose, newVisionPose);
 
         double translationSigma =

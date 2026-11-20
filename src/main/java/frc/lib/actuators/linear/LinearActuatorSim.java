@@ -165,7 +165,7 @@ public class LinearActuatorSim extends LinearActuator<MotorIOSim> {
          * Enforce consistency between the gear ratio and number of motors used to construct this mechanism's state-space model and that
          * reported by its corresponding MotorIO implementation; after the first mechanism.periodic() call below, the corresponding MotorIO
          * implementation's updateInputs() method will also be called, thereby correctly setting the motor parameters (e.g. rotorToMechanismRatio)
-         * in the MotorIO.MotorInputs structure. Before then, these parameters will have their default values from the MotorIO interface (e.g.
+         * in the MotorIO.MotorIOInputs structure. Before then, these parameters will have their default values from the MotorIO interface (e.g.
          * rotorToMechanismRatio = 1.0, numMotors = 1).
          *
          * Note that including the motor parameters as inputs rather than IO getters is for consistency with replay.
