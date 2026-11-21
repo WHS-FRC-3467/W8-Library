@@ -127,7 +127,7 @@ public class SerialIOUSB implements SerialIO {
             port.reset(); // throw away anything left in the buffer from before we opened it
         } catch (RuntimeException e) {
             reportFailure(e);
-            port = null;
+            close();
         }
     }
 
