@@ -15,12 +15,13 @@
 
 package frc.robot;
 
+import static org.wpilib.units.Units.Meters;
 import static org.wpilib.units.Units.MetersPerSecond;
-import static org.wpilib.units.Units.Seconds;
 
-import frc.lib.posestimator.PoseEstimator;
+import frc.lib.posestimator.EkfPoseEstimator;
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
+import frc.lib.util.FieldUtil;
 import frc.robot.subsystems.drive.Drive;
 import java.util.Optional;
 import lombok.AccessLevel;
@@ -37,9 +38,6 @@ import org.wpilib.units.measure.LinearVelocity;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class GlobalPoseEstimator {
 
-    private static final double LINEAR_ODOMETRY_STD_DEV = 0.3;
-    private static final double ANGULAR_ODOMETRY_STD_DEV = 0.15;
-
     @Getter(lazy = true)
     private static final GlobalPoseEstimator instance = new GlobalPoseEstimator();
 
@@ -50,12 +48,9 @@ public class GlobalPoseEstimator {
 
     // -------- POSE ESTIMATION --------
 
-    private final PoseEstimator poseEstimator = new PoseEstimator(
-            new SwerveDriveKinematics(Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new)),
-            Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new),
-            Seconds.of(2),
-            LINEAR_ODOMETRY_STD_DEV,
-            ANGULAR_ODOMETRY_STD_DEV);
+    private final EkfPoseEstimator poseEstimator = new EkfPoseEstimator(
+                    new SwerveDriveKinematics(Drive.MODULE_TRANSLATIONS.toArray(Translation2d[]::new)))
+            .withPoseValidator(p -> FieldUtil.isPoseInField(p.getTranslation(), Meters.zero()));
 
     @Getter
     @Setter
@@ -93,6 +88,17 @@ public class GlobalPoseEstimator {
     }
 
     /**
+     * Tells the pose estimator whether the robot is tipped. While tipped, odometry is trusted less,
+     * so vision pulls the pose back harder, during the tip and in the first frames after it. Call
+     * every cycle, before that cycle's odometry observations.
+     *
+     * @param tipped whether the robot is tipped
+     */
+    public void setTipped(boolean tipped) {
+        poseEstimator.setTipped(tipped);
+    }
+
+    /**
      * Adds a new vision observation to the pose estimator.
      *
      * @param observation the vision observation to add
@@ -115,10 +121,10 @@ public class GlobalPoseEstimator {
      * Returns the robot-relative velocity around a past timestamp, from odometry.
      *
      * @param timestampSeconds the timestamp in seconds
-     * @return the velocity, or zero velocity if the odometry history does not reach that time
+     * @return the velocity then, or the current velocity if the history does not reach that time
      */
     public ChassisVelocities getRobotRelativeVelocityAtTime(double timestampSeconds) {
-        return poseEstimator.getVelocityAtTime(timestampSeconds).orElseGet(() -> new ChassisVelocities(0, 0, 0));
+        return poseEstimator.getVelocityAtTime(timestampSeconds).orElse(robotRelativeVelocity);
     }
 
     /**

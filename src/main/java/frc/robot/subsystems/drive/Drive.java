@@ -21,6 +21,7 @@ import com.ctre.phoenix6.configs.SlotConfigs;
 import frc.lib.actuators.Actuator.TunablePidConfig;
 import frc.lib.io.motor.MotorIO.PIDSlot;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
+import frc.lib.posestimator.TipDetector;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.PID;
 import frc.lib.util.PowerProfiler;
@@ -94,6 +95,26 @@ public class Drive implements Mechanism {
 
     private SwerveDriveKinematics kinematics =
             new SwerveDriveKinematics(MODULE_TRANSLATIONS.toArray(Translation2d[]::new));
+
+    /*
+     * Tipped means tilted far past ordinary driving, where pitch and roll wobble by a few degrees
+     * (DriveConstants.ANGLED_TOLERANCE, 3 degrees, would flag about 15% of a match). While tipped
+     * the pose estimator trusts odometry less, so vision pulls the pose harder. The hold keeps that
+     * on briefly after the robot is level, while the robot settles.
+     */
+    private static final LoggedTunableNumber TIPPED_THRESHOLD_DEGREES =
+            new LoggedTunableNumber("Drive/Tipped/ThresholdDegrees", 8.0);
+
+    private static final LoggedTunableNumber TIPPED_HOLD_SECONDS =
+            new LoggedTunableNumber("Drive/Tipped/HoldSeconds", 0.25);
+
+    private final TipDetector tipDetector = new TipDetector();
+
+    @AutoLogOutput(key = "Drive/Tipped/Tipped")
+    private boolean tippedLatest = false;
+
+    @AutoLogOutput(key = "Drive/Tipped/TiltDegrees")
+    private double tiltDegreesLatest = 0.0;
 
     private final TunablePidConfig driveTunablePID;
     private final TunablePidConfig steerTunablePID;
@@ -236,6 +257,18 @@ public class Drive implements Mechanism {
         double[] sampleTimestamps = modules[0].getOdometryTimestamps();
         int sampleCount = sampleTimestamps.length;
 
+        if (sampleCount > 0) {
+            // Before this cycle's odometry, so its samples are stamped with this orientation
+            tippedLatest = tipDetector.update(
+                    sampleTimestamps[sampleCount - 1],
+                    MathUtil.inputModulus(gyroInputs.pitchPosition.getDegrees(), -180.0, 180.0),
+                    MathUtil.inputModulus(gyroInputs.rollPosition.getDegrees(), -180.0, 180.0),
+                    TIPPED_THRESHOLD_DEGREES.get(),
+                    TIPPED_HOLD_SECONDS.get());
+            tiltDegreesLatest = tipDetector.tiltDegrees();
+            globalPoseEstimator.setTipped(tippedLatest);
+        }
+
         for (int sampleIndex = 0; sampleIndex < sampleCount; sampleIndex++) {
             SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
             for (int i = 0; i < 4; i++) {
@@ -247,10 +280,8 @@ public class Drive implements Mechanism {
                 gyroAngle = Optional.of(gyroInputs.yawPosition);
             }
 
-            globalPoseEstimator.addOdometryObservation(new OdometryObservation(
-                    Seconds.of(sampleTimestamps[sampleIndex]), modulePositions, gyroAngle, new boolean[] {
-                        false, false, false, false
-                    }));
+            globalPoseEstimator.addOdometryObservation(
+                    new OdometryObservation(Seconds.of(sampleTimestamps[sampleIndex]), modulePositions, gyroAngle));
         }
 
         // Update RobotState velocity
