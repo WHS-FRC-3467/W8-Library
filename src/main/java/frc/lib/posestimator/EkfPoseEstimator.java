@@ -19,6 +19,7 @@ import static org.wpilib.units.Units.Seconds;
 
 import frc.lib.posestimator.PoseEstimator.VisionPoseObservation;
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
+import frc.robot.FieldConstants;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +32,7 @@ import lombok.Builder;
 import org.ejml.data.SingularMatrixException;
 import org.littletonrobotics.junction.Logger;
 import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Pose3d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Twist2d;
 import org.wpilib.math.kinematics.ChassisVelocities;
@@ -526,7 +528,7 @@ public class EkfPoseEstimator implements PoseEstimator {
     public void addVisionObservation(VisionPoseObservation observation) {
         int stepsAfter = stepsAfter(observation.timestampSeconds());
         if (stepsAfter < 0) {
-            logVision(observation, VisionObservationReason.MISSING_ODOMETRY_SAMPLE, Double.NaN, 0);
+            logVision(observation, VisionObservationReason.MISSING_ODOMETRY_SAMPLE, null, Double.NaN, 0);
             return;
         }
 
@@ -537,7 +539,7 @@ public class EkfPoseEstimator implements PoseEstimator {
         double linearStdDev = observation.linearStdDev() * config.visionStdDevScale();
         double angularStdDev = observation.angularStdDev() * config.visionStdDevScale();
         if (!allFinite(values) || Double.isNaN(linearStdDev) || Double.isNaN(angularStdDev)) {
-            logVision(observation, VisionObservationReason.INVALID_OBSERVATION, Double.NaN, 0);
+            logVision(observation, VisionObservationReason.INVALID_OBSERVATION, null, Double.NaN, 0);
             return;
         }
 
@@ -554,7 +556,7 @@ public class EkfPoseEstimator implements PoseEstimator {
             }
         }
         if (measuredAxes == 0) {
-            logVision(observation, VisionObservationReason.NO_USABLE_MEASUREMENT, Double.NaN, 0);
+            logVision(observation, VisionObservationReason.NO_USABLE_MEASUREMENT, null, Double.NaN, 0);
             return;
         }
 
@@ -577,7 +579,12 @@ public class EkfPoseEstimator implements PoseEstimator {
             innovationInverse = innovationCovarianceInverse(prior.covariance(), observationMatrix, measurementNoise);
             nis = quadraticForm(innovation, innovationInverse);
         } catch (SingularMatrixException e) {
-            logVision(observation, VisionObservationReason.SINGULAR_INNOVATION_COVARIANCE, Double.NaN, measuredAxes);
+            logVision(
+                    observation,
+                    VisionObservationReason.SINGULAR_INNOVATION_COVARIANCE,
+                    null,
+                    Double.NaN,
+                    measuredAxes);
             return;
         }
 
@@ -588,7 +595,7 @@ public class EkfPoseEstimator implements PoseEstimator {
         VisionObservationReason reason = VisionObservationReason.ACCEPTED;
         if (gated) {
             if (!shouldRecoverFromGating()) {
-                logVision(observation, VisionObservationReason.GATED_OUTLIER, nis, measuredAxes);
+                logVision(observation, VisionObservationReason.GATED_OUTLIER, null, nis, measuredAxes);
                 return;
             }
             // Vision has disagreed with the filter for a sustained stretch, so assume the filter is
@@ -599,7 +606,7 @@ public class EkfPoseEstimator implements PoseEstimator {
                 innovationInverse = innovationCovarianceInverse(inflated, observationMatrix, measurementNoise);
                 prior = new State(prior.pose(), inflated);
             } catch (SingularMatrixException e) {
-                logVision(observation, VisionObservationReason.SINGULAR_INNOVATION_COVARIANCE, nis, measuredAxes);
+                logVision(observation, VisionObservationReason.SINGULAR_INNOVATION_COVARIANCE, null, nis, measuredAxes);
                 return;
             }
             reason = VisionObservationReason.ACCEPTED_AFTER_GATE_RECOVERY;
@@ -653,7 +660,7 @@ public class EkfPoseEstimator implements PoseEstimator {
         if (reason == VisionObservationReason.ACCEPTED_AFTER_GATE_RECOVERY) {
             recentGateOutcomes.clear();
         }
-        logVision(observation, reason, nis, measuredAxes);
+        logVision(observation, reason, running.pose(), nis, measuredAxes);
     }
 
     /**
@@ -695,7 +702,9 @@ public class EkfPoseEstimator implements PoseEstimator {
     }
 
     /**
-     * Sets a validator applied to vision-corrected poses.
+     * Sets a validator applied to vision-corrected poses. A correction is rejected only if it would
+     * move an estimate that passes the validator to one that fails it, so an estimate that has
+     * already drifted to an invalid pose can still be corrected back.
      *
      * @param validator returns {@code true} for acceptable poses
      * @return this
@@ -1145,17 +1154,35 @@ public class EkfPoseEstimator implements PoseEstimator {
     }
 
     private void logVision(
-            VisionPoseObservation observation, VisionObservationReason reason, double nis, int measuredAxes) {
+            VisionPoseObservation observation,
+            VisionObservationReason reason,
+            Pose2d candidatePose,
+            double nis,
+            int measuredAxes) {
         lastVisionReason = reason;
         lastNis = nis;
         boolean accepted = reason == VisionObservationReason.ACCEPTED
                 || reason == VisionObservationReason.ACCEPTED_AFTER_GATE_RECOVERY;
         Matrix<N3, N3> p = covariance();
 
+        int[] seenTagIds = observation.seenTagIds() != null
+                ? observation.seenTagIds().stream().mapToInt(Integer::intValue).toArray()
+                : new int[] {};
+        Pose3d[] seenTagPoses = new Pose3d[seenTagIds.length];
+        for (int i = 0; i < seenTagIds.length; i++) {
+            seenTagPoses[i] = FieldConstants.DEFAULT_APRIL_TAG_TYPE
+                    .getLayout()
+                    .getTagPose(seenTagIds[i])
+                    .orElse(Pose3d.ZERO);
+        }
+
         Logger.recordOutput(LOG_PREFIX + "Vision/Accepted", accepted);
         Logger.recordOutput(LOG_PREFIX + "Vision/Reason", reason.name());
         Logger.recordOutput(LOG_PREFIX + "Vision/ObservationPose", observation.robotPose());
         Logger.recordOutput(LOG_PREFIX + "Vision/TimestampSeconds", observation.timestampSeconds());
+        Logger.recordOutput(LOG_PREFIX + "Vision/AvgTagDistanceMeters", observation.avgTagDistance());
+        Logger.recordOutput(LOG_PREFIX + "Vision/SeenTagIds", seenTagIds);
+        Logger.recordOutput(LOG_PREFIX + "Vision/SeenTagPoses", seenTagPoses);
         Logger.recordOutput(LOG_PREFIX + "Vision/LinearStdDev", observation.linearStdDev());
         Logger.recordOutput(LOG_PREFIX + "Vision/AngularStdDev", observation.angularStdDev());
         Logger.recordOutput(LOG_PREFIX + "Vision/Nis", nis);
@@ -1169,5 +1196,15 @@ public class EkfPoseEstimator implements PoseEstimator {
         Logger.recordOutput(LOG_PREFIX + "Covariance/SigmaX", Math.sqrt(p.get(0, 0)));
         Logger.recordOutput(LOG_PREFIX + "Covariance/SigmaY", Math.sqrt(p.get(1, 1)));
         Logger.recordOutput(LOG_PREFIX + "Covariance/SigmaTheta", Math.sqrt(p.get(2, 2)));
+
+        var candidatePoseOrZero = candidatePose != null ? new Pose2d[] {candidatePose} : new Pose2d[0];
+        Logger.recordOutput(LOG_PREFIX + "Vision/CandidatePose", candidatePoseOrZero);
+        if (accepted) {
+            Logger.recordOutput(LOG_PREFIX + "Vision/RejectedPose", new Pose2d[0]);
+            Logger.recordOutput(LOG_PREFIX + "Vision/AcceptedPose", candidatePoseOrZero);
+        } else {
+            Logger.recordOutput(LOG_PREFIX + "Vision/AcceptedPose", new Pose2d[0]);
+            Logger.recordOutput(LOG_PREFIX + "Vision/RejectedPose", candidatePoseOrZero);
+        }
     }
 }

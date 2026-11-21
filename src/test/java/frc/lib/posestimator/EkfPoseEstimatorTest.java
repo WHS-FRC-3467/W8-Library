@@ -506,6 +506,23 @@ class EkfPoseEstimatorTest {
         assertEquals(before, estimator.estimatedPose());
     }
 
+    @Test
+    void poseValidatorDoesNotTrapAnEstimateThatIsAlreadyInvalid() {
+        EkfPoseEstimator estimator = new EkfPoseEstimator(KINEMATICS).withPoseValidator(pose -> pose.getX() >= 0.0);
+        // Odometry is not validated, so the estimate can end up outside the valid region
+        estimator.resetPose(new Pose2d(-1.0, 0, Rotation2d.ZERO));
+        for (int i = 0; i <= 100; i++) {
+            estimator.applyOdometryTwist(new Twist2d(), i * ODOMETRY_PERIOD);
+        }
+
+        // A low-trust frame only pulls part of the way, so the corrected pose is still invalid,
+        // but it is closer and must be accepted rather than leaving the estimate stuck
+        estimator.addVisionObservation(vision(1.0, new Pose2d(1.0, 0, Rotation2d.ZERO), 0.6, 0.02));
+
+        assertEquals(EkfPoseEstimator.VisionObservationReason.ACCEPTED, estimator.lastVisionReason);
+        assertTrue(estimator.estimatedPose().getX() > -1.0);
+    }
+
     // ---- config / reset ----
 
     // ---- tipped ----

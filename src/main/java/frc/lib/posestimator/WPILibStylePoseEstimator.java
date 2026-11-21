@@ -18,7 +18,7 @@ package frc.lib.posestimator;
 import static org.wpilib.units.Units.Seconds;
 
 import frc.lib.posestimator.SwerveOdometry.OdometryObservation;
-import frc.robot.FieldConstants.AprilTagLayoutType;
+import frc.robot.FieldConstants;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -415,7 +415,7 @@ public class WPILibStylePoseEstimator implements PoseEstimator {
                 : new int[] {};
         Pose3d[] seenTagPoses = new Pose3d[seenTagIds.length];
         for (int i = 0; i < seenTagIds.length; i++) {
-            seenTagPoses[i] = AprilTagLayoutType.OFFICIAL
+            seenTagPoses[i] = FieldConstants.DEFAULT_APRIL_TAG_TYPE
                     .getLayout()
                     .getTagPose(seenTagIds[i])
                     .orElse(Pose3d.ZERO);
@@ -432,15 +432,15 @@ public class WPILibStylePoseEstimator implements PoseEstimator {
         Logger.recordOutput(LOG_PREFIX + "Vision/AngularStdDev", observation.angularStdDev());
         Logger.recordOutput(LOG_PREFIX + "Vision/TranslationNSigma", translationNSigma);
         Logger.recordOutput(LOG_PREFIX + "Vision/RotationNSigma", rotationNSigma);
-        Logger.recordOutput(
-                LOG_PREFIX + "Vision/CandidatePose",
-                new Pose2d[] {candidatePose != null ? candidatePose : Pose2d.ZERO});
-        if (accepted && candidatePose != null) {
-            Logger.recordOutput(LOG_PREFIX + "Vision/AcceptedPose", new Pose2d[] {candidatePose});
+
+        var candidatePoseOrZero = candidatePose != null ? new Pose2d[] {candidatePose} : new Pose2d[0];
+        Logger.recordOutput(LOG_PREFIX + "Vision/CandidatePose", candidatePoseOrZero);
+        if (accepted) {
+            Logger.recordOutput(LOG_PREFIX + "Vision/RejectedPose", new Pose2d[0]);
+            Logger.recordOutput(LOG_PREFIX + "Vision/AcceptedPose", candidatePoseOrZero);
         } else {
-            Logger.recordOutput(
-                    LOG_PREFIX + "Vision/RejectedPose",
-                    new Pose2d[] {candidatePose != null ? candidatePose : observation.robotPose()});
+            Logger.recordOutput(LOG_PREFIX + "Vision/AcceptedPose", new Pose2d[0]);
+            Logger.recordOutput(LOG_PREFIX + "Vision/RejectedPose", candidatePoseOrZero);
         }
     }
 }
