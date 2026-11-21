@@ -638,8 +638,11 @@ public class EkfPoseEstimator implements PoseEstimator {
                     step.corrections()));
         }
 
-        if (!poseValidator.test(running.pose())) {
-            logVision(observation, VisionObservationReason.POSE_VALIDATOR_REJECTED, nis, measuredAxes);
+        // Only reject a correction that would move a valid estimate to an invalid pose. Odometry is
+        // not validated and may drift off the field; corrections must still be able to pull it back.
+        if (!poseValidator.test(running.pose())
+                && poseValidator.test(latest().state().pose())) {
+            logVision(observation, VisionObservationReason.POSE_VALIDATOR_REJECTED, running.pose(), nis, measuredAxes);
             return;
         }
 
