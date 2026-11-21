@@ -150,7 +150,7 @@ public class EkfPoseEstimator implements PoseEstimator {
      *     vision frames are being gated (the filter is overconfident in odometry); <b>lower</b> if
      *     the pose jitters when vision updates arrive. A higher value fixes slip bursts but pulls
      *     the pose toward vision frames that are about 0.2 s old while the robot is fast; the
-     *     default is the knee of that tradeoff on one logged match (see docs/EkfPoseEstimator.md).
+     *     default is the knee of that tradeoff on one logged match.
      * @param linearVariancePerSecond Process noise: translation variance added per second,
      *     regardless of motion, in m²/s. A small floor that stops the uncertainty from collapsing
      *     to zero after many vision updates, so the filter never becomes completely deaf to vision.
