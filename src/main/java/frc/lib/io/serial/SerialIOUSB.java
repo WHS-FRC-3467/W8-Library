@@ -66,6 +66,8 @@ public class SerialIOUSB implements SerialIO {
      * @param name A human readable name for this device, used in error messages
      * @param usb The USB serial port the device is plugged into
      * @param baudRate The device's baud rate, in bits per second (e.g. 115200)
+     * @param loopPeriod The robot loop period, used as the read/write timeout so a stuck adapter
+     *     can't stall the loop
      */
     public SerialIOUSB(String name, Device.USB usb, int baudRate, Time loopPeriod) {
         this.name = name;
