@@ -54,6 +54,7 @@ public class SerialIOUSB implements SerialIO {
     private final String name;
     private final int baudRate;
     private final SerialPort.Port portId;
+    private final double loopPeriodSeconds;
 
     private SerialPort port;
     private double lastOpenAttemptSeconds = Double.NEGATIVE_INFINITY;
@@ -66,10 +67,11 @@ public class SerialIOUSB implements SerialIO {
      * @param usb The USB serial port the device is plugged into
      * @param baudRate The device's baud rate, in bits per second (e.g. 115200)
      */
-    public SerialIOUSB(String name, Device.USB usb, int baudRate) {
+    public SerialIOUSB(String name, Device.USB usb, int baudRate, Time loopPeriod) {
         this.name = name;
         this.baudRate = baudRate;
         this.portId = usb.id() == 1 ? SerialPort.Port.USB_1 : SerialPort.Port.USB_2;
+        this.loopPeriodSeconds = loopPeriod.in(Seconds);
     }
 
     @Override
@@ -124,6 +126,7 @@ public class SerialIOUSB implements SerialIO {
 
         try {
             port = new SerialPort(baudRate, portId);
+            port.setTimeout(loopPeriodSeconds);
             port.reset(); // throw away anything left in the buffer from before we opened it
         } catch (RuntimeException e) {
             reportFailure(e);

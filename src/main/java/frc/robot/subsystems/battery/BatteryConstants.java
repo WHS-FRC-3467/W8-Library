@@ -51,7 +51,8 @@ public class BatteryConstants {
      */
     public static Battery get() {
         return switch (Constants.CURRENT_MODE) {
-            case REAL -> new Battery(new SerialIOUSB(NAME, Ports.batteryReader, READER_BAUD_RATE));
+            case REAL ->
+                new Battery(new SerialIOUSB(NAME, Ports.batteryReader, READER_BAUD_RATE, Constants.LOOP_PERIOD));
             case SIM -> new Battery(new SerialIOPepperC1Sim(NAME));
             case REPLAY -> new Battery(new SerialIO() {});
         };
