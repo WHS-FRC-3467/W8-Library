@@ -25,7 +25,7 @@ import org.wpilib.math.kinematics.ChassisVelocities;
 /**
  * Fuses swerve odometry with vision measurements into a field-relative pose estimate.
  *
- * <p>Implementations: {@link MechAPoseEstimator} (WPILib's fixed per-axis gain method) and {@link
+ * <p>Implementations: {@link WPILibStylePoseEstimator} (WPILib's fixed per-axis gain method) and {@link
  * EkfPoseEstimator} (extended Kalman filter with covariance tracking and outlier gating).
  */
 public interface PoseEstimator {
