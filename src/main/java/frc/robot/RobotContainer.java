@@ -18,6 +18,8 @@ package frc.robot;
 import frc.lib.util.GamePieceVisualizer;
 import frc.lib.util.PowerProfiler;
 import frc.robot.commands.DriveCommands;
+import frc.robot.subsystems.battery.Battery;
+import frc.robot.subsystems.battery.BatteryConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.vision.VisionConstants;
@@ -41,6 +43,7 @@ public class RobotContainer {
 
     // Subsystems
     public final Drive drive;
+    private final Battery battery;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -48,6 +51,7 @@ public class RobotContainer {
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
         drive = DriveConstants.get();
+        battery = BatteryConstants.get();
         VisionConstants.create();
 
         // Configure the button bindings

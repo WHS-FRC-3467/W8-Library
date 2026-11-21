@@ -18,6 +18,7 @@ package frc.robot;
 import com.ctre.phoenix6.CANBus;
 import frc.lib.util.Device;
 import frc.lib.util.Device.CAN;
+import frc.lib.util.Device.USB;
 
 /**
  * Hardware port definitions for all CAN devices and other I/O ports on the robot. Contains CAN IDs
@@ -45,4 +46,6 @@ public class Ports {
 
     public static final Device.CAN intakeLinear = new CAN(27, Device.ONBOARD_CAN_BUS);
     public static final Device.CAN intakeRoller = new CAN(28, Device.ONBOARD_CAN_BUS);
+
+    public static final Device.USB batteryReader = new USB(1);
 }
