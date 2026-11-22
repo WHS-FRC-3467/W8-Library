@@ -12,100 +12,77 @@
  * You should have received a copy of the GNU General Public License along with this program. If
  * not, see <https://www.gnu.org/licenses/>.
  */
+
 package frc.robot.subsystems.indexer;
 
 import static org.wpilib.units.Units.Amps;
 
 import frc.lib.actuators.flywheel.FlywheelActuator;
+import frc.lib.statemachine.GoalStateMachine;
 import frc.lib.util.LoggedTunableNumber;
 import frc.lib.util.PowerProfiler;
-import org.wpilib.command3.Command;
 import org.wpilib.command3.Mechanism;
 import org.wpilib.command3.Scheduler;
 import org.wpilib.units.measure.AngularVelocity;
 
 /**
- * Subsystem that controls the indexer for moving game pieces within the robot. The indexer can run
- * forward to feed game pieces toward the shooter, run in reverse to eject them, or stop. Uses a
- * flywheel actuator and runs forward and reverse with torque-current control.
+ * The indexer, which moves game pieces from the intake toward the tower. It runs with
+ * torque-current control.
  */
-public class Indexer implements Mechanism {
-    private final FlywheelActuator<?> io;
-    private boolean brownedOut = false;
+public class Indexer implements Mechanism, AutoCloseable {
+    /** What the indexer can be asked to do. */
+    public enum Goal {
+        /** Coast with no power applied. */
+        STOP,
+        /** Push game pieces toward the tower. */
+        FEED,
+        /** Push game pieces back toward the intake. */
+        EJECT
+    }
 
-    private static final LoggedTunableNumber SHOOT_TORQUE_CURRENT =
-            new LoggedTunableNumber(IndexerConstants.NAME + "/ShootTorqueCurrent", 40.0);
+    private static final LoggedTunableNumber FEED_TORQUE_CURRENT =
+            new LoggedTunableNumber(IndexerConstants.NAME + "/FeedTorqueCurrent", 40.0);
 
     private static final LoggedTunableNumber EJECT_TORQUE_CURRENT =
             new LoggedTunableNumber(IndexerConstants.NAME + "/EjectTorqueCurrent", -40.0);
 
+    private final FlywheelActuator<?> io;
+    private final GoalStateMachine<Goal> goals;
+    private boolean brownedOut = false;
+
     /**
-     * Constructs an Indexer subsystem.
+     * Constructs the indexer.
      *
-     * @param io The flywheel actuator for controlling the indexer motors
+     * @param io the indexer actuator
      */
     public Indexer(FlywheelActuator<?> io) {
         this.io = io;
 
-        Scheduler.getDefault().addPeriodic(this::periodic);
-    }
+        goals = new GoalStateMachine<>(IndexerConstants.NAME, this, Goal.class, Goal.STOP);
+        goals.addState(Goal.STOP, c -> io.runCoast());
+        goals.addState(Goal.FEED, c -> io.runCurrent(Amps.of(FEED_TORQUE_CURRENT.get())));
+        goals.addState(Goal.EJECT, c -> io.runCurrent(Amps.of(EJECT_TORQUE_CURRENT.get())));
+        goals.start();
 
-    public void periodic() {
-        io.periodic();
-    }
-
-    private void stop() {
-        io.runCoast();
-    }
-
-    /** Register the Indexer subsystem with the power profiler. */
-    public void registerMechanisms(PowerProfiler powerProfiler) {
-        powerProfiler.registerMechanism(getName(), io);
+        Scheduler.getDefault().addPeriodic(io::periodic);
     }
 
     /**
-     * Creates a command to stop the indexer by applying coast mode.
+     * Asks the indexer to switch to a goal.
      *
-     * @return a command that stops the indexer
+     * @param goal what the indexer should do
      */
-    public Command stopCommand() {
-        return this.run(c -> this.stop()).named("Stop Indexer");
-    }
-
-    /**
-     * Creates a command to run the indexer at shooting velocities. The indexer will stop when the
-     * command is interrupted or cancelled.
-     *
-     * @return a command that runs the indexer at shooting speed
-     */
-    public Command shoot() {
-        return this.run(c -> {
-                    io.runCurrent(Amps.of(SHOOT_TORQUE_CURRENT.get()));
-
-                    c.park();
-                })
-                .whenCanceled(this::stop)
-                .named("Shoot");
-    }
-
-    /**
-     * Creates a command to run the indexer in reverse to eject game pieces. The indexer will stop
-     * when the command is interrupted or cancelled.
-     *
-     * @return a command that runs the indexer in reverse
-     */
-    public Command eject() {
-        return this.run(c -> {
-                    io.runCurrent(Amps.of(EJECT_TORQUE_CURRENT.get()));
-
-                    c.park();
-                })
-                .whenCanceled(this::stop)
-                .named("Eject");
+    public void request(Goal goal) {
+        goals.request(goal);
     }
 
     public AngularVelocity getVelocity() {
         return io.getVelocity();
+    }
+
+    /** Register the indexer with the power profiler. */
+    public void registerMechanisms(PowerProfiler powerProfiler) {
+        powerProfiler.registerMechanism(IndexerConstants.NAME, io);
     }
 
     /**
@@ -122,12 +99,7 @@ public class Indexer implements Mechanism {
                 brownedOut ? IndexerConstants.BROWNOUT_SUPPLY_CURRENT_LIMIT : IndexerConstants.SUPPLY_CURRENT_LIMIT);
     }
 
-    /** Toggles the indexer supply current limit for brownout protection. */
-    public void toggleBrownedOut() {
-        setBrownedOut(!brownedOut);
-    }
-
-    /** Closes the indexer actuator and releases resources. */
+    @Override
     public void close() {
         io.close();
     }

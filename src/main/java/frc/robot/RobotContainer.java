@@ -20,6 +20,19 @@ import frc.lib.util.PowerProfiler;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.indexer.IndexerConstants;
+import frc.robot.subsystems.intake.IntakeLinearConstants;
+import frc.robot.subsystems.intake.IntakeRoller;
+import frc.robot.subsystems.intake.IntakeRollerConstants;
+import frc.robot.subsystems.intake.IntakeSlide;
+import frc.robot.subsystems.shooter.Flywheel;
+import frc.robot.subsystems.shooter.FlywheelConstants;
+import frc.robot.subsystems.shooter.Hood;
+import frc.robot.subsystems.shooter.HoodConstants;
+import frc.robot.subsystems.superstructure.Superstructure;
+import frc.robot.subsystems.tower.Tower;
+import frc.robot.subsystems.tower.TowerConstants;
 import frc.robot.subsystems.vision.VisionConstants;
 import org.wpilib.command3.button.CommandXboxController;
 import org.wpilib.driverstation.GenericHID;
@@ -41,6 +54,15 @@ public class RobotContainer {
 
     // Subsystems
     public final Drive drive;
+    private final IntakeSlide intakeSlide;
+    private final IntakeRoller intakeRoller;
+    private final Indexer indexer;
+    private final Tower tower;
+    private final Flywheel flywheel;
+    private final Hood hood;
+
+    // Coordinates every mechanism above. Bindings and autos talk to this, not to the mechanisms.
+    private final Superstructure superstructure;
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
@@ -48,6 +70,13 @@ public class RobotContainer {
     /** The container for the robot. Contains subsystems, IO devices, and commands. */
     public RobotContainer() {
         drive = DriveConstants.get();
+        intakeSlide = new IntakeSlide(IntakeLinearConstants.getMechanism());
+        intakeRoller = new IntakeRoller(IntakeRollerConstants.getMechanism());
+        indexer = IndexerConstants.get();
+        tower = TowerConstants.get();
+        flywheel = new Flywheel(FlywheelConstants.get());
+        hood = new Hood(HoodConstants.get());
+        superstructure = new Superstructure(intakeSlide, intakeRoller, indexer, tower, flywheel, hood);
         VisionConstants.create();
 
         // Configure the button bindings
@@ -68,11 +97,25 @@ public class RobotContainer {
     private void configureButtonBindings() {
         drive.setDefaultCommand(DriveCommands.joystickDrive(
                 drive, () -> -controller.getLeftY(), () -> -controller.getLeftX(), () -> -controller.getRightX()));
+
+        // Buttons only request robot states. The superstructure decides what each mechanism does.
+        controller.leftTrigger().onTrue(superstructure.intake()).onFalse(superstructure.stow());
+        controller.rightTrigger().onTrue(superstructure.score()).onFalse(superstructure.stow());
+        controller.b().onTrue(superstructure.eject()).onFalse(superstructure.stow());
+
+        // An override command: takes the slide from its state machine while the button is held.
+        controller.menu().whileTrue(intakeSlide.home());
     }
 
     /** Register all of the subsystems' mechanisms and generic power channels. */
     private void registerMechanismsAndGenerics() {
         powerProfiler.setLoopPeriod(Constants.LOOP_PERIOD);
         drive.registerModules(powerProfiler);
+        intakeSlide.registerMechanisms(powerProfiler);
+        intakeRoller.registerMechanisms(powerProfiler);
+        indexer.registerMechanisms(powerProfiler);
+        tower.registerMechanisms(powerProfiler);
+        flywheel.registerMechanisms(powerProfiler);
+        hood.registerMechanisms(powerProfiler);
     }
 }
