@@ -19,7 +19,7 @@ The overall goal is to estimate the robot's field-relative pose using two imperf
 | $H$ | Observation matrix selecting the vision-measured state components |
 | $K$ | Kalman gain: maps the innovation into a pose correction |
 
-Covariance is a **model of estimation error (also referred to as uncertainty or noise)**. Fundamentally, this matrix is tracking what it believes its error bounds and error covariances to be based on the estimator's calibrated inputs provided at construction and hardware measurements over the course of the match. Note that this is fundamentally different from the error measured against "pose ground truth" during a match, because pose ground truth during a match is not known. For an error vector $\mathbf e=\hat{\mathbf x}-\mathbf x_{\mathrm{true}}$ with approximately zero mean (i.e. the error is unbiased),
+Covariance is a **model of estimation error (also referred to as uncertainty or noise)**. Fundamentally, this matrix is tracking what it believes its error bounds and error covariances to be based on the estimator's calibrated inputs provided at construction and hardware measurements over the course of the match. Note that this is fundamentally different from the error measured against "pose ground truth" during a match, because pose ground truth during a match is not known. For an error vector $\mathbf e=\hat{\mathbf x}-\mathbf x_{\mathrm{true}}$ with approximately zero mean (i.e. the error is unbiased):
 
 $$
 P=\operatorname{Cov}(\mathbf e)=\mathbb E[\mathbf e\mathbf e^T]
@@ -59,7 +59,7 @@ Here, $\mathbb{E}$ is the expected-value operator (the probability-weighted popu
 
 ### 2.1 Derivation
 
-Consider one coordinate, $x$. Suppose odometry predicts $x_o$ and vision measures $x_v$. We need to reconcile these two measurements. One approach is a weighted fusion, expressed as
+Consider one coordinate, $x$. Suppose odometry predicts $x_o$ and vision measures $x_v$. We need to reconcile these two measurements. One approach is a weighted fusion, expressed as:
 
 $$
 \boxed{\hat x_{\mathrm{fused}}=(1-k)x_o+kx_v=x_o+k(x_v-x_o).}
@@ -94,7 +94,7 @@ $$
 =-2(1-k)P+2kR=0.
 $$
 
-Thus
+Thus:
 
 $$
 \boxed{k=\frac{P}{P+R}.}
@@ -152,7 +152,7 @@ k_\theta&=\frac{0.0004002}{0.0004002+0.0729}=0.00545974.
 \end{aligned}
 $$
 
-With the camera's innovation $(0.10\ \mathrm m,\ 0.04\ \mathrm m,\ 10^\circ)$, this produces
+With the camera's innovation $(0.10\ \mathrm m,\ 0.04\ \mathrm m,\ 10^\circ)$, this produces:
 
 $$
 \boxed{\hat{\mathbf x}_{\mathrm{SKF}}\approx
@@ -163,13 +163,13 @@ SKF adjusts the estimate toward vision by a fraction determined by configured va
 
 ### 2.3 Limitations of SKF
 
-- **Odometry uncertainty changes over time.** Driving farther without vision, slipping, and heading errors all affect the reliability of the predicted pose -- these dynamics increase modeled error (i.e. the diagonals of $P$) over time. Naturally, the representative fixed $P$ utilized above does not explicitly accumulate these effects. Such a fixed value *can* approximate a steady-state operating regime, but not arbitrary motion history. As we'll see, this approach is most viable when the robot is receiving high-quality vision measurements at sufficient FPS such that accumulated uncertainty is consistently decimated from loop-to-loop. 
+- **Odometry uncertainty changes over time.** Driving farther without vision, slipping, and heading errors all affect the reliability of the predicted pose -- these dynamics increase modeled error (i.e. the diagonals of $P$) over time. Naturally, the representative fixed $P_{SKF}$ utilized above does not explicitly accumulate these effects. Such a fixed value *can* approximate a steady-state operating regime, but not arbitrary motion history. As we'll see, this approach is most viable when the robot is receiving high-quality vision measurements at sufficient FPS such that accumulated uncertainty is consistently decimated from loop-to-loop. 
 
 - **State errors are correlated.** After driving forward, a heading error induces lateral displacement error. Three independent scalar weights ignore the resulting $P_{y\theta}$ terms. Neglecting these effects is most viable with high-quality vision at sufficient FPS.
 
 - **Vision observations are not equally reliable.** A baseline $d^2/n$ model describes some variation, but robot motion, camera configuration, and observation quality can also matter. A fixed baseline coefficient may have absorbed their *typical* effects during tuning, but don't represent arbitrary vision conditions.
 
-Fundamentally, SKF uses **representative uncertainty** rather than explicitly predicting its evolution. EKF, derived below, takes a seeded uncertainty from a reset pose and evolves it in time.
+Fundamentally, SKF uses a blanket **representative uncertainty** rather than dynamically predicting its evolution and correcting it. EKF, derived below, takes a seeded uncertainty from a reset pose and evolves / corrects it as a function of time.
 
 ## 3. Extended Kalman Filter 
 
@@ -179,7 +179,7 @@ This is a more advanced approach that initially seeds and evolves $P$ recursivel
 
 To begin, we should review the robot's motion model. The most general motion the robot can execute is an odometry **twist**. A twist occurs when the robot simultaneously translates and rotates. After one of these profiles, the robot swerve drive returns a $[dx,dy,d\theta]^T$ in the form of WPILib's `Twist2d`. These components don't represent a field-relative displacement -- they represent transform coordinates in robot's time-varying body-fixed frame over the course of the motion from $t_0$ to $t_f$ quantified through drive and steer-encoder readings from all four modules. However, because the body-fixed frame is rotating while it's translating, these components aren't expressed in the $t_0$ robot-frame either. 
 
-To express this twist in the $t_0$ robot frame, we essentially need to play back all of the rotation matrices for each state variable at every given time $t \in [t_0, t_f]$ and sum the results together. This is done automatically by applying an integration matrix $V$. Let $\phi=\Delta\theta$ and
+To express this twist in the $t_0$ robot frame, we essentially need to play back all of the rotation matrices for each state variable at every given time $t \in [t_0, t_f]$ and sum the results together. This is done automatically by applying an integration matrix $V$. Let $\phi=\Delta\theta$ and:
 
 $$
 R(\theta)=\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix},
@@ -196,13 +196,13 @@ $$
 \begin{bmatrix}\Delta x_r\\\Delta y_r\end{bmatrix}=V(\phi)\begin{bmatrix}dx\\dy\end{bmatrix}=\begin{bmatrix}a\\b\end{bmatrix}
 $$
 
-where $[a, b]^T$ is utilized for brevity. We can rotate this $t_0$ robot-frame displacement into field coordinates using $R(\theta_k)$ such that
+where $[a, b]^T$ is utilized for brevity. We can rotate this $t_0$ robot-frame displacement into field coordinates using $R(\theta_k)$ such that:
 
 $$
 \begin{bmatrix}\Delta x_f\\\Delta y_f\end{bmatrix}=R(\theta_k)\begin{bmatrix}a\\b\end{bmatrix}
 $$
 
-then the predicted state is
+then the predicted state is:
 
 $$
 \boxed{
@@ -228,7 +228,7 @@ F=\frac{\partial\mathbf x_{k+1}}{\partial\mathbf x_k}
 \end{bmatrix}.
 $$
 
-As demonstrated above, our **field-relative** displacement is $\Delta x_f=a\cos\theta_k-b\sin\theta_k$ and $\Delta y_f=a\sin\theta_k+b\cos\theta_k$. Therefore
+As demonstrated above, our **field-relative** displacement is $\Delta x_f=a\cos\theta_k-b\sin\theta_k$ and $\Delta y_f=a\sin\theta_k+b\cos\theta_k$. Therefore:
 
 $$
 \boxed{F=\begin{bmatrix}
@@ -238,25 +238,27 @@ $$
 
 For example, $F_{y\theta}=\Delta x_f$ means an uncertain heading produces uncertain lateral position when driving in field X such that $\partial y_{k+1} \approx \Delta x_f\partial\theta_k$. Even with a zero-mean heading error, its **variance** can generate lateral position variance and a Y/heading covariance.
 
-### 3.3 Generating the Current Covariance Matrix $F$ and Propagating via $FPF^T$
+### 3.3 Generating the Covariance Matrix $P$
 
 Linearize the evolution of state-estimation error about the estimated pose:
 
 $$
-\partial\mathbf x_{k+1}\approx F\mathbf \partial\mathbf x_k+G\mathbf w,
+\delta\mathbf x_{k+1}\approx F_k\mathbf \delta\mathbf x_k+G_k\mathbf w_k,
 $$
 
-where $\mathbf w$ is zero-mean, independent process noise with covariance $Q=\mathbb E[\mathbf w\mathbf w^T]$. The above equation essentially posits that the propagated fused pose error is the evolution of the existing fused pose error _plus_ additional injected error from the latest odometry reading, which is being used to project the fused pose forward. Form the expected outer product:
+where $\mathbf w_k$ is the current-step zero-mean, independent process noise with covariance $Q_k=\mathbb E[\mathbf w_k\mathbf w_k^T]$. The _total_ predicted pose error at the next time step consists of the existing estimation error, propagated through the motion model by $F_k$, plus new process noise introduced during the latest odometry interval and mapped into field coordinates by $G_k$.
+
+Form the expected outer product:
 
 $$
 \begin{aligned}
-P'&=\mathbb E[\mathbf e'{\mathbf e'}^T]\\
-&\approx F\mathbb E[\mathbf e\mathbf e^T]F^T
-+G\mathbb E[\mathbf w\mathbf w^T]G^T.
+P'&=\mathbb E[\delta\mathbf x_{k+1}{\delta\mathbf x_{k+1}}^T]\\
+&\approx F\mathbb E[\delta\mathbf x_k{\delta\mathbf x_k}^T]F^T
++G_k\mathbb E[\mathbf w_k\mathbf w_k^T]G_k^T.
 \end{aligned}
 $$
 
-The cross terms vanish if prior estimation errors and new process noise are uncorrelated. Therefore
+The cross terms vanish if prior estimation errors and new process noise are uncorrelated. Therefore:
 
 $$
 \boxed{P_{k+1}^-=F_kP_k^+F_k^T+G_kQ_kG_k^T.}
@@ -352,7 +354,7 @@ $$
 \end{aligned}
 $$
 
-Here $d$ is average camera-to-tag distance in meters and $n$ is the number of contributing tags. Both baseline coefficients, the floor values, and the exact dependence on $d$ and $n$ are **empirical model choices**, not physical laws. In particular, $1/n$ on **standard deviation** is more aggressive than the $1/\sqrt n$ behavior of ideal independent measurements; real multi-tag pose solutions also depend on tag geometry.
+Here $d$ is average camera-to-tag distance in meters and $n$ is the number of contributing tags. Both baseline coefficients, the floor values, and the exact dependence on $d$ and $n$ are **empirical model choices, not physical laws**. For example, $1/n$ on **standard deviation** is more aggressive than the $1/\sqrt n$ behavior of ideal independent measurements in sample statistics; real multi-tag pose solutions also depend on tag geometry.
 
 The model multiplies the baseline standard deviations by
 
@@ -397,7 +399,7 @@ $$
 
 A 10% increase in the **standard deviation** from the quality factor increases the corresponding **variance** by $1.1^2=1.21$, or 21%.
 
-For a single-tag observation, this implementation ordinarily ignores camera heading by masking it with $H$; it does **not** place an infinite entry in a matrix to be inverted.
+For a single-tag observation, this implementation ordinarily ignores camera heading by masking it with $H$.
 
 ## 6. Generalizing scalar fusion to the matrix Kalman gain
 
