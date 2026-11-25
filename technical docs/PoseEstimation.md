@@ -22,7 +22,7 @@ The overall goal is to estimate the robot's field-relative pose using two imperf
 Covariance is a **model of estimation error (also referred to as uncertainty or noise)**. Fundamentally, this matrix is tracking what it believes its error bounds and error covariances to be based on the estimator's calibrated inputs provided at construction and hardware measurements over the course of the match. Note that this is fundamentally different from the error measured against "pose ground truth" during a match, because pose ground truth during a match is not known. For an error vector $\mathbf e=\hat{\mathbf x}-\mathbf x_{\mathrm{true}}$ with approximately zero mean (i.e. the error is unbiased):
 
 $$
-P=\operatorname{Cov}(\mathbf e)=\mathbb E[\mathbf e\mathbf e^T]
+P=\mathrm{Cov}(\mathbf e)=\mathbb E[\mathbf e\mathbf e^T]
 =\begin{bmatrix}
 \sigma_x^2&P_{xy}&P_{x\theta}\\
 P_{xy}&\sigma_y^2&P_{y\theta}\\
@@ -46,7 +46,7 @@ As the diagonal variances approach zero, the estimator reports increasing confid
 The off-diagonal elements of $P_k$ represent **covariance between estimation errors**. For example, assuming unbiased (zero-mean) errors:
 
 $$
-P_{y\theta} = \operatorname{Cov}(\delta y,\delta\theta)
+P_{y\theta} = \mathrm{Cov}(\delta y,\delta\theta)
 = \mathbb{E}[\delta y\,\delta\theta]
 \approx \frac{1}{N}\sum_{i=1}^{N}\delta y_i\,\delta\theta_i
 $$
@@ -77,12 +77,12 @@ $$
 e_{\mathrm{fused}}=(1-k)e_o+ke_v.
 $$
 
-For **unbiased, mutually independent** errors with _constant_ variances $P=\operatorname{Var}(e_o)=\sigma_o^2$ and $R=\operatorname{Var}(e_v)=\sigma_v^2$, the covariance cross-term is zero:
+For **unbiased, mutually independent** errors with _constant_ variances $P=\mathrm{Var}(e_o)=\sigma_o^2$ and $R=\mathrm{Var}(e_v)=\sigma_v^2$, the covariance cross-term is zero:
 $$
 \begin{aligned}
-\operatorname{Var}(e_{\mathrm{fused}})
+\mathrm{Var}(e_{\mathrm{fused}})
 &=(1-k)^2P+k^2R\\
-&\quad+2k(1-k)\operatorname{Cov}(e_o,e_v)\\
+&\quad+2k(1-k)\mathrm{Cov}(e_o,e_v)\\
 &=(1-k)^2P+k^2R.
 \end{aligned}
 $$
@@ -90,7 +90,7 @@ $$
 To find the local minimum in error, differentiate with respect to $k$ and set the derivative to zero:
 
 $$
-\frac{d\operatorname{Var}(e_{\mathrm{fused}})}{dk}
+\frac{d\mathrm{Var}(e_{\mathrm{fused}})}{dk}
 =-2(1-k)P+2kR=0.
 $$
 
@@ -112,13 +112,13 @@ We'll baseline the application of the SKF through the following numerical exampl
 - Slightly anisotropic odometry variances are as follows (however, note that it's very common to assume complete isotropy such that $\sigma_x^2 = \sigma_y^2$):
 
 $$
-P_{\mathrm{fixed}}=\operatorname{diag}(0.0037002,\ 0.00370164,\ 0.0004002).
+P_{\mathrm{fixed}}=\mathrm{diag}(0.0037002,\ 0.00370164,\ 0.0004002).
 $$
 
 - Isotropic vision variances are as follows: 
 
 $$
-R_{\mathrm{baseline}}=\operatorname{diag}(0.0004,\ 0.0004,\ 0.0036).
+R_{\mathrm{baseline}}=\mathrm{diag}(0.0004,\ 0.0004,\ 0.0036).
 $$
 
 - Vision observations that utilize numerous tags at a short distance are taken as more reliable than the inverse. Therefore, we'll trust high-quality measurements (and distrust low-quality measurements) more according to the following scaling rule:
@@ -139,7 +139,7 @@ $$
 This produces our corrected vision uncertainty for use in the fusion operation:
 
 $$
-R_{\mathrm{corrected}}=\operatorname{diag}(0.0081,\ 0.0081\ 0.0729).
+R_{\mathrm{corrected}}=\mathrm{diag}(0.0081,\ 0.0081\ 0.0729).
 $$
 
 Apply the scalar gain independently to each coordinate:
@@ -280,7 +280,7 @@ For one odometry interval, `EkfPoseEstimator.Config` defines
 
 $$
 \boxed{
-Q_k=\operatorname{diag}(q_{xy},q_{xy},q_\theta),\quad
+Q_k=\mathrm{diag}(q_{xy},q_{xy},q_\theta),\quad
 \begin{aligned}
 q_{xy}&=k_d\sqrt{\Delta x_r^2+\Delta y_r^2}+k_t\Delta t,\\
 q_\theta&=k_\theta\Delta t.
@@ -294,7 +294,7 @@ The default coefficients for our non-tipped example are $k_d=0.02\ \mathrm{m^2/m
 Start with a pose reset to $(2,3,0)$ and reset standard deviations $\sigma_{xy}=0.05\ \mathrm m$ and $\sigma_\theta=0.02\ \mathrm{rad}$. Thus
 
 $$
-P_0^+=\operatorname{diag}(0.0025,\ 0.0025,\ 0.0004).
+P_0^+=\mathrm{diag}(0.0025,\ 0.0025,\ 0.0004).
 $$
 
 The robot moves forward $0.06\ \mathrm m$ in $\Delta t=0.02\ \mathrm s$ with $\phi=0$ and $\theta=0$. Therefore $R(0)=V(0)=I$, the field displacement is $(0.06,0)$, and
@@ -309,7 +309,7 @@ $$
 \begin{aligned}
 q_{xy}&=0.02(0.06)+10^{-5}(0.02)=0.0012002,\\
 q_\theta&=10^{-5}(0.02)=0.0000002,\\
-Q&=\operatorname{diag}(0.0012002,0.0012002,0.0000002).
+Q&=\mathrm{diag}(0.0012002,0.0012002,0.0000002).
 \end{aligned}
 $$
 
@@ -412,7 +412,7 @@ H=I,\qquad
 \boxed{\mathbf r=\mathbf z-H\hat{\mathbf x}^-},
 $$
 
-where $\mathbf r$ is the **innovation**. The heading component is wrapped to the shortest signed angular difference. When only X and Y are measured, the implementation uses $H=\operatorname{diag}(1,1,0)$ and zeroes the unmeasured innovation component.
+where $\mathbf r$ is the **innovation**. The heading component is wrapped to the shortest signed angular difference. When only X and Y are measured, the implementation uses $H=\mathrm{diag}(1,1,0)$ and zeroes the unmeasured innovation component.
 
 The innovation covariance is
 
@@ -465,7 +465,7 @@ $$
 P_1^-=\begin{bmatrix}
 0.0037002&0&0\\0&0.00370164&0.000024\\0&0.000024&0.0004002
 \end{bmatrix},\qquad
-R_1=\operatorname{diag}(0.0206066025,0.0206066025,0.1854594225).
+R_1=\mathrm{diag}(0.0206066025,0.0206066025,0.1854594225).
 $$
 
 Because this is a multi-tag observation, $H=I$. The innovation and its covariance are
